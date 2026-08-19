@@ -3,7 +3,7 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { FollowButton } from "@/components/FollowButton";
-import { PortfolioBio } from "@/components/PortfolioBio";
+import { PortfolioHeader } from "@/components/PortfolioBio";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   formatYen,
@@ -36,17 +36,10 @@ export default async function SeederPortfolioPage({ params }: Props) {
 
       <div className="mx-auto max-w-lg">
       <header className="border-b border-viscum-line px-4 py-5">
-        <p className="text-xs text-viscum-muted">シーダー／メンター</p>
-        <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold text-viscum-ink">
-            @{display}
-          </h1>
-          <FollowButton handle={display} />
-        </div>
-        <p className="mt-2 text-[14px] text-viscum-muted">
-          ポートフォリオ（デモ）
-        </p>
-        <PortfolioBio handle={display} />
+        <PortfolioHeader
+          handle={display}
+          action={<FollowButton handle={display} />}
+        />
 
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3">
