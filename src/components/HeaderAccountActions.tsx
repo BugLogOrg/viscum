@@ -180,6 +180,9 @@ export function HeaderAccountActions({
                 <MenuRow href="/dashboard" onNavigate={close}>
                   シードごとの届き方
                 </MenuRow>
+                <MenuRow href="/dashboard/messages" onNavigate={close}>
+                  ご依頼DM
+                </MenuRow>
                 <MenuRow href="/dashboard/notifications" onNavigate={close}>
                   通知
                   {unread > 0 ? `（未読 ${unread}）` : ""}

@@ -109,6 +109,16 @@ export function installDemoNotifies() {
   const now = Date.now();
   const demos: LocalNotify[] = [
     {
+      id: "n_demo_direct_request",
+      kind: "direct_request",
+      title: "ご依頼が届きました",
+      body: "ken さんから直依頼（デモ）。やる／いまは無理が返せます。",
+      href: "/dashboard/messages/req_demo_01",
+      createdAt: new Date(now - 12 * 60000).toISOString(),
+      read: false,
+      audience: "seeder",
+    },
+    {
       id: "n_demo_comment",
       kind: "comment",
       title: "新しいコメント",

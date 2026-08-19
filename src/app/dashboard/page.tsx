@@ -94,6 +94,12 @@ export default function DashboardPage() {
                 公開ポートフォリオを見る
               </Link>
               <Link
+                href="/dashboard/messages"
+                className="text-[13px] font-medium text-viscum-brand underline"
+              >
+                ご依頼DM
+              </Link>
+              <Link
                 href="/dashboard/reactions"
                 className="text-[13px] font-medium text-viscum-brand underline"
               >

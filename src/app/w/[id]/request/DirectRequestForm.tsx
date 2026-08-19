@@ -2,23 +2,30 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import type { Work } from "@/data/dummy-works";
+import { createRequestDm } from "@/lib/local-request-dms";
+import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 
 const MENTORS = [
   {
-    handle: "メンターA",
+    handle: "mentorA",
+    label: "メンターA",
     specialty: "動画",
     accepting: true,
     blurb: "Shorts／冒頭1秒の伝わり方",
   },
   {
-    handle: "メンターJ",
+    handle: "mentorJ",
+    label: "メンターJ",
     specialty: "アプリ",
     accepting: true,
     blurb: "初見3秒・空状態",
   },
   {
-    handle: "観察I",
+    handle: "kansatsuI",
+    label: "観察I",
     specialty: "デザイン",
     accepting: false,
     blurb: "受付OFF（送れない見本）",
@@ -26,6 +33,8 @@ const MENTORS = [
 ] as const;
 
 export function DirectRequestForm({ work }: { work: Work }) {
+  const router = useRouter();
+  const { data: session } = useSession();
   const [mentor, setMentor] = useState<string>(MENTORS[0].handle);
   const [message, setMessage] = useState(
     `${work.title.slice(0, 40)}… を、あなただけに見てほしいです。見る範囲は説明どおりで大丈夫です。`,
@@ -34,6 +43,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
 
   const selected = MENTORS.find((m) => m.handle === mentor);
   const canSend = selected?.accepting && message.trim().length > 0;
+  const fromHandle = session?.user?.handle ?? "mDB";
 
   return (
     <div className="space-y-5">
@@ -82,23 +92,20 @@ export function DirectRequestForm({ work }: { work: Work }) {
       className="space-y-5"
       onSubmit={(e) => {
         e.preventDefault();
-        if (!canSend) return;
-        window.alert(
-          [
-            "【デモ】直依頼を送りました（実送信なし）",
-            "",
-            `宛先: ${mentor}`,
-            closed ? "閲覧: クローズド（指名者のみ）" : "閲覧: 作品は公開のまま／依頼だけ個人宛て",
-            "",
-            "本番想定の到達:",
-            "・登録メール（本命・呼び戻し）",
-            "・この依頼単位の薄いDM",
-            "・ベル／ダッシュボード未処理（補助）",
-            "",
-            "この依頼にコンペの話は含めていません。",
-            "公開コンペは別導線です。",
-          ].join("\n"),
-        );
+        if (!canSend || !selected) return;
+        const row = createRequestDm({
+          workId: work.id,
+          workTitle: work.title,
+          fromHandle,
+          fromAccountName: displayAccountName(
+            fromHandle,
+            readLocalProfile(fromHandle),
+          ),
+          toHandle: selected.handle,
+          amountYen: 3000,
+          pitch: message.trim(),
+        });
+        router.push(`/dashboard/messages/${encodeURIComponent(row.id)}`);
       }}
     >
       <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-3 text-[13px] text-viscum-ink">
@@ -146,10 +153,10 @@ export function DirectRequestForm({ work }: { work: Work }) {
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-center gap-2">
                     <span className="font-medium text-viscum-ink">
-                      {m.handle}
+                      {m.label}
                     </span>
                     <span className="text-[11px] text-viscum-muted">
-                      {m.specialty}
+                      @{m.handle} · {m.specialty}
                     </span>
                     {!m.accepting && (
                       <span className="rounded bg-viscum-line/80 px-1.5 py-0.5 text-[10px] text-viscum-muted">
