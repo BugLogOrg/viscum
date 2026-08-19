@@ -12,11 +12,84 @@ function normalizeHandle(raw: string) {
     .slice(0, 24);
 }
 
+type UserRow = typeof users.$inferSelect;
+
+/**
+ * セッションはあるが users 行が無い／id ずれ、を救済。
+ * （JWT＋adapter でオンボに来たのに行が無いと「ユーザーが見つかりません」になる）
+ */
+async function resolveSessionUser(
+  db: NonNullable<ReturnType<typeof getDb>>,
+  session: {
+    user?: { id?: string | null; email?: string | null; name?: string | null };
+  },
+): Promise<UserRow | null> {
+  const userId = session.user?.id?.trim() || "";
+  const email = session.user?.email?.trim() || "";
+
+  if (userId) {
+    const byId = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+    if (byId[0]) return byId[0];
+  }
+
+  if (email) {
+    const byEmail = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+    if (byEmail[0]) return byEmail[0];
+  }
+
+  if (!userId && !email) return null;
+
+  const id = userId || crypto.randomUUID();
+  try {
+    await db.insert(users).values({
+      id,
+      email: email || null,
+      name: session.user?.name?.trim() || null,
+      handle: null,
+    });
+  } catch (err) {
+    const text = err instanceof Error ? err.message : String(err);
+    // 並行作成・email unique など → 再読込
+    if (email) {
+      const again = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email))
+        .limit(1);
+      if (again[0]) return again[0];
+    }
+    if (userId) {
+      const again = await db
+        .select()
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1);
+      if (again[0]) return again[0];
+    }
+    console.error("[profile/handle] ensure user", err, text);
+    return null;
+  }
+
+  const created = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, id))
+    .limit(1);
+  return created[0] ?? null;
+}
+
 /** 初回 Magic Link 後の英語ID確定（MVPは変更不可。将来 userId 参照なら変更可） */
 export async function POST(req: Request) {
   const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) {
+  if (!session?.user?.id && !session?.user?.email) {
     return NextResponse.json(
       { error: "unauthorized", message: "ログインし直してください" },
       { status: 401 },
@@ -54,23 +127,23 @@ export async function POST(req: Request) {
     );
   }
 
-  const me = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, userId))
-    .limit(1);
-  if (!me[0]) {
+  const me = await resolveSessionUser(db, session);
+  if (!me) {
     return NextResponse.json(
-      { error: "user not found", message: "ユーザーが見つかりません" },
-      { status: 404 },
+      {
+        error: "unauthorized",
+        message: "ログインの状態が切れています。もう一度ログインしてください",
+      },
+      { status: 401 },
     );
   }
-  if (me[0].handle) {
+
+  if (me.handle) {
     return NextResponse.json(
       {
         error: "handle already set",
         message: "英語IDはすでに設定済みです",
-        handle: me[0].handle,
+        handle: me.handle,
       },
       { status: 409 },
     );
@@ -80,7 +153,7 @@ export async function POST(req: Request) {
     .select({ id: users.id })
     .from(users)
     .where(
-      and(sql`lower(${users.handle}) = ${handle}`, ne(users.id, userId)),
+      and(sql`lower(${users.handle}) = ${handle}`, ne(users.id, me.id)),
     )
     .limit(1);
   if (taken[0]) {
@@ -94,13 +167,13 @@ export async function POST(req: Request) {
   }
 
   const name =
-    me[0].name && me[0].name.trim() !== "" ? me[0].name : handle;
+    me.name && me.name.trim() !== "" ? me.name : handle;
 
   try {
     await db
       .update(users)
       .set({ handle, name })
-      .where(eq(users.id, userId));
+      .where(eq(users.id, me.id));
   } catch (err) {
     const text = err instanceof Error ? err.message : String(err);
     if (/unique|duplicate/i.test(text)) {
@@ -115,7 +188,10 @@ export async function POST(req: Request) {
     }
     console.error("[profile/handle]", err);
     return NextResponse.json(
-      { error: "update failed", message: "設定に失敗しました。もう一度お試しください" },
+      {
+        error: "update failed",
+        message: "設定に失敗しました。もう一度お試しください",
+      },
       { status: 500 },
     );
   }
