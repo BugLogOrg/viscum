@@ -75,12 +75,16 @@ export function WorkEngage({
       setError("件名と本文の両方を書いてください。");
       return;
     }
-    const author =
-      session?.user?.handle != null
-        ? `@${session.user.handle}`
-        : "ゲスト";
+    const handle = session?.user?.handle?.replace(/^@/, "").trim();
+    const author = handle || "ゲスト";
+    const accountName =
+      session?.user?.name?.trim() &&
+      session.user.name.trim().toLowerCase() !== handle?.toLowerCase()
+        ? session.user.name.trim()
+        : undefined;
     const row = addLocalComment(workId, {
       author,
+      accountName,
       subject: s,
       body: b,
       afterClose: compClosed,

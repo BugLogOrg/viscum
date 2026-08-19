@@ -3,6 +3,8 @@ export type CompStatus = "none" | "open" | "pay_soon" | "closed";
 export type Comment = {
   id: string;
   author: string;
+  /** 投稿時のアカウント名（任意。英語IDと別） */
+  accountName?: string;
   /** 一覧行に出す件名・見出し（GmailのSubject相当） */
   subject: string;
   body: string;

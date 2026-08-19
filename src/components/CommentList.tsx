@@ -1,9 +1,53 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import type { Comment, CompStatus } from "@/data/dummy-works";
 import { formatHoursAgo, formatYen } from "@/data/dummy-works";
+import { accountLabelForHandle } from "@/data/suggested-seeders";
+import { readLocalProfile } from "@/lib/local-profile";
 import { LinkifiedText } from "@/components/LinkifiedText";
+
+function isPortfolioHandle(raw: string) {
+  return /^[a-zA-Z0-9_]{2,24}$/.test(raw);
+}
+
+/** 英語IDなら PF へ。アカウント名があれば併記 */
+function CommentAuthor({
+  author,
+  accountName,
+}: {
+  author: string;
+  accountName?: string;
+}) {
+  const raw = author.replace(/^@/, "").trim();
+  if (!isPortfolioHandle(raw)) {
+    return <span>{author.startsWith("@") ? author : author}</span>;
+  }
+
+  const demo = accountLabelForHandle(raw);
+  const localName =
+    typeof window !== "undefined"
+      ? readLocalProfile(raw)?.accountName?.trim()
+      : undefined;
+  const name =
+    accountName?.trim() ||
+    localName ||
+    (demo.accountName.toLowerCase() !== raw.toLowerCase()
+      ? demo.accountName
+      : "");
+  const label = name ? `${name} @${raw}` : `@${raw}`;
+
+  return (
+    <Link
+      href={`/u/${encodeURIComponent(raw)}`}
+      onClick={(e) => e.stopPropagation()}
+      className="font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
+    >
+      {label}
+    </Link>
+  );
+}
 
 export function CommentList({
   comments,
@@ -83,7 +127,11 @@ export function CommentList({
                     )}
                   </span>
                   <span className="mt-0.5 block text-[11px] text-viscum-muted">
-                    {c.author} · {formatHoursAgo(c.hoursAgo)}
+                    <CommentAuthor
+                      author={c.author}
+                      accountName={c.accountName}
+                    />
+                    <span> · {formatHoursAgo(c.hoursAgo)}</span>
                     {!open && (
                       <>
                         <span className="text-viscum-line"> · </span>

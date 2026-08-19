@@ -10,6 +10,8 @@ import {
   addLocalPortfolioWallPost,
   readLocalPortfolioWall,
 } from "@/lib/local-portfolio-wall";
+import { accountLabelForHandle } from "@/data/suggested-seeders";
+import { readLocalProfile } from "@/lib/local-profile";
 
 type Thread = {
   root: PortfolioWallPost;
@@ -132,12 +134,25 @@ export function PortfolioCommentsClient({
         }`}
       >
         <div className="flex flex-wrap items-center gap-1.5">
-          <Link
-            href={`/u/${encodeURIComponent(p.author)}`}
-            className="text-[13px] font-medium text-viscum-ink hover:underline"
-          >
-            @{p.author}
-          </Link>
+          {(() => {
+            const raw = p.author.replace(/^@/, "").trim();
+            const label = accountLabelForHandle(raw);
+            const localName = readLocalProfile(raw)?.accountName?.trim();
+            const name =
+              localName ||
+              (label.accountName.toLowerCase() !== raw.toLowerCase()
+                ? label.accountName
+                : "");
+            const text = name ? `${name} @${raw}` : `@${raw}`;
+            return (
+              <Link
+                href={`/u/${encodeURIComponent(raw)}`}
+                className="text-[13px] font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
+              >
+                {text}
+              </Link>
+            );
+          })()}
           <span className="text-[11px] text-viscum-muted">
             {formatHoursAgo(p.hoursAgo)}
           </span>

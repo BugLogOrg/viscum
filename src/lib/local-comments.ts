@@ -24,11 +24,18 @@ export function writeLocalComments(workId: string, comments: Comment[]) {
 
 export function addLocalComment(
   workId: string,
-  input: { author: string; subject: string; body: string; afterClose?: boolean },
+  input: {
+    author: string;
+    accountName?: string;
+    subject: string;
+    body: string;
+    afterClose?: boolean;
+  },
 ): Comment {
   const row: Comment & { afterClose?: boolean } = {
     id: `local_c_${Date.now().toString(36)}`,
     author: input.author,
+    accountName: input.accountName,
     subject: input.subject.trim(),
     body: input.body.trim(),
     hoursAgo: 0,
