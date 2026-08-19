@@ -474,6 +474,82 @@ export function getSeederPayFacts(seeder: string): SeederPayFacts {
   return { handle, ...row };
 }
 
+/** メンター面の事実（スコアではない）。件数を主、累計受取¥は透明性の副次 */
+export type MentorFacts = {
+  handle: string;
+  /** 採用されたコメント数 */
+  adoptedCount: number;
+  /** チップを受け取った回数 */
+  tipsReceivedCount: number;
+  /** 累計受取額（事実。収入自慢用ではない） */
+  tipsReceivedYenTotal: number;
+};
+
+/** デモ用。コメント author がハンドルと一致しないダミーへの上書き */
+const DUMMY_MENTOR_FACTS: Record<
+  string,
+  Omit<MentorFacts, "handle">
+> = {
+  mdb: {
+    adoptedCount: 5,
+    tipsReceivedCount: 3,
+    tipsReceivedYenTotal: 11000,
+  },
+  ken: {
+    adoptedCount: 2,
+    tipsReceivedCount: 1,
+    tipsReceivedYenTotal: 3000,
+  },
+  ayu: {
+    adoptedCount: 1,
+    tipsReceivedCount: 0,
+    tipsReceivedYenTotal: 0,
+  },
+};
+
+function mentorFactsFromComments(handle: string): Omit<MentorFacts, "handle"> {
+  const key = handle.replace(/^@/, "").toLowerCase();
+  let adoptedCount = 0;
+  let tipsReceivedCount = 0;
+  let tipsReceivedYenTotal = 0;
+
+  for (const w of DUMMY_WORKS) {
+    for (const c of w.comments) {
+      const authorKey = c.author.replace(/^@/, "").toLowerCase();
+      if (authorKey !== key) continue;
+      if (c.adopted) adoptedCount += 1;
+      if (c.tipped) {
+        tipsReceivedCount += 1;
+        tipsReceivedYenTotal += c.tipYen ?? w.prizeYen ?? 0;
+      }
+    }
+  }
+
+  return { adoptedCount, tipsReceivedCount, tipsReceivedYenTotal };
+}
+
+export function getMentorFacts(handle: string): MentorFacts {
+  const h = handle.replace(/^@/, "");
+  const fromComments = mentorFactsFromComments(h);
+  const demo = DUMMY_MENTOR_FACTS[h.toLowerCase()];
+  if (!demo) {
+    return { handle: h, ...fromComments };
+  }
+  // デモ上書きは件数・金額の大きい方を採用（コメント由来が育ったら自然に勝つ）
+  return {
+    handle: h,
+    adoptedCount: Math.max(fromComments.adoptedCount, demo.adoptedCount),
+    tipsReceivedCount: Math.max(
+      fromComments.tipsReceivedCount,
+      demo.tipsReceivedCount,
+    ),
+    tipsReceivedYenTotal: Math.max(
+      fromComments.tipsReceivedYenTotal,
+      demo.tipsReceivedYenTotal,
+    ),
+  };
+}
+
 export function formatYen(n: number): string {
   return `¥${n.toLocaleString("ja-JP")}`;
 }
