@@ -62,9 +62,7 @@ export function PortfolioCommentsClient({
             ログインしたコテハンのみ投稿可。全文公開（自浄のため）。運営は原則裁定しません（デモ）。
           </p>
         </div>
-        {status === "loading" ? (
-          <span className="text-[12px] text-viscum-muted">…</span>
-        ) : loggedIn ? (
+        {loggedIn ? (
           <button
             type="button"
             onClick={() => setComposeOpen((v) => !v)}
@@ -77,7 +75,7 @@ export function PortfolioCommentsClient({
             href={loginHref}
             className="shrink-0 rounded-md border border-viscum-line bg-viscum-paper-2 px-2.5 py-1.5 text-[12px] font-medium text-viscum-ink hover:border-viscum-brand"
           >
-            ログインしてコメント
+            {status === "loading" ? "…" : "ログインしてコメント"}
           </Link>
         )}
       </div>
