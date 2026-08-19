@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useMemo, useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { DEMO_SPECIALTIES } from "@/data/specialties";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -20,9 +20,11 @@ function readPostPath(): string {
   return "/";
 }
 
-export default function OnboardingWelcomePage() {
+function WelcomeBody() {
   const { data, update, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preview = searchParams.get("preview") === "1";
   const [picked, setPicked] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +35,10 @@ export default function OnboardingWelcomePage() {
   );
 
   async function finish(specialties: string[], skip: boolean) {
+    if (preview) {
+      router.replace("/");
+      return;
+    }
     setPending(true);
     setError(null);
     const res = await fetch("/api/onboarding", {
@@ -69,6 +75,7 @@ export default function OnboardingWelcomePage() {
   }
 
   if (
+    !preview &&
     status === "authenticated" &&
     data?.user &&
     !data.user.needsOnboarding &&
@@ -84,16 +91,36 @@ export default function OnboardingWelcomePage() {
     );
   }
 
+  const displayName =
+    data?.user?.name?.trim() ||
+    (data?.user?.handle ? `@${data.user.handle}` : "");
+
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
       <SiteHeader backHref="/" hidePostCta />
       <main className="px-4 py-8">
+        {preview && (
+          <p className="mb-4 rounded-md bg-viscum-leaf-soft/50 px-3 py-2 text-[11px] text-viscum-muted">
+            プレビュー表示（保存しません）
+          </p>
+        )}
         <p className="text-[12px] font-medium tracking-wide text-viscum-brand">
           はじめてのVISCUM
         </p>
-        <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
-          気になる専門はありますか？
+        <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight text-viscum-ink sm:text-5xl">
+          ようこそ
+          {displayName ? (
+            <>
+              <br />
+              <span className="text-[0.55em] font-medium text-viscum-muted">
+                {displayName}
+              </span>
+            </>
+          ) : null}
         </h1>
+        <h2 className="mt-8 text-lg font-semibold text-viscum-ink">
+          気になる専門はありますか？
+        </h2>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
           あとから変えられます。選ぶと、開催中の通知や見つけやすさの材料になります（準備中の機能含む）。スキップもできます。
         </p>
@@ -131,16 +158,18 @@ export default function OnboardingWelcomePage() {
             onClick={() => void finish(picked, false)}
             className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
           >
-            {pending ? "保存中…" : "棚を見にいく"}
+            {pending ? "保存中…" : preview ? "棚へ戻る" : "棚を見にいく"}
           </button>
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => void finish([], true)}
-            className="w-full rounded-md border border-viscum-line bg-white/70 px-4 py-2.5 text-sm font-medium text-viscum-muted hover:bg-viscum-paper-2 disabled:opacity-50"
-          >
-            スキップして棚へ
-          </button>
+          {!preview && (
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => void finish([], true)}
+              className="w-full rounded-md border border-viscum-line bg-white/70 px-4 py-2.5 text-sm font-medium text-viscum-muted hover:bg-viscum-paper-2 disabled:opacity-50"
+            >
+              スキップして棚へ
+            </button>
+          )}
         </div>
 
         <p className="mt-6 text-[12px] leading-relaxed text-viscum-muted">
@@ -149,5 +178,19 @@ export default function OnboardingWelcomePage() {
         <SiteFooter />
       </main>
     </div>
+  );
+}
+
+export default function OnboardingWelcomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto flex min-h-dvh max-w-lg items-center justify-center bg-viscum-paper text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      }
+    >
+      <WelcomeBody />
+    </Suspense>
   );
 }
