@@ -173,7 +173,7 @@ export function PortfolioCommentsClient({
       <div className="flex flex-wrap items-end justify-between gap-2 px-4 pt-4">
         <div>
           <p className="text-[20px] font-bold text-viscum-ink">
-            コメント · {commentCount}
+            コメント · {commentCount}件
           </p>
           <p className="mt-1 max-w-md text-[11px] leading-snug text-viscum-muted">
             ログインしたコテハンのみ。返信は1段まで。全文公開（自浄）。運営は原則裁定しません（デモ）。
