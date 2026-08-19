@@ -1,11 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { DUMMY_WORKS } from "@/data/dummy-works";
-import { FOLLOWS_UPDATED, listFollowing } from "@/lib/local-follows";
+import {
+  FOLLOWS_UPDATED,
+  clearRememberedViewer,
+  listFollowing,
+  readRememberedViewer,
+  rememberViewer,
+} from "@/lib/local-follows";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -25,14 +31,25 @@ function matchesQuery(
   return hay.includes(needle);
 }
 
+function initialFilter(searchParams: URLSearchParams): Filter {
+  const feed = searchParams.get("feed");
+  if (feed === "open" || feed === "follow" || feed === "all") return feed;
+  return "all";
+}
+
 export function FeedClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session } = useSession();
-  const myHandle = session?.user?.handle?.trim() || "";
-  const [filter, setFilter] = useState<Filter>("all");
-  const [specialty, setSpecialty] = useState<string | null>(null);
+  const { data: session, status } = useSession();
+  const sessionHandle = session?.user?.handle?.trim() || "";
+  const [filter, setFilter] = useState<Filter>(() =>
+    initialFilter(searchParams),
+  );
+  const [specialty, setSpecialty] = useState<string | null>(() =>
+    searchParams.get("tag"),
+  );
   const [query, setQuery] = useState("");
+  const [viewerHandle, setViewerHandle] = useState("");
   const [followingHandles, setFollowingHandles] = useState<string[]>([]);
 
   useEffect(() => {
@@ -43,9 +60,24 @@ export function FeedClient() {
     }
   }, [searchParams]);
 
+  useLayoutEffect(() => {
+    if (sessionHandle) {
+      rememberViewer(sessionHandle);
+      setViewerHandle(sessionHandle);
+      return;
+    }
+    if (status === "loading") {
+      const remembered = readRememberedViewer();
+      if (remembered) setViewerHandle(remembered);
+      return;
+    }
+    clearRememberedViewer();
+    setViewerHandle("");
+  }, [sessionHandle, status]);
+
   useEffect(() => {
     const sync = () => {
-      setFollowingHandles(myHandle ? listFollowing(myHandle) : []);
+      setFollowingHandles(viewerHandle ? listFollowing(viewerHandle) : []);
     };
     sync();
     window.addEventListener(FOLLOWS_UPDATED, sync);
@@ -54,8 +86,10 @@ export function FeedClient() {
       window.removeEventListener(FOLLOWS_UPDATED, sync);
       window.removeEventListener("storage", sync);
     };
-  }, [myHandle]);
+  }, [viewerHandle]);
 
+  const myHandle = viewerHandle;
+  const sessionPending = status === "loading" && !myHandle;
   const selectTag = useCallback(
     (tag: string | null) => {
       setSpecialty(tag);
@@ -105,11 +139,13 @@ export function FeedClient() {
 
   const contextCrumbs: string[] = [
     filter === "follow"
-      ? myHandle
-        ? followingHandles.length > 0
-          ? "フォローしたシーダーの作品"
-          : "まだ誰もフォローしていません"
-        : "ログインするとフォロー中が表示されます"
+      ? sessionPending
+        ? "フォロー中を読み込み中"
+        : myHandle
+          ? followingHandles.length > 0
+            ? "フォローしたシーダーの作品"
+            : "まだ誰もフォローしていません"
+          : "ログインするとフォロー中が表示されます"
       : filter === "open"
         ? "コメントコンペ開催中 · チップ付きで反応を募集"
         : "シーダーがシードした作品",
@@ -248,15 +284,19 @@ export function FeedClient() {
         ) : null}
         {rest.length === 0 && filter === "follow" && !myHandle && (
           <div className="col-span-full px-4 py-10 text-center text-sm text-viscum-muted">
-            <p>
-              ログインすると、フォローしたシーダーの作品がここに並びます。{" "}
-              <Link
-                href="/login?callbackUrl=%2F%3Ffeed%3Dfollow"
-                className="font-medium text-viscum-brand underline-offset-2 hover:underline"
-              >
-                ログイン
-              </Link>
-            </p>
+            {sessionPending ? (
+              <p>フォロー中を読み込み中…</p>
+            ) : (
+              <p>
+                ログインすると、フォローしたシーダーの作品がここに並びます。{" "}
+                <Link
+                  href="/login?callbackUrl=%2F%3Ffeed%3Dfollow"
+                  className="font-medium text-viscum-brand underline-offset-2 hover:underline"
+                >
+                  ログイン
+                </Link>
+              </p>
+            )}
           </div>
         )}
         {rest.length === 0 && filter !== "follow" && (

@@ -1,6 +1,7 @@
 /** 端末内のフォローグラフ。viewer（自分の英語ID）ごとに保存。本番はサーバ購読へ。 */
 
 const KEY = "viscum_follows_v1";
+const LAST_VIEWER_KEY = "viscum_last_viewer_v1";
 export const FOLLOWS_UPDATED = "viscum-follows-updated";
 
 type FollowMap = Record<string, string[]>;
@@ -24,6 +25,36 @@ function readMap(): FollowMap {
 function writeMap(map: FollowMap) {
   localStorage.setItem(KEY, JSON.stringify(map));
   window.dispatchEvent(new Event(FOLLOWS_UPDATED));
+}
+
+/** セッション確定前にフォロー棚を出すための控え */
+export function rememberViewer(handle: string) {
+  if (typeof window === "undefined") return;
+  const key = normalize(handle);
+  if (!key) return;
+  try {
+    sessionStorage.setItem(LAST_VIEWER_KEY, key);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function clearRememberedViewer() {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(LAST_VIEWER_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function readRememberedViewer(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return sessionStorage.getItem(LAST_VIEWER_KEY) ?? "";
+  } catch {
+    return "";
+  }
 }
 
 export function listFollowing(viewerHandle: string): string[] {
