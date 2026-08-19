@@ -7,11 +7,12 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import { formatYen, type CompStatus } from "@/data/dummy-works";
 import {
-  SEED_COURSES,
   MAX_COURSE_QUESTIONS,
   PUBLIC_BOOST,
   courseById,
+  isFieldCourse,
   type SeedCourseId,
+  type SeedPlanId,
 } from "@/data/seed-courses";
 import { addLocalSeed } from "@/lib/local-seeds";
 
@@ -60,8 +61,7 @@ export function PostForm() {
   const [focusNote, setFocusNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
-  const [planMode, setPlanMode] = useState<"free" | "field" | "boost">("free");
-  const [courseId, setCourseId] = useState<SeedCourseId>("first_impression");
+  const [seedPlan, setSeedPlan] = useState<SeedPlanId>("free_comment");
   const [questions, setQuestions] = useState<string[]>(() => [
     ...courseById("first_impression").questions,
   ]);
@@ -74,18 +74,31 @@ export function PostForm() {
   const [thumbName, setThumbName] = useState<string | null>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
-  const compOn = planMode === "field";
-  const extReviewOn = planMode === "boost";
+  const compOn = isFieldCourse(seedPlan);
+  const extReviewOn = seedPlan === "public_boost";
+  const courseId: SeedCourseId = isFieldCourse(seedPlan)
+    ? seedPlan
+    : "first_impression";
   const course = courseById(courseId);
   const prizeYen = course.yen;
   const extPrizeYen = PUBLIC_BOOST.yen;
 
-  function setPlan(next: "free" | "field" | "boost") {
-    setPlanMode(next);
-    if (next === "field" && questions.every((q) => !q.trim())) {
-      setQuestions([...course.questions]);
+  function selectPlan(next: SeedPlanId) {
+    setSeedPlan(next);
+    if (isFieldCourse(next)) {
+      setQuestions([...courseById(next).questions]);
     }
   }
+
+  const previewMeta = (() => {
+    if (extReviewOn) {
+      return `公開ブースト · 予算 ${formatYen(extPrizeYen)} · 記入後報告→選んで褒賞`;
+    }
+    if (compOn) {
+      return `${course.name} · 予算 ${formatYen(prizeYen)} · 締切 あと約${closesInDays}日`;
+    }
+    return "無料コメント · コメント歓迎";
+  })();
 
   useEffect(() => {
     return () => {
@@ -134,12 +147,6 @@ export function PostForm() {
     description.trim().length > 0 &&
     (!compOn || (prizeYen >= 5000 && promptList.length >= 1)) &&
     (!extReviewOn || extPrizeYen === PUBLIC_BOOST.yen);
-
-  function applyCourse(id: SeedCourseId) {
-    const next = courseById(id);
-    setCourseId(id);
-    setQuestions([...next.questions]);
-  }
 
   function setQuestionAt(index: number, value: string) {
     setQuestions((prev) => {
@@ -293,6 +300,9 @@ export function PostForm() {
             <p className="text-[13px] text-viscum-ink">
               公開ブースト · 予算 {formatYen(extPrizeYen)} · 記入後報告→選んで褒賞
             </p>
+          )}
+          {!compOn && !extReviewOn && (
+            <p className="text-[13px] text-viscum-ink">無料コメント · コメント歓迎</p>
           )}
         </div>
 
@@ -506,7 +516,7 @@ export function PostForm() {
         {!compOn ? (
           <>
             <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
-              見てほしいところの入口です。書いていない論点を書かれても大丈夫（採用・褒賞はシーダーが選びます）。コンペにしなくても書けます。
+              見てほしいところの入口です。書いていない論点を書かれても大丈夫（採用・褒賞はシーダーが選びます）。無料コメントでも書けます。
             </p>
             <textarea
               value={focusNote}
@@ -518,7 +528,7 @@ export function PostForm() {
           </>
         ) : (
           <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
-            コンペON中は下の「コース」でおすすめ質問を足場にします。編集・追加・削除できます。
+            初見レビュー／改善提案を選ぶと、下でおすすめ質問を足場にします。編集・追加・削除できます。
           </p>
         )}
       </div>
@@ -579,40 +589,49 @@ export function PostForm() {
       <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-4 py-4 space-y-4">
         <div>
           <p className="text-[14px] font-medium text-viscum-ink">
-            どう出しますか？（どれか一つ）
+            コース（どれか一つ）
           </p>
           <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
             価格は ¥0／¥5,000／¥10,000／¥30,000
-            だけ。場内と公開ブーストは同じ投稿では重ねません。褒賞は稀少（記入後に選んで払う）。メンターは選ばれるためにアレンジしがち——それがシーダーの美味しいところです。
+            だけ。褒賞は稀少（記入後に選んで払う）。同じ投稿ではコースを重ねません。
           </p>
         </div>
 
-        <div className="grid gap-2">
+        <div className="grid gap-2 sm:grid-cols-2">
           {(
             [
               {
-                id: "free" as const,
-                title: "並べる（無料）",
-                body: "コメント歓迎だけ。お金は使いません。",
+                id: "free_comment" as const,
+                title: "無料コメント",
+                yenLabel: "¥0",
+                body: "コメント歓迎。お金は使いません。",
               },
               {
-                id: "field" as const,
-                title: "場内で聞く",
-                body: "VISCUM内のコメントコンペ。初見¥5,000／改善¥10,000。",
+                id: "first_impression" as const,
+                title: "初見レビュー",
+                yenLabel: formatYen(5000),
+                body: "初めて見た人に「どう見えたか」を聞く",
               },
               {
-                id: "boost" as const,
-                title: "外でも試す · 公開ブースト",
-                body: `予算 ${formatYen(PUBLIC_BOOST.yen)} 一択。外に書いて報告→あなたが選んで褒賞。`,
+                id: "brush_up" as const,
+                title: "改善提案",
+                yenLabel: formatYen(10000),
+                body: "どこを直せば伝わるかを聞く",
+              },
+              {
+                id: "public_boost" as const,
+                title: "公開ブースト",
+                yenLabel: formatYen(PUBLIC_BOOST.yen),
+                body: "外に書いて報告→あなたが選んで褒賞",
               },
             ] as const
           ).map((opt) => {
-            const on = planMode === opt.id;
+            const on = seedPlan === opt.id;
             return (
               <button
                 key={opt.id}
                 type="button"
-                onClick={() => setPlan(opt.id)}
+                onClick={() => selectPlan(opt.id)}
                 className={`rounded-md border px-3 py-2.5 text-left transition ${
                   on
                     ? "border-viscum-berry bg-viscum-berry text-white"
@@ -621,7 +640,12 @@ export function PostForm() {
               >
                 <span className="block text-[13px] font-medium">{opt.title}</span>
                 <span
-                  className={`mt-0.5 block text-[12px] leading-snug ${on ? "text-white/90" : "text-viscum-muted"}`}
+                  className={`mt-0.5 block text-[12px] ${on ? "text-white/90" : "text-viscum-muted"}`}
+                >
+                  {opt.yenLabel}
+                </span>
+                <span
+                  className={`mt-1 block text-[11px] leading-snug ${on ? "text-white/85" : "text-viscum-muted"}`}
                 >
                   {opt.body}
                 </span>
@@ -636,92 +660,11 @@ export function PostForm() {
             status={status}
             prizeYen={compOn ? prizeYen : undefined}
           />
-          {compOn && (
-            <span className="text-[12px] text-viscum-ink">{course.name}</span>
-          )}
-          {extReviewOn && (
-            <span className="text-[12px] text-viscum-ink">
-              公開ブースト {formatYen(extPrizeYen)}
-            </span>
-          )}
+          <span className="text-[12px] text-viscum-ink">{previewMeta}</span>
         </div>
 
         {compOn && (
           <div className="space-y-4 border-t border-viscum-line pt-4">
-            <div className="rounded-md border border-viscum-berry/25 bg-white/60 px-3 py-3">
-              <p className="text-[11px] font-medium tracking-wide text-viscum-berry-deep">
-                見え方（プレビュー）
-              </p>
-              {thumbUrl ? (
-                <div
-                  className={`mt-2 w-full overflow-hidden rounded ${THUMB_ASPECT}`}
-                  style={{ aspectRatio: "1280 / 670" }}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={thumbUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div
-                  className={`mt-2 flex w-full items-center justify-center rounded bg-viscum-leaf-deep/80 text-[11px] text-white/80 ${THUMB_ASPECT}`}
-                  style={{ aspectRatio: "1280 / 670" }}
-                >
-                  サムネ未設定（色面仮置き）
-                </div>
-              )}
-              <p className="mt-2 text-[14px] font-semibold leading-snug text-viscum-ink line-clamp-3">
-                {title.trim() || "（タイトルがヘッドラインになります）"}
-              </p>
-              <p className="mt-1 text-[12px] text-viscum-ink">
-                {course.name} · 予算 {formatYen(prizeYen)} · 締切 あと約
-                {closesInDays}日
-              </p>
-            </div>
-
-            <div>
-              <p className="text-[13px] font-medium text-viscum-ink">コース</p>
-              <p className="mt-0.5 text-[12px] text-viscum-muted">
-                差は「質の保証」ではなく、聞き方の目的です。選ぶとおすすめ質問に戻します。
-              </p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                {SEED_COURSES.map((c) => {
-                  const on = courseId === c.id;
-                  return (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => applyCourse(c.id)}
-                      className={`rounded-md border px-3 py-2.5 text-left transition ${
-                        on
-                          ? "border-viscum-berry bg-viscum-berry text-white"
-                          : "border-viscum-line bg-white/70 text-viscum-ink hover:border-viscum-berry"
-                      }`}
-                    >
-                      <span className="block text-[13px] font-medium">
-                        {c.name}
-                      </span>
-                      <span
-                        className={`mt-0.5 block text-[12px] ${on ? "text-white/90" : "text-viscum-muted"}`}
-                      >
-                        {formatYen(c.yen)}
-                      </span>
-                      <span
-                        className={`mt-1 block text-[11px] leading-snug ${on ? "text-white/85" : "text-viscum-muted"}`}
-                      >
-                        {c.purpose}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-              <p className="mt-1.5 text-[11px] text-viscum-muted">
-                払うのは採用したあと（デモでは決済しません）。広げて候補を集め、刺さった人を選ぶのがシーダーの仕事です。
-              </p>
-            </div>
-
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[13px] font-medium text-viscum-ink">
@@ -809,19 +752,17 @@ export function PostForm() {
                 ごろ
               </p>
             </div>
+            <p className="text-[11px] text-viscum-muted">
+              払うのは採用したあと（デモでは決済しません）。広げて候補を集め、刺さった人を選ぶのがシーダーの仕事です。
+            </p>
           </div>
         )}
 
         {extReviewOn && (
           <div className="space-y-4 border-t border-viscum-line pt-4">
-            <div className="rounded-md border border-viscum-berry/40 bg-white/60 px-3 py-2.5">
-              <p className="text-[13px] font-medium text-viscum-ink">
-                {PUBLIC_BOOST.name} · 予算 {formatYen(PUBLIC_BOOST.yen)}
-              </p>
-              <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
-                依頼して書かせるのではなく、募集します。メンターが外に書いて報告→あなたが誰に上げるか選ぶ。星や好意は保証しません。広げた分だけ候補が増えやすいです。
-              </p>
-            </div>
+            <p className="text-[12px] leading-relaxed text-viscum-muted">
+              依頼して書かせるのではなく、募集します。メンターが外に書いて報告→あなたが誰に上げるか選ぶ。星や好意は保証しません。
+            </p>
 
             <ol className="list-decimal space-y-1 pl-5 text-[12px] leading-relaxed text-viscum-ink">
               <li>募集を出す（この画面）</li>
@@ -871,6 +812,36 @@ export function PostForm() {
         <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
           「あなたに頼みたい」は、シードしたあとにできます。公開の募集／コンペとは別のお願いです。シード完了画面から進めます。
         </p>
+      </div>
+
+      <div className="rounded-md border border-viscum-berry/25 bg-white/60 px-3 py-3">
+        <p className="text-[11px] font-medium tracking-wide text-viscum-berry-deep">
+          見え方（プレビュー）
+        </p>
+        {thumbUrl ? (
+          <div
+            className={`mt-2 w-full overflow-hidden rounded ${THUMB_ASPECT}`}
+            style={{ aspectRatio: "1280 / 670" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          </div>
+        ) : (
+          <div
+            className={`mt-2 flex w-full items-center justify-center rounded bg-viscum-leaf-deep/80 text-[11px] text-white/80 ${THUMB_ASPECT}`}
+            style={{ aspectRatio: "1280 / 670" }}
+          >
+            サムネ未設定（色面仮置き）
+          </div>
+        )}
+        <p className="mt-2 text-[14px] font-semibold leading-snug text-viscum-ink line-clamp-3">
+          {title.trim() || "（タイトルがヘッドラインになります）"}
+        </p>
+        <p className="mt-1 text-[12px] text-viscum-ink">{previewMeta}</p>
       </div>
 
       <button

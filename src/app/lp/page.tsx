@@ -80,30 +80,28 @@ export default function LandingPage() {
           </p>
           <ul className="list-disc space-y-3 pl-5 text-[15px] leading-relaxed text-viscum-ink">
             <li>
-              <span className="font-medium">並べる（無料）</span>
+              <span className="font-medium">無料コメント</span>
               … コメント歓迎だけ。お金は使いません。
             </li>
             <li>
-              <span className="font-medium">場内で聞く</span>
-              … VISCUM内のコメントコンペ。
-              <span className="font-medium">初見チェック ¥5,000</span>／
-              <span className="font-medium">改善チェック ¥10,000</span>
-              。差は質の保証ではなく、聞き方の目的です。褒賞は採用や上位に寄せます（全員には払いません）。
+              <span className="font-medium">初見レビュー ¥5,000</span>
+              … VISCUM内で、初めて見た人に「どう見えたか」を聞く。褒賞は採用や上位に寄せます。
+            </li>
+            <li>
+              <span className="font-medium">改善提案 ¥10,000</span>
+              … VISCUM内で、どこを直せば伝わるかを聞く。褒賞は採用や上位に寄せます。
+            </li>
+            <li>
+              <span className="font-medium">公開ブースト ¥30,000</span>
+              … 外の公開場所へ正直な反応・投稿を募る。記入後に報告し、シーダーが誰に褒賞を上げるか選びます。依頼して書かせる管理型ではありません。
             </li>
             <li>
               <span className="font-medium">直依頼する</span>
-              … 「あなたに書いてほしい」と、その人だけに声をかける。公開の募集とは別ものです。
-            </li>
-            <li>
-              <span className="font-medium">公開ブースト</span>
-              … 外の公開場所（ストア／拡張／SNSなど）へ正直な反応・投稿を募る旗艦。予算は
-              <span className="font-medium">¥30,000一択</span>
-              。書いた人は記入後に報告し、シーダーが誰に褒賞を上げるか選びます。依頼して書かせる管理型ではありません。場内コンペと同じ投稿では同時に頼めません。
+              … 「あなたに書いてほしい」と、その人だけに声をかける。上のコースとは別ものです（シードしたあとにできます）。
             </li>
           </ul>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            コンペでは、メンターが選ばれるために自分なりにアレンジしてくれることがあります。そこがシーダーにとっては美味しいところです。候補が集まるかどうかは、シーダーがURLを広げられるかにもよります。価格表はいつも
-            ¥0／¥5,000／¥10,000／¥30,000 だけです。
+            コースは同じ投稿では重ねません（価格はいつも ¥0／¥5,000／¥10,000／¥30,000）。コンペではメンターが選ばれるためにアレンジしてくれることがあり、そこがシーダーにとっては美味しいところです。候補が集まるかどうかは、シーダーがURLを広げられるかにもよります。
           </p>
         </section>
 

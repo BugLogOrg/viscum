@@ -1,7 +1,8 @@
-/** ADR-031/033: 場内コンペと公開ブーストは別企画。Dは¥30k一択・稀少褒賞 */
+/** ADR-031/033: 4コースフラット（無料／初見／改善／公開ブースト） */
 
-/** 場内コメントコンペ用（プランB） */
 export type SeedCourseId = "first_impression" | "brush_up";
+
+export type SeedPlanId = "free_comment" | SeedCourseId | "public_boost";
 
 export type SeedCourse = {
   id: SeedCourseId;
@@ -14,7 +15,7 @@ export type SeedCourse = {
 export const SEED_COURSES: SeedCourse[] = [
   {
     id: "first_impression",
-    name: "初見チェック",
+    name: "初見レビュー",
     yen: 5000,
     purpose: "初めて見た人に「どう見えたか」を聞く",
     questions: [
@@ -26,7 +27,7 @@ export const SEED_COURSES: SeedCourse[] = [
   },
   {
     id: "brush_up",
-    name: "改善チェック",
+    name: "改善提案",
     yen: 10000,
     purpose: "どこを直せば伝わるかを聞く",
     questions: [
@@ -44,9 +45,13 @@ export function courseById(id: SeedCourseId): SeedCourse {
   return SEED_COURSES.find((c) => c.id === id) ?? SEED_COURSES[0];
 }
 
+export function isFieldCourse(id: SeedPlanId): id is SeedCourseId {
+  return id === "first_impression" || id === "brush_up";
+}
+
 /**
  * 公開ブースト（プランD）— ¥30,000一択。
- * 記入後報告→シーダーが選ぶ（全員払いしない）。依頼検収型にしない。
+ * 記入後報告→シーダーが選ぶ（全員払いしない）。
  */
 export const PUBLIC_BOOST = {
   name: "公開ブースト",
