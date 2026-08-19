@@ -477,6 +477,8 @@ export function getSeederPayFacts(seeder: string): SeederPayFacts {
 /** メンター面の事実（スコアではない）。件数を主、累計受取¥は透明性の副次 */
 export type MentorFacts = {
   handle: string;
+  /** コメントした作品数（参加） */
+  participatedCount: number;
   /** 採用されたコメント数 */
   adoptedCount: number;
   /** チップを受け取った回数 */
@@ -485,26 +487,43 @@ export type MentorFacts = {
   tipsReceivedYenTotal: number;
 };
 
+export type MentorParticipation = {
+  work: Work;
+  adopted: boolean;
+  tipped: boolean;
+  commentSubject?: string;
+};
+
 /** デモ用。コメント author がハンドルと一致しないダミーへの上書き */
 const DUMMY_MENTOR_FACTS: Record<
   string,
   Omit<MentorFacts, "handle">
 > = {
   mdb: {
+    participatedCount: 4,
     adoptedCount: 5,
     tipsReceivedCount: 3,
     tipsReceivedYenTotal: 11000,
   },
   ken: {
+    participatedCount: 3,
     adoptedCount: 2,
     tipsReceivedCount: 1,
     tipsReceivedYenTotal: 3000,
   },
   ayu: {
+    participatedCount: 2,
     adoptedCount: 1,
     tipsReceivedCount: 0,
     tipsReceivedYenTotal: 0,
   },
+};
+
+/** デモ：参加作品ID（コメント author とハンドルが食い違う間の見た目用） */
+const DUMMY_MENTOR_WORK_IDS: Record<string, string[]> = {
+  mdb: ["note-clip", "promo-15s", "novel-open", "closed-one"],
+  ken: ["viscum-self", "note-clip", "lp-saas"],
+  ayu: ["promo-15s", "viscum-self"],
 };
 
 function mentorFactsFromComments(handle: string): Omit<MentorFacts, "handle"> {
@@ -512,11 +531,13 @@ function mentorFactsFromComments(handle: string): Omit<MentorFacts, "handle"> {
   let adoptedCount = 0;
   let tipsReceivedCount = 0;
   let tipsReceivedYenTotal = 0;
+  const workIds = new Set<string>();
 
   for (const w of DUMMY_WORKS) {
     for (const c of w.comments) {
       const authorKey = c.author.replace(/^@/, "").toLowerCase();
       if (authorKey !== key) continue;
+      workIds.add(w.id);
       if (c.adopted) adoptedCount += 1;
       if (c.tipped) {
         tipsReceivedCount += 1;
@@ -525,7 +546,12 @@ function mentorFactsFromComments(handle: string): Omit<MentorFacts, "handle"> {
     }
   }
 
-  return { adoptedCount, tipsReceivedCount, tipsReceivedYenTotal };
+  return {
+    participatedCount: workIds.size,
+    adoptedCount,
+    tipsReceivedCount,
+    tipsReceivedYenTotal,
+  };
 }
 
 export function getMentorFacts(handle: string): MentorFacts {
@@ -535,9 +561,12 @@ export function getMentorFacts(handle: string): MentorFacts {
   if (!demo) {
     return { handle: h, ...fromComments };
   }
-  // デモ上書きは件数・金額の大きい方を採用（コメント由来が育ったら自然に勝つ）
   return {
     handle: h,
+    participatedCount: Math.max(
+      fromComments.participatedCount,
+      demo.participatedCount,
+    ),
     adoptedCount: Math.max(fromComments.adoptedCount, demo.adoptedCount),
     tipsReceivedCount: Math.max(
       fromComments.tipsReceivedCount,
@@ -548,6 +577,42 @@ export function getMentorFacts(handle: string): MentorFacts {
       demo.tipsReceivedYenTotal,
     ),
   };
+}
+
+/** メンターとしてコメントした作品一覧（二面ポートフォリオの書く棚） */
+export function getWorksMentoredBy(handle: string): MentorParticipation[] {
+  const h = handle.replace(/^@/, "");
+  const key = h.toLowerCase();
+  const byId = new Map<string, MentorParticipation>();
+
+  for (const w of DUMMY_WORKS) {
+    for (const c of w.comments) {
+      const authorKey = c.author.replace(/^@/, "").toLowerCase();
+      if (authorKey !== key) continue;
+      const prev = byId.get(w.id);
+      byId.set(w.id, {
+        work: w,
+        adopted: Boolean(prev?.adopted || c.adopted),
+        tipped: Boolean(prev?.tipped || c.tipped),
+        commentSubject: prev?.commentSubject ?? c.subject,
+      });
+    }
+  }
+
+  const demoIds = DUMMY_MENTOR_WORK_IDS[key] ?? [];
+  for (const id of demoIds) {
+    if (byId.has(id)) continue;
+    const w = getWork(id);
+    if (!w) continue;
+    byId.set(id, {
+      work: w,
+      adopted: false,
+      tipped: false,
+      commentSubject: undefined,
+    });
+  }
+
+  return [...byId.values()];
 }
 
 export function formatYen(n: number): string {

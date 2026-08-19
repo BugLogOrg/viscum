@@ -3,11 +3,13 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { FollowButton } from "@/components/FollowButton";
 import { PortfolioBio } from "@/components/PortfolioBio";
+import { StatusBadge } from "@/components/StatusBadge";
 import {
   formatYen,
   getMentorFacts,
   getSeederPayFacts,
   getWorksBySeeder,
+  getWorksMentoredBy,
 } from "@/data/dummy-works";
 
 type Props = { params: Promise<{ handle: string }> };
@@ -19,18 +21,20 @@ export default async function SeederPortfolioPage({ params }: Props) {
   const display = works[0]?.seeder ?? handle;
   const pay = getSeederPayFacts(display);
   const mentor = getMentorFacts(display);
+  const mentored = getWorksMentoredBy(display);
   const hasPayHistory = pay.paymentsCount > 0;
   const hasMentorHistory =
-    mentor.adoptedCount > 0 || mentor.tipsReceivedCount > 0;
+    mentor.participatedCount > 0 ||
+    mentor.adoptedCount > 0 ||
+    mentor.tipsReceivedCount > 0 ||
+    mentored.length > 0;
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
       <SiteHeader backHref="/" />
 
       <header className="border-b border-viscum-line px-4 py-5">
-        <p className="text-xs text-viscum-muted">
-          シーダー／メンター
-        </p>
+        <p className="text-xs text-viscum-muted">シーダー／メンター</p>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold text-viscum-ink">
             @{display}
@@ -42,7 +46,6 @@ export default async function SeederPortfolioPage({ params }: Props) {
         </p>
         <PortfolioBio handle={display} />
 
-        {/* 二面：シーダー実績｜メンター実績（スマホは縦並び） */}
         <div className="mt-4 grid gap-2 sm:grid-cols-2">
           <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3">
             <div className="flex flex-wrap items-center gap-2">
@@ -92,6 +95,12 @@ export default async function SeederPortfolioPage({ params }: Props) {
             <p className="mt-1 text-[10px] text-viscum-muted">書く側の事実</p>
             <dl className="mt-2 space-y-0.5 text-[14px] text-viscum-ink">
               <div>
+                <dt className="inline text-viscum-muted">参加作品：</dt>
+                <dd className="inline tabular-nums">
+                  {Math.max(mentor.participatedCount, mentored.length)}件
+                </dd>
+              </div>
+              <div>
                 <dt className="inline text-viscum-muted">採用された：</dt>
                 <dd className="inline tabular-nums">
                   {mentor.adoptedCount}件
@@ -116,23 +125,74 @@ export default async function SeederPortfolioPage({ params }: Props) {
         <p className="mt-2 text-[11px] leading-snug text-viscum-muted">
           どちらもスコアや順位ではありません。決済・採用が完了した件数と金額の事実です。メンターの累計受取は「いくら稼いだ自慢」ではなく、ちゃんと払われた透明性のための表示です。
         </p>
-
-        <p className="mt-3 text-[13px] text-viscum-ink">
-          作品 {works.length} 件
-        </p>
       </header>
 
-      {works.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-viscum-muted">
-          このシーダーの作品はまだありません。
+      <section className="border-b border-viscum-line">
+        <p className="px-4 pt-4 text-[13px] font-medium text-viscum-ink">
+          シードした作品 · {works.length}件
         </p>
-      ) : (
-        <div>
-          {works.map((w) => (
-            <WorkFeedRow key={w.id} work={w} />
-          ))}
-        </div>
-      )}
+        {works.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-viscum-muted">
+            まだシードした作品はありません。
+          </p>
+        ) : (
+          <div>
+            {works.map((w) => (
+              <WorkFeedRow key={w.id} work={w} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <p className="px-4 pt-4 text-[13px] font-medium text-viscum-ink">
+          メンターとして参加した作品 · {mentored.length}件
+        </p>
+        <p className="px-4 pt-1 text-[11px] text-viscum-muted">
+          コメントした棚。採用・チップはバッジで事実表示します。
+        </p>
+        {mentored.length === 0 ? (
+          <p className="px-4 py-6 text-center text-sm text-viscum-muted">
+            まだ参加した作品はありません。
+          </p>
+        ) : (
+          <ul className="mt-2 divide-y divide-viscum-line border-t border-viscum-line">
+            {mentored.map(({ work, adopted, tipped, commentSubject }) => (
+              <li key={work.id}>
+                <Link
+                  href={`/w/${encodeURIComponent(work.id)}`}
+                  className="block px-4 py-3 transition hover:bg-viscum-paper-2/80"
+                >
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <StatusBadge
+                      status={work.status}
+                      prizeYen={work.prizeYen}
+                      dense
+                    />
+                    {adopted && (
+                      <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                        採用
+                      </span>
+                    )}
+                    {tipped && (
+                      <span className="rounded bg-viscum-berry/15 px-1.5 py-0.5 text-[10px] font-medium text-viscum-berry-deep">
+                        チップ受取
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
+                    {work.title}
+                  </p>
+                  <p className="mt-1 text-[11px] text-viscum-muted">
+                    シーダー @{work.seeder}
+                    {commentSubject ? ` · 「${commentSubject}」` : ""}
+                  </p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <p className="px-4 py-8 text-center text-sm">
         <Link href="/" className="text-viscum-brand hover:underline">
