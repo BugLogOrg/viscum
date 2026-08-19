@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatYen } from "@/data/dummy-works";
@@ -39,17 +40,20 @@ export default function MePage() {
 
   if (status === "loading") {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper px-4 py-10 text-sm text-viscum-muted">
-        読み込み中…
-      </div>
+      <BrowseChrome>
+        <SiteHeader backHref="/" hideOnMd />
+        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      </BrowseChrome>
     );
   }
 
   if (!session?.user) {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-        <SiteHeader backHref="/" />
-        <main className="px-4 py-10">
+      <BrowseChrome>
+        <SiteHeader backHref="/" hideOnMd />
+        <main className="mx-auto max-w-lg px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">マイシード</h1>
           <p className="mt-2 text-[14px] text-viscum-muted">
             ログインすると、シードごとの広告の届き方が見られます。
@@ -61,16 +65,16 @@ export default function MePage() {
             ログインへ
           </Link>
         </main>
-      </div>
+      </BrowseChrome>
     );
   }
 
   const handle = session.user.handle;
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/" />
-      <main className="px-4 py-6 space-y-6">
+    <BrowseChrome>
+      <SiteHeader backHref="/" hideOnMd />
+      <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs text-viscum-muted">シーダー</p>
@@ -232,6 +236,6 @@ export default function MePage() {
           </Link>
         </p>
       </main>
-    </div>
+    </BrowseChrome>
   );
 }

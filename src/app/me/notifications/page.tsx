@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   clearDemoNotifies,
@@ -33,17 +34,20 @@ export default function NotificationsPage() {
 
   if (status === "loading") {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper px-4 py-10 text-sm text-viscum-muted">
-        読み込み中…
-      </div>
+      <BrowseChrome>
+        <SiteHeader backHref="/" hideOnMd hidePostCta />
+        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      </BrowseChrome>
     );
   }
 
   if (!session?.user) {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-        <SiteHeader backHref="/" hidePostCta />
-        <main className="px-4 py-10">
+      <BrowseChrome>
+        <SiteHeader backHref="/" hideOnMd hidePostCta />
+        <main className="mx-auto max-w-lg px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">通知</h1>
           <p className="mt-2 text-[14px] text-viscum-muted">
             ログインすると通知が見られます。
@@ -55,14 +59,14 @@ export default function NotificationsPage() {
             ログインへ
           </Link>
         </main>
-      </div>
+      </BrowseChrome>
     );
   }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/" hidePostCta />
-      <main className="space-y-5 px-4 py-6">
+    <BrowseChrome>
+      <SiteHeader backHref="/" hideOnMd hidePostCta />
+      <main className="mx-auto max-w-lg space-y-5 px-4 py-6">
         <div className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold text-viscum-ink">通知</h1>
@@ -159,6 +163,6 @@ export default function NotificationsPage() {
           </ul>
         )}
       </main>
-    </div>
+    </BrowseChrome>
   );
 }

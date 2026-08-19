@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
@@ -61,17 +62,20 @@ export default function SeedStatsPage() {
 
   if (status === "loading" || seed === undefined) {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper px-4 py-10 text-sm text-viscum-muted">
-        読み込み中…
-      </div>
+      <BrowseChrome>
+        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      </BrowseChrome>
     );
   }
 
   if (!session?.user) {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-        <SiteHeader backHref="/me" />
-        <main className="px-4 py-10">
+      <BrowseChrome>
+        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <main className="mx-auto max-w-lg px-4 py-10">
           <p className="text-[14px] text-viscum-muted">
             成績シートはログイン後に見られます。
           </p>
@@ -82,15 +86,15 @@ export default function SeedStatsPage() {
             ログインへ
           </Link>
         </main>
-      </div>
+      </BrowseChrome>
     );
   }
 
   if (!seed || seed.seederHandle !== session.user.handle) {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-        <SiteHeader backHref="/me" />
-        <main className="px-4 py-10">
+      <BrowseChrome>
+        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <main className="mx-auto max-w-lg px-4 py-10">
           <p className="text-[14px] text-viscum-muted">
             このシードの成績が見つかりません。
           </p>
@@ -101,7 +105,7 @@ export default function SeedStatsPage() {
             マイシードへ
           </Link>
         </main>
-      </div>
+      </BrowseChrome>
     );
   }
 
@@ -142,9 +146,9 @@ export default function SeedStatsPage() {
   ];
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/me" hidePostCta />
-      <main className="space-y-6 px-4 py-6">
+    <BrowseChrome>
+      <SiteHeader backHref="/me" hideOnMd hidePostCta />
+      <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
         <div className="space-y-2">
           <p className="text-[11px] font-medium tracking-wide text-viscum-muted">
             成績シート
@@ -391,6 +395,6 @@ export default function SeedStatsPage() {
           </Link>
         </div>
       </main>
-    </div>
+    </BrowseChrome>
   );
 }

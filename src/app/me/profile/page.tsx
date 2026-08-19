@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   fileToAvatarDataUrl,
@@ -30,17 +31,20 @@ export default function ProfileEditPage() {
 
   if (status === "loading") {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper px-4 py-10 text-sm text-viscum-muted">
-        読み込み中…
-      </div>
+      <BrowseChrome>
+        <SiteHeader backHref="/me/settings" hideOnMd hidePostCta />
+        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      </BrowseChrome>
     );
   }
 
   if (!session?.user || !handle) {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-        <SiteHeader backHref="/" hidePostCta />
-        <main className="px-4 py-10">
+      <BrowseChrome>
+        <SiteHeader backHref="/" hideOnMd hidePostCta />
+        <main className="mx-auto max-w-lg px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">
             プロフィール編集
           </h1>
@@ -54,7 +58,7 @@ export default function ProfileEditPage() {
             ログインへ
           </Link>
         </main>
-      </div>
+      </BrowseChrome>
     );
   }
 
@@ -103,9 +107,9 @@ export default function ProfileEditPage() {
   }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/me/settings" hidePostCta />
-      <main className="space-y-6 px-4 py-6">
+    <BrowseChrome>
+      <SiteHeader backHref="/me/settings" hideOnMd hidePostCta />
+      <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">
             プロフィール編集
@@ -222,6 +226,6 @@ export default function ProfileEditPage() {
           </Link>
         </p>
       </main>
-    </div>
+    </BrowseChrome>
   );
 }

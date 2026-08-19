@@ -1,13 +1,14 @@
 import Link from "next/link";
+import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { PostForm } from "./PostForm";
 
 /** S04 投稿／編集（ダミー。認証・DBなし） */
 export default function NewWorkPage() {
   return (
-    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/" hidePostCta />
-      <main className="px-4 py-6">
+    <BrowseChrome>
+      <SiteHeader backHref="/" hideOnMd hidePostCta />
+      <main className="mx-auto max-w-lg px-4 py-6">
         <p className="text-xs text-viscum-muted">S04 · 投稿デモ</p>
         <h1 className="mt-1 text-xl font-semibold text-viscum-ink">シードする</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
@@ -22,6 +23,6 @@ export default function NewWorkPage() {
           </Link>
         </p>
       </main>
-    </div>
+    </BrowseChrome>
   );
 }

@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { useSession } from "next-auth/react";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
 
 /** 加入時専門のチップ一覧（本番はプロフィールから） */
@@ -17,7 +16,8 @@ export const DEMO_SPECIALTIES = [
 /**
  * 左カラム＋メイン。
  * - feed: フィード上でフィルタを state 操作
- * - chrome: 作品詳細など閲覧面。ナビはホームへのリンク（左カラム常時）
+ * - chrome: 作品詳細・/me など。ナビはホームへのリンク（左カラム常時）
+ * アカウント操作は右上メニューへ（左には棚ナビのみ）
  */
 export function AppShell({
   children,
@@ -38,8 +38,6 @@ export function AppShell({
   showSpecialty?: boolean;
   variant?: "feed" | "chrome";
 }) {
-  const { data: session } = useSession();
-  const handle = session?.user?.handle;
   const interactive = variant === "feed" && !!onFeedFilter;
   const shelfActive = interactive && feedFilter === "all";
   const followActive = interactive && feedFilter === "follow";
@@ -51,9 +49,7 @@ export function AppShell({
         ? "bg-viscum-berry/15 font-medium text-viscum-berry-deep"
         : "bg-viscum-leaf-soft font-medium text-viscum-leaf-deep";
     }
-    return emphasize === "berry" && !interactive
-      ? "text-viscum-ink hover:bg-viscum-paper-2"
-      : "text-viscum-ink hover:bg-viscum-paper-2";
+    return "text-viscum-ink hover:bg-viscum-paper-2";
   }
 
   return (
@@ -143,57 +139,8 @@ export function AppShell({
           </Link>
         </nav>
 
-        <div className="mt-1 border-t border-viscum-line px-3 py-3">
-          <p className="mb-2 text-[11px] font-medium tracking-wide text-viscum-brand">
-            アカウント
-          </p>
-          {handle ? (
-            <ul className="space-y-0.5 text-xs">
-              <li>
-                <Link
-                  href="/me"
-                  className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
-                >
-                  シードごとの届き方
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/me/reactions"
-                  className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
-                >
-                  スキ・気になる
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/me/settings"
-                  className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
-                >
-                  設定
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/me/profile"
-                  className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
-                >
-                  プロフィール編集
-                </Link>
-              </li>
-            </ul>
-          ) : (
-            <Link
-              href="/login"
-              className="block rounded-md px-2 py-1.5 text-xs text-viscum-brand hover:bg-viscum-paper-2"
-            >
-              ログイン
-            </Link>
-          )}
-        </div>
-
         {showSpecialty && (
-          <div className="mt-2 border-t border-viscum-line px-3 py-3">
+          <div className="mt-1 border-t border-viscum-line px-3 py-3">
             <p className="mb-2 text-[11px] font-medium tracking-wide text-viscum-brand">
               専門
             </p>

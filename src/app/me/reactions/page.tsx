@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
+import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   clearDemoReactions,
@@ -63,17 +64,20 @@ function MyReactionsInner() {
 
   if (status === "loading") {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper px-4 py-10 text-sm text-viscum-muted">
-        読み込み中…
-      </div>
+      <BrowseChrome>
+        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      </BrowseChrome>
     );
   }
 
   if (!session?.user) {
     return (
-      <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-        <SiteHeader backHref="/me" />
-        <main className="px-4 py-10">
+      <BrowseChrome>
+        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <main className="mx-auto max-w-lg px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">
             スキ・気になる
           </h1>
@@ -87,7 +91,7 @@ function MyReactionsInner() {
             ログインへ
           </Link>
         </main>
-      </div>
+      </BrowseChrome>
     );
   }
 
@@ -95,9 +99,9 @@ function MyReactionsInner() {
   const bmN = rows.filter((r) => r.kind === "bookmark").length;
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/me" hidePostCta />
-      <main className="space-y-5 px-4 py-6">
+    <BrowseChrome>
+      <SiteHeader backHref="/me" hideOnMd hidePostCta />
+      <main className="mx-auto max-w-lg space-y-5 px-4 py-6">
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">
             スキ・気になる
@@ -214,6 +218,6 @@ function MyReactionsInner() {
           </Link>
         </p>
       </main>
-    </div>
+    </BrowseChrome>
   );
 }
