@@ -1,17 +1,19 @@
 import { DUMMY_WORKS, type Work } from "@/data/dummy-works";
 
-export type SuggestedSeeder = {
+export type DemoSeederProfile = {
   handle: string;
   displayName: string;
   bio: string;
-  /** フィードと同じ一文字タイル用 */
   thumbTone: Work["thumbTone"];
   glyph: string;
+};
+
+export type SuggestedSeeder = DemoSeederProfile & {
   workCount: number;
 };
 
 /** デモ棚の人物像（handle は dummy-works の seeder と揃える） */
-const PROFILES: Omit<SuggestedSeeder, "workCount">[] = [
+const PROFILES: DemoSeederProfile[] = [
   {
     handle: "tori",
     displayName: "鳥居はな",
@@ -48,6 +50,13 @@ const PROFILES: Omit<SuggestedSeeder, "workCount">[] = [
     glyph: "根",
   },
 ];
+
+export function getDemoSeederProfile(
+  handle: string,
+): DemoSeederProfile | undefined {
+  const key = handle.replace(/^@/, "").toLowerCase();
+  return PROFILES.find((p) => p.handle.toLowerCase() === key);
+}
 
 /** 棚デモからおすすめシーダーを組み立て（本物の活発ユーザーが出るまでの仮） */
 export function getSuggestedSeeders(limit = 5): SuggestedSeeder[] {

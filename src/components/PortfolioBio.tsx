@@ -2,11 +2,14 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import {
-  displayAccountName,
   fetchRemoteProfile,
   readLocalProfile,
   writeLocalProfile,
 } from "@/lib/local-profile";
+import {
+  getDemoSeederProfile,
+  THUMB_TONE_CLASS,
+} from "@/data/suggested-seeders";
 import { LinkifiedText } from "@/components/LinkifiedText";
 
 /** 公開PF頭：アカウント名が主、@英語IDは副。一言はその下 */
@@ -17,16 +20,21 @@ export function PortfolioHeader({
   handle: string;
   action?: ReactNode;
 }) {
-  const [accountName, setAccountName] = useState(handle);
-  const [bio, setBio] = useState<string | null>(null);
+  const demo = getDemoSeederProfile(handle);
+  const [accountName, setAccountName] = useState(
+    demo?.displayName ?? handle,
+  );
+  const [bio, setBio] = useState<string | null>(demo?.bio ?? null);
   const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const applyLocal = () => {
       const p = readLocalProfile(handle);
-      setAccountName(displayAccountName(handle, p));
-      setBio(p?.bio?.trim() ? p.bio.trim() : null);
+      const seed = getDemoSeederProfile(handle);
+      const localName = p?.accountName?.trim();
+      setAccountName(localName || seed?.displayName || handle);
+      setBio(p?.bio?.trim() || seed?.bio || null);
       setAvatar(p?.avatarDataUrl ?? null);
     };
     applyLocal();
@@ -34,8 +42,11 @@ export function PortfolioHeader({
       const remote = await fetchRemoteProfile(handle);
       if (cancelled || !remote?.persisted) return;
       if (!remote.accountName && !remote.bio && !remote.image) return;
-      setAccountName(remote.accountName?.trim() || handle);
-      setBio(remote.bio?.trim() || null);
+      const seed = getDemoSeederProfile(handle);
+      setAccountName(
+        remote.accountName?.trim() || seed?.displayName || handle,
+      );
+      setBio(remote.bio?.trim() || seed?.bio || null);
       setAvatar(remote.image);
       writeLocalProfile({
         handle,
@@ -54,7 +65,11 @@ export function PortfolioHeader({
     };
   }, [handle]);
 
-  const letter = accountName.slice(0, 1).toUpperCase();
+  const seed = getDemoSeederProfile(handle);
+  const letter = seed?.glyph ?? accountName.slice(0, 1).toUpperCase();
+  const toneClass = seed
+    ? `${THUMB_TONE_CLASS[seed.thumbTone]} ${seed.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`
+    : "bg-viscum-berry text-white";
 
   return (
     <div>
@@ -69,7 +84,7 @@ export function PortfolioHeader({
             />
           ) : (
             <span
-              className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-viscum-berry text-lg font-semibold text-white"
+              className={`inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold ${toneClass}`}
               aria-hidden
             >
               {letter}
