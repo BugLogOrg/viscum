@@ -73,8 +73,8 @@ export function CommentList({
 
   return (
     <section className="border-t border-viscum-line pt-4" aria-label="コメント">
-      <h2 className="text-sm font-medium text-viscum-ink">
-        コメント · {comments.length}
+      <h2 className="text-[20px] font-bold text-viscum-ink">
+        コメント · {comments.length}件
       </h2>
       <p className="mt-1 text-[11px] text-viscum-muted">
         件名をタップして本文を展開（Gmail型）
