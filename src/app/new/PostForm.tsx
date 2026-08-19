@@ -20,7 +20,7 @@ const RECOMMENDED_TAGS = [
 ] as const;
 
 const PRIZE_PRESETS = [3000, 5000, 10000] as const;
-/** 公開面レビュー（プランD）本命帯。場内コンペより上 */
+/** 公開ブースト（プランD）本命帯。場内コンペより上 */
 const EXT_REVIEW_PRESETS = [5000, 10000, 20000] as const;
 
 /** 締切のプリセット（相対日数）。カレンダーよりミスりにくい */
@@ -141,7 +141,7 @@ export function PostForm() {
     const lines: string[] = [];
     if (compOn && extReviewOn) {
       lines.push(
-        `【VISCUM】コメントコンペ＋公開面レビュー · 場内 ${formatYen(prizeYen)}／公開面 ${formatYen(extPrizeYen)}（広告費）`,
+        `【VISCUM】コメントコンペ＋公開ブースト · 場内 ${formatYen(prizeYen)}／公開 ${formatYen(extPrizeYen)}`,
       );
     } else if (compOn) {
       lines.push(
@@ -149,7 +149,7 @@ export function PostForm() {
       );
     } else if (extReviewOn) {
       lines.push(
-        `【VISCUM】公開面レビュー募集 · 合格で ${formatYen(extPrizeYen)}（検品後払い・広告）`,
+        `【VISCUM】公開ブースト募集 · 合格で ${formatYen(extPrizeYen)}（検品後払い）`,
       );
     } else {
       lines.push(`【VISCUM】コメント歓迎`);
@@ -165,7 +165,7 @@ export function PostForm() {
     if (extReviewOn) {
       lines.push(
         "",
-        "App／Chrome など公開コメント欄への正直なレビューも募集（やらせ不可・合格者へ確実払い）。",
+        "ストア／拡張／SNSなど公開の場所への正直な反応・投稿も募集（やらせ不可・合格者へ確実払い）。",
       );
     }
     return lines.join("\n");
@@ -638,11 +638,11 @@ export function PostForm() {
           />
           <span>
             <span className="block text-[14px] font-medium text-viscum-ink">
-              公開面レビューも頼む（広告プラン）
+              公開ブーストも頼む
             </span>
             <span className="mt-0.5 block text-[12px] leading-relaxed text-viscum-muted">
               App Store や Chrome
-              拡張など、公開コメント欄へ正直な反応を書いてもらいます。合格した人には固定謝礼を確実に払います（検品後払い。前払い確約はしません）。やらせや、触ってもいない星だけは不合格。場内コンペと同時でもOKです。
+              拡張、SNSなど、外の公開の場所へ正直な反応や投稿を残してもらいます。合格した人には固定謝礼を確実に払います（検品後払い。前払い確約はしません）。やらせや、触ってもいない星だけは不合格。場内コンペと同時でもOKです。媒体枠の「広告」ではなく、押し上げのブーストです。
             </span>
           </span>
         </label>
