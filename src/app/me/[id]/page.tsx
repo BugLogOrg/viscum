@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Sparkline } from "@/components/Sparkline";
+import { AnalyticsChart } from "@/components/AnalyticsChart";
 import { formatYen } from "@/data/dummy-works";
 import {
   readLocalSeeds,
@@ -15,9 +15,11 @@ import {
   type LocalSeed,
 } from "@/lib/local-seeds";
 import {
-  dayDelta,
+  formatDateJa,
   formatDelta,
   getReachSeries,
+  periodTotals,
+  todayDaily,
 } from "@/lib/reach-series";
 
 export default function SeedStatsPage() {
@@ -39,6 +41,18 @@ export default function SeedStatsPage() {
     () => (seed ? getReachSeries(seed) : null),
     [seed],
   );
+
+  const totals = useMemo(
+    () => (series ? periodTotals(series.days) : null),
+    [series],
+  );
+  const today = series ? todayDaily(series.days) : null;
+
+  /** 表は新しい日が上（アナリティクス表っぽく） */
+  const tableRows = useMemo(() => {
+    if (!series) return [];
+    return [...series.days].reverse();
+  }, [series]);
 
   if (status === "loading" || seed === undefined) {
     return (
@@ -87,10 +101,6 @@ export default function SeedStatsPage() {
   }
 
   const detailHref = workDetailHref(seed);
-  const viewDelta = series ? dayDelta(series.views) : 0;
-  const emoDelta = series ? dayDelta(series.emo) : 0;
-  const bookmarkDelta = series ? dayDelta(series.bookmark) : 0;
-  const commentDelta = series ? dayDelta(series.comment) : 0;
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
@@ -122,83 +132,169 @@ export default function SeedStatsPage() {
           </h1>
         </div>
 
-        <section className="rounded-lg border border-viscum-line bg-white/60 px-3 py-3">
+        <section className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="text-[14px] font-semibold text-viscum-ink">
-              閲覧の推移
-            </h2>
-            <p
-              className={`text-[13px] font-semibold tabular-nums ${
-                viewDelta > 0
-                  ? "text-viscum-brand"
-                  : viewDelta < 0
-                    ? "text-viscum-berry"
-                    : "text-viscum-muted"
-              }`}
-            >
-              今日 {formatDelta(viewDelta)}
-            </p>
+            <div>
+              <h2 className="text-[14px] font-semibold text-viscum-ink">
+                閲覧（日次）
+              </h2>
+              <p className="text-[11px] text-viscum-muted">
+                直近14日 · YouTubeアナリティクス風
+              </p>
+            </div>
+            {today && (
+              <p className="text-right">
+                <span className="block text-[10px] text-viscum-muted">今日</span>
+                <span
+                  className={`text-[15px] font-semibold tabular-nums ${
+                    today.views > 0
+                      ? "text-viscum-brand"
+                      : "text-viscum-muted"
+                  }`}
+                >
+                  {formatDelta(today.views)}
+                </span>
+              </p>
+            )}
           </div>
-          <p className="mt-0.5 text-[11px] text-viscum-muted">直近7日・累計</p>
-          {series && <Sparkline values={series.views} className="mt-2" />}
-          <p className="mt-1 text-right text-[12px] tabular-nums text-viscum-ink">
-            いま{" "}
-            <span className="text-[18px] font-semibold">{seed.viewCount}</span>
-          </p>
+          {series && (
+            <div className="mt-3">
+              <AnalyticsChart days={series.days} metric="views" />
+            </div>
+          )}
+          {totals && (
+            <p className="mt-2 border-t border-viscum-line pt-2 text-[12px] tabular-nums text-viscum-ink">
+              期間合計{" "}
+              <span className="text-[16px] font-semibold">{totals.views}</span>
+              <span className="ml-2 text-viscum-muted">
+                （生涯 {seed.viewCount}）
+              </span>
+            </p>
+          )}
         </section>
 
         <section className="grid grid-cols-3 gap-2">
           {(
             [
-              ["EMO", seed.emoCount, emoDelta],
-              ["気になる", seed.bookmarkCount, bookmarkDelta],
-              ["コメント", seed.commentCount, commentDelta],
+              ["EMO", totals?.emo ?? 0, today?.emo ?? 0],
+              ["気になる", totals?.bookmark ?? 0, today?.bookmark ?? 0],
+              ["コメント", totals?.comment ?? 0, today?.comment ?? 0],
             ] as const
-          ).map(([label, total, delta]) => (
+          ).map(([label, period, day]) => (
             <div
               key={label}
               className="rounded-lg border border-viscum-line bg-white/50 px-2 py-2.5 text-center"
             >
               <p className="text-[10px] text-viscum-muted">{label}</p>
               <p className="mt-0.5 text-[18px] font-semibold tabular-nums text-viscum-ink">
-                {total}
+                {period}
               </p>
               <p
                 className={`text-[11px] font-medium tabular-nums ${
-                  delta > 0
+                  day > 0
                     ? "text-viscum-brand"
-                    : delta < 0
+                    : day < 0
                       ? "text-viscum-berry"
                       : "text-viscum-muted"
                 }`}
               >
-                今日 {formatDelta(delta)}
+                今日 {formatDelta(day)}
               </p>
             </div>
           ))}
         </section>
 
-        {series && (seed.emoCount > 0 || isDemoSeed(seed.id)) && (
-          <section className="rounded-lg border border-viscum-line bg-white/40 px-3 py-3">
-            <h2 className="text-[13px] font-semibold text-viscum-ink">
-              EMOの推移
+        <section className="overflow-hidden rounded-lg border border-viscum-line bg-white/70">
+          <div className="border-b border-viscum-line px-3 py-2">
+            <h2 className="text-[14px] font-semibold text-viscum-ink">
+              日別の数字
             </h2>
-            <Sparkline
-              values={series.emo}
-              className="mt-1"
-              heightClass="h-16"
-              stroke="var(--viscum-berry)"
-              fill="color-mix(in srgb, var(--viscum-berry-soft) 35%, transparent)"
-            />
-          </section>
-        )}
+            <p className="text-[11px] text-viscum-muted">
+              新しい日が上 · タップした日付と対応
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[20rem] border-collapse text-left text-[12px]">
+              <thead>
+                <tr className="bg-viscum-paper-2/80 text-[10px] text-viscum-muted">
+                  <th className="px-2 py-2 font-medium">日付</th>
+                  <th className="px-1 py-2 text-right font-medium tabular-nums">
+                    閲覧
+                  </th>
+                  <th className="px-1 py-2 text-right font-medium tabular-nums">
+                    EMO
+                  </th>
+                  <th className="px-1 py-2 text-right font-medium tabular-nums">
+                    気になる
+                  </th>
+                  <th className="px-2 py-2 text-right font-medium tabular-nums">
+                    コメント
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableRows.map((row) => {
+                  const isToday =
+                    today != null && row.date === today.date;
+                  return (
+                    <tr
+                      key={row.date}
+                      className={`border-t border-viscum-line ${
+                        isToday ? "bg-viscum-leaf-soft/35" : ""
+                      }`}
+                    >
+                      <td className="px-2 py-2 text-viscum-ink">
+                        <span className="block text-[11px] leading-snug">
+                          {formatDateJa(row.date)}
+                        </span>
+                      </td>
+                      <td className="px-1 py-2 text-right tabular-nums font-medium text-viscum-ink">
+                        {row.views}
+                      </td>
+                      <td className="px-1 py-2 text-right tabular-nums text-viscum-ink">
+                        {row.emo}
+                      </td>
+                      <td className="px-1 py-2 text-right tabular-nums text-viscum-ink">
+                        {row.bookmark}
+                      </td>
+                      <td className="px-2 py-2 text-right tabular-nums text-viscum-ink">
+                        {row.comment}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              {totals && (
+                <tfoot>
+                  <tr className="border-t-2 border-viscum-line bg-viscum-paper-2/60">
+                    <td className="px-2 py-2 text-[11px] font-semibold text-viscum-ink">
+                      期間合計
+                    </td>
+                    <td className="px-1 py-2 text-right text-[12px] font-semibold tabular-nums">
+                      {totals.views}
+                    </td>
+                    <td className="px-1 py-2 text-right text-[12px] font-semibold tabular-nums">
+                      {totals.emo}
+                    </td>
+                    <td className="px-1 py-2 text-right text-[12px] font-semibold tabular-nums">
+                      {totals.bookmark}
+                    </td>
+                    <td className="px-2 py-2 text-right text-[12px] font-semibold tabular-nums">
+                      {totals.comment}
+                    </td>
+                  </tr>
+                </tfoot>
+              )}
+            </table>
+          </div>
+        </section>
 
         <p className="text-[11px] leading-relaxed text-viscum-muted">
           {isDemoSeed(seed.id)
-            ? "折れ線は見た目確認用の仮データです。データベース接続後に本物の日次推移へ差し替えます。"
+            ? "表と折れ線は見た目確認用の仮データです。日付は端末の「今日」から逆算しています。"
             : seed.viewCount === 0
-              ? "まだ届きの記録がありません。共有するとここに増減が乗ります。"
-              : "推移は仮の曲線です。日ごとの本物の増減はデータベース接続後です。"}
+              ? "まだ届きの記録がありません。共有するとここに日次が増えます。"
+              : "日次は仮の割り振りです。本物の日付ログはデータベース接続後です。"}
         </p>
 
         <div className="space-y-2 pb-8">
