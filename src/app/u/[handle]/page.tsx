@@ -124,7 +124,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
       </header>
 
       <section className="border-b border-viscum-line">
-        <p className="px-4 pt-4 text-[13px] font-medium text-viscum-ink">
+        <p className="px-4 pt-4 text-[20px] font-bold text-viscum-ink">
           シードした作品 · {works.length}件
         </p>
         {works.length === 0 ? (
@@ -141,7 +141,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
       </section>
 
       <section>
-        <p className="px-4 pt-4 text-[13px] font-medium text-viscum-ink">
+        <p className="px-4 pt-4 text-[20px] font-bold text-viscum-ink">
           メンターとして参加した作品 · {mentored.length}件
         </p>
         <p className="px-4 pt-1 text-[11px] text-viscum-muted">

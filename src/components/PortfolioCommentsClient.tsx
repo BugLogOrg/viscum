@@ -172,7 +172,7 @@ export function PortfolioCommentsClient({
     >
       <div className="flex flex-wrap items-end justify-between gap-2 px-4 pt-4">
         <div>
-          <p className="text-[13px] font-medium text-viscum-ink">
+          <p className="text-[20px] font-bold text-viscum-ink">
             コメント · {commentCount}
           </p>
           <p className="mt-1 max-w-md text-[11px] leading-snug text-viscum-muted">
