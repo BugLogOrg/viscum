@@ -311,7 +311,7 @@ export function PostForm() {
             共有する（拡散が候補を集める）
           </p>
           <p className="text-[12px] leading-relaxed text-viscum-muted">
-            コンペの「お値段以上」は、メンターが差異化してくれることと、シーダーが広げることの掛け算です。URLを自分で貼って候補を集めましょう。
+            足場の質問はそのままでも大丈夫です。気づいたことがあれば、追加でアレンジしても構いません——そちらの方が、シーダーの参考になることもあります。あとはURLを広げて候補を集めましょう。
           </p>
           <pre className="whitespace-pre-wrap break-all rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[12px] text-viscum-trunk">
             {shareText()}
@@ -679,7 +679,7 @@ export function PostForm() {
                 </button>
               </div>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
-                テンプレは足場です。メンターはここから自分なりにアレンジして書いてくれます（最大
+                テンプレは足場です。そのまま答えても大丈夫。気づいたことがあれば追加でアレンジしても構いません（最大
                 {MAX_COURSE_QUESTIONS}問）。
               </p>
               <ul className="mt-2 space-y-2">
