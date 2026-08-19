@@ -11,6 +11,46 @@ import {
   readLocalPortfolioWall,
 } from "@/lib/local-portfolio-wall";
 
+type Thread = {
+  root: PortfolioWallPost;
+  replies: PortfolioWallPost[];
+};
+
+/** 1段返信のみ。返信への返信もルート直下に付ける */
+function buildThreads(posts: PortfolioWallPost[]): Thread[] {
+  const byId = new Map(posts.map((p) => [p.id, p]));
+
+  function rootIdOf(p: PortfolioWallPost): string {
+    if (!p.parentId || !byId.has(p.parentId)) return p.id;
+    const parent = byId.get(p.parentId)!;
+    if (!parent.parentId || !byId.has(parent.parentId)) return parent.id;
+    return parent.parentId;
+  }
+
+  const roots = posts
+    .filter((p) => !p.parentId || !byId.has(p.parentId))
+    .sort((a, b) => a.hoursAgo - b.hoursAgo);
+
+  const rootIdSet = new Set(roots.map((r) => r.id));
+
+  const repliesByRoot = new Map<string, PortfolioWallPost[]>();
+  for (const p of posts) {
+    if (!p.parentId || !byId.has(p.parentId)) continue;
+    const rid = rootIdOf(p);
+    if (!rootIdSet.has(rid)) continue;
+    const list = repliesByRoot.get(rid) ?? [];
+    list.push(p);
+    repliesByRoot.set(rid, list);
+  }
+
+  return roots.map((root) => ({
+    root,
+    replies: (repliesByRoot.get(root.id) ?? []).sort(
+      (a, b) => a.hoursAgo - b.hoursAgo,
+    ),
+  }));
+}
+
 export function PortfolioCommentsClient({
   handle,
   initialPosts,
@@ -21,6 +61,7 @@ export function PortfolioCommentsClient({
   const { data: session, status } = useSession();
   const [local, setLocal] = useState<PortfolioWallPost[]>([]);
   const [composeOpen, setComposeOpen] = useState(false);
+  const [replyTo, setReplyTo] = useState<PortfolioWallPost | null>(null);
   const [body, setBody] = useState("");
 
   useEffect(() => {
@@ -29,24 +70,100 @@ export function PortfolioCommentsClient({
 
   const posts = useMemo(() => {
     const ids = new Set(local.map((p) => p.id));
-    return [...local, ...initialPosts.filter((p) => !ids.has(p.id))].sort(
-      (a, b) => a.hoursAgo - b.hoursAgo,
-    );
+    return [...local, ...initialPosts.filter((p) => !ids.has(p.id))];
   }, [local, initialPosts]);
+
+  const threads = useMemo(() => buildThreads(posts), [posts]);
+  const commentCount = posts.length;
 
   const loggedIn = status === "authenticated" && !!session?.user?.handle;
   const myHandle = session?.user?.handle?.replace(/^@/, "") ?? "";
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/u/${handle}`)}`;
+
+  function resolveRoot(target: PortfolioWallPost): PortfolioWallPost {
+    if (!target.parentId) return target;
+    const parent = posts.find((p) => p.id === target.parentId);
+    if (!parent) return target;
+    if (!parent.parentId) return parent;
+    return posts.find((p) => p.id === parent.parentId) ?? parent;
+  }
+
+  function openNew() {
+    setReplyTo(null);
+    setBody("");
+    setComposeOpen(true);
+  }
+
+  function openReply(target: PortfolioWallPost) {
+    if (!loggedIn) return;
+    const root = resolveRoot(target);
+    setReplyTo(root);
+    setBody(`@${target.author} `);
+    setComposeOpen(true);
+  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!loggedIn || !body.trim()) return;
-    addLocalPortfolioWallPost(handle, { author: myHandle, body });
+    addLocalPortfolioWallPost(handle, {
+      author: myHandle,
+      body,
+      parentId: replyTo?.id,
+    });
     setBody("");
+    setReplyTo(null);
     setComposeOpen(false);
     setLocal(readLocalPortfolioWall(handle));
   }
 
-  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/u/${handle}`)}`;
+  function CommentBody({
+    p,
+    indented,
+  }: {
+    p: PortfolioWallPost;
+    indented?: boolean;
+  }) {
+    return (
+      <div
+        className={`px-4 py-3 ${
+          indented
+            ? "ml-3 border-l-2 border-viscum-line bg-viscum-paper-2/40"
+            : ""
+        }`}
+      >
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Link
+            href={`/u/${encodeURIComponent(p.author)}`}
+            className="text-[13px] font-medium text-viscum-ink hover:underline"
+          >
+            @{p.author}
+          </Link>
+          <span className="text-[11px] text-viscum-muted">
+            {formatHoursAgo(p.hoursAgo)}
+          </span>
+        </div>
+        <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
+          <LinkifiedText text={p.body} />
+        </p>
+        {loggedIn ? (
+          <button
+            type="button"
+            onClick={() => openReply(p)}
+            className="mt-1.5 text-[11px] font-medium text-viscum-brand hover:underline"
+          >
+            返信
+          </button>
+        ) : (
+          <Link
+            href={loginHref}
+            className="mt-1.5 inline-block text-[11px] font-medium text-viscum-brand hover:underline"
+          >
+            ログインして返信
+          </Link>
+        )}
+      </div>
+    );
+  }
 
   return (
     <section
@@ -56,19 +173,22 @@ export function PortfolioCommentsClient({
       <div className="flex flex-wrap items-end justify-between gap-2 px-4 pt-4">
         <div>
           <p className="text-[13px] font-medium text-viscum-ink">
-            コメント · {posts.length}
+            コメント · {commentCount}
           </p>
           <p className="mt-1 max-w-md text-[11px] leading-snug text-viscum-muted">
-            ログインしたコテハンのみ投稿可。全文公開（自浄のため）。運営は原則裁定しません（デモ）。
+            ログインしたコテハンのみ。返信は1段まで。全文公開（自浄）。運営は原則裁定しません（デモ）。
           </p>
         </div>
         {loggedIn ? (
           <button
             type="button"
-            onClick={() => setComposeOpen((v) => !v)}
+            onClick={() => {
+              if (composeOpen && !replyTo) setComposeOpen(false);
+              else openNew();
+            }}
             className="shrink-0 rounded-md border border-viscum-line bg-viscum-paper-2 px-2.5 py-1.5 text-[12px] font-medium text-viscum-ink hover:border-viscum-brand"
           >
-            {composeOpen ? "閉じる" : "コメントする"}
+            {composeOpen && !replyTo ? "閉じる" : "コメントする"}
           </button>
         ) : (
           <Link
@@ -86,15 +206,29 @@ export function PortfolioCommentsClient({
           className="mx-4 mt-3 space-y-2 rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3"
         >
           <p className="text-[12px] text-viscum-ink">
-            投稿者{" "}
-            <span className="font-medium">@{myHandle}</span>
-            <span className="ml-1 text-viscum-muted">（コテハン・変更不可）</span>
+            投稿者 <span className="font-medium">@{myHandle}</span>
+            <span className="ml-1 text-viscum-muted">（コテハン）</span>
+            {replyTo && (
+              <span className="ml-2 text-viscum-muted">
+                → @{replyTo.author} への返信
+                <button
+                  type="button"
+                  className="ml-1 text-viscum-brand hover:underline"
+                  onClick={() => {
+                    setReplyTo(null);
+                    setBody("");
+                  }}
+                >
+                  解除
+                </button>
+              </span>
+            )}
           </p>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={3}
-            placeholder="コメントを書く…"
+            placeholder={replyTo ? "返信を書く…" : "コメントを書く…"}
             className="w-full resize-y rounded border border-viscum-line bg-white px-2 py-1.5 text-[13px] leading-relaxed"
           />
           <button
@@ -102,33 +236,23 @@ export function PortfolioCommentsClient({
             disabled={!body.trim()}
             className="rounded-md bg-viscum-brand px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-40"
           >
-            投稿する（デモ・端末内）
+            {replyTo ? "返信する（デモ）" : "投稿する（デモ・端末内）"}
           </button>
         </form>
       )}
 
-      {posts.length === 0 ? (
+      {threads.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">
           まだコメントはありません。
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-viscum-line border-t border-viscum-line">
-          {posts.map((p) => (
-            <li key={p.id} className="px-4 py-3">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <Link
-                  href={`/u/${encodeURIComponent(p.author)}`}
-                  className="text-[13px] font-medium text-viscum-ink hover:underline"
-                >
-                  @{p.author}
-                </Link>
-                <span className="text-[11px] text-viscum-muted">
-                  {formatHoursAgo(p.hoursAgo)}
-                </span>
-              </div>
-              <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
-                <LinkifiedText text={p.body} />
-              </p>
+          {threads.map(({ root, replies }) => (
+            <li key={root.id}>
+              <CommentBody p={root} />
+              {replies.map((r) => (
+                <CommentBody key={r.id} p={r} indented />
+              ))}
             </li>
           ))}
         </ul>

@@ -1,4 +1,4 @@
-/** PFコメント（ADR-027）。コテハン・ログイン必須。一見／取引バッジは廃止 */
+/** PFコメント（ADR-027）。コテハン・ログイン必須。1段返信可 */
 
 export type PortfolioWallPost = {
   id: string;
@@ -8,9 +8,8 @@ export type PortfolioWallPost = {
   author: string;
   body: string;
   hoursAgo: number;
-  /** 任意：案件へのリンク */
-  workId?: string;
-  workTitle?: string;
+  /** 返信先コメントID（1段のみ。深いネストはしない） */
+  parentId?: string;
 };
 
 const DUMMY_WALL: PortfolioWallPost[] = [
@@ -20,17 +19,21 @@ const DUMMY_WALL: PortfolioWallPost[] = [
     author: "ayu",
     body: "採用〜支払いまでスムーズでした。締切後の追記コメントにも反応もらえて助かりました。また書けます。",
     hoursAgo: 18,
-    workId: "closed-one",
-    workTitle: "終了・支払い完了のアーカイブ見本",
   },
   {
     id: "wall-ken-2",
     portfolioHandle: "ken",
     author: "sana",
-    body: "合格あと支払い待ち、とのこと了解です。今週中にCheckoutでお願いします。こちらは提出ログ残してます。",
+    body: "合格あと支払い待ち、とのこと了解です。今週中にCheckoutでお願いします。",
     hoursAgo: 40,
-    workId: "pay-after-adopt",
-    workTitle: "採用直後・支払い前の見本",
+  },
+  {
+    id: "wall-ken-2r",
+    portfolioHandle: "ken",
+    author: "ken",
+    parentId: "wall-ken-2",
+    body: "@sana 了解です。今日中に払います。",
+    hoursAgo: 36,
   },
   {
     id: "wall-ken-3",
@@ -45,8 +48,6 @@ const DUMMY_WALL: PortfolioWallPost[] = [
     author: "neo",
     body: "チップ着金まで見えました。スコアじゃなく件数の事実だけで十分信頼できます。",
     hoursAgo: 5,
-    workId: "closed-one",
-    workTitle: "終了・支払い完了のアーカイブ見本",
   },
   {
     id: "wall-mdb-2",
@@ -61,8 +62,6 @@ const DUMMY_WALL: PortfolioWallPost[] = [
     author: "ken",
     body: "申立の件、追加で払いました。ログ残してくれて助かりました。次回は期限前に払います。",
     hoursAgo: 96,
-    workId: "pay-after-adopt",
-    workTitle: "採用直後・支払い前の見本",
   },
 ];
 

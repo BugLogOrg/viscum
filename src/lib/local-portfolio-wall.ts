@@ -25,7 +25,7 @@ export function writeLocalPortfolioWall(
 
 export function addLocalPortfolioWallPost(
   portfolioHandle: string,
-  input: { author: string; body: string },
+  input: { author: string; body: string; parentId?: string },
 ): PortfolioWallPost {
   const h = portfolioHandle.replace(/^@/, "");
   const author = input.author.replace(/^@/, "").trim();
@@ -35,6 +35,7 @@ export function addLocalPortfolioWallPost(
     author,
     body: input.body.trim(),
     hoursAgo: 0,
+    parentId: input.parentId,
   };
   const next = [row, ...readLocalPortfolioWall(h)];
   writeLocalPortfolioWall(h, next);
