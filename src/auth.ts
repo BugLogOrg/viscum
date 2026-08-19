@@ -1,9 +1,11 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import GitHub from "next-auth/providers/github";
-import { getDb } from "@/db";
-import { users } from "@/db/schema";
+import Resend from "next-auth/providers/resend";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
+import { getDb, hasDatabase } from "@/db";
+import { accounts, users, verificationTokens } from "@/db/schema";
 
 async function upsertUser(input: {
   id: string;
@@ -24,7 +26,6 @@ async function upsertUser(input: {
       .update(users)
       .set({
         handle: input.handle,
-        // 既存のアカウント名はログインのたびに上書きしない
         name:
           existing[0].name != null && existing[0].name !== ""
             ? existing[0].name
@@ -44,6 +45,17 @@ async function upsertUser(input: {
   });
 }
 
+async function loadHandleForUserId(userId: string): Promise<string | null> {
+  const db = getDb();
+  if (!db) return null;
+  const rows = await db
+    .select({ handle: users.handle })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+  return rows[0]?.handle ?? null;
+}
+
 function handleFromEmail(email: string) {
   const base = email
     .split("@")[0]
@@ -52,13 +64,72 @@ function handleFromEmail(email: string) {
   return base || "seeder";
 }
 
+const db = getDb();
+const resendKey = process.env.RESEND_API_KEY?.trim();
+const emailFrom =
+  process.env.EMAIL_FROM_ADDRESS?.trim() || "noreply@mail.viscum.org";
+
+const magicLinkEnabled = Boolean(db && resendKey);
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
+    verifyRequest: "/login/check-email",
+    error: "/login",
   },
+  ...(db
+    ? {
+        adapter: DrizzleAdapter(db, {
+          usersTable: users,
+          accountsTable: accounts,
+          verificationTokensTable: verificationTokens,
+        }),
+      }
+    : {}),
   providers: [
+    ...(magicLinkEnabled
+      ? [
+          Resend({
+            apiKey: resendKey,
+            from: `VISCUM <${emailFrom}>`,
+            async sendVerificationRequest({ identifier, url }) {
+              const { host } = new URL(url);
+              const res = await fetch("https://api.resend.com/emails", {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${resendKey}`,
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  from: `VISCUM <${emailFrom}>`,
+                  to: [identifier],
+                  subject: "【VISCUM】ログイン用リンク",
+                  text: [
+                    "VISCUM へのログインリンクです。",
+                    "",
+                    url,
+                    "",
+                    `有効期限が過ぎた場合は、もう一度ログイン画面から送ってください。`,
+                    `（${host}）`,
+                  ].join("\n"),
+                  html: `
+                    <p>VISCUM へのログインリンクです。</p>
+                    <p><a href="${url}">ログインする</a></p>
+                    <p style="color:#666;font-size:12px">リンクが開けない場合は次のURLをブラウザに貼ってください。<br/>${url}</p>
+                    <p style="color:#666;font-size:12px">有効期限が過ぎた場合は、もう一度ログイン画面から送ってください。</p>
+                  `,
+                }),
+              });
+              if (!res.ok) {
+                const body = await res.text();
+                throw new Error(`Resend error ${res.status}: ${body}`);
+              }
+            },
+          }),
+        ]
+      : []),
     ...(process.env.AUTH_GITHUB_ID && process.env.AUTH_GITHUB_SECRET
       ? [
           GitHub({
@@ -83,11 +154,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           typeof credentials?.handle === "string" && credentials.handle.trim()
             ? credentials.handle.trim()
             : "mDB";
-        // 英語ID: 英数字と _ のみ（アカウント名はプロフィール側・ADR-029）
         const handle =
           raw.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 24) || "mDB";
         const id = `demo:${handle}`;
-        // name は渡さない（毎ログインでアカウント名を潰さない）
         await upsertUser({
           id,
           handle,
@@ -119,21 +188,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
         user.handle = handle;
       }
+      // resend: handle はオンボーディングで決める（adapter が user を作る）
       return true;
     },
-    async jwt({ token, user }) {
-      if (user) {
+    async jwt({ token, user, trigger, session }) {
+      if (trigger === "update") {
+        const s = session as { handle?: string } | undefined;
+        if (s?.handle) {
+          token.handle = s.handle;
+          token.needsHandle = false;
+        }
+      }
+      if (user?.id) {
         token.id = user.id;
-        token.handle =
-          user.handle ||
-          (user.email ? handleFromEmail(user.email) : "seeder");
+      }
+      const id = (token.id as string | undefined) || user?.id;
+      if (id && hasDatabase() && trigger !== "update") {
+        const handle = await loadHandleForUserId(id);
+        token.handle = handle ?? undefined;
+        token.needsHandle = !handle;
+      } else if (user?.handle) {
+        token.handle = user.handle;
+        token.needsHandle = false;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = (token.id as string) || "";
-        session.user.handle = (token.handle as string) || "seeder";
+        session.user.handle = (token.handle as string) || "";
+        session.user.needsHandle = Boolean(token.needsHandle);
       }
       return session;
     },

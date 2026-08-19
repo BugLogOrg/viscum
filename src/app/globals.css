@@ -48,6 +48,11 @@
   --color-viscum-bark-soft: var(--viscum-bark-soft);
 }
 
+/* AppShell 外の長いページ用。フィード本体の切替ガクつきは AppShell 内スクロールで止める */
+html {
+  scrollbar-gutter: stable;
+}
+
 body {
   background: var(--viscum-bg);
   color: var(--viscum-fg);

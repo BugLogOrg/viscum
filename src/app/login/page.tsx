@@ -10,10 +10,15 @@ function safeCallback(raw: string | null): string {
   return raw;
 }
 
+const magicLinkUi =
+  process.env.NEXT_PUBLIC_AUTH_MAGIC_LINK !== "0";
+
 export default function LoginPage() {
+  const [email, setEmail] = useState("");
   const [handle, setHandle] = useState("mDB");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showDemo, setShowDemo] = useState(false);
   const githubEnabled = process.env.NEXT_PUBLIC_AUTH_GITHUB === "1";
 
   function readCallback(): string {
@@ -21,6 +26,27 @@ export default function LoginPage() {
     return safeCallback(
       new URLSearchParams(window.location.search).get("callbackUrl"),
     );
+  }
+
+  async function magicLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+    const callbackUrl = readCallback();
+    const res = await signIn("resend", {
+      email: email.trim(),
+      redirect: false,
+      callbackUrl,
+    });
+    setPending(false);
+    if (res?.error) {
+      setError(
+        "メールを送れませんでした。アドレスを確認するか、しばらくしてから再試行してください。",
+      );
+      return;
+    }
+    const q = new URLSearchParams({ email: email.trim() });
+    window.location.href = `/login/check-email?${q.toString()}`;
   }
 
   async function demoLogin(e: React.FormEvent) {
@@ -50,35 +76,41 @@ export default function LoginPage() {
           見る・読むは登録なしのままです。ログインすると、自分用のダッシュボードと、シード／書く／払う／PFコメントが使えます。
         </p>
 
-        <form onSubmit={demoLogin} className="mt-8 space-y-4">
-          <div>
-            <label className="text-[13px] font-medium text-viscum-ink">
-              英語ID（デモ）
-            </label>
-            <input
-              value={handle}
-              onChange={(e) => setHandle(e.target.value)}
-              className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] focus:border-viscum-brand focus:outline-none"
-              placeholder="mDB"
-              autoComplete="username"
-            />
-          </div>
-          {error && (
-            <p className="text-[13px] text-viscum-berry-deep">{error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={pending}
-            className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-          >
-            {pending ? "入っています…" : "デモログイン"}
-          </button>
-          <p className="text-[11px] leading-relaxed text-viscum-muted">
-            英数字と _ のみ。公開の顔・メールの「さん」はログイン後の
-            <span className="text-viscum-ink">アカウント名</span>
-            （プロフィール）で別途設定します。PFコメントのコテハンはこの英語IDです。
+        {magicLinkUi ? (
+          <form onSubmit={magicLogin} className="mt-8 space-y-4">
+            <div>
+              <label className="text-[13px] font-medium text-viscum-ink">
+                メールアドレス
+              </label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] focus:border-viscum-brand focus:outline-none"
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </div>
+            {error && (
+              <p className="text-[13px] text-viscum-berry-deep">{error}</p>
+            )}
+            <button
+              type="submit"
+              disabled={pending || !email.trim()}
+              className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+            >
+              {pending ? "送信中…" : "ログインリンクを送る"}
+            </button>
+            <p className="text-[11px] leading-relaxed text-viscum-muted">
+              パスワードはありません。届いたメールのリンクから入れます。英語ID（コテハン）は初回だけ決めます。
+            </p>
+          </form>
+        ) : (
+          <p className="mt-8 text-[13px] text-viscum-muted">
+            メールログインは準備中です。デモログインを使ってください。
           </p>
-        </form>
+        )}
 
         {githubEnabled && (
           <button
@@ -91,6 +123,39 @@ export default function LoginPage() {
             GitHubでログイン
           </button>
         )}
+
+        <div className="mt-8 border-t border-viscum-line pt-6">
+          <button
+            type="button"
+            className="text-[12px] text-viscum-muted underline-offset-2 hover:text-viscum-ink hover:underline"
+            onClick={() => setShowDemo((v) => !v)}
+          >
+            {showDemo ? "デモログインを閉じる" : "デモログイン（開発・友人検証）"}
+          </button>
+          {showDemo && (
+            <form onSubmit={demoLogin} className="mt-4 space-y-3">
+              <div>
+                <label className="text-[13px] font-medium text-viscum-ink">
+                  英語ID（デモ）
+                </label>
+                <input
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value)}
+                  className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] focus:border-viscum-brand focus:outline-none"
+                  placeholder="mDB"
+                  autoComplete="username"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={pending}
+                className="w-full rounded-md border border-viscum-line bg-white/70 px-4 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:opacity-50"
+              >
+                {pending ? "入っています…" : "デモログイン"}
+              </button>
+            </form>
+          )}
+        </div>
 
         <SiteFooter />
       </main>

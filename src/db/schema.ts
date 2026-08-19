@@ -4,15 +4,21 @@ import {
   timestamp,
   integer,
   jsonb,
+  primaryKey,
 } from "drizzle-orm/pg-core";
+import type { AdapterAccountType } from "@auth/core/adapters";
 
 /** Auth.js / アプリ共通のユーザー */
 export const users = pgTable("users", {
-  id: text("id").primaryKey(),
-  handle: text("handle").notNull().unique(),
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  /** 英語ID。Magic Link 初回は未設定→オンボーディングで決める */
+  handle: text("handle").unique(),
   /** アカウント名（表示名・メール「さん」） */
   name: text("name"),
   email: text("email").unique(),
+  emailVerified: timestamp("emailVerified", { mode: "date" }),
   /** アイコンURLまたは data URL（デモ可） */
   image: text("image"),
   /** 公開一言 */
@@ -21,6 +27,42 @@ export const users = pgTable("users", {
     .defaultNow()
     .notNull(),
 });
+
+/** Auth.js OAuth / Email リンク用 */
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").$type<AdapterAccountType>().notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("providerAccountId").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (account) => [
+    primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  ],
+);
+
+/** Magic Link 検証トークン */
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { mode: "date" }).notNull(),
+  },
+  (vt) => [primaryKey({ columns: [vt.identifier, vt.token] })],
+);
 
 /**
  * シード（作品）。

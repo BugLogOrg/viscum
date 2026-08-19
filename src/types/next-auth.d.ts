@@ -8,6 +8,7 @@ declare module "next-auth" {
     user: {
       id: string;
       handle: string;
+      needsHandle?: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -16,5 +17,6 @@ declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
     handle?: string;
+    needsHandle?: boolean;
   }
 }
