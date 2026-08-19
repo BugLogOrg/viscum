@@ -209,6 +209,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (s?.handle) {
           token.handle = s.handle;
           token.needsHandle = false;
+          // 歓迎表示などが name を見ても古い呼び名（メール由来）に戻らないように
+          token.name = s.handle;
         }
         if (s?.onboardingDone) {
           token.needsOnboarding = false;

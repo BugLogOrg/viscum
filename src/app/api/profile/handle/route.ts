@@ -166,8 +166,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const name =
-    me.name && me.name.trim() !== "" ? me.name : handle;
+  const name = handle;
 
   try {
     await db

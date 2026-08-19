@@ -97,9 +97,10 @@ function WelcomeBody() {
     );
   }
 
-  const displayName =
-    data?.user?.name?.trim() ||
-    (data?.user?.handle ? `@${data.user.handle}` : "");
+  // 英語IDが主。name に古い呼び名（メール由来など）が残っていても歓迎では使わない
+  const displayName = data?.user?.handle?.trim()
+    ? `@${data.user.handle.trim()}`
+    : "";
 
   // preview 以外で「もう完了」なら effect で飛ぶまでの待ち
   if (

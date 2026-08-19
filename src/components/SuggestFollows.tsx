@@ -40,9 +40,14 @@ export function SuggestFollows({
   }, [me]);
 
   const followSet = new Set(following.map((h) => h.toLowerCase()));
-  const list = getSuggestedSeeders(limit + followSet.size).filter(
-    (s) => !followSet.has(s.handle.toLowerCase()),
-  ).slice(0, limit);
+  const meKey = me.toLowerCase();
+  const list = getSuggestedSeeders(limit + followSet.size)
+    .filter(
+      (s) =>
+        !followSet.has(s.handle.toLowerCase()) &&
+        s.handle.toLowerCase() !== meKey,
+    )
+    .slice(0, limit);
 
   if (list.length === 0) return null;
 
