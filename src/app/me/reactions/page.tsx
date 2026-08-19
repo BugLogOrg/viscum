@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -23,12 +23,24 @@ function tabFromQuery(raw: string | null): Tab {
 }
 
 export default function MyReactionsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper px-4 py-10 text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      }
+    >
+      <MyReactionsInner />
+    </Suspense>
+  );
+}
+
+function MyReactionsInner() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [rows, setRows] = useState<LocalReaction[]>([]);
-  const [tab, setTab] = useState<Tab>(() =>
-    tabFromQuery(searchParams.get("tab")),
-  );
+  const tab = tabFromQuery(searchParams.get("tab"));
   const [demoOn, setDemoOn] = useState(false);
 
   function refresh() {
@@ -43,10 +55,6 @@ export default function MyReactionsPage() {
   useEffect(() => {
     refresh();
   }, []);
-
-  useEffect(() => {
-    setTab(tabFromQuery(searchParams.get("tab")));
-  }, [searchParams]);
 
   const filtered = useMemo(() => {
     if (tab === "all") return rows;
@@ -103,15 +111,18 @@ export default function MyReactionsPage() {
           <div className="flex gap-1 rounded-lg border border-viscum-line bg-white/50 p-0.5 text-[12px]">
             {(
               [
-                ["all", `すべて (${rows.length})`],
-                ["suki", `スキ (${sukiN})`],
-                ["bookmark", `気になる (${bmN})`],
+                ["all", `すべて (${rows.length})`, "/me/reactions"],
+                ["suki", `スキ (${sukiN})`, "/me/reactions?tab=suki"],
+                [
+                  "bookmark",
+                  `気になる (${bmN})`,
+                  "/me/reactions?tab=bookmark",
+                ],
               ] as const
-            ).map(([key, label]) => (
-              <button
+            ).map(([key, label, href]) => (
+              <Link
                 key={key}
-                type="button"
-                onClick={() => setTab(key)}
+                href={href}
                 className={`rounded-md px-2.5 py-1.5 ${
                   tab === key
                     ? "bg-viscum-leaf-soft font-medium text-viscum-brand"
@@ -119,7 +130,7 @@ export default function MyReactionsPage() {
                 }`}
               >
                 {label}
-              </button>
+              </Link>
             ))}
           </div>
           {demoOn ? (
