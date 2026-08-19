@@ -12,6 +12,11 @@ import {
   readRememberedViewer,
   rememberViewer,
 } from "@/lib/local-follows";
+import {
+  getDemoSeederProfile,
+  searchDemoUsers,
+  THUMB_TONE_CLASS,
+} from "@/data/suggested-seeders";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -23,9 +28,17 @@ function matchesQuery(
   w: (typeof DUMMY_WORKS)[number],
   q: string,
 ): boolean {
-  const needle = q.trim().toLowerCase();
+  const needle = q.trim().toLowerCase().replace(/^@/, "");
   if (!needle) return true;
-  const hay = [w.title, w.tagline, w.seeder, w.description, ...w.tags]
+  const demo = getDemoSeederProfile(w.seeder);
+  const hay = [
+    w.title,
+    w.tagline,
+    w.seeder,
+    demo?.displayName ?? "",
+    w.description,
+    ...w.tags,
+  ]
     .join(" ")
     .toLowerCase();
   return hay.includes(needle);
@@ -143,16 +156,18 @@ export function FeedClient() {
         ? "フォロー中を読み込み中"
         : myHandle
           ? followingHandles.length > 0
-            ? "フォローしたシーダーの作品"
+            ? "フォローしたユーザーの作品"
             : "まだ誰もフォローしていません"
           : "ログインするとフォロー中が表示されます"
       : filter === "open"
         ? "コメントコンペ開催中 · チップ付きで反応を募集"
-        : "シーダーがシードした作品",
+        : "みんなの作品",
   ];
   if (specialty) contextCrumbs.push(specialty);
   if (query.trim()) contextCrumbs.push(`「${query.trim()}」`);
   const contextLine = contextCrumbs.join(" › ");
+
+  const peopleHits = query.trim() ? searchDemoUsers(query, 6) : [];
 
   return (
     <AppShell
@@ -174,7 +189,7 @@ export function FeedClient() {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="タイトル・シーダー・タグ"
+          placeholder="タイトル・ユーザー名・タグ"
           className="mt-2 w-full rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-sm text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none focus:ring-1 focus:ring-viscum-brand"
         />
 
@@ -249,13 +264,62 @@ export function FeedClient() {
           開催中 ({openCount})
         </button>
         <span className="ml-auto text-[10px] text-viscum-muted">
-          {rest.length}件
+          {peopleHits.length > 0
+            ? `ユーザー${peopleHits.length} · 作品${rest.length}`
+            : `${rest.length}件`}
         </span>
       </div>
 
       <div className="hidden items-center justify-end border-b border-viscum-line px-3 py-1.5 md:flex">
-        <span className="text-[10px] text-viscum-muted">{rest.length}件</span>
+        <span className="text-[10px] text-viscum-muted">
+          {peopleHits.length > 0
+            ? `ユーザー${peopleHits.length} · 作品${rest.length}`
+            : `${rest.length}件`}
+        </span>
       </div>
+
+      {peopleHits.length > 0 ? (
+        <section
+          aria-label="ユーザー"
+          className="border-b border-viscum-line px-3 py-3"
+        >
+          <p className="mb-2 text-[11px] font-medium text-viscum-muted">
+            ユーザー
+          </p>
+          <ul className="space-y-1.5">
+            {peopleHits.map((p) => (
+              <li key={p.handle}>
+                <Link
+                  href={`/u/${encodeURIComponent(p.handle)}`}
+                  className="flex items-center gap-2 rounded-md px-1.5 py-1.5 transition hover:bg-viscum-paper-2"
+                >
+                  <span
+                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${THUMB_TONE_CLASS[p.thumbTone]} ${p.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`}
+                    aria-hidden
+                  >
+                    {p.glyph}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="flex min-w-0 items-baseline gap-1.5">
+                      <span className="truncate text-[14px] font-medium text-viscum-ink">
+                        {p.displayName}
+                      </span>
+                      <span className="shrink-0 text-[12px] text-viscum-muted">
+                        @{p.handle}
+                      </span>
+                    </span>
+                    {p.bio ? (
+                      <span className="mt-0.5 block truncate text-[11px] text-viscum-muted">
+                        {p.bio}
+                      </span>
+                    ) : null}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section
         aria-label="一覧"
@@ -274,7 +338,7 @@ export function FeedClient() {
               <p className="text-center">
                 {followingHandles.length === 0
                   ? "まだ誰もフォローしていません。下から選ぶか、公開PFの「フォロー」でも追加できます。"
-                  : "フォロー中のシーダーに、条件に合う作品がまだありません。"}
+                  : "フォロー中のユーザーに、条件に合う作品がまだありません。"}
               </p>
             ) : null}
             <div className={rest.length === 0 ? "mx-auto max-w-lg px-2" : "mx-auto max-w-lg"}>
@@ -288,7 +352,7 @@ export function FeedClient() {
               <p>フォロー中を読み込み中…</p>
             ) : (
               <p>
-                ログインすると、フォローしたシーダーの作品がここに並びます。{" "}
+                ログインすると、フォローしたユーザーの作品がここに並びます。{" "}
                 <Link
                   href="/login?callbackUrl=%2F%3Ffeed%3Dfollow"
                   className="font-medium text-viscum-brand underline-offset-2 hover:underline"
@@ -299,7 +363,7 @@ export function FeedClient() {
             )}
           </div>
         )}
-        {rest.length === 0 && filter !== "follow" && (
+        {rest.length === 0 && filter !== "follow" && peopleHits.length === 0 && (
           <p className="col-span-full px-4 py-8 text-center text-sm text-viscum-muted">
             「{query.trim() || specialty || "条件"}」に合う作品がありません
           </p>

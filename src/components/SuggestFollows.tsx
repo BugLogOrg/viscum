@@ -13,7 +13,7 @@ import {
 } from "@/data/suggested-seeders";
 import { FollowButton } from "@/components/FollowButton";
 
-/** デモ棚の色タイル付きでシーダーをおすすめ（フォロー中が空でも寂しくない） */
+/** デモ棚の色タイル付きでユーザーをおすすめ（フォロー中が空でも寂しくない） */
 export function SuggestFollows({
   title = "まずはこの人をフォロー",
   limit = 5,
@@ -55,7 +55,7 @@ export function SuggestFollows({
     <section className="mt-8">
       <h2 className="text-lg font-semibold text-viscum-ink">{title}</h2>
       <p className="mt-1 text-[13px] leading-relaxed text-viscum-muted">
-        いまはデモ棚のシーダーです。何人でもフォローできます（この場に留まります）。
+        いまはデモ棚のユーザーです。何人でもフォローできます（この場に留まります）。
       </p>
       <ul className="mt-4 divide-y divide-viscum-line overflow-hidden rounded-lg border border-viscum-line bg-white/50">
         {list.map((s) => (

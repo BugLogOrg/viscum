@@ -67,7 +67,7 @@ export function listReservedDemoHandles(): string[] {
   return PROFILES.map((p) => p.handle);
 }
 
-/** 棚デモからおすすめシーダーを組み立て（本物の活発ユーザーが出るまでの仮） */
+/** 棚デモからおすすめユーザーを組み立て（本物の活発ユーザーが出るまでの仮） */
 export function getSuggestedSeeders(limit = 5): SuggestedSeeder[] {
   const counts = new Map<string, number>();
   for (const w of DUMMY_WORKS) {
@@ -80,6 +80,43 @@ export function getSuggestedSeeders(limit = 5): SuggestedSeeder[] {
       workCount: counts.get(p.handle.toLowerCase()) ?? 0,
     }))
     .slice(0, limit);
+}
+
+/** 検索用：表示名・@ID でユーザーを拾う（作品コンペ有無に依存しない） */
+export function searchDemoUsers(query: string, limit = 8): SuggestedSeeder[] {
+  const needle = query.trim().toLowerCase().replace(/^@/, "");
+  if (!needle) return [];
+  const counts = new Map<string, number>();
+  for (const w of DUMMY_WORKS) {
+    const key = w.seeder.toLowerCase();
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const hit = new Map<string, SuggestedSeeder>();
+  for (const p of PROFILES) {
+    if (
+      p.handle.toLowerCase().includes(needle) ||
+      p.displayName.toLowerCase().includes(needle)
+    ) {
+      hit.set(p.handle.toLowerCase(), {
+        ...p,
+        workCount: counts.get(p.handle.toLowerCase()) ?? 0,
+      });
+    }
+  }
+  for (const w of DUMMY_WORKS) {
+    const key = w.seeder.toLowerCase();
+    if (!key.includes(needle) || hit.has(key)) continue;
+    const demo = getDemoSeederProfile(key);
+    hit.set(key, {
+      handle: w.seeder,
+      displayName: demo?.displayName ?? w.seeder,
+      bio: demo?.bio ?? "",
+      thumbTone: demo?.thumbTone ?? w.thumbTone,
+      glyph: demo?.glyph ?? w.seeder.slice(0, 1).toUpperCase(),
+      workCount: counts.get(key) ?? 0,
+    });
+  }
+  return [...hit.values()].slice(0, limit);
 }
 
 export const THUMB_TONE_CLASS: Record<Work["thumbTone"], string> = {

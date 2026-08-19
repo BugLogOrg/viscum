@@ -78,7 +78,7 @@ export function WorkFeedRow({
           <span aria-hidden>·</span>
           <span>💬 {work.comments.length}</span>
           <span aria-hidden>·</span>
-          <span className="truncate text-viscum-trunk" title="シーダー（種を撒く人）">
+          <span className="truncate text-viscum-trunk" title="投稿者">
             @{work.seeder}
           </span>
         </div>
