@@ -187,7 +187,7 @@ export default function MePage() {
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-[10px] text-viscum-muted">EMO</dt>
+                        <dt className="text-[10px] text-viscum-muted">スキ</dt>
                         <dd className="text-[15px] font-semibold text-viscum-ink">
                           {s.emoCount}
                         </dd>

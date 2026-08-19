@@ -267,7 +267,7 @@ export default function SeedStatsPage() {
                   {(
                     [
                       ["views", "閲覧"],
-                      ["emo", "EMO"],
+                      ["emo", "スキ"],
                       ["bookmark", "気になる"],
                       ["comment", "コメント"],
                     ] as const

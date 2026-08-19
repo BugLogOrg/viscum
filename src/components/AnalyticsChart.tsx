@@ -12,7 +12,7 @@ export type AnalyticsMetric = "views" | "emo" | "bookmark" | "comment";
 
 export const ANALYTICS_METRIC_LABEL: Record<AnalyticsMetric, string> = {
   views: "閲覧",
-  emo: "EMO",
+  emo: "スキ",
   bookmark: "気になる",
   comment: "コメント",
 };

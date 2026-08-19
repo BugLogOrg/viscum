@@ -20,7 +20,8 @@ export const users = pgTable("users", {
 
 /**
  * シード（作品）。
- * soft KPI（閲覧・emo・気になる）はシーダーの広告実績用。公開信用スコアには使わない（ADR-013／014）。
+ * soft KPI（閲覧・スキ・気になる）はシーダーの広告実績用。公開信用スコアには使わない（ADR-013／014／016）。
+ * emo_count 列名は歴史的。UI表記はスキ。
  */
 export const works = pgTable("works", {
   id: text("id").primaryKey(),
