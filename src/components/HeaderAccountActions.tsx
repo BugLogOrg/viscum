@@ -13,6 +13,10 @@ import {
   readAvatarDataUrl,
   readLocalProfile,
 } from "@/lib/local-profile";
+import {
+  installDemoRequestDms,
+  pendingRequestCount,
+} from "@/lib/local-request-dms";
 
 /** 通知・アカウントメニュー（note寄り：プロフィール頭＋ダッシュ／設定＋履歴） */
 export function HeaderAccountActions({
@@ -25,6 +29,7 @@ export function HeaderAccountActions({
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [pendingDm, setPendingDm] = useState(0);
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
   const [accountName, setAccountName] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -43,11 +48,14 @@ export function HeaderAccountActions({
     if (!handle) {
       setLocalAvatar(null);
       setAccountName(null);
+      setPendingDm(0);
       return;
     }
     const sync = () => {
       setLocalAvatar(readAvatarDataUrl(handle));
       setAccountName(displayAccountName(handle, readLocalProfile(handle)));
+      installDemoRequestDms(handle);
+      setPendingDm(pendingRequestCount(handle));
     };
     sync();
     window.addEventListener("viscum-profile-updated", sync);
@@ -90,6 +98,31 @@ export function HeaderAccountActions({
       >
         <BellIcon className="h-5 w-5" />
         {session?.user && unread > 0 && (
+          <span
+            className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-viscum-berry"
+            aria-hidden
+          />
+        )}
+      </Link>
+
+      <Link
+        href={
+          session?.user
+            ? "/dashboard/messages"
+            : "/login?callbackUrl=/dashboard/messages"
+        }
+        title="ご依頼DM"
+        aria-label="ご依頼DM"
+        className="relative rounded-md p-2 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
+        onClick={() => {
+          if (handle) {
+            installDemoRequestDms(handle);
+            setPendingDm(pendingRequestCount(handle));
+          }
+        }}
+      >
+        <DmIcon className="h-5 w-5" />
+        {session?.user && pendingDm > 0 && (
           <span
             className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-viscum-berry"
             aria-hidden
@@ -332,6 +365,23 @@ function GearIcon({ className }: { className?: string }) {
     >
       <circle cx="12" cy="12" r="3" />
       <path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />
+    </svg>
+  );
+}
+
+function DmIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
     </svg>
   );
 }
