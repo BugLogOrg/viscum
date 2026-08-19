@@ -176,21 +176,12 @@ export function HeaderAccountActions({
                 </MenuRow>
               </Section>
 
-              {/* 履歴（noteの「スキした」相当） */}
-              <Section label="履歴">
-                <MenuRow href="/me/reactions?tab=suki" onNavigate={close}>
-                  スキした
-                </MenuRow>
-                <MenuRow
-                  href="/me/reactions?tab=bookmark"
-                  onNavigate={close}
-                >
-                  気になる
-                </MenuRow>
+              {/* 履歴：中ページでスキ／気になるを切り替え */}
+              <div className="border-b border-viscum-line py-1.5">
                 <MenuRow href="/me/reactions" onNavigate={close}>
-                  履歴すべて
+                  履歴
                 </MenuRow>
-              </Section>
+              </div>
 
               <div className="border-t border-viscum-line px-2 py-1.5">
                 <button
