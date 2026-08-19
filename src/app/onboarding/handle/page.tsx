@@ -32,7 +32,7 @@ export default function OnboardingHandlePage() {
       return;
     }
     await update({ handle: json?.handle });
-    router.replace("/dashboard/profile");
+    router.replace("/onboarding/welcome");
     router.refresh();
   }
 
@@ -42,7 +42,11 @@ export default function OnboardingHandlePage() {
   }
 
   if (status === "authenticated" && data?.user && !data.user.needsHandle) {
-    router.replace("/dashboard");
+    if (data.user.needsOnboarding) {
+      router.replace("/onboarding/welcome");
+    } else {
+      router.replace("/");
+    }
     return null;
   }
 

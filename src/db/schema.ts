@@ -23,6 +23,12 @@ export const users = pgTable("users", {
   image: text("image"),
   /** 公開一言 */
   bio: text("bio"),
+  /** 加入時の専門タグ（推奨セット） */
+  specialties: jsonb("specialties").$type<string[]>().notNull().default([]),
+  /** 初回ウェルカム完了時刻。null の間だけオンボーディングへ */
+  onboardingCompletedAt: timestamp("onboarding_completed_at", {
+    withTimezone: true,
+  }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

@@ -2,12 +2,12 @@
 
 import { SessionProvider } from "next-auth/react";
 import type { ReactNode } from "react";
-import { HandleGate } from "@/components/HandleGate";
+import { OnboardingGate } from "@/components/OnboardingGate";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
-      <HandleGate>{children}</HandleGate>
+      <OnboardingGate>{children}</OnboardingGate>
     </SessionProvider>
   );
 }

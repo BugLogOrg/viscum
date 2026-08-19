@@ -6,12 +6,14 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
 function safeCallback(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
   return raw;
 }
 
 const magicLinkUi =
   process.env.NEXT_PUBLIC_AUTH_MAGIC_LINK !== "0";
+
+const POST_ONBOARDING_KEY = "viscum.postOnboarding";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -22,10 +24,18 @@ export default function LoginPage() {
   const githubEnabled = process.env.NEXT_PUBLIC_AUTH_GITHUB === "1";
 
   function readCallback(): string {
-    if (typeof window === "undefined") return "/dashboard";
+    if (typeof window === "undefined") return "/";
     return safeCallback(
       new URLSearchParams(window.location.search).get("callbackUrl"),
     );
+  }
+
+  function rememberPostOnboarding(callbackUrl: string) {
+    try {
+      sessionStorage.setItem(POST_ONBOARDING_KEY, callbackUrl);
+    } catch {
+      /* ignore */
+    }
   }
 
   async function magicLogin(e: React.FormEvent) {
@@ -33,6 +43,7 @@ export default function LoginPage() {
     setPending(true);
     setError(null);
     const callbackUrl = readCallback();
+    rememberPostOnboarding(callbackUrl);
     const res = await signIn("resend", {
       email: email.trim(),
       redirect: false,
@@ -54,6 +65,7 @@ export default function LoginPage() {
     setPending(true);
     setError(null);
     const callbackUrl = readCallback();
+    rememberPostOnboarding(callbackUrl);
     const res = await signIn("demo", {
       handle,
       redirect: false,

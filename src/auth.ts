@@ -45,15 +45,25 @@ async function upsertUser(input: {
   });
 }
 
-async function loadHandleForUserId(userId: string): Promise<string | null> {
+async function loadUserFlags(userId: string): Promise<{
+  handle: string | null;
+  onboardingDone: boolean;
+}> {
   const db = getDb();
-  if (!db) return null;
+  if (!db) return { handle: null, onboardingDone: true };
   const rows = await db
-    .select({ handle: users.handle })
+    .select({
+      handle: users.handle,
+      onboardingCompletedAt: users.onboardingCompletedAt,
+    })
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
-  return rows[0]?.handle ?? null;
+  const row = rows[0];
+  return {
+    handle: row?.handle ?? null,
+    onboardingDone: Boolean(row?.onboardingCompletedAt),
+  };
 }
 
 function handleFromEmail(email: string) {
@@ -193,10 +203,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async jwt({ token, user, trigger, session }) {
       if (trigger === "update") {
-        const s = session as { handle?: string } | undefined;
+        const s = session as
+          | { handle?: string; onboardingDone?: boolean }
+          | undefined;
         if (s?.handle) {
           token.handle = s.handle;
           token.needsHandle = false;
+        }
+        if (s?.onboardingDone) {
+          token.needsOnboarding = false;
         }
       }
       if (user?.id) {
@@ -204,12 +219,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
       const id = (token.id as string | undefined) || user?.id;
       if (id && hasDatabase() && trigger !== "update") {
-        const handle = await loadHandleForUserId(id);
-        token.handle = handle ?? undefined;
-        token.needsHandle = !handle;
+        const flags = await loadUserFlags(id);
+        token.handle = flags.handle ?? undefined;
+        token.needsHandle = !flags.handle;
+        token.needsOnboarding = Boolean(flags.handle) && !flags.onboardingDone;
       } else if (user?.handle) {
         token.handle = user.handle;
         token.needsHandle = false;
+        // デモ新規は DB 側フラグを次の jwt で読む。ここは仮で完了扱いにしない
+        if (id && hasDatabase()) {
+          const flags = await loadUserFlags(id);
+          token.needsOnboarding =
+            Boolean(flags.handle) && !flags.onboardingDone;
+        } else {
+          token.needsOnboarding = false;
+        }
+      }
+      // handle 更新直後: onboarding がまだなら要ウェルカム
+      if (
+        trigger === "update" &&
+        id &&
+        hasDatabase() &&
+        !(session as { onboardingDone?: boolean } | undefined)?.onboardingDone
+      ) {
+        const flags = await loadUserFlags(id);
+        token.needsOnboarding = Boolean(flags.handle) && !flags.onboardingDone;
       }
       return token;
     },
@@ -218,6 +252,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.id = (token.id as string) || "";
         session.user.handle = (token.handle as string) || "";
         session.user.needsHandle = Boolean(token.needsHandle);
+        session.user.needsOnboarding = Boolean(token.needsOnboarding);
       }
       return session;
     },

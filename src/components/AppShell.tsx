@@ -5,15 +5,9 @@ import type { ReactNode } from "react";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
+import { DEMO_SPECIALTIES } from "@/data/specialties";
 
-/** 加入時専門のチップ一覧（本番はプロフィールから） */
-export const DEMO_SPECIALTIES = [
-  "アプリ",
-  "小説",
-  "動画",
-  "デザイン",
-  "ツール",
-] as const;
+export { DEMO_SPECIALTIES };
 
 /**
  * 左カラム＋メイン。
