@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
+import { ViscumMark } from "@/components/ViscumMark";
 
 export function SiteHeader({
   title = "VISCUM",
@@ -34,12 +35,10 @@ export function SiteHeader({
           ) : (
             <Link
               href="/"
-              className="truncate text-sm font-semibold tracking-wide text-viscum-brand"
+              className="flex min-w-0 items-center gap-1.5 truncate text-sm font-semibold tracking-wide text-viscum-brand"
               title="VISCUM／ヤドリギ"
             >
-              <span aria-hidden className="mr-1">
-                🐦
-              </span>
+              <ViscumMark className="h-5 w-5" />
               <span className="tracking-[0.12em]">{title}</span>
             </Link>
           )}

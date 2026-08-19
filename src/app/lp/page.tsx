@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ViscumMark } from "@/components/ViscumMark";
 
 /** シーダー主語のLP。柔らかく・正確に「どんなサービスか」を伝える */
 export default function LandingPage() {
@@ -14,10 +15,8 @@ export default function LandingPage() {
           aria-hidden
         />
         <div className="relative mx-auto max-w-3xl px-6 pb-12 pt-12 sm:px-10 sm:pb-16 sm:pt-16">
-          <p className="text-sm font-semibold tracking-[0.18em] text-white/95">
-            <span aria-hidden className="mr-1.5">
-              🐦
-            </span>
+          <p className="flex items-center gap-2 text-sm font-semibold tracking-[0.18em] text-white/95">
+            <ViscumMark className="h-6 w-6" />
             VISCUM
           </p>
           <h1 className="mt-4 max-w-xl text-3xl font-semibold leading-snug text-white sm:text-[2.35rem]">

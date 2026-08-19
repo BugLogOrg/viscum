@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
+import { ViscumMark } from "@/components/ViscumMark";
 
 /** 加入時専門のチップ一覧（本番はプロフィールから） */
 export const DEMO_SPECIALTIES = [
@@ -58,12 +59,10 @@ export function AppShell({
         <div className="border-b border-viscum-line px-4 py-3">
           <Link
             href="/"
-            className="text-sm font-semibold tracking-[0.12em] text-viscum-brand"
+            className="flex items-center gap-1.5 text-sm font-semibold tracking-[0.12em] text-viscum-brand"
             title="VISCUM／ヤドリギ"
           >
-            <span aria-hidden className="mr-1">
-              🐦
-            </span>
+            <ViscumMark className="h-5 w-5" />
             VISCUM
           </Link>
         </div>

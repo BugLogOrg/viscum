@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ViscumMark } from "@/components/ViscumMark";
 import {
   formatDeadlineLine,
   formatPostedLine,
@@ -29,10 +30,8 @@ export default async function DmInvitePage({ params, searchParams }: Props) {
   return (
     <div className="min-h-dvh bg-viscum-paper text-viscum-ink">
       <header className="border-b border-viscum-line bg-viscum-leaf-deep px-4 py-5 text-white">
-        <p className="text-xs font-semibold tracking-[0.16em]">
-          <span aria-hidden className="mr-1">
-            🐦
-          </span>
+        <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em]">
+          <ViscumMark className="h-5 w-5" />
           VISCUM
         </p>
         <p className="mt-2 text-[13px] leading-relaxed text-white/90">
