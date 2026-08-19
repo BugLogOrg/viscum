@@ -163,9 +163,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const raw =
           typeof credentials?.handle === "string" && credentials.handle.trim()
             ? credentials.handle.trim()
-            : "mDB";
+            : "guest";
         const handle =
-          raw.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 24) || "mDB";
+          raw.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 24) || "guest";
         const id = `demo:${handle}`;
         await upsertUser({
           id,

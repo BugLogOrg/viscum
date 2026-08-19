@@ -153,7 +153,7 @@ export function installDemoNotifies() {
       kind: "tip_received",
       title: "チップを受け取りました",
       body: "コメントが採用され、チップの支払いが完了しました（デモ）。",
-      href: "/u/mDB",
+      href: "/u/tori",
       createdAt: new Date(now - 2 * 86400000).toISOString(),
       read: true,
       audience: "seeder",

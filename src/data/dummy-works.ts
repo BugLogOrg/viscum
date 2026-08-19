@@ -41,7 +41,7 @@ export const DUMMY_WORKS: Work[] = [
     id: "viscum-self",
     title: "個人が作ったアプリや動画を速報棚に載せて、少額のコメントコンペを広告費としてばらまけるか——Viscum（ヤドリギ候補）自体の初見レビュー募集。開催中バッジと金額、払う顔は伝わる？稼ぐ副業っぽく見えない？名前・色・初動の迷いを一言ください。厳しめで短くて大丈夫です。",
     tagline: "少額コンペ＝少額広告の顔は伝わるか",
-    seeder: "mDB",
+    seeder: "tori",
     tags: ["アプリ", "告知"],
     status: "open",
     prizeYen: 3000,
@@ -258,7 +258,7 @@ export const DUMMY_WORKS: Work[] = [
     id: "pay-after-adopt",
     title: "採用した直後・Checkout前の見本です。決済準備中を越えて、シーダーが『採用して支払う』を押す直前の画面。メンターにはまだ出金リンクが出ない想定。採用マークは付いているがチップ未払い、という中間状態が分かるか確認してください。文言が怖くないか、金額の再確認が足りるかも見てほしいです。",
     tagline: "採用直後・支払い前",
-    seeder: "mDB",
+    seeder: "tori",
     tags: ["アプリ", "決済"],
     status: "open",
     prizeYen: 5000,
@@ -445,7 +445,7 @@ const DUMMY_SEEDER_PAY: Record<
   string,
   Omit<SeederPayFacts, "handle">
 > = {
-  mdb: { paidYenTotal: 48000, paymentsCount: 12 },
+  tori: { paidYenTotal: 48000, paymentsCount: 12 },
   ayu: { paidYenTotal: 15000, paymentsCount: 3 },
   ken: { paidYenTotal: 9000, paymentsCount: 2 },
   sana: { paidYenTotal: 3000, paymentsCount: 1 },
@@ -499,7 +499,7 @@ const DUMMY_MENTOR_FACTS: Record<
   string,
   Omit<MentorFacts, "handle">
 > = {
-  mdb: {
+  tori: {
     participatedCount: 4,
     adoptedCount: 5,
     tipsReceivedCount: 3,
@@ -521,7 +521,7 @@ const DUMMY_MENTOR_FACTS: Record<
 
 /** デモ：参加作品ID（コメント author とハンドルが食い違う間の見た目用） */
 const DUMMY_MENTOR_WORK_IDS: Record<string, string[]> = {
-  mdb: ["note-clip", "promo-15s", "novel-open", "closed-one"],
+  tori: ["note-clip", "promo-15s", "novel-open", "closed-one"],
   ken: ["viscum-self", "note-clip", "lp-saas"],
   ayu: ["promo-15s", "viscum-self"],
 };

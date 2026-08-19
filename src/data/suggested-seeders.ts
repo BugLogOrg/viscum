@@ -10,7 +10,7 @@ export type SuggestedSeeder = {
 };
 
 const BLURBS: Record<string, string> = {
-  mdb: "VISCUMの見本シード。場の型を見るのに向く",
+  tori: "VISCUMの見本シード。場の型を見るのに向く",
   ayu: "朝活・短尺まわりのサンプル",
   ken: "ツール・個人開発系の見本",
   sana: "小説・長文まわり",
@@ -35,7 +35,7 @@ export function getSuggestedSeeders(limit = 5): SuggestedSeeder[] {
       workCount: 1,
     });
   }
-  const preferred = ["mdb", "ayu", "ken", "sana", "neo"];
+  const preferred = ["tori", "ayu", "ken", "sana", "neo"];
   const ordered: SuggestedSeeder[] = [];
   for (const p of preferred) {
     const s = map.get(p);

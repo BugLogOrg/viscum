@@ -43,7 +43,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
 
   const selected = MENTORS.find((m) => m.handle === mentor);
   const canSend = selected?.accepting && message.trim().length > 0;
-  const fromHandle = session?.user?.handle ?? "mDB";
+  const fromHandle = session?.user?.handle ?? "guest";
 
   return (
     <div className="space-y-5">

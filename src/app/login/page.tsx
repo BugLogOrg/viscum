@@ -17,7 +17,7 @@ const POST_ONBOARDING_KEY = "viscum.postOnboarding";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
-  const [handle, setHandle] = useState("mDB");
+  const [handle, setHandle] = useState("guest");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDemo, setShowDemo] = useState(false);
@@ -154,7 +154,7 @@ export default function LoginPage() {
                   value={handle}
                   onChange={(e) => setHandle(e.target.value)}
                   className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] focus:border-viscum-brand focus:outline-none"
-                  placeholder="mDB"
+                  placeholder="tori"
                   autoComplete="username"
                 />
               </div>
