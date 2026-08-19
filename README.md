@@ -19,6 +19,10 @@ npm run dev
 
 ## Vercel
 
+- **公開デモ（段階A・2026-08-19）**: https://viscum.vercel.app （別名 https://app-opal-xi-rw82xi0vc5.vercel.app ）
+- **GitHub**: https://github.com/BugLogOrg/viscum （単独リポ。Vaultドキュメントは入れない）
+- `viscum.org` DNS は中身確認後（ADR-011）
+
 1. GitHub 等にこの `app/` リポジトリを push  
 2. Vercel で Import → Framework Preset: Next.js  
 3. 仮URLで確認してから `viscum.org` の DNS を接続  
