@@ -8,6 +8,7 @@ import {
 } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import { StatusBadge } from "@/components/StatusBadge";
+import { FeedThumbReactions } from "@/components/FeedThumbReactions";
 
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1） */
 export const THUMB_ASPECT = "aspect-[1280/670]";
@@ -33,18 +34,25 @@ export function WorkFeedRow({
   const seeder = accountLabelForHandle(work.seeder);
 
   return (
-    <Link
-      href={`/w/${work.id}`}
-      className={`flex gap-2.5 border-b border-viscum-line px-3 py-2 transition hover:bg-viscum-paper-2/80 active:bg-viscum-paper-2 ${className}`}
+    <article
+      className={`flex gap-2.5 border-b border-viscum-line px-3 py-2 transition hover:bg-viscum-paper-2/80 ${className}`}
     >
-      <div
-        className={`w-[9.5rem] shrink-0 self-start overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]} flex items-center justify-center text-base font-semibold text-white/90`}
-        style={{ aspectRatio: "1280 / 670" }}
-        aria-hidden
-      >
-        {work.title.slice(0, 1)}
+      <div className="w-[9.5rem] shrink-0 self-start">
+        <Link
+          href={`/w/${work.id}`}
+          className={`block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]} flex items-center justify-center text-base font-semibold text-white/90`}
+          style={{ aspectRatio: "1280 / 670" }}
+          aria-hidden
+          tabIndex={-1}
+        >
+          {work.title.slice(0, 1)}
+        </Link>
+        <FeedThumbReactions workId={work.id} title={work.title} />
       </div>
-      <div className="min-w-0 flex-1 self-center">
+      <Link
+        href={`/w/${work.id}`}
+        className="min-w-0 flex-1 self-center active:opacity-90"
+      >
         <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink line-clamp-4">
           {work.title}
         </h2>
@@ -84,7 +92,7 @@ export function WorkFeedRow({
             {seeder.line}
           </span>
         </div>
-      </div>
-    </Link>
+      </Link>
+    </article>
   );
 }
