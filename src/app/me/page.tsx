@@ -12,6 +12,7 @@ import {
   clearDemoSeeds,
   hasDemoSeeds,
   isDemoSeed,
+  workDetailHref,
   type LocalSeed,
 } from "@/lib/local-seeds";
 
@@ -153,59 +154,75 @@ export default function MePage() {
             </div>
           ) : (
             <ul className="space-y-3">
-              {mine.map((s) => (
-                <li
-                  key={s.id}
-                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge
-                      status={s.status}
-                      prizeYen={s.prizeYen}
-                      dense
-                    />
-                    {isDemoSeed(s.id) && (
-                      <span className="rounded-full bg-viscum-paper-2 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
-                        表示デモ
-                      </span>
+              {mine.map((s) => {
+                const href = workDetailHref(s);
+                const card = (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StatusBadge
+                        status={s.status}
+                        prizeYen={s.prizeYen}
+                        dense
+                      />
+                      {isDemoSeed(s.id) && (
+                        <span className="rounded-full bg-viscum-paper-2 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
+                          表示デモ
+                        </span>
+                      )}
+                      {s.prizeYen != null && s.status === "open" && (
+                        <span className="text-[11px] text-viscum-muted">
+                          チップ {formatYen(s.prizeYen)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
+                      {s.title}
+                    </p>
+                    <dl className="mt-3 grid grid-cols-4 gap-2 border-t border-viscum-line pt-3 text-center">
+                      <div>
+                        <dt className="text-[10px] text-viscum-muted">閲覧</dt>
+                        <dd className="text-[15px] font-semibold text-viscum-ink">
+                          {s.viewCount}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] text-viscum-muted">EMO</dt>
+                        <dd className="text-[15px] font-semibold text-viscum-ink">
+                          {s.emoCount}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] text-viscum-muted">気になる</dt>
+                        <dd className="text-[15px] font-semibold text-viscum-ink">
+                          {s.bookmarkCount}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] text-viscum-muted">コメント</dt>
+                        <dd className="text-[15px] font-semibold text-viscum-ink">
+                          {s.commentCount}
+                        </dd>
+                      </div>
+                    </dl>
+                  </>
+                );
+                return (
+                  <li key={s.id}>
+                    {href ? (
+                      <Link
+                        href={href}
+                        className="block rounded-lg border border-viscum-line bg-white/50 px-3 py-3 transition-colors hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
+                      >
+                        {card}
+                      </Link>
+                    ) : (
+                      <div className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3">
+                        {card}
+                      </div>
                     )}
-                    {s.prizeYen != null && s.status === "open" && (
-                      <span className="text-[11px] text-viscum-muted">
-                        チップ {formatYen(s.prizeYen)}
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
-                    {s.title}
-                  </p>
-                  <dl className="mt-3 grid grid-cols-4 gap-2 border-t border-viscum-line pt-3 text-center">
-                    <div>
-                      <dt className="text-[10px] text-viscum-muted">閲覧</dt>
-                      <dd className="text-[15px] font-semibold text-viscum-ink">
-                        {s.viewCount}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[10px] text-viscum-muted">EMO</dt>
-                      <dd className="text-[15px] font-semibold text-viscum-ink">
-                        {s.emoCount}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[10px] text-viscum-muted">気になる</dt>
-                      <dd className="text-[15px] font-semibold text-viscum-ink">
-                        {s.bookmarkCount}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="text-[10px] text-viscum-muted">コメント</dt>
-                      <dd className="text-[15px] font-semibold text-viscum-ink">
-                        {s.commentCount}
-                      </dd>
-                    </div>
-                  </dl>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

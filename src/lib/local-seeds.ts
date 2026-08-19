@@ -66,13 +66,14 @@ export function bumpLocalSeedStat(
   writeLocalSeeds(seeds);
 }
 
-const DEMO_PREFIX = "demo_seed_";
+/** 表示デモ用。id は `/w/[id]` のダミー作品と一致させ、クリックで詳細へ行けるようにする */
+const DEMO_SEED_IDS = ["promo-15s", "note-clip", "recipe-site"] as const;
 
 /** /me の見た目確認用。シードごとの届き方の差が分かる3本 */
 export function installDemoSeeds(seederHandle: string): LocalSeed[] {
   const demos: LocalSeed[] = [
     {
-      id: `${DEMO_PREFIX}hot`,
+      id: "promo-15s",
       seederHandle,
       title:
         "宅配ボックスIoTの15秒プロモ。冒頭1秒で何の製品か分かるかだけ見てほしいコンペ",
@@ -90,7 +91,7 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
     },
     {
-      id: `${DEMO_PREFIX}mid`,
+      id: "note-clip",
       seederHandle,
       title: "メモアプリβのオンボーディング。空白の初見が怖くないかレビュー募集",
       description: "表示デモ用。普通に回っている例。",
@@ -106,12 +107,12 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
     },
     {
-      id: `${DEMO_PREFIX}quiet`,
+      id: "recipe-site",
       seederHandle,
-      title: "CLIのREADME初見。インストール前の期待値だけコメント歓迎（チップなし）",
+      title: "5分レシピ棚の公開。検索せずにTonightが出るかだけコメント歓迎（チップなし）",
       description: "表示デモ用。ほぼ届いていない例。",
-      externalUrl: "https://example.com/cli",
-      tags: ["ツール"],
+      externalUrl: "https://example.com/recipe",
+      tags: ["Web"],
       status: "none",
       viewCount: 14,
       emoCount: 0,
@@ -121,28 +122,45 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
     },
   ];
 
-  const rest = readLocalSeeds().filter(
-    (s) => !s.id.startsWith(DEMO_PREFIX) || s.seederHandle !== seederHandle,
-  );
+  const demoIdSet = new Set<string>(DEMO_SEED_IDS);
+  const rest = readLocalSeeds().filter((s) => {
+    if (s.seederHandle !== seederHandle) return true;
+    if (demoIdSet.has(s.id)) return false;
+    // 旧表示デモ（demo_seed_*）も入れ直し時に掃除
+    if (s.id.startsWith("demo_seed_")) return false;
+    return true;
+  });
   const next = [...demos, ...rest];
   writeLocalSeeds(next);
   return demos;
 }
 
 export function clearDemoSeeds(seederHandle: string) {
+  const demoIdSet = new Set<string>(DEMO_SEED_IDS);
   writeLocalSeeds(
-    readLocalSeeds().filter(
-      (s) => !(s.id.startsWith(DEMO_PREFIX) && s.seederHandle === seederHandle),
-    ),
+    readLocalSeeds().filter((s) => {
+      if (s.seederHandle !== seederHandle) return true;
+      if (demoIdSet.has(s.id)) return false;
+      if (s.id.startsWith("demo_seed_")) return false;
+      return true;
+    }),
   );
 }
 
 export function hasDemoSeeds(seederHandle: string) {
+  const demoIdSet = new Set<string>(DEMO_SEED_IDS);
   return readLocalSeeds().some(
-    (s) => s.id.startsWith(DEMO_PREFIX) && s.seederHandle === seederHandle,
+    (s) => demoIdSet.has(s.id) && s.seederHandle === seederHandle,
   );
 }
 
 export function isDemoSeed(id: string) {
-  return id.startsWith(DEMO_PREFIX);
+  return (DEMO_SEED_IDS as readonly string[]).includes(id);
+}
+
+/** 詳細があるシードだけ `/w/[id]`。local_* は Neon 前は詳細未接続 */
+export function workDetailHref(seed: LocalSeed): string | null {
+  if (isDemoSeed(seed.id)) return `/w/${seed.id}`;
+  if (seed.id.startsWith("local_")) return null;
+  return `/w/${seed.id}`;
 }
