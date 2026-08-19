@@ -47,6 +47,12 @@ export default function LandingPage() {
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             つくったあとって、「誰かに見てもらいたい」のに、投稿しても流れていく感じ、ありませんか。SNSに載せても既読スルーだったり、友人に頼むのは気後れしたり。あの、ちょっと寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。見るだけの人は、お金を払わずに、いま何が盛り上がっているのかを眺めていられます。
           </p>
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            いまは、誰でもつくれる時代です。コンテンツは溢れかえっている。だからこそ問われるのは、作ることそのものより、どう守って、どう育てていくか。ブーストのかけ方が、大事になると思っています。
+          </p>
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            推しにスパチャする感覚でいい。ただし落とす先は、有名人じゃなく、あなたの作品。VISCUMは、そのための場所です。
+          </p>
           <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
             <img
               src="/lp-worldview.jpg"
@@ -202,7 +208,7 @@ export default function LandingPage() {
 
         <section className="mt-14 border-t border-viscum-line pt-10">
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            つくったものをちゃんと見てもらって、「ここが良かった」と言ってもらう。それが嬉しい。そして、その一言にちゃんとお金が乗ることも、うれしいことです。褒賞はおまけではありません。反応に値段をつけること自体が、この場所の大事な一部です。
+            誰でも作れる時代だからこそ、育て方が問われる。つくったものをちゃんと見てもらって、「ここが良かった」と言ってもらう。それが嬉しい。そして、その一言にちゃんとお金が乗ることも、うれしいことです。褒賞はおまけではありません。反応に値段をつけること自体が、この場所の大事な一部です。
           </p>
           <p className="mt-4 text-[15px] leading-relaxed text-viscum-ink">
             お金は嫌うものじゃありません。払うことも、貰うこともできます。コメントひとつで、誰かの次の一手の助けになれるかもしれません。気持ちよく回していきましょう。
