@@ -2,13 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { CommentList } from "@/components/CommentList";
+import { WorkEngage } from "@/components/WorkEngage";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import {
   closesAtFromHours,
   formatDeadlineLine,
   formatPostedLine,
-  formatYen,
   getWork,
   postedAtFromHoursAgo,
   type Work,
@@ -29,7 +28,6 @@ export default async function WorkDetailPage({ params }: Props) {
   const work = getWork(id);
   if (!work) notFound();
 
-  const canComment = work.status === "open" || work.status === "pay_soon";
   const postedAt = postedAtFromHoursAgo(work.hoursAgo);
   const postedLine = formatPostedLine(work.hoursAgo);
   const deadlineLine = formatDeadlineLine(work.closesInHours, work.status);
@@ -37,6 +35,9 @@ export default async function WorkDetailPage({ params }: Props) {
     work.closesInHours != null
       ? closesAtFromHours(work.closesInHours)
       : null;
+  const hasAdoptedUntipped = work.comments.some(
+    (c) => c.adopted && !c.tipped,
+  );
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
@@ -138,12 +139,6 @@ export default async function WorkDetailPage({ params }: Props) {
             </ul>
           )}
 
-          {canComment && (
-            <p className="text-[15px] leading-relaxed text-viscum-muted">
-              見てほしいところは入口です。ここに書かれていないことでも、気づいたら書いて大丈夫です。
-            </p>
-          )}
-
           <p>
             <a
               href={work.externalUrl}
@@ -155,55 +150,14 @@ export default async function WorkDetailPage({ params }: Props) {
             </a>
           </p>
 
-          {(work.status === "open" ||
-            work.status === "pay_soon" ||
-            work.status === "closed") && (
-            <div className="rounded-lg border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-3 text-sm">
-              <p className="font-medium text-viscum-berry-deep">コンペ帯</p>
-              <p className="mt-1 text-viscum-ink">
-                {work.prizeYen
-                  ? `賞金 ${formatYen(work.prizeYen)}（広告費として）`
-                  : "賞金なし"}
-                {deadlineLine ? ` · 締切 ${deadlineLine}` : ""}
-                {work.status === "pay_soon" && " · 決済準備中"}
-                {work.status === "closed" && " · 受付終了"}
-                {typeof work.paymentsDone === "number" &&
-                  work.paymentsDone > 0 &&
-                  ` · 支払い完了 ${work.paymentsDone}件`}
-                {work.status === "open" &&
-                  work.paymentsDone === 0 &&
-                  work.comments.some((c) => c.adopted && !c.tipped) &&
-                  " · 採用済み・支払い待ち"}
-              </p>
-              {work.status === "closed" &&
-                (work.paymentsDone ?? 0) > 0 && (
-                  <p className="mt-2 text-[12px] text-viscum-muted">
-                    採用時支払いは完了済み。メンターはコメント展開先の「受け取る」から出金（デモ）。
-                  </p>
-                )}
-              {canComment &&
-                work.comments.some((c) => c.adopted && !c.tipped) && (
-                  <p className="mt-2 text-[12px] text-viscum-muted">
-                    決済準備中の先: コメントを展開 →「採用して支払う」で Checkout
-                    デモへ。
-                  </p>
-                )}
-              <button
-                type="button"
-                className="mt-3 w-full rounded-md bg-viscum-berry px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-                disabled={!canComment}
-              >
-                {canComment
-                  ? "参加してコメント（デモのため無効）"
-                  : "コメント受付終了"}
-              </button>
-            </div>
-          )}
-
-          <CommentList
-            comments={work.comments}
+          <WorkEngage
+            workId={work.id}
             status={work.status}
             prizeYen={work.prizeYen}
+            paymentsDone={work.paymentsDone}
+            deadlineLine={deadlineLine}
+            initialComments={work.comments}
+            hasAdoptedUntipped={hasAdoptedUntipped}
           />
         </div>
       </article>

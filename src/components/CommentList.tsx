@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Comment, CompStatus } from "@/data/dummy-works";
 import { formatHoursAgo, formatYen } from "@/data/dummy-works";
 
@@ -16,6 +16,13 @@ export function CommentList({
   const [openId, setOpenId] = useState<string | null>(
     comments.find((c) => c.adopted)?.id ?? comments[0]?.id ?? null,
   );
+
+  useEffect(() => {
+    const newest = comments[0];
+    if (newest?.id.startsWith("local_c_")) {
+      setOpenId(newest.id);
+    }
+  }, [comments]);
 
   const tipLabel = prizeYen ? formatYen(prizeYen) : "¥3,000";
 
@@ -63,6 +70,11 @@ export function CommentList({
                         採用
                       </span>
                     )}
+                    {c.afterClose && (
+                      <span className="rounded bg-viscum-paper-2 px-1.5 py-0.5 text-[10px] font-medium text-viscum-muted">
+                        終了後・対象外
+                      </span>
+                    )}
                     {c.tipped && (
                       <span className="rounded bg-viscum-berry/15 px-1.5 py-0.5 text-[10px] font-medium text-viscum-berry-deep">
                         支払い済み
@@ -89,7 +101,7 @@ export function CommentList({
                     {c.body}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {!c.adopted && (
+                    {!c.adopted && !c.afterClose && (
                       <>
                         <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
                           ありがとう
@@ -103,6 +115,11 @@ export function CommentList({
                           </span>
                         )}
                       </>
+                    )}
+                    {c.afterClose && (
+                      <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
+                        終了後コメント（このラウンドの賞金対象外）
+                      </span>
                     )}
 
                     {c.adopted && !c.tipped && status !== "none" && (

@@ -11,6 +11,8 @@ export type Comment = {
   /** 採用後にチップ／賞金を支払済み */
   tipped?: boolean;
   tipYen?: number;
+  /** コンペ締切後に書かれたコメント（賞金対象外の明示用） */
+  afterClose?: boolean;
 };
 
 export type Work = {
