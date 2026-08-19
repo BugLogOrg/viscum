@@ -7,6 +7,7 @@ import {
   readLocalProfile,
   writeLocalProfile,
 } from "@/lib/local-profile";
+import { LinkifiedText } from "@/components/LinkifiedText";
 
 /** 公開PF頭：アカウント名が主、@英語IDは副。一言はその下 */
 export function PortfolioHeader({
@@ -86,7 +87,9 @@ export function PortfolioHeader({
         {action ? <div className="shrink-0 pt-1">{action}</div> : null}
       </div>
       {bio ? (
-        <p className="mt-3 text-[14px] leading-relaxed text-viscum-ink">{bio}</p>
+        <div className="mt-3 text-[14px] leading-relaxed text-viscum-ink">
+          <LinkifiedText text={bio} />
+        </div>
       ) : null}
     </div>
   );

@@ -112,7 +112,7 @@ export default function ProfileEditPage() {
     writeLocalProfile({
       handle: handle!,
       accountName: nextName || undefined,
-      bio: (next.bio ?? prev.bio).trim().slice(0, 200),
+      bio: (next.bio ?? prev.bio).trim().slice(0, 500),
       avatarDataUrl,
       updatedAt: new Date().toISOString(),
     });
@@ -310,11 +310,16 @@ export default function ProfileEditPage() {
                 setBio(e.target.value);
                 setSaved(false);
               }}
-              rows={3}
-              maxLength={200}
-              placeholder="何をシードしている人か、一行で"
+              rows={5}
+              maxLength={500}
+              placeholder={
+                "何をシードしている人か。改行OK。\nhttps://… のURLはリンクになります"
+              }
               className="w-full resize-y rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand"
             />
+            <span className="block text-[11px] leading-relaxed text-viscum-muted">
+              改行はそのまま表示。http(s)のURLは自動でリンクになります（{bio.length}/500）
+            </span>
           </label>
           {error && (
             <p className="text-[12px] text-viscum-berry-deep">{error}</p>

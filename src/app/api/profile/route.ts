@@ -83,7 +83,7 @@ export async function PATCH(req: Request) {
       { status: 400 },
     );
   }
-  const bio = (body.bio ?? "").trim().slice(0, 200);
+  const bio = (body.bio ?? "").trim().slice(0, 500);
   const image =
     body.image === null
       ? null
