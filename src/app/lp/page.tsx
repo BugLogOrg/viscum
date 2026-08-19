@@ -49,14 +49,14 @@ export default function LandingPage() {
           </p>
           <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
             <img
-              src="/lp-worldview.png"
-              alt="鳥がヤドリギの実を運び、種を落として芽が育つ世界観のイラスト"
+              src="/lp-worldview.jpg"
+              alt="木に寄生する丸いヤドリギの房と、実を運ぶ鳥のイラスト"
               className="h-auto w-full"
               width={1400}
-              height={780}
+              height={933}
             />
             <figcaption className="border-t border-viscum-line px-4 py-3 text-[13px] leading-relaxed text-viscum-muted">
-              鳥が実をくわえて運んで、種を落とす——つくった人が種を撒き、反応が寄り添い、また次が育つ。
+              ヤドリギは木に寄り添う丸い房。鳥が実を運び、種を落とす——つくった人が種を撒き、反応が寄り添い、また次が育つ。
             </figcaption>
           </figure>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
