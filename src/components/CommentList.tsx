@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Comment, CompStatus } from "@/data/dummy-works";
 import { formatHoursAgo, formatYen } from "@/data/dummy-works";
+import { LinkifiedText } from "@/components/LinkifiedText";
 
 export function CommentList({
   comments,
@@ -97,8 +98,8 @@ export function CommentList({
 
               {open && (
                 <div className="border-t border-viscum-line/80 bg-viscum-paper px-3 py-3 pl-9">
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed text-viscum-ink">
-                    {c.body}
+                  <p className="text-sm leading-relaxed text-viscum-ink">
+                    <LinkifiedText text={c.body} />
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {!c.adopted && !c.afterClose && (
