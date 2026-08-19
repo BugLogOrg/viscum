@@ -1,4 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="VISCUM">
-  <circle cx="16" cy="16" r="15" fill="#556348"/>
-  <circle cx="22" cy="10" r="4" fill="#c45c3e"/>
+  <rect width="32" height="32" rx="7" fill="#6e9168"/>
+  <circle cx="16" cy="17" r="9" fill="#5d845f"/>
+  <circle cx="21" cy="11" r="3.6" fill="#c45c3e"/>
 </svg>
