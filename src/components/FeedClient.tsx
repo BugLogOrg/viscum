@@ -102,11 +102,6 @@ export function FeedClient() {
             </p>
           )}
         </div>
-        {filter === "open" && !specialty && !query.trim() && (
-          <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-            コメントコンペ開催中。チップ付きで反応を募集しているシードです。
-          </p>
-        )}
 
         <label className="sr-only" htmlFor="feed-search">
           キーワード検索
