@@ -12,7 +12,6 @@ import {
   clearDemoSeeds,
   hasDemoSeeds,
   isDemoSeed,
-  workDetailHref,
   type LocalSeed,
 } from "@/lib/local-seeds";
 
@@ -132,8 +131,8 @@ export default function MePage() {
           </div>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
             {demoOn
-              ? "いまは見た目確認用のデモ3本です（届きが良い／普通／ほぼ届かない）。"
-              : "Neon未接続のあいだは、この端末に保存したシードのみ。空なら「表示デモを入れる」でレイアウトを確認できます。"}
+              ? "いまは見た目確認用のデモ3本です。カードを開くと成績シート（折れ線）→作品詳細の二段です。"
+              : "カードを開くと成績シート（増減）へ。その先で作品詳細へ進めます。空なら「表示デモを入れる」で確認できます。"}
           </p>
 
           {mine.length === 0 ? (
@@ -154,10 +153,12 @@ export default function MePage() {
             </div>
           ) : (
             <ul className="space-y-3">
-              {mine.map((s) => {
-                const href = workDetailHref(s);
-                const card = (
-                  <>
+              {mine.map((s) => (
+                <li key={s.id}>
+                  <Link
+                    href={`/me/${encodeURIComponent(s.id)}`}
+                    className="block rounded-lg border border-viscum-line bg-white/50 px-3 py-3 transition-colors hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
+                  >
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge
                         status={s.status}
@@ -204,25 +205,12 @@ export default function MePage() {
                         </dd>
                       </div>
                     </dl>
-                  </>
-                );
-                return (
-                  <li key={s.id}>
-                    {href ? (
-                      <Link
-                        href={href}
-                        className="block rounded-lg border border-viscum-line bg-white/50 px-3 py-3 transition-colors hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
-                      >
-                        {card}
-                      </Link>
-                    ) : (
-                      <div className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3">
-                        {card}
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
+                    <p className="mt-2 text-right text-[11px] text-viscum-brand">
+                      成績を見る →
+                    </p>
+                  </Link>
+                </li>
+              ))}
             </ul>
           )}
         </section>
