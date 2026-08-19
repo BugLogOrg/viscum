@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, Suspense } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { DEMO_SPECIALTIES } from "@/data/specialties";
@@ -34,6 +34,32 @@ function WelcomeBody() {
     [status, data?.user?.needsHandle],
   );
 
+  // リダイレクトは effect のみ。preview 中は絶対に飛ばさない（セッション確定で消えるのを防ぐ）
+  useEffect(() => {
+    if (preview) return;
+    if (status === "loading") return;
+    if (status === "unauthenticated") {
+      router.replace("/login");
+      return;
+    }
+    if (data?.user?.needsHandle) {
+      router.replace("/onboarding/handle");
+      return;
+    }
+    if (data?.user && !data.user.needsOnboarding && canSkipGate) {
+      const next = readPostPath();
+      router.replace(next === "/dashboard" ? "/" : next);
+    }
+  }, [
+    preview,
+    status,
+    data?.user,
+    data?.user?.needsHandle,
+    data?.user?.needsOnboarding,
+    canSkipGate,
+    router,
+  ]);
+
   async function finish(specialties: string[], skip: boolean) {
     if (preview) {
       router.replace("/");
@@ -64,27 +90,6 @@ function WelcomeBody() {
     router.refresh();
   }
 
-  if (status === "unauthenticated") {
-    router.replace("/login");
-    return null;
-  }
-
-  if (status === "authenticated" && data?.user?.needsHandle) {
-    router.replace("/onboarding/handle");
-    return null;
-  }
-
-  if (
-    !preview &&
-    status === "authenticated" &&
-    data?.user &&
-    !data.user.needsOnboarding &&
-    canSkipGate
-  ) {
-    router.replace(readPostPath() === "/dashboard" ? "/" : readPostPath());
-    return null;
-  }
-
   function toggle(tag: string) {
     setPicked((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
@@ -95,13 +100,36 @@ function WelcomeBody() {
     data?.user?.name?.trim() ||
     (data?.user?.handle ? `@${data.user.handle}` : "");
 
+  // preview 以外で「もう完了」なら effect で飛ぶまでの待ち
+  if (
+    !preview &&
+    status === "authenticated" &&
+    data?.user &&
+    !data.user.needsOnboarding &&
+    canSkipGate
+  ) {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-lg items-center justify-center bg-viscum-paper text-sm text-viscum-muted">
+        棚へ…
+      </div>
+    );
+  }
+
+  if (!preview && status === "unauthenticated") {
+    return (
+      <div className="mx-auto flex min-h-dvh max-w-lg items-center justify-center bg-viscum-paper text-sm text-viscum-muted">
+        ログインへ…
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
       <SiteHeader backHref="/" hidePostCta />
       <main className="px-4 py-8">
         {preview && (
           <p className="mb-4 rounded-md bg-viscum-leaf-soft/50 px-3 py-2 text-[11px] text-viscum-muted">
-            プレビュー表示（保存しません）
+            プレビュー表示（このまま残ります・保存しません）
           </p>
         )}
         <p className="text-[12px] font-medium tracking-wide text-viscum-brand">
