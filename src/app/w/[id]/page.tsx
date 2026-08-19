@@ -43,7 +43,7 @@ export default async function WorkDetailPage({ params }: Props) {
 
   return (
     <BrowseChrome>
-      <SiteHeader backHref="/" hideOnMd hidePostCta />
+      <SiteHeader backHref="/" hideOnMd />
 
       <div className="mx-auto max-w-lg">
         <article>

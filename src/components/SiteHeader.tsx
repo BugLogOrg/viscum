@@ -6,9 +6,9 @@ import { HeaderAccountActions } from "@/components/HeaderAccountActions";
 export function SiteHeader({
   title = "VISCUM",
   backHref,
-  /** フィード（AppShellあり）: md以上はヘッダごと隠す（左カラムがブランド＆ナビ） */
+  /** 左カラムあり: md以上はヘッダごと隠す（シードは左ナビ）。モバイルだけ右上CTA */
   hideOnMd = false,
-  /** 投稿ページなど、右の「シードする」を出さない */
+  /** /new・login・設定など、シードCTA自体が不要な面だけ true */
   hidePostCta = false,
 }: {
   title?: string;
