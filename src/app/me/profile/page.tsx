@@ -54,6 +54,7 @@ export default function ProfileEditPage() {
 
   function save(e: React.FormEvent) {
     e.preventDefault();
+    if (!handle) return;
     writeLocalProfile({
       handle,
       bio: bio.trim().slice(0, 200),
