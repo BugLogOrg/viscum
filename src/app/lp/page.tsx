@@ -16,17 +16,17 @@ export default function LandingPage() {
           aria-hidden
         />
         <div className="relative mx-auto max-w-3xl px-6 pb-12 pt-12 sm:px-10 sm:pb-16 sm:pt-16">
-          <p className="flex items-center gap-2 text-sm font-semibold tracking-[0.18em] text-white/95">
-            <ViscumMark className="h-6 w-6" />
+          <p className="flex items-center gap-3 text-base font-semibold tracking-[0.18em] text-white/95 sm:text-lg">
+            <ViscumMark className="h-11 w-11 sm:h-12 sm:w-12" />
             VISCUM
           </p>
-          <h1 className="mt-4 max-w-xl text-3xl font-semibold leading-snug text-white sm:text-[2.35rem]">
-            つくったものを届けて、
+          <h1 className="mt-5 max-w-xl text-3xl font-semibold leading-snug text-white sm:text-[2.35rem]">
+            小さな広告費で、
             <br />
-            やさしく反応をもらう場所です。
+            最初の「反応」を頼める場所。
           </h1>
           <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-white/92">
-            アプリや動画、小説など、個人でつくったものを並べておけます。見に来た人は、お金を払わずに眺めるだけで大丈夫。お金が出てくるのは、つくった側が「ちゃんと見てもらいたい」と思ったときだけです。場内でコメントを募ることも、ストアやSNSなど外へ正直な反応を残してもらう「公開ブースト」も選べます。
+            アプリや動画、小説など、個人でつくったものを並べておけます。見に来た人はお金を払わずに眺めて大丈夫。報酬が発生するのは、つくった側が「ちゃんと見てもらいたい」と思ったときだけ——コメントに報酬をつけて、短時間で第一印象を集めます。
           </p>
           <div className="mt-8">
             <Link
@@ -45,8 +45,20 @@ export default function LandingPage() {
             どんな場所なの？
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            つくったあとって、「誰かに見てもらいたい」のに、投稿しても流れていく感じ、ありませんか。SNSに載せても既読スルーだったり、友人に頼むのは気後れしたり。あの、ちょっと寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。見るだけの人は、お金を払わずに、いま何が出ているかを眺めていられます。
+            つくったあとって、「誰かに見てもらいたい」のに、投稿しても流れていく感じ、ありませんか。SNSに載せても既読スルーだったり、友人に頼むのは気後れしたり。あの、ちょっと寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。見るだけの人は、お金を払わずに、いま何が盛り上がっているのかを眺めていられます。
           </p>
+          <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
+            <img
+              src="/lp-worldview.svg"
+              alt="鳥がヤドリギの実を運び、種を落として芽が育つ世界観のイラスト"
+              className="h-auto w-full"
+              width={720}
+              height={320}
+            />
+            <figcaption className="border-t border-viscum-line px-4 py-3 text-[13px] leading-relaxed text-viscum-muted">
+              鳥が実をくわえて運んで、種を落とす——つくった人が種を撒き、反応が寄り添い、また次が育つ。
+            </figcaption>
+          </figure>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             VISCUM（ヴィスカム）は、個人でつくったものを置いておける、小さな掲示板みたいなサービスです。日本語の呼び名は「ヤドリギ」を考えています。鳥が実をくわえて運んで、種を落としていく——つくった人が種を撒いて、反応をもらって、また次をつくる。そんなふうに回っていくといいな、と思っています。
           </p>
@@ -86,7 +98,8 @@ export default function LandingPage() {
           </ul>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             場内でもらったコメントには、お礼を言ったり、採用したり、チップを渡したりできます。公開ブーストは合格／不合格を付けて、合格者へ払います。払うかどうかを決めるのはシーダーなので、書く側は条件を見て参加できます。
-          </p>        </section>
+          </p>
+        </section>
 
         <section className="mt-14 space-y-4">
           <h2 className="text-lg font-semibold text-viscum-brand">
