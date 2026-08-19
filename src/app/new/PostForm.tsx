@@ -20,6 +20,8 @@ const RECOMMENDED_TAGS = [
 ] as const;
 
 const PRIZE_PRESETS = [3000, 5000, 10000] as const;
+/** 公開面レビュー（プランD）本命帯。場内コンペより上 */
+const EXT_REVIEW_PRESETS = [5000, 10000, 20000] as const;
 
 /** 締切のプリセット（相対日数）。カレンダーよりミスりにくい */
 const CLOSE_PRESETS = [
@@ -56,7 +58,10 @@ export function PostForm() {
   const [tags, setTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
   const [compOn, setCompOn] = useState(false);
+  const [extReviewOn, setExtReviewOn] = useState(false);
   const [prizeYen, setPrizeYen] = useState<(typeof PRIZE_PRESETS)[number]>(3000);
+  const [extPrizeYen, setExtPrizeYen] =
+    useState<(typeof EXT_REVIEW_PRESETS)[number]>(5000);
   const [closesInDays, setClosesInDays] = useState(7);
   const [saved, setSaved] = useState(false);
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
@@ -112,7 +117,8 @@ export function PostForm() {
     title.trim().length > 0 &&
     externalUrl.trim().length > 8 &&
     description.trim().length > 0 &&
-    (!compOn || prizeYen >= 3000);
+    (!compOn || prizeYen >= 3000) &&
+    (!extReviewOn || extPrizeYen >= 5000);
 
   function toggleTag(tag: string) {
     setTags((prev) =>
@@ -132,24 +138,37 @@ export function PostForm() {
       typeof window !== "undefined"
         ? `${window.location.origin}${DEMO_DETAIL_HREF}`
         : DEMO_DETAIL_HREF;
-    if (compOn) {
-      const lines = [
+    const lines: string[] = [];
+    if (compOn && extReviewOn) {
+      lines.push(
+        `【VISCUM】コメントコンペ＋公開面レビュー · 場内 ${formatYen(prizeYen)}／公開面 ${formatYen(extPrizeYen)}（広告費）`,
+      );
+    } else if (compOn) {
+      lines.push(
         `【VISCUM】コメントコンペ開催中 · チップ ${formatYen(prizeYen)}（広告費）`,
-        title.trim() || "（タイトル）",
-        url,
-      ];
+      );
+    } else if (extReviewOn) {
+      lines.push(
+        `【VISCUM】公開面レビュー募集 · 合格で ${formatYen(extPrizeYen)}（検品後払い・広告）`,
+      );
+    } else {
+      lines.push(`【VISCUM】コメント歓迎`);
+    }
+    lines.push(title.trim() || "（タイトル）", url);
+    if (compOn) {
       if (promptList.length > 0) {
         lines.push("", ...promptList.map((p) => `・${p}`));
       } else {
         lines.push("", "見て書いてくれる人、募集しています。");
       }
-      return lines.join("\n");
     }
-    return [
-      `【VISCUM】コメント歓迎`,
-      title.trim() || "（タイトル）",
-      url,
-    ].join("\n");
+    if (extReviewOn) {
+      lines.push(
+        "",
+        "App／Chrome など公開コメント欄への正直なレビューも募集（やらせ不可・合格者へ確実払い）。",
+      );
+    }
+    return lines.join("\n");
   }
 
   if (saved) {
@@ -295,6 +314,8 @@ export function PostForm() {
             status: compOn ? "open" : "none",
             prizeYen: compOn ? prizeYen : undefined,
             closesInDays: compOn ? closesInDays : undefined,
+            extReviewOn: extReviewOn || undefined,
+            extPrizeYen: extReviewOn ? extPrizeYen : undefined,
           });
         }
         setSaved(true);
@@ -603,6 +624,58 @@ export function PostForm() {
                 ごろ
               </p>
             </div>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-4 py-4 space-y-4">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={extReviewOn}
+            onChange={(e) => setExtReviewOn(e.target.checked)}
+            className="mt-1"
+          />
+          <span>
+            <span className="block text-[14px] font-medium text-viscum-ink">
+              公開面レビューも頼む（広告プラン）
+            </span>
+            <span className="mt-0.5 block text-[12px] leading-relaxed text-viscum-muted">
+              App Store や Chrome
+              拡張など、公開コメント欄へ正直な反応を書いてもらいます。合格した人には固定謝礼を確実に払います（検品後払い。前払い確約はしません）。やらせや、触ってもいない星だけは不合格。場内コンペと同時でもOKです。
+            </span>
+          </span>
+        </label>
+
+        {extReviewOn && (
+          <div className="space-y-3 border-t border-viscum-line pt-4">
+            <div>
+              <p className="text-[13px] font-medium text-viscum-ink">
+                合格者への固定謝礼（1件あたり）
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {EXT_REVIEW_PRESETS.map((yen) => (
+                  <button
+                    key={yen}
+                    type="button"
+                    onClick={() => setExtPrizeYen(yen)}
+                    className={`rounded-md border px-3 py-1.5 text-[13px] font-medium transition ${
+                      extPrizeYen === yen
+                        ? "border-viscum-berry bg-viscum-berry text-white"
+                        : "border-viscum-line bg-white/70 text-viscum-ink hover:border-viscum-berry"
+                    }`}
+                  >
+                    {formatYen(yen)}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[11px] text-viscum-muted">
+                下限 ¥5,000。合格確定後に支払い（デモでは決済しません）。決済手数料はシーダー負担（向こう持ち）。
+              </p>
+            </div>
+            <p className="text-[12px] leading-relaxed text-viscum-muted">
+              合格の目安（デモ文言）: 実利用したうえで書く／指定ポイントに触れる／テンプレ量産でない／必要な開示がある。不合格は差し戻しまたは不払い。
+            </p>
           </div>
         )}
       </div>

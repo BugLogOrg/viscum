@@ -10,6 +10,9 @@ export type LocalSeed = {
   status: "none" | "open" | "pay_soon" | "closed";
   prizeYen?: number;
   closesInDays?: number;
+  /** 公開面レビュー（プランD）デモフラグ */
+  extReviewOn?: boolean;
+  extPrizeYen?: number;
   viewCount: number;
   emoCount: number;
   bookmarkCount: number;

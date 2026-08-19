@@ -63,7 +63,7 @@ export default function LandingPage() {
             シーダーができること
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            シーダーは、作品を出して「ここを見てほしい」と書けます。反応がほしいときの頼み方は、3つあります。
+            シーダーは、作品を出して「ここを見てほしい」と書けます。反応がほしいときの頼み方は、4つあります。
           </p>
           <ul className="list-disc space-y-3 pl-5 text-[15px] leading-relaxed text-viscum-ink">
             <li>
@@ -72,17 +72,20 @@ export default function LandingPage() {
             </li>
             <li>
               <span className="font-medium">コメントコンペにする</span>
-              … 少しだけチップを用意して、いろんな人に書いてもらう。宣伝費みたいな気持ちで出せます。やらなくても大丈夫。
+              … 少しだけチップを用意して、いろんな人に書いてもらう。宣伝費みたいな気持ちで出せます。やらなくても大丈夫。すべてに褒賞は付けず、採用や上位に寄せます。
             </li>
             <li>
               <span className="font-medium">直依頼する</span>
               … 「あなたに書いてほしい」と、その人だけに声をかける。公開のコンペとは別ものです。
             </li>
+            <li>
+              <span className="font-medium">公開面レビューを頼む</span>
+              … App Store や Chrome 拡張など、サービスの公開コメント欄へ正直な反応を書いてもらうプランです。合格／不合格を検品して、合格した人には固定の謝礼を確実に払います（やらせや、触ってもいない星だけは不合格）。先に全額を預ける前払いにはしません。場内のコンペとは別の広告ユニットです。
+            </li>
           </ul>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            もらったコメントには、お礼を言ったり、採用したり、チップを渡したりできます。払うかどうかを決めるのはシーダーなので、書く側はとりあえずコメントするだけで参加できます。
-          </p>
-        </section>
+            場内でもらったコメントには、お礼を言ったり、採用したり、チップを渡したりできます。公開面レビューは合格／不合格を付けて、合格者へ払います。払うかどうかを決めるのはシーダーなので、書く側は条件を見て参加できます。
+          </p>        </section>
 
         <section className="mt-14 space-y-4">
           <h2 className="text-lg font-semibold text-viscum-brand">
