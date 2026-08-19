@@ -3,15 +3,21 @@ import { formatYen } from "@/data/dummy-works";
 
 const LABELS: Record<
   CompStatus,
-  { text: (prize?: number, paymentsDone?: number) => string; className: string }
+  { text: (prize?: number, paymentsDone?: number, planLabel?: string) => string; className: string }
 > = {
   open: {
-    text: (prize) => (prize ? `開催中 · ${formatYen(prize)}` : "開催中"),
+    text: (prize, _paymentsDone, planLabel) => {
+      if (planLabel && prize) return `${planLabel} · ${formatYen(prize)}`;
+      if (prize) return `開催中 · ${formatYen(prize)}`;
+      return planLabel ?? "開催中";
+    },
     className: "badge-open",
   },
   pay_soon: {
-    text: (prize) =>
-      prize ? `決済準備中 · ${formatYen(prize)}` : "決済準備中",
+    text: (prize, _paymentsDone, planLabel) => {
+      const head = planLabel ?? "決済準備中";
+      return prize ? `${head} · ${formatYen(prize)}` : head;
+    },
     className: "bg-viscum-bark text-white",
   },
   closed: {
@@ -20,7 +26,7 @@ const LABELS: Record<
     className: "badge-closed",
   },
   none: {
-    text: () => "コメント歓迎",
+    text: (_prize, _paymentsDone, planLabel) => planLabel ?? "コメント歓迎",
     className: "badge-none",
   },
 };
@@ -29,12 +35,15 @@ export function StatusBadge({
   status,
   prizeYen,
   paymentsDone,
+  planLabel,
   className = "",
   dense = false,
 }: {
   status: CompStatus;
   prizeYen?: number;
   paymentsDone?: number;
+  /** 例: 初見レビュー／改善提案／公開ブースト／無料コメント */
+  planLabel?: string;
   className?: string;
   dense?: boolean;
 }) {
@@ -47,7 +56,7 @@ export function StatusBadge({
       <span
         className={`inline-block rounded-full font-medium ${size} ${LABELS.none.className} ${className}`}
       >
-        {LABELS.none.text()}
+        {LABELS.none.text(undefined, undefined, planLabel)}
       </span>
     );
   }
@@ -56,7 +65,7 @@ export function StatusBadge({
     <span
       className={`inline-block rounded-full font-medium ${size} ${L.className} ${className}`}
     >
-      {L.text(prizeYen, paymentsDone)}
+      {L.text(prizeYen, paymentsDone, planLabel)}
     </span>
   );
 }

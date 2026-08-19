@@ -156,7 +156,8 @@ export default function SeedStatsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <StatusBadge
               status={seed.status}
-              prizeYen={seed.prizeYen}
+              prizeYen={seed.prizeYen ?? seed.extPrizeYen}
+              planLabel={seed.planLabel}
               dense
             />
             {isDemoSeed(seed.id) && (
@@ -164,9 +165,10 @@ export default function SeedStatsPage() {
                 表示デモ
               </span>
             )}
-            {seed.prizeYen != null && seed.status === "open" && (
+            {(seed.prizeYen != null || seed.extPrizeYen != null) &&
+              seed.status === "open" && (
               <span className="text-[11px] text-viscum-muted">
-                チップ {formatYen(seed.prizeYen)}
+                予算 {formatYen(seed.prizeYen ?? seed.extPrizeYen ?? 0)}
               </span>
             )}
           </div>

@@ -5,6 +5,7 @@ import {
   formatMonthDay,
   formatHoursAgo,
   postedAtFromHoursAgo,
+  planBadgeLabel,
 } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -61,6 +62,7 @@ export function WorkFeedRow({
             status={work.status}
             prizeYen={work.prizeYen}
             paymentsDone={work.paymentsDone}
+            planLabel={planBadgeLabel(work.plan)}
             dense
           />
           {deadline && (

@@ -13,6 +13,8 @@ export type LocalSeed = {
   /** 公開ブースト（プランD）デモフラグ */
   extReviewOn?: boolean;
   extPrizeYen?: number;
+  /** バッジ用（ADR-031 4コース） */
+  planLabel?: string;
   viewCount: number;
   emoCount: number;
   bookmarkCount: number;
@@ -70,21 +72,27 @@ export function bumpLocalSeedStat(
 }
 
 /** 表示デモ用。id は `/w/[id]` のダミー作品と一致させ、クリックで詳細へ行けるようにする */
-const DEMO_SEED_IDS = ["promo-15s", "note-clip", "recipe-site"] as const;
+const DEMO_SEED_IDS = [
+  "promo-15s",
+  "novel-open",
+  "recipe-site",
+  "chrome-ext-store",
+] as const;
 
-/** /dashboard の見た目確認用。シードごとの届き方の差が分かる3本 */
+/** /dashboard の見た目確認用。4コース各1本 */
 export function installDemoSeeds(seederHandle: string): LocalSeed[] {
   const demos: LocalSeed[] = [
     {
       id: "promo-15s",
       seederHandle,
       title:
-        "宅配ボックスIoTの15秒プロモ。冒頭1秒で何の製品か分かるかだけ見てほしいコンペ",
-      description: "表示デモ用。届きが良い例。",
+        "宅配ボックスIoTの15秒プロモ。冒頭1秒で何の製品か分かるかだけ見てほしい（初見レビュー）",
+      description: "表示デモ用。初見レビュー ¥5,000。",
       focusNote: "冒頭1秒\n音なしでも伝わるか",
       externalUrl: "https://example.com/promo",
       tags: ["動画"],
       status: "open",
+      planLabel: "初見レビュー",
       prizeYen: 5000,
       closesInDays: 5,
       viewCount: 428,
@@ -94,14 +102,17 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
     },
     {
-      id: "note-clip",
+      id: "novel-open",
       seederHandle,
-      title: "メモアプリβのオンボーディング。空白の初見が怖くないかレビュー募集",
-      description: "表示デモ用。普通に回っている例。",
-      externalUrl: "https://example.com/memo",
-      tags: ["アプリ"],
+      title:
+        "短編『団地の屋上』冒頭の改善提案。続きが読みたくなるか、一人目の印象は残るか",
+      description: "表示デモ用。改善提案 ¥10,000。",
+      focusNote: "続きが欲しいか\n一人目の印象",
+      externalUrl: "https://example.com/novel",
+      tags: ["小説"],
       status: "open",
-      prizeYen: 5000,
+      planLabel: "改善提案",
+      prizeYen: 10000,
       closesInDays: 10,
       viewCount: 91,
       emoCount: 7,
@@ -112,16 +123,38 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
     {
       id: "recipe-site",
       seederHandle,
-      title: "5分レシピ棚の公開。検索せずにTonightが出るかだけコメント歓迎（チップなし）",
-      description: "表示デモ用。ほぼ届いていない例。",
+      title:
+        "5分レシピ棚の公開。検索せずにTonightが出るかだけコメント歓迎（無料コメント）",
+      description: "表示デモ用。無料コメント。ほぼ届いていない例。",
       externalUrl: "https://example.com/recipe",
       tags: ["Web"],
       status: "none",
+      planLabel: "無料コメント",
       viewCount: 14,
       emoCount: 0,
       bookmarkCount: 1,
       commentCount: 0,
       createdAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+    },
+    {
+      id: "chrome-ext-store",
+      seederHandle,
+      title:
+        "タブ整理Chrome拡張の公開ブースト。ストア／SNSへ正直な反応→報告（予算¥30,000）",
+      description: "表示デモ用。公開ブースト。記入後報告→選んで褒賞。",
+      externalUrl: "https://example.com/ext",
+      tags: ["アプリ"],
+      status: "open",
+      planLabel: "公開ブースト",
+      extReviewOn: true,
+      extPrizeYen: 30000,
+      prizeYen: 30000,
+      closesInDays: 7,
+      viewCount: 203,
+      emoCount: 11,
+      bookmarkCount: 8,
+      commentCount: 1,
+      createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
     },
   ];
 
@@ -131,6 +164,8 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
     if (demoIdSet.has(s.id)) return false;
     // 旧表示デモ（demo_seed_*）も入れ直し時に掃除
     if (s.id.startsWith("demo_seed_")) return false;
+    // 旧3本セットの note-clip も入れ直し時に掃除
+    if (s.id === "note-clip") return false;
     return true;
   });
   const next = [...demos, ...rest];
@@ -145,6 +180,7 @@ export function clearDemoSeeds(seederHandle: string) {
       if (s.seederHandle !== seederHandle) return true;
       if (demoIdSet.has(s.id)) return false;
       if (s.id.startsWith("demo_seed_")) return false;
+      if (s.id === "note-clip") return false;
       return true;
     }),
   );

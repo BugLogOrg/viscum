@@ -186,7 +186,8 @@ export default function DashboardPage() {
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge
                         status={s.status}
-                        prizeYen={s.prizeYen}
+                        prizeYen={s.prizeYen ?? s.extPrizeYen}
+                        planLabel={s.planLabel}
                         dense
                       />
                       {isDemoSeed(s.id) && (
@@ -194,9 +195,10 @@ export default function DashboardPage() {
                           表示デモ
                         </span>
                       )}
-                      {s.prizeYen != null && s.status === "open" && (
+                      {(s.prizeYen != null || s.extPrizeYen != null) &&
+                        s.status === "open" && (
                         <span className="text-[11px] text-viscum-muted">
-                          チップ {formatYen(s.prizeYen)}
+                          予算 {formatYen(s.prizeYen ?? s.extPrizeYen ?? 0)}
                         </span>
                       )}
                     </div>

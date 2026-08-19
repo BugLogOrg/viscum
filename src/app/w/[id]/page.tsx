@@ -12,6 +12,7 @@ import {
   formatPostedLine,
   getWork,
   postedAtFromHoursAgo,
+  planBadgeLabel,
   type Work,
 } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
@@ -64,6 +65,7 @@ export default async function WorkDetailPage({ params }: Props) {
                 status={work.status}
                 prizeYen={work.prizeYen}
                 paymentsDone={work.paymentsDone}
+                planLabel={planBadgeLabel(work.plan)}
               />
               <dl className="space-y-1 text-[14px] text-viscum-ink">
                 <div>

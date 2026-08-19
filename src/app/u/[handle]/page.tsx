@@ -12,6 +12,7 @@ import {
   getSeederPayFacts,
   getWorksBySeeder,
   getWorksMentoredBy,
+  planBadgeLabel,
 } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 
@@ -164,6 +165,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
                     <StatusBadge
                       status={work.status}
                       prizeYen={work.prizeYen}
+                      planLabel={planBadgeLabel(work.plan)}
                       dense
                     />
                     {adopted && (

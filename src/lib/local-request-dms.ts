@@ -157,15 +157,15 @@ export function installDemoRequestDms(viewerHandle: string) {
       fromHandle: viewerHandle,
       fromAccountName: viewerHandle,
       toHandle: "ayu",
-      amountYen: 1500,
-      pitch: "冒頭3秒だけ見てほしいです。",
+      amountYen: 10000,
+      pitch: "冒頭3秒と改善点だけ見てほしいです（直依頼・改善提案帯）。",
       status: "accepted",
       createdAt: new Date(now - 2 * 86400000).toISOString(),
       messages: [
         {
           id: "req_demo_02_m0",
           fromHandle: viewerHandle,
-          body: "冒頭3秒だけ見てほしいです。",
+          body: "冒頭3秒と改善点だけ見てほしいです（直依頼・改善提案帯）。",
           createdAt: new Date(now - 2 * 86400000).toISOString(),
         },
         {

@@ -1,5 +1,12 @@
 export type CompStatus = "none" | "open" | "pay_soon" | "closed";
 
+/** フィード／詳細デモ用。ADR-031/034 の4コース＋直依頼は別 */
+export type DemoSeedPlan =
+  | "free_comment"
+  | "first_impression"
+  | "brush_up"
+  | "public_boost";
+
 export type Comment = {
   id: string;
   author: string;
@@ -24,6 +31,8 @@ export type Work = {
   seeder: string;
   tags: string[];
   status: CompStatus;
+  /** デモ上のコース（価格表と揃える） */
+  plan?: DemoSeedPlan;
   prizeYen?: number;
   hoursAgo: number;
   /** 締切まであと何時間（なし／終了は undefined） */
@@ -38,6 +47,14 @@ export type Work = {
   paymentsDone?: number;
 };
 
+export function planBadgeLabel(plan?: DemoSeedPlan): string | undefined {
+  if (plan === "free_comment") return "無料コメント";
+  if (plan === "first_impression") return "初見レビュー";
+  if (plan === "brush_up") return "改善提案";
+  if (plan === "public_boost") return "公開ブースト";
+  return undefined;
+}
+
 export const DUMMY_WORKS: Work[] = [
   {
     id: "viscum-self",
@@ -46,6 +63,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "tori",
     tags: ["アプリ", "告知"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 2,
     closesInHours: 46,
@@ -75,8 +93,8 @@ export const DUMMY_WORKS: Work[] = [
       {
         id: "c3",
         author: "作り手C",
-        subject: "¥3,000は『広告費』と言い換えるとDMしやすい",
-        body: "知人にタダで見て、より他人に『払うから参加して』の方が心理的に楽、という仮説に近いです。金額もワンコインだとポイ活顔、¥3,000なら本気シグナルになる。コピーに『広告費として』を添える案は、紙コンペの募集文でも試せそうです。",
+        subject: "¥5,000は『広告費』と言い換えるとDMしやすい",
+        body: "知人にタダで見て、より他人に『払うから参加して』の方が心理的に楽、という仮説に近いです。金額も無料帯の薄い募集だと本気度が伝わらず、¥5,000なら本気シグナルになる。コピーに『広告費として』を添える案は、紙コンペの募集文でも試せそうです。",
         hoursAgo: 5,
       },
       {
@@ -95,6 +113,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "ayu",
     tags: ["アプリ"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 4,
     closesInHours: 20,
@@ -119,6 +138,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "ken",
     tags: ["動画"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 6,
     closesInHours: 8,
@@ -135,6 +155,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "sana",
     tags: ["小説", "短編", "冒頭"],
     status: "open",
+    plan: "brush_up",
     prizeYen: 10000,
     hoursAgo: 9,
     closesInHours: 72,
@@ -160,6 +181,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "rio",
     tags: ["アプリ", "LP"],
     status: "pay_soon",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 12,
     closesInHours: 30,
@@ -176,6 +198,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "moss",
     tags: ["ゲーム"],
     status: "none",
+    plan: "free_comment",
     hoursAgo: 14,
     description: "コンペなし。お礼と採用だけで回すテスト。",
     externalUrl: "https://example.com/moss",
@@ -197,6 +220,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "tab",
     tags: ["アプリ"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 18,
     closesInHours: 54,
@@ -208,11 +232,12 @@ export const DUMMY_WORKS: Work[] = [
   },
   {
     id: "podcast-cover",
-    title: "ポッドキャスト封面の大喜利コンペです。真面目な添削より、タイトル案・一言ツッコミ・サムネの第一印象をください。音声番組の顔としてクリックしたくなるか。短くて尖った案ほど採用しやすいです。¥3,000帯の軽量祭りなので気軽に。色・フォント・余白の違和感の指摘も歓迎しています。",
+    title: "ポッドキャスト封面の大喜利コンペです。真面目な添削より、タイトル案・一言ツッコミ・サムネの第一印象をください。音声番組の顔としてクリックしたくなるか。短くて尖った案ほど採用しやすいです。初見レビュー帯の軽量祭りなので気軽に。色・フォント・余白の違和感の指摘も歓迎しています。",
     tagline: "タイトル案を一言で",
     seeder: "wave",
     tags: ["音声", "大喜利"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 22,
     closesInHours: 12,
@@ -229,6 +254,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "neo",
     tags: ["アプリ"],
     status: "closed",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 48,
     paymentsDone: 1,
@@ -263,6 +289,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "tori",
     tags: ["アプリ", "決済"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 5,
     closesInHours: 28,
@@ -291,6 +318,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "yuki",
     tags: ["デザイン"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 3,
     closesInHours: 36,
@@ -307,6 +335,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "dev",
     tags: ["ツール"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 7,
     closesInHours: 96,
@@ -323,6 +352,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "nabe",
     tags: ["Web"],
     status: "none",
+    plan: "free_comment",
     hoursAgo: 11,
     description: "コンペなしの公開。感想歓迎。",
     externalUrl: "https://example.com/recipe",
@@ -336,6 +366,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "kai",
     tags: ["デザイン"],
     status: "open",
+    plan: "first_impression",
     prizeYen: 5000,
     hoursAgo: 1,
     closesInHours: 18,
@@ -352,7 +383,8 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "rim",
     tags: ["動画"],
     status: "open",
-    prizeYen: 5000,
+    plan: "brush_up",
+    prizeYen: 10000,
     hoursAgo: 5,
     closesInHours: 40,
     description: "音声のみ。導入の長さとトーン。",
@@ -362,27 +394,44 @@ export const DUMMY_WORKS: Work[] = [
   },
   {
     id: "chrome-ext-store",
-    title: "タブ整理Chrome拡張のストア提出前チェックです。説明文とスクショ3枚だけで、権限ダイアログが怖く見えないか、何が片付く拡張か分かるか。決済準備中のコンペです。インストールしたくなるコピーか、警戒が勝つか、スクショの順序の良し悪しも教えてください。短文の一票で構いません。",
-    tagline: "権限ダイアログが怖くないか",
+    title: "タブ整理Chrome拡張の公開ブーストです。Chromeウェブストア（またはX）へ正直な反応・投稿を残したあと、投稿URLを報告してください。権限ダイアログが怖く見えないか、何が片付く拡張か分かるか。褒賞は全員払いではなく、報告を見てシーダーが選びます。星の指定・やらせは不可。実利用したうえで書いてください。",
+    tagline: "ストア／SNSへ正直な反応→報告",
     seeder: "ext",
     tags: ["ツール", "アプリ"],
-    status: "pay_soon",
-    prizeYen: 5000,
+    status: "open",
+    plan: "public_boost",
+    prizeYen: 30000,
     hoursAgo: 9,
-    closesInHours: 24,
-    description: "ストア説明文とスクショ3枚。",
+    closesInHours: 72,
+    featured: true,
+    description:
+      "公開ブースト見本。外に書いてから報告。褒賞はシーダーが選ぶ（¥30,000予算）。",
+    prompts: [
+      "指定の公開場所へ正直な反応を残す",
+      "実利用したうえで書く",
+      "記入後に投稿URLを報告",
+    ],
     externalUrl: "https://example.com/ext",
     thumbTone: "leaf",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "メンターK",
+        subject: "ストアに短評を残して報告します",
+        body: "スクショ3枚を見てからインストールし、権限説明は許容範囲でした。ストアに『タブが束ねられて視界が楽』と短評を投稿済みです。報告URLはデモなので仮置きです → https://example.com/review-demo",
+        hoursAgo: 2,
+      },
+    ],
   },
   {
     id: "short-story",
-    title: "掌編『バス停の傘』約2000字のレビュー募集です。結末の余韻の切れ方だけ重点的に見てほしい。途中の描写より、最後の一文が残るか。タイトルと結末の対応も気になっています。ネタバレを件名に書いても大丈夫です。長さの負荷感と、読み直ししたいかどうかも一言ください。小説メンター向け。",
+    title: "掌編『バス停の傘』約2000字のレビュー募集です。結末の余韻の切れ方だけ重点的に見てほしい。途中の描写より、最後の一文が残るか。タイトルと結末の対応も気になっています。ネタバレを件名に書いても大丈夫です。長さの負荷感と、読み直ししたいかどうかも一言ください。小説メンター向け・改善提案帯。",
     tagline: "余韻の切れ方",
     seeder: "umi",
     tags: ["小説"],
     status: "open",
-    prizeYen: 5000,
+    plan: "brush_up",
+    prizeYen: 10000,
     hoursAgo: 14,
     closesInHours: 60,
     description: "2000字。結末の一言だけ見てほしい。",
@@ -397,7 +446,8 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "abo",
     tags: ["Web", "告知"],
     status: "open",
-    prizeYen: 8000,
+    plan: "brush_up",
+    prizeYen: 10000,
     hoursAgo: 2,
     closesInHours: 14,
     description: "2案のスクショ。選んだ理由を件名に。",
@@ -413,6 +463,7 @@ export const DUMMY_WORKS: Work[] = [
     seeder: "ico",
     tags: ["デザイン"],
     status: "none",
+    plan: "free_comment",
     hoursAgo: 20,
     description: "コンペなし。好き嫌いコメント歓迎。",
     externalUrl: "https://example.com/icon",
@@ -449,20 +500,20 @@ const DUMMY_SEEDER_PAY: Record<
 > = {
   tori: { paidYenTotal: 48000, paymentsCount: 12 },
   ayu: { paidYenTotal: 15000, paymentsCount: 3 },
-  ken: { paidYenTotal: 9000, paymentsCount: 2 },
-  sana: { paidYenTotal: 3000, paymentsCount: 1 },
+  ken: { paidYenTotal: 10000, paymentsCount: 2 },
+  sana: { paidYenTotal: 10000, paymentsCount: 1 },
   rio: { paidYenTotal: 0, paymentsCount: 0 },
-  moss: { paidYenTotal: 6000, paymentsCount: 2 },
-  tab: { paidYenTotal: 12000, paymentsCount: 4 },
-  wave: { paidYenTotal: 3000, paymentsCount: 1 },
-  neo: { paidYenTotal: 21000, paymentsCount: 5 },
+  moss: { paidYenTotal: 5000, paymentsCount: 1 },
+  tab: { paidYenTotal: 15000, paymentsCount: 3 },
+  wave: { paidYenTotal: 5000, paymentsCount: 1 },
+  neo: { paidYenTotal: 25000, paymentsCount: 5 },
   yuki: { paidYenTotal: 0, paymentsCount: 0 },
-  dev: { paidYenTotal: 8000, paymentsCount: 2 },
+  dev: { paidYenTotal: 10000, paymentsCount: 2 },
   nabe: { paidYenTotal: 0, paymentsCount: 0 },
   kai: { paidYenTotal: 5000, paymentsCount: 1 },
-  rim: { paidYenTotal: 10000, paymentsCount: 2 },
-  ext: { paidYenTotal: 3000, paymentsCount: 1 },
-  umi: { paidYenTotal: 15000, paymentsCount: 3 },
+  rim: { paidYenTotal: 10000, paymentsCount: 1 },
+  ext: { paidYenTotal: 30000, paymentsCount: 1 },
+  umi: { paidYenTotal: 20000, paymentsCount: 2 },
   abo: { paidYenTotal: 0, paymentsCount: 0 },
   ico: { paidYenTotal: 0, paymentsCount: 0 },
 };
@@ -511,7 +562,7 @@ const DUMMY_MENTOR_FACTS: Record<
     participatedCount: 3,
     adoptedCount: 2,
     tipsReceivedCount: 1,
-    tipsReceivedYenTotal: 3000,
+    tipsReceivedYenTotal: 5000,
   },
   ayu: {
     participatedCount: 2,
