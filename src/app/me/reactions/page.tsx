@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   clearDemoReactions,
@@ -16,10 +17,18 @@ import {
 
 type Tab = "all" | ReactionKind;
 
+function tabFromQuery(raw: string | null): Tab {
+  if (raw === "suki" || raw === "bookmark") return raw;
+  return "all";
+}
+
 export default function MyReactionsPage() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
   const [rows, setRows] = useState<LocalReaction[]>([]);
-  const [tab, setTab] = useState<Tab>("all");
+  const [tab, setTab] = useState<Tab>(() =>
+    tabFromQuery(searchParams.get("tab")),
+  );
   const [demoOn, setDemoOn] = useState(false);
 
   function refresh() {
@@ -34,6 +43,10 @@ export default function MyReactionsPage() {
   useEffect(() => {
     refresh();
   }, []);
+
+  useEffect(() => {
+    setTab(tabFromQuery(searchParams.get("tab")));
+  }, [searchParams]);
 
   const filtered = useMemo(() => {
     if (tab === "all") return rows;
