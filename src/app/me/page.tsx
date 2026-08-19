@@ -8,15 +8,27 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { formatYen } from "@/data/dummy-works";
 import {
   readLocalSeeds,
+  installDemoSeeds,
+  clearDemoSeeds,
+  hasDemoSeeds,
+  isDemoSeed,
   type LocalSeed,
 } from "@/lib/local-seeds";
 
 export default function MePage() {
   const { data: session, status } = useSession();
   const [seeds, setSeeds] = useState<LocalSeed[]>([]);
+  const [demoOn, setDemoOn] = useState(false);
+
+  function refresh() {
+    const h = session?.user?.handle;
+    setSeeds(readLocalSeeds());
+    setDemoOn(h ? hasDemoSeeds(h) : false);
+  }
 
   useEffect(() => {
-    setSeeds(readLocalSeeds());
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.user?.handle]);
 
   const mine = useMemo(() => {
@@ -53,6 +65,8 @@ export default function MePage() {
     );
   }
 
+  const handle = session.user.handle;
+
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
       <SiteHeader backHref="/" />
@@ -61,11 +75,12 @@ export default function MePage() {
           <div>
             <p className="text-xs text-viscum-muted">シーダー</p>
             <h1 className="text-xl font-semibold text-viscum-ink">
-              @{session.user.handle}
+              @{handle}
             </h1>
             <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-              広告の届き方は<strong className="font-medium text-viscum-ink">シードごと</strong>
-              に見ます（キャンペーン単位）。合計だけでは次に何を直すか分かりません。公開プロフィールの信用欄には出しません。
+              広告の届き方は
+              <strong className="font-medium text-viscum-ink">シードごと</strong>
+              に見ます（キャンペーン単位）。公開プロフィールの信用欄には出しません。
             </p>
           </div>
           <button
@@ -78,27 +93,64 @@ export default function MePage() {
         </div>
 
         <section className="space-y-3">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-[15px] font-semibold text-viscum-ink">
               シードごとの届き方
             </h2>
-            <Link
-              href="/new"
-              className="text-[13px] font-medium text-viscum-brand underline"
-            >
-              シードする
-            </Link>
+            <div className="flex items-center gap-3">
+              {demoOn ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearDemoSeeds(handle);
+                    refresh();
+                  }}
+                  className="text-[12px] text-viscum-muted underline"
+                >
+                  デモを消す
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    installDemoSeeds(handle);
+                    refresh();
+                  }}
+                  className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                >
+                  表示デモを入れる
+                </button>
+              )}
+              <Link
+                href="/new"
+                className="text-[13px] font-medium text-viscum-brand underline"
+              >
+                シードする
+              </Link>
+            </div>
           </div>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
-            Neon未接続のあいだは、この端末に保存したシードのみ。DB接続後はサーバ集計に切り替えます。
+            {demoOn
+              ? "いまは見た目確認用のデモ3本です（届きが良い／普通／ほぼ届かない）。"
+              : "Neon未接続のあいだは、この端末に保存したシードのみ。空なら「表示デモを入れる」でレイアウトを確認できます。"}
           </p>
 
           {mine.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-viscum-line px-4 py-6 text-[13px] leading-relaxed text-viscum-muted">
-              まだありません。ログインした状態でシードすると、ここに
-              <span className="text-viscum-ink">1本ごとの</span>
-              閲覧・EMO・気になる・コメントが並びます。
-            </p>
+            <div className="rounded-lg border border-dashed border-viscum-line px-4 py-6 text-center">
+              <p className="text-[13px] leading-relaxed text-viscum-muted">
+                まだありません。
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  installDemoSeeds(handle);
+                  refresh();
+                }}
+                className="mt-4 rounded-md bg-viscum-berry px-4 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+              >
+                表示デモを入れる
+              </button>
+            </div>
           ) : (
             <ul className="space-y-3">
               {mine.map((s) => (
@@ -112,6 +164,11 @@ export default function MePage() {
                       prizeYen={s.prizeYen}
                       dense
                     />
+                    {isDemoSeed(s.id) && (
+                      <span className="rounded-full bg-viscum-paper-2 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
+                        表示デモ
+                      </span>
+                    )}
                     {s.prizeYen != null && s.status === "open" && (
                       <span className="text-[11px] text-viscum-muted">
                         チップ {formatYen(s.prizeYen)}
@@ -155,7 +212,7 @@ export default function MePage() {
 
         <p className="text-center text-sm">
           <Link
-            href={`/u/${encodeURIComponent(session.user.handle)}`}
+            href={`/u/${encodeURIComponent(handle)}`}
             className="text-viscum-brand underline"
           >
             公開ポートフォリオ（支払い事実）

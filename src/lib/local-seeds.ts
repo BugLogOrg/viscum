@@ -65,3 +65,84 @@ export function bumpLocalSeedStat(
   seeds[i] = { ...seeds[i], [field]: seeds[i][field] + 1 };
   writeLocalSeeds(seeds);
 }
+
+const DEMO_PREFIX = "demo_seed_";
+
+/** /me の見た目確認用。シードごとの届き方の差が分かる3本 */
+export function installDemoSeeds(seederHandle: string): LocalSeed[] {
+  const demos: LocalSeed[] = [
+    {
+      id: `${DEMO_PREFIX}hot`,
+      seederHandle,
+      title:
+        "宅配ボックスIoTの15秒プロモ。冒頭1秒で何の製品か分かるかだけ見てほしいコンペ",
+      description: "表示デモ用。届きが良い例。",
+      focusNote: "冒頭1秒\n音なしでも伝わるか",
+      externalUrl: "https://example.com/promo",
+      tags: ["動画"],
+      status: "open",
+      prizeYen: 3000,
+      closesInDays: 5,
+      viewCount: 428,
+      emoCount: 36,
+      bookmarkCount: 19,
+      commentCount: 12,
+      createdAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+    },
+    {
+      id: `${DEMO_PREFIX}mid`,
+      seederHandle,
+      title: "メモアプリβのオンボーディング。空白の初見が怖くないかレビュー募集",
+      description: "表示デモ用。普通に回っている例。",
+      externalUrl: "https://example.com/memo",
+      tags: ["アプリ"],
+      status: "open",
+      prizeYen: 5000,
+      closesInDays: 10,
+      viewCount: 91,
+      emoCount: 7,
+      bookmarkCount: 4,
+      commentCount: 3,
+      createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
+    },
+    {
+      id: `${DEMO_PREFIX}quiet`,
+      seederHandle,
+      title: "CLIのREADME初見。インストール前の期待値だけコメント歓迎（チップなし）",
+      description: "表示デモ用。ほぼ届いていない例。",
+      externalUrl: "https://example.com/cli",
+      tags: ["ツール"],
+      status: "none",
+      viewCount: 14,
+      emoCount: 0,
+      bookmarkCount: 1,
+      commentCount: 0,
+      createdAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+    },
+  ];
+
+  const rest = readLocalSeeds().filter(
+    (s) => !s.id.startsWith(DEMO_PREFIX) || s.seederHandle !== seederHandle,
+  );
+  const next = [...demos, ...rest];
+  writeLocalSeeds(next);
+  return demos;
+}
+
+export function clearDemoSeeds(seederHandle: string) {
+  writeLocalSeeds(
+    readLocalSeeds().filter(
+      (s) => !(s.id.startsWith(DEMO_PREFIX) && s.seederHandle === seederHandle),
+    ),
+  );
+}
+
+export function hasDemoSeeds(seederHandle: string) {
+  return readLocalSeeds().some(
+    (s) => s.id.startsWith(DEMO_PREFIX) && s.seederHandle === seederHandle,
+  );
+}
+
+export function isDemoSeed(id: string) {
+  return id.startsWith(DEMO_PREFIX);
+}
