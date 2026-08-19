@@ -123,8 +123,6 @@ export default async function SeederPortfolioPage({ params }: Props) {
         </p>
       </header>
 
-      <PortfolioWall handle={display} />
-
       <section className="border-b border-viscum-line">
         <p className="px-4 pt-4 text-[13px] font-medium text-viscum-ink">
           シードした作品 · {works.length}件
@@ -191,6 +189,8 @@ export default async function SeederPortfolioPage({ params }: Props) {
           </ul>
         )}
       </section>
+
+      <PortfolioWall handle={display} />
 
       <p className="px-4 py-8 text-center text-sm">
         <Link href="/" className="text-viscum-brand hover:underline">
