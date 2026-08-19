@@ -12,7 +12,7 @@ export default function NewWorkPage() {
         <p className="text-xs text-viscum-muted">S04 · 投稿デモ</p>
         <h1 className="mt-1 text-xl font-semibold text-viscum-ink">シードする</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-          タイトルが棚の見出し、メンターへのお願いが入口。一言・別途お題は置きません（重複しやすいので）。コンペは任意の小さな広告です。
+          どう出すかはどれか一つ（無料／場内コンペ／公開ブースト）。褒賞は稀少で、記入後に選んで払います。広げて候補を集めるのもシーダーの仕事です。
         </p>
         <div className="mt-6">
           <PostForm />

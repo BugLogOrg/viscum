@@ -9,6 +9,7 @@ import { formatYen, type CompStatus } from "@/data/dummy-works";
 import {
   SEED_COURSES,
   MAX_COURSE_QUESTIONS,
+  PUBLIC_BOOST,
   courseById,
   type SeedCourseId,
 } from "@/data/seed-courses";
@@ -24,9 +25,6 @@ const RECOMMENDED_TAGS = [
   "ゲーム",
   "LP",
 ] as const;
-
-/** 公開ブースト（プランD）本命帯。旗艦は¥30,000パッケージ */
-const EXT_REVIEW_PRESETS = [5000, 10000, 30000] as const;
 
 /** 締切のプリセット（相対日数）。カレンダーよりミスりにくい */
 const CLOSE_PRESETS = [
@@ -62,22 +60,32 @@ export function PostForm() {
   const [focusNote, setFocusNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
-  const [compOn, setCompOn] = useState(false);
-  const [extReviewOn, setExtReviewOn] = useState(false);
+  const [planMode, setPlanMode] = useState<"free" | "field" | "boost">("free");
   const [courseId, setCourseId] = useState<SeedCourseId>("first_impression");
   const [questions, setQuestions] = useState<string[]>(() => [
     ...courseById("first_impression").questions,
   ]);
-  const [extPrizeYen, setExtPrizeYen] =
-    useState<(typeof EXT_REVIEW_PRESETS)[number]>(5000);
+  const [boostCriteria, setBoostCriteria] = useState<string[]>(() => [
+    ...PUBLIC_BOOST.criteria,
+  ]);
   const [closesInDays, setClosesInDays] = useState(7);
   const [saved, setSaved] = useState(false);
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
   const [thumbName, setThumbName] = useState<string | null>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
+  const compOn = planMode === "field";
+  const extReviewOn = planMode === "boost";
   const course = courseById(courseId);
   const prizeYen = course.yen;
+  const extPrizeYen = PUBLIC_BOOST.yen;
+
+  function setPlan(next: "free" | "field" | "boost") {
+    setPlanMode(next);
+    if (next === "field" && questions.every((q) => !q.trim())) {
+      setQuestions([...course.questions]);
+    }
+  }
 
   useEffect(() => {
     return () => {
@@ -125,15 +133,12 @@ export function PostForm() {
     externalUrl.trim().length > 8 &&
     description.trim().length > 0 &&
     (!compOn || (prizeYen >= 5000 && promptList.length >= 1)) &&
-    (!extReviewOn || extPrizeYen >= 5000);
+    (!extReviewOn || extPrizeYen === PUBLIC_BOOST.yen);
 
   function applyCourse(id: SeedCourseId) {
     const next = courseById(id);
     setCourseId(id);
     setQuestions([...next.questions]);
-    if (id === "boost") {
-      setExtPrizeYen(30000);
-    }
   }
 
   function setQuestionAt(index: number, value: string) {
@@ -160,6 +165,18 @@ export function PostForm() {
     setQuestions([...course.questions]);
   }
 
+  function setCriterionAt(index: number, value: string) {
+    setBoostCriteria((prev) => {
+      const copy = [...prev];
+      copy[index] = value;
+      return copy;
+    });
+  }
+
+  function resetBoostCriteria() {
+    setBoostCriteria([...PUBLIC_BOOST.criteria]);
+  }
+
   function toggleTag(tag: string) {
     setTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
@@ -179,17 +196,13 @@ export function PostForm() {
         ? `${window.location.origin}${DEMO_DETAIL_HREF}`
         : DEMO_DETAIL_HREF;
     const lines: string[] = [];
-    if (compOn && extReviewOn) {
+    if (compOn) {
       lines.push(
-        `【VISCUM】コメントコンペ＋公開ブースト · 場内 ${formatYen(prizeYen)}／公開 ${formatYen(extPrizeYen)}`,
-      );
-    } else if (compOn) {
-      lines.push(
-        `【VISCUM】${course.name} · チップ ${formatYen(prizeYen)}`,
+        `【VISCUM】${course.name} · 予算 ${formatYen(prizeYen)}`,
       );
     } else if (extReviewOn) {
       lines.push(
-        `【VISCUM】公開ブースト募集 · 合格で ${formatYen(extPrizeYen)}（検品後払い）`,
+        `【VISCUM】公開ブースト · 予算 ${formatYen(extPrizeYen)}（記入後報告→選んで褒賞）`,
       );
     } else {
       lines.push(`【VISCUM】コメント歓迎`);
@@ -205,8 +218,12 @@ export function PostForm() {
     if (extReviewOn) {
       lines.push(
         "",
-        "ストア／拡張／SNSなど公開の場所への正直な反応・投稿も募集（やらせ不可・合格者へ確実払い）。",
+        "ストア／拡張／SNSなど公開の場所への正直な反応・投稿を募集（記入後に報告。褒賞はシーダーが選ぶ／全員払いではない）。",
       );
+      const crit = boostCriteria.map((c) => c.trim()).filter(Boolean);
+      if (crit.length > 0) {
+        lines.push("", ...crit.map((c) => `・${c}`));
+      }
     }
     return lines.join("\n");
   }
@@ -268,18 +285,23 @@ export function PostForm() {
           )}
           {compOn && (
             <p className="text-[13px] text-viscum-ink">
-              {course.name} · チップ {formatYen(prizeYen)} · 締切 あと約
+              {course.name} · 予算 {formatYen(prizeYen)} · 締切 あと約
               {closesInDays}日
+            </p>
+          )}
+          {extReviewOn && (
+            <p className="text-[13px] text-viscum-ink">
+              公開ブースト · 予算 {formatYen(extPrizeYen)} · 記入後報告→選んで褒賞
             </p>
           )}
         </div>
 
         <div className="rounded-lg border border-viscum-berry/30 bg-viscum-berry/5 px-4 py-4 space-y-3">
           <p className="text-[14px] font-medium text-viscum-berry-deep">
-            共有する
+            共有する（拡散が候補を集める）
           </p>
           <p className="text-[12px] leading-relaxed text-viscum-muted">
-            SNSは拡声器。コンペやお願いのURLを、自分で貼って営業します。
+            コンペの「お値段以上」は、メンターが差異化してくれることと、シーダーが広げることの掛け算です。URLを自分で貼って候補を集めましょう。
           </p>
           <pre className="whitespace-pre-wrap break-all rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[12px] text-viscum-trunk">
             {shareText()}
@@ -484,7 +506,7 @@ export function PostForm() {
         {!compOn ? (
           <>
             <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
-              見てほしいところの入口です。書いていない論点を書かれても大丈夫（採用・チップはシーダーが選びます）。コンペにしなくても書けます。
+              見てほしいところの入口です。書いていない論点を書かれても大丈夫（採用・褒賞はシーダーが選びます）。コンペにしなくても書けます。
             </p>
             <textarea
               value={focusNote}
@@ -555,28 +577,58 @@ export function PostForm() {
       </div>
 
       <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-4 py-4 space-y-4">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={compOn}
-            onChange={(e) => {
-              const on = e.target.checked;
-              setCompOn(on);
-              if (on && promptList.length === 0) {
-                setQuestions([...course.questions]);
-              }
-            }}
-            className="mt-1"
-          />
-          <span>
-            <span className="block text-[14px] font-medium text-viscum-ink">
-              コメントコンペにする
-            </span>
-            <span className="mt-0.5 block text-[12px] leading-relaxed text-viscum-muted">
-              コースを選んで、おすすめ質問を足場に反応を募集します。必須ではありません。無料のまま並べるだけでもOKです。
-            </span>
-          </span>
-        </label>
+        <div>
+          <p className="text-[14px] font-medium text-viscum-ink">
+            どう出しますか？（どれか一つ）
+          </p>
+          <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
+            価格は ¥0／¥5,000／¥10,000／¥30,000
+            だけ。場内と公開ブーストは同じ投稿では重ねません。褒賞は稀少（記入後に選んで払う）。メンターは選ばれるためにアレンジしがち——それがシーダーの美味しいところです。
+          </p>
+        </div>
+
+        <div className="grid gap-2">
+          {(
+            [
+              {
+                id: "free" as const,
+                title: "並べる（無料）",
+                body: "コメント歓迎だけ。お金は使いません。",
+              },
+              {
+                id: "field" as const,
+                title: "場内で聞く",
+                body: "VISCUM内のコメントコンペ。初見¥5,000／改善¥10,000。",
+              },
+              {
+                id: "boost" as const,
+                title: "外でも試す · 公開ブースト",
+                body: `予算 ${formatYen(PUBLIC_BOOST.yen)} 一択。外に書いて報告→あなたが選んで褒賞。`,
+              },
+            ] as const
+          ).map((opt) => {
+            const on = planMode === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setPlan(opt.id)}
+                className={`rounded-md border px-3 py-2.5 text-left transition ${
+                  on
+                    ? "border-viscum-berry bg-viscum-berry text-white"
+                    : "border-viscum-line bg-white/70 text-viscum-ink hover:border-viscum-berry"
+                }`}
+              >
+                <span className="block text-[13px] font-medium">{opt.title}</span>
+                <span
+                  className={`mt-0.5 block text-[12px] leading-snug ${on ? "text-white/90" : "text-viscum-muted"}`}
+                >
+                  {opt.body}
+                </span>
+              </button>
+            );
+          })}
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[12px] text-viscum-muted">いまの見え方：</span>
@@ -586,6 +638,11 @@ export function PostForm() {
           />
           {compOn && (
             <span className="text-[12px] text-viscum-ink">{course.name}</span>
+          )}
+          {extReviewOn && (
+            <span className="text-[12px] text-viscum-ink">
+              公開ブースト {formatYen(extPrizeYen)}
+            </span>
           )}
         </div>
 
@@ -619,7 +676,7 @@ export function PostForm() {
                 {title.trim() || "（タイトルがヘッドラインになります）"}
               </p>
               <p className="mt-1 text-[12px] text-viscum-ink">
-                {course.name} · チップ {formatYen(prizeYen)} · 締切 あと約
+                {course.name} · 予算 {formatYen(prizeYen)} · 締切 あと約
                 {closesInDays}日
               </p>
             </div>
@@ -627,9 +684,9 @@ export function PostForm() {
             <div>
               <p className="text-[13px] font-medium text-viscum-ink">コース</p>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
-                価格で質を保証しません。集め方の型が変わります。選ぶとおすすめ質問に戻します。
+                差は「質の保証」ではなく、聞き方の目的です。選ぶとおすすめ質問に戻します。
               </p>
-              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
                 {SEED_COURSES.map((c) => {
                   const on = courseId === c.id;
                   return (
@@ -661,10 +718,7 @@ export function PostForm() {
                 })}
               </div>
               <p className="mt-1.5 text-[11px] text-viscum-muted">
-                下限 ¥5,000。払うのは採用したあと（デモでは決済しません）。
-                {courseId === "boost"
-                  ? " ブーストは下の「公開ブースト」とセットがおすすめです。"
-                  : ""}
+                払うのは採用したあと（デモでは決済しません）。広げて候補を集め、刺さった人を選ぶのがシーダーの仕事です。
               </p>
             </div>
 
@@ -682,7 +736,7 @@ export function PostForm() {
                 </button>
               </div>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
-                テンプレは足場です。文言を変えても、空欄を足しても大丈夫（最大
+                テンプレは足場です。メンターはここから自分なりにアレンジして書いてくれます（最大
                 {MAX_COURSE_QUESTIONS}問）。
               </p>
               <ul className="mt-2 space-y-2">
@@ -757,56 +811,57 @@ export function PostForm() {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-4 py-4 space-y-4">
-        <label className="flex cursor-pointer items-start gap-3">
-          <input
-            type="checkbox"
-            checked={extReviewOn}
-            onChange={(e) => setExtReviewOn(e.target.checked)}
-            className="mt-1"
-          />
-          <span>
-            <span className="block text-[14px] font-medium text-viscum-ink">
-              公開ブーストも頼む
-            </span>
-            <span className="mt-0.5 block text-[12px] leading-relaxed text-viscum-muted">
-              App Store や Chrome
-              拡張、SNSなど、外の公開の場所へ正直な反応や投稿を残してもらいます。合格した人には固定謝礼を確実に払います（検品後払い。前払い確約はしません）。やらせや、触ってもいない星だけは不合格。場内コンペと同時でもOKです。媒体枠の「広告」ではなく、押し上げのブーストです。
-            </span>
-          </span>
-        </label>
 
         {extReviewOn && (
-          <div className="space-y-3 border-t border-viscum-line pt-4">
-            <div>
+          <div className="space-y-4 border-t border-viscum-line pt-4">
+            <div className="rounded-md border border-viscum-berry/40 bg-white/60 px-3 py-2.5">
               <p className="text-[13px] font-medium text-viscum-ink">
-                合格者への固定謝礼（1件あたり）
+                {PUBLIC_BOOST.name} · 予算 {formatYen(PUBLIC_BOOST.yen)}
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {EXT_REVIEW_PRESETS.map((yen) => (
-                  <button
-                    key={yen}
-                    type="button"
-                    onClick={() => setExtPrizeYen(yen)}
-                    className={`rounded-md border px-3 py-1.5 text-[13px] font-medium transition ${
-                      extPrizeYen === yen
-                        ? "border-viscum-berry bg-viscum-berry text-white"
-                        : "border-viscum-line bg-white/70 text-viscum-ink hover:border-viscum-berry"
-                    }`}
-                  >
-                    {formatYen(yen)}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-1.5 text-[11px] text-viscum-muted">
-                下限 ¥5,000。合格確定後に支払い（デモでは決済しません）。決済手数料はお支払いに上乗せ（シーダー負担）。
+              <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
+                依頼して書かせるのではなく、募集します。メンターが外に書いて報告→あなたが誰に上げるか選ぶ。星や好意は保証しません。広げた分だけ候補が増えやすいです。
               </p>
             </div>
-            <p className="text-[12px] leading-relaxed text-viscum-muted">
-              合格の目安（デモ文言）: 実利用したうえで書く／指定ポイントに触れる／テンプレ量産でない／必要な開示がある。不合格は差し戻しまたは不払い。
-            </p>
+
+            <ol className="list-decimal space-y-1 pl-5 text-[12px] leading-relaxed text-viscum-ink">
+              <li>募集を出す（この画面）</li>
+              <li>参加者が外に正直な反応・投稿を残す</li>
+              <li>記入後に投稿URLなどを報告</li>
+              <li>あなたが報告を見て、褒賞を上げる相手を選ぶ</li>
+            </ol>
+
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[13px] font-medium text-viscum-ink">
+                  募集の目安（足場）
+                </p>
+                <button
+                  type="button"
+                  onClick={resetBoostCriteria}
+                  className="text-[12px] text-viscum-brand underline"
+                >
+                  おすすめに戻す
+                </button>
+              </div>
+              <ul className="mt-2 space-y-2">
+                {boostCriteria.map((line, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
+                      {i + 1}.
+                    </span>
+                    <input
+                      type="text"
+                      value={line}
+                      onChange={(e) => setCriterionAt(i, e.target.value)}
+                      className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[13px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
+                    />
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-1.5 text-[11px] text-viscum-muted">
+                全員払いではありません。虚偽・未使用・禁止違反は除外の目安。決済手数料はお支払いに上乗せ（シーダー負担）。人数保証・星の売買はしません。
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -814,7 +869,7 @@ export function PostForm() {
       <div className="rounded-lg border border-dashed border-viscum-line px-4 py-3">
         <p className="text-[13px] font-medium text-viscum-ink">直依頼について</p>
         <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-          「あなたに頼みたい」は、シードしたあとにできます。公開コンペとは別のお願いです。シード完了画面から、サイト内メンターへの指名と外部DM用URLに進めます。
+          「あなたに頼みたい」は、シードしたあとにできます。公開の募集／コンペとは別のお願いです。シード完了画面から進めます。
         </p>
       </div>
 

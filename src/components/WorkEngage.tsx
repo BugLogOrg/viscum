@@ -112,8 +112,8 @@ export function WorkEngage({
           <p className="font-medium text-viscum-berry-deep">コンペ帯</p>
           <p className="mt-1 text-viscum-ink">
             {prizeYen
-              ? `賞金 ${formatYen(prizeYen)}（広告費として）`
-              : "賞金なし"}
+              ? `予算 ${formatYen(prizeYen)}（採用した人に褒賞）`
+              : "予算なし"}
             {deadlineLine ? ` · 締切 ${deadlineLine}` : ""}
             {status === "pay_soon" && " · 決済準備中"}
             {compClosed && " · 受付終了"}
