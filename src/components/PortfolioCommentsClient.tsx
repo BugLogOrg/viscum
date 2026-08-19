@@ -129,17 +129,6 @@ export function PortfolioCommentsClient({
               <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
                 <LinkifiedText text={p.body} />
               </p>
-              {p.workId && (
-                <p className="mt-1.5 text-[11px] text-viscum-muted">
-                  案件：
-                  <Link
-                    href={`/w/${encodeURIComponent(p.workId)}`}
-                    className="text-viscum-brand hover:underline"
-                  >
-                    {p.workTitle ?? p.workId}
-                  </Link>
-                </p>
-              )}
             </li>
           ))}
         </ul>
