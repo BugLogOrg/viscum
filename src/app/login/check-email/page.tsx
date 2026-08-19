@@ -39,7 +39,7 @@ function CheckEmailBody() {
 export default function CheckEmailPage() {
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/login" hidePostCta />
+      <SiteHeader hidePostCta hideAccountActions />
       <Suspense
         fallback={
           <main className="px-4 py-8 text-sm text-viscum-muted">読み込み中…</main>

@@ -11,11 +11,14 @@ export function SiteHeader({
   hideOnMd = false,
   /** /new・login・設定など、シードCTA自体が不要な面だけ true */
   hidePostCta = false,
+  /** ログイン／オンボなど：通知・アカウント操作を出さない */
+  hideAccountActions = false,
 }: {
   title?: string;
   backHref?: string;
   hideOnMd?: boolean;
   hidePostCta?: boolean;
+  hideAccountActions?: boolean;
 }) {
   return (
     <header
@@ -43,18 +46,22 @@ export function SiteHeader({
             </Link>
           )}
         </div>
-        <div className="flex shrink-0 items-center gap-1">
-          <HeaderAccountActions />
-          {!hidePostCta && (
-            <Link
-              href="/new"
-              title="作品をシードする（棚に並べる）"
-              className="ml-1 rounded-md bg-viscum-berry px-2.5 py-1.5 text-xs font-medium text-white hover:bg-viscum-berry-deep"
-            >
-              シードする
-            </Link>
-          )}
-        </div>
+        {!hideAccountActions || !hidePostCta ? (
+          <div className="flex shrink-0 items-center gap-1">
+            {!hideAccountActions ? <HeaderAccountActions /> : null}
+            {!hidePostCta && (
+              <Link
+                href="/new"
+                title="作品をシードする（棚に並べる）"
+                className="ml-1 rounded-md bg-viscum-berry px-2.5 py-1.5 text-xs font-medium text-white hover:bg-viscum-berry-deep"
+              >
+                シードする
+              </Link>
+            )}
+          </div>
+        ) : (
+          <span className="w-0" aria-hidden />
+        )}
       </div>
     </header>
   );

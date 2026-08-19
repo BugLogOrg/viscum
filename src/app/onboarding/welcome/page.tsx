@@ -126,7 +126,7 @@ function WelcomeBody() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/" hidePostCta />
+      <SiteHeader hidePostCta hideAccountActions />
       <main className="px-4 py-8">
         {preview && (
           <p className="mb-4 rounded-md bg-viscum-leaf-soft/50 px-3 py-2 text-[11px] text-viscum-muted">

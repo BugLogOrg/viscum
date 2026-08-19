@@ -52,7 +52,7 @@ export default function OnboardingHandlePage() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/" hidePostCta />
+      <SiteHeader hidePostCta hideAccountActions />
       <main className="px-4 py-8">
         <h1 className="text-xl font-semibold text-viscum-ink">英語IDを決める</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">

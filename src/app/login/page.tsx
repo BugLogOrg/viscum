@@ -81,7 +81,7 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/" hidePostCta />
+      <SiteHeader hidePostCta hideAccountActions />
       <main className="px-4 py-8">
         <h1 className="text-xl font-semibold text-viscum-ink">ログイン</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
