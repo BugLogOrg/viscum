@@ -24,11 +24,22 @@ export default function OnboardingHandlePage() {
     });
     const json = (await res.json().catch(() => null)) as {
       message?: string;
+      error?: string;
       handle?: string;
     } | null;
     setPending(false);
     if (!res.ok) {
-      setError(json?.message || "設定に失敗しました");
+      if (
+        json?.error === "handle taken" ||
+        /使われて|already|taken|存在/i.test(json?.message ?? "")
+      ) {
+        setError(
+          json?.message ||
+            "この英語IDはすでに使われています。別のものを選んでください",
+        );
+      } else {
+        setError(json?.message || "設定に失敗しました。もう一度お試しください");
+      }
       return;
     }
     await update({ handle: json?.handle });

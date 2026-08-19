@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { users } from "@/db/schema";
 
 function normalizeHandle(raw: string) {
-  return raw.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 24);
+  return raw
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]/g, "")
+    .slice(0, 24);
 }
 
 /** 初回 Magic Link 後の英語ID確定（以降変更は重い） */
@@ -13,11 +17,17 @@ export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id;
   if (!userId) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "unauthorized", message: "ログインし直してください" },
+      { status: 401 },
+    );
   }
   if (!hasDatabase()) {
     return NextResponse.json(
-      { error: "database unavailable" },
+      {
+        error: "database unavailable",
+        message: "しばらくしてからもう一度お試しください",
+      },
       { status: 503 },
     );
   }
@@ -36,7 +46,10 @@ export async function POST(req: Request) {
   const db = getDb();
   if (!db) {
     return NextResponse.json(
-      { error: "database unavailable" },
+      {
+        error: "database unavailable",
+        message: "しばらくしてからもう一度お試しください",
+      },
       { status: 503 },
     );
   }
@@ -47,7 +60,10 @@ export async function POST(req: Request) {
     .where(eq(users.id, userId))
     .limit(1);
   if (!me[0]) {
-    return NextResponse.json({ error: "user not found" }, { status: 404 });
+    return NextResponse.json(
+      { error: "user not found", message: "ユーザーが見つかりません" },
+      { status: 404 },
+    );
   }
   if (me[0].handle) {
     return NextResponse.json(
@@ -63,11 +79,16 @@ export async function POST(req: Request) {
   const taken = await db
     .select({ id: users.id })
     .from(users)
-    .where(and(eq(users.handle, handle), ne(users.id, userId)))
+    .where(
+      and(sql`lower(${users.handle}) = ${handle}`, ne(users.id, userId)),
+    )
     .limit(1);
   if (taken[0]) {
     return NextResponse.json(
-      { error: "handle taken", message: "この英語IDは使われています" },
+      {
+        error: "handle taken",
+        message: "この英語IDはすでに使われています。別のものを選んでください",
+      },
       { status: 409 },
     );
   }
@@ -75,10 +96,29 @@ export async function POST(req: Request) {
   const name =
     me[0].name && me[0].name.trim() !== "" ? me[0].name : handle;
 
-  await db
-    .update(users)
-    .set({ handle, name })
-    .where(eq(users.id, userId));
+  try {
+    await db
+      .update(users)
+      .set({ handle, name })
+      .where(eq(users.id, userId));
+  } catch (err) {
+    const text = err instanceof Error ? err.message : String(err);
+    if (/unique|duplicate/i.test(text)) {
+      return NextResponse.json(
+        {
+          error: "handle taken",
+          message:
+            "この英語IDはすでに使われています。別のものを選んでください",
+        },
+        { status: 409 },
+      );
+    }
+    console.error("[profile/handle]", err);
+    return NextResponse.json(
+      { error: "update failed", message: "設定に失敗しました。もう一度お試しください" },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true, handle, accountName: name });
 }
