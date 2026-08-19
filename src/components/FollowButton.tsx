@@ -9,7 +9,14 @@ import {
   setFollowing,
 } from "@/lib/local-follows";
 
-export function FollowButton({ handle }: { handle: string }) {
+export function FollowButton({
+  handle,
+  loginCallbackUrl,
+}: {
+  handle: string;
+  /** 未ログイン時。未指定なら公開PFへ戻す */
+  loginCallbackUrl?: string;
+}) {
   const { data: session, status } = useSession();
   const me = session?.user?.handle?.trim() || "";
   const target = handle.replace(/^@/, "").trim();
@@ -41,9 +48,11 @@ export function FollowButton({ handle }: { handle: string }) {
   }
 
   if (!me) {
+    const back =
+      loginCallbackUrl ?? `/u/${encodeURIComponent(target)}`;
     return (
       <Link
-        href={`/login?callbackUrl=${encodeURIComponent(`/u/${encodeURIComponent(target)}`)}`}
+        href={`/login?callbackUrl=${encodeURIComponent(back)}`}
         className="rounded-md bg-viscum-berry px-3 py-1.5 text-[13px] font-medium text-white hover:bg-viscum-berry-deep"
       >
         フォロー

@@ -232,30 +232,31 @@ export function FeedClient() {
             className="lg:border-viscum-line"
           />
         ))}
-        {rest.length === 0 && filter === "follow" && (
+        {filter === "follow" && myHandle ? (
+          <div className="col-span-full px-4 pb-10 pt-4 text-sm text-viscum-muted">
+            {rest.length === 0 ? (
+              <p className="text-center">
+                {followingHandles.length === 0
+                  ? "まだ誰もフォローしていません。下から選ぶか、公開PFの「フォロー」でも追加できます。"
+                  : "フォロー中のシーダーに、条件に合う作品がまだありません。"}
+              </p>
+            ) : null}
+            <div className={rest.length === 0 ? "mx-auto max-w-lg px-2" : "mx-auto max-w-lg"}>
+              <SuggestFollows title="おすすめ（デモ棚）" />
+            </div>
+          </div>
+        ) : null}
+        {rest.length === 0 && filter === "follow" && !myHandle && (
           <div className="col-span-full px-4 py-10 text-center text-sm text-viscum-muted">
-            {!myHandle ? (
-              <p>
-                ログインすると、フォローしたシーダーの作品がここに並びます。{" "}
-                <Link
-                  href="/login?callbackUrl=%2F%3Ffeed%3Dfollow"
-                  className="font-medium text-viscum-brand underline-offset-2 hover:underline"
-                >
-                  ログイン
-                </Link>
-              </p>
-            ) : followingHandles.length === 0 ? (
-              <div className="mx-auto max-w-lg px-2">
-                <p className="text-center">
-                  まだ誰もフォローしていません。下から選ぶか、公開PFの「フォロー」でも追加できます。
-                </p>
-                <SuggestFollows title="おすすめ（デモ棚）" />
-              </div>
-            ) : (
-              <p>
-                フォロー中のシーダーに、条件に合う作品がまだありません。
-              </p>
-            )}
+            <p>
+              ログインすると、フォローしたシーダーの作品がここに並びます。{" "}
+              <Link
+                href="/login?callbackUrl=%2F%3Ffeed%3Dfollow"
+                className="font-medium text-viscum-brand underline-offset-2 hover:underline"
+              >
+                ログイン
+              </Link>
+            </p>
           </div>
         )}
         {rest.length === 0 && filter !== "follow" && (

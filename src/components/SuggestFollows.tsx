@@ -1,6 +1,12 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import {
+  FOLLOWS_UPDATED,
+  listFollowing,
+} from "@/lib/local-follows";
 import {
   getSuggestedSeeders,
   THUMB_TONE_CLASS,
@@ -11,17 +17,40 @@ import { FollowButton } from "@/components/FollowButton";
 export function SuggestFollows({
   title = "まずはこの人をフォロー",
   limit = 5,
+  /** 未ログイン時の戻り先（連続フォロー用に一覧へ戻す） */
+  loginCallbackUrl = "/?feed=follow",
 }: {
   title?: string;
   limit?: number;
+  loginCallbackUrl?: string;
 }) {
-  const list = getSuggestedSeeders(limit);
+  const { data: session } = useSession();
+  const me = session?.user?.handle?.trim() || "";
+  const [following, setFollowing] = useState<string[]>([]);
+
+  useEffect(() => {
+    const sync = () => setFollowing(me ? listFollowing(me) : []);
+    sync();
+    window.addEventListener(FOLLOWS_UPDATED, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(FOLLOWS_UPDATED, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [me]);
+
+  const followSet = new Set(following.map((h) => h.toLowerCase()));
+  const list = getSuggestedSeeders(limit + followSet.size).filter(
+    (s) => !followSet.has(s.handle.toLowerCase()),
+  ).slice(0, limit);
+
+  if (list.length === 0) return null;
 
   return (
     <section className="mt-8">
       <h2 className="text-lg font-semibold text-viscum-ink">{title}</h2>
       <p className="mt-1 text-[13px] leading-relaxed text-viscum-muted">
-        いまはデモ棚のシーダーです。フォローすると「フォロー中」に作品が並びます。
+        いまはデモ棚のシーダーです。何人でもフォローできます（この場に留まります）。
       </p>
       <ul className="mt-4 divide-y divide-viscum-line overflow-hidden rounded-lg border border-viscum-line bg-white/50">
         {list.map((s) => (
@@ -53,7 +82,10 @@ export function SuggestFollows({
                 </span>
               </span>
             </Link>
-            <FollowButton handle={s.handle} />
+            <FollowButton
+              handle={s.handle}
+              loginCallbackUrl={loginCallbackUrl}
+            />
           </li>
         ))}
       </ul>

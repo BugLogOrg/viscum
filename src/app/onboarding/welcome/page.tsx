@@ -176,7 +176,7 @@ function WelcomeBody() {
           })}
         </ul>
 
-        <SuggestFollows />
+        <SuggestFollows loginCallbackUrl="/onboarding/welcome" />
 
         {error && (
           <p className="mt-4 text-[13px] text-viscum-berry-deep">{error}</p>
