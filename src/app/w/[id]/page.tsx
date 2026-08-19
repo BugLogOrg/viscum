@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { WorkEngage } from "@/components/WorkEngage";
+import { WorkReactionBar } from "@/components/WorkReactionBar";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import {
   closesAtFromHours,
@@ -149,6 +150,8 @@ export default async function WorkDetailPage({ params }: Props) {
               作品を開く（外部）
             </a>
           </p>
+
+          <WorkReactionBar workId={work.id} title={work.title} />
 
           <WorkEngage
             workId={work.id}

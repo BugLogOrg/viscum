@@ -82,6 +82,14 @@ export default function MePage() {
               <strong className="font-medium text-viscum-ink">シードごと</strong>
               に見ます（キャンペーン単位）。公開プロフィールの信用欄には出しません。
             </p>
+            <p className="mt-2">
+              <Link
+                href="/me/reactions"
+                className="text-[13px] font-medium text-viscum-brand underline"
+              >
+                自分が押したスキ・気になる（打刻つき）
+              </Link>
+            </p>
           </div>
           <button
             type="button"
