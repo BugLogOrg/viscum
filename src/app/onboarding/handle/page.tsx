@@ -67,7 +67,7 @@ export default function OnboardingHandlePage() {
       <main className="px-4 py-8">
         <h1 className="text-xl font-semibold text-viscum-ink">英語IDを決める</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
-          URL・PFコメントのコテハンになります。あとからの変更は重いので、ここで一度決めてください。公開の呼び名（アカウント名）は次のプロフィールで設定できます。
+          URL・PFコメントのコテハンになります。あとからの変更はできません。ここで一度決めてください。公開の呼び名（アカウント名）はプロフィールでいつでも変えられます。
         </p>
 
         <form onSubmit={submit} className="mt-8 space-y-4">

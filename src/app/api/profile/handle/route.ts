@@ -12,7 +12,7 @@ function normalizeHandle(raw: string) {
     .slice(0, 24);
 }
 
-/** 初回 Magic Link 後の英語ID確定（以降変更は重い） */
+/** 初回 Magic Link 後の英語ID確定（MVPは変更不可。将来 userId 参照なら変更可） */
 export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id;
