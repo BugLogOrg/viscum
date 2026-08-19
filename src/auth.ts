@@ -79,7 +79,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           typeof credentials?.handle === "string" && credentials.handle.trim()
             ? credentials.handle.trim()
             : "mDB";
-        const handle = raw.replace(/[^a-zA-Z0-9_\u3040-\u30ff\u4e00-\u9af5]/g, "").slice(0, 24) || "mDB";
+        // 英語ID: 英数字と _ のみ（アカウント名はプロフィール側・ADR-029）
+        const handle =
+          raw.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 24) || "mDB";
         const id = `demo:${handle}`;
         await upsertUser({
           id,

@@ -7,12 +7,14 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   fileToAvatarDataUrl,
+  normalizeAccountName,
   readLocalProfile,
   writeLocalProfile,
 } from "@/lib/local-profile";
 
 export default function ProfileEditPage() {
   const { data: session, status } = useSession();
+  const [accountName, setAccountName] = useState("");
   const [bio, setBio] = useState("");
   const [avatar, setAvatar] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -25,6 +27,7 @@ export default function ProfileEditPage() {
   useEffect(() => {
     if (!handle) return;
     const p = readLocalProfile(handle);
+    setAccountName(p?.accountName?.trim() ? p.accountName : "");
     setBio(p?.bio ?? "");
     setAvatar(p?.avatarDataUrl ?? null);
   }, [handle]);
@@ -62,7 +65,11 @@ export default function ProfileEditPage() {
     );
   }
 
-  function persist(next: { bio?: string; avatarDataUrl?: string | null }) {
+  function persist(next: {
+    accountName?: string;
+    bio?: string;
+    avatarDataUrl?: string | null;
+  }) {
     const prev = readLocalProfile(handle!) ?? {
       handle: handle!,
       bio: "",
@@ -72,8 +79,13 @@ export default function ProfileEditPage() {
       next.avatarDataUrl === null
         ? undefined
         : (next.avatarDataUrl ?? prev.avatarDataUrl);
+    const nextName =
+      next.accountName !== undefined
+        ? normalizeAccountName(next.accountName)
+        : (prev.accountName ?? "");
     writeLocalProfile({
       handle: handle!,
+      accountName: nextName || undefined,
       bio: (next.bio ?? prev.bio).trim().slice(0, 200),
       avatarDataUrl,
       updatedAt: new Date().toISOString(),
@@ -83,7 +95,14 @@ export default function ProfileEditPage() {
 
   function save(e: React.FormEvent) {
     e.preventDefault();
-    persist({ bio });
+    const name = normalizeAccountName(accountName);
+    if (!name) {
+      setError("アカウント名を入れてください（メールの「さん」や公開の顔になります）");
+      setSaved(false);
+      return;
+    }
+    persist({ accountName: name, bio });
+    setAccountName(name);
     setSaved(true);
     setError(null);
   }
@@ -96,7 +115,11 @@ export default function ProfileEditPage() {
     try {
       const dataUrl = await fileToAvatarDataUrl(file);
       setAvatar(dataUrl);
-      persist({ bio, avatarDataUrl: dataUrl });
+      persist({
+        accountName: normalizeAccountName(accountName) || undefined,
+        bio,
+        avatarDataUrl: dataUrl,
+      });
       setSaved(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "アップロードに失敗しました");
@@ -106,6 +129,8 @@ export default function ProfileEditPage() {
     }
   }
 
+  const previewName = normalizeAccountName(accountName) || handle;
+
   return (
     <BrowseChrome>
       <SiteHeader backHref="/dashboard/settings" hideOnMd hidePostCta />
@@ -114,8 +139,8 @@ export default function ProfileEditPage() {
           <h1 className="text-xl font-semibold text-viscum-ink">
             プロフィール編集
           </h1>
-          <p className="mt-1 text-[12px] text-viscum-muted">
-            デモ段階は端末内に保存。ハンドルはログイン名のままです。通知などの設定は
+          <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
+            デモ段階は端末内に保存。英語IDとアカウント名は別です（メールの送り主はアカウント名）。通知などの設定は
             <Link href="/dashboard/settings" className="text-viscum-brand underline">
               設定
             </Link>
@@ -142,7 +167,7 @@ export default function ProfileEditPage() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  handle.slice(0, 1).toUpperCase()
+                  previewName.slice(0, 1).toUpperCase()
                 )}
               </button>
               <div className="min-w-0 flex-1 space-y-2">
@@ -167,7 +192,11 @@ export default function ProfileEditPage() {
                     className="ml-2 text-[12px] text-viscum-muted underline"
                     onClick={() => {
                       setAvatar(null);
-                      persist({ bio, avatarDataUrl: null });
+                      persist({
+                        accountName: normalizeAccountName(accountName) || undefined,
+                        bio,
+                        avatarDataUrl: null,
+                      });
                       setSaved(true);
                     }}
                   >
@@ -182,13 +211,40 @@ export default function ProfileEditPage() {
           </div>
 
           <label className="block space-y-1">
-            <span className="text-[12px] text-viscum-muted">ハンドル</span>
+            <span className="text-[12px] text-viscum-muted">
+              英語ID（認識用・変更不可）
+            </span>
             <input
               value={`@${handle}`}
               readOnly
               className="w-full rounded-md border border-viscum-line bg-viscum-paper-2 px-3 py-2 text-[14px] text-viscum-muted"
             />
+            <span className="block text-[11px] text-viscum-muted">
+              URL・ログイン・PFコメントのコテハンに使います。
+            </span>
           </label>
+
+          <label className="block space-y-1">
+            <span className="text-[12px] text-viscum-muted">アカウント名</span>
+            <input
+              value={accountName}
+              onChange={(e) => {
+                setAccountName(e.target.value);
+                setSaved(false);
+                setError(null);
+              }}
+              maxLength={40}
+              placeholder="例: 観察の鳥"
+              className="w-full rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand"
+            />
+            <span className="block text-[11px] leading-relaxed text-viscum-muted">
+              公開の顔・直依頼メールの送り主（「さん」）に使います。日本語可。
+              {accountName.trim()
+                ? ` プレビュー: ${previewName} さん（@${handle}）`
+                : null}
+            </span>
+          </label>
+
           <label className="block space-y-1">
             <span className="text-[12px] text-viscum-muted">一言（公開）</span>
             <textarea

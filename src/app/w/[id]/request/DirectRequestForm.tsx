@@ -37,6 +37,16 @@ export function DirectRequestForm({ work }: { work: Work }) {
 
   return (
     <div className="space-y-5">
+      <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-3 text-[13px] text-viscum-ink">
+        <p className="font-medium">内部向け（登録済みメンター）</p>
+        <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
+          本番では<strong className="font-medium text-viscum-ink">登録メールが本命</strong>
+          （休眠でも届く・呼び戻し）。あわせて
+          <strong className="font-medium text-viscum-ink">この依頼だけの薄いDM</strong>
+          が開き、ベルは補助。フォロー必須にはしない。
+        </p>
+      </div>
+
       <div className="rounded-lg border border-viscum-berry/25 bg-viscum-berry/5 px-3 py-3 text-[13px] text-viscum-ink">
         <p className="font-medium">外部向け（VISCUM未登録）</p>
         <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
@@ -79,6 +89,11 @@ export function DirectRequestForm({ work }: { work: Work }) {
             "",
             `宛先: ${mentor}`,
             closed ? "閲覧: クローズド（指名者のみ）" : "閲覧: 作品は公開のまま／依頼だけ個人宛て",
+            "",
+            "本番想定の到達:",
+            "・登録メール（本命・呼び戻し）",
+            "・この依頼単位の薄いDM",
+            "・ベル／ダッシュボード未処理（補助）",
             "",
             "この依頼にコンペの話は含めていません。",
             "公開コンペは別導線です。",

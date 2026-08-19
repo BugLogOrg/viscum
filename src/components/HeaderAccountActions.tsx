@@ -8,7 +8,11 @@ import {
   readLocalNotifies,
   unreadNotifyCount,
 } from "@/lib/local-notifies";
-import { readAvatarDataUrl } from "@/lib/local-profile";
+import {
+  displayAccountName,
+  readAvatarDataUrl,
+  readLocalProfile,
+} from "@/lib/local-profile";
 
 /** 通知・アカウントメニュー（note寄り：プロフィール頭＋ダッシュ／設定＋履歴） */
 export function HeaderAccountActions({
@@ -22,6 +26,7 @@ export function HeaderAccountActions({
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
   const [localAvatar, setLocalAvatar] = useState<string | null>(null);
+  const [accountName, setAccountName] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const handle = session?.user?.handle;
@@ -37,9 +42,13 @@ export function HeaderAccountActions({
   useEffect(() => {
     if (!handle) {
       setLocalAvatar(null);
+      setAccountName(null);
       return;
     }
-    const sync = () => setLocalAvatar(readAvatarDataUrl(handle));
+    const sync = () => {
+      setLocalAvatar(readAvatarDataUrl(handle));
+      setAccountName(displayAccountName(handle, readLocalProfile(handle)));
+    };
     sync();
     window.addEventListener("viscum-profile-updated", sync);
     window.addEventListener("focus", sync);
@@ -69,6 +78,7 @@ export function HeaderAccountActions({
     ? `/u/${encodeURIComponent(handle)}`
     : "/";
   const avatarSrc = localAvatar ?? session?.user?.image ?? null;
+  const faceName = accountName ?? handle;
   return (
     <div className={`flex items-center gap-0.5 ${className}`}>
       <Link
@@ -93,7 +103,7 @@ export function HeaderAccountActions({
         <div className="relative" ref={rootRef}>
           <button
             type="button"
-            title={`@${handle}`}
+            title={`${faceName} (@${handle})`}
             aria-label="アカウントメニュー"
             aria-expanded={open}
             aria-haspopup="menu"
@@ -103,7 +113,7 @@ export function HeaderAccountActions({
           >
             <Avatar handle={handle} image={avatarSrc} size="sm" />
             <span className="hidden max-w-[5.5rem] truncate text-[11px] font-medium sm:inline">
-              @{handle}
+              {faceName}
             </span>
           </button>
 
@@ -118,6 +128,9 @@ export function HeaderAccountActions({
                 <Avatar handle={handle} image={avatarSrc} size="lg" />
                 <div className="min-w-0 flex-1 pt-0.5">
                   <p className="truncate text-[14px] font-semibold text-viscum-ink">
+                    {faceName}
+                  </p>
+                  <p className="truncate text-[12px] text-viscum-muted">
                     @{handle}
                   </p>
                   <Link

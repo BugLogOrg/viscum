@@ -1,6 +1,11 @@
 /** プロフィール編集の端末内控え（Neon前） */
 export type LocalProfile = {
   handle: string;
+  /**
+   * アカウント名（人の呼び名・メール From／「さん」用）。
+   * 英語ID（handle）とは別。未設定時は表示フォールバックで handle を使う。
+   */
+  accountName?: string;
   /** 一言（公開ポートフォリオ向け） */
   bio: string;
   /** アイコン（data URL。デモは端末内のみ） */
@@ -10,6 +15,7 @@ export type LocalProfile = {
 
 const KEY = "viscum_local_profile_v1";
 const MAX_AVATAR_BYTES = 180_000; // localStorage 圧迫を避ける
+const MAX_ACCOUNT_NAME = 40;
 
 export function readLocalProfile(handle: string): LocalProfile | null {
   if (typeof window === "undefined") return null;
@@ -30,6 +36,20 @@ export function writeLocalProfile(profile: LocalProfile) {
 
 export function readAvatarDataUrl(handle: string): string | null {
   return readLocalProfile(handle)?.avatarDataUrl ?? null;
+}
+
+/** 表示用アカウント名。未設定なら英語ID */
+export function displayAccountName(
+  handle: string,
+  profile?: LocalProfile | null,
+): string {
+  const p = profile === undefined ? readLocalProfile(handle) : profile;
+  const name = p?.accountName?.trim();
+  return name || handle;
+}
+
+export function normalizeAccountName(raw: string): string {
+  return raw.replace(/\s+/g, " ").trim().slice(0, MAX_ACCOUNT_NAME);
 }
 
 /** 正方形に寄せて JPEG data URL 化（端末内デモ用） */

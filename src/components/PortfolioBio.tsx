@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { readLocalProfile } from "@/lib/local-profile";
+import {
+  displayAccountName,
+  readLocalProfile,
+} from "@/lib/local-profile";
 
-/** 公開PF頭：アイコン＋@ハンドル、その下に一言 */
+/** 公開PF頭：アカウント名が主、@英語IDは副。一言はその下 */
 export function PortfolioHeader({
   handle,
   action,
@@ -11,12 +14,14 @@ export function PortfolioHeader({
   handle: string;
   action?: ReactNode;
 }) {
+  const [accountName, setAccountName] = useState(handle);
   const [bio, setBio] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
     const sync = () => {
       const p = readLocalProfile(handle);
+      setAccountName(displayAccountName(handle, p));
       setBio(p?.bio?.trim() ? p.bio.trim() : null);
       setAvatar(p?.avatarDataUrl ?? null);
     };
@@ -25,7 +30,7 @@ export function PortfolioHeader({
     return () => window.removeEventListener("viscum-profile-updated", sync);
   }, [handle]);
 
-  const letter = handle.slice(0, 1).toUpperCase();
+  const letter = accountName.slice(0, 1).toUpperCase();
 
   return (
     <div>
@@ -48,10 +53,10 @@ export function PortfolioHeader({
           )}
           <div className="min-w-0">
             <h1 className="truncate text-2xl font-semibold text-viscum-ink">
-              @{handle}
+              {accountName}
             </h1>
-            <p className="mt-0.5 text-[13px] text-viscum-muted">
-              ポートフォリオ（デモ）
+            <p className="mt-0.5 truncate text-[13px] text-viscum-muted">
+              @{handle}
             </p>
           </div>
         </div>

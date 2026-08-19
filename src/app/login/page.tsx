@@ -53,13 +53,14 @@ export default function LoginPage() {
         <form onSubmit={demoLogin} className="mt-8 space-y-4">
           <div>
             <label className="text-[13px] font-medium text-viscum-ink">
-              ハンドル（コテハン・デモ）
+              英語ID（デモ）
             </label>
             <input
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] focus:border-viscum-brand focus:outline-none"
               placeholder="mDB"
+              autoComplete="username"
             />
           </div>
           {error && (
@@ -73,7 +74,9 @@ export default function LoginPage() {
             {pending ? "入っています…" : "デモログイン"}
           </button>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
-            段階Bの仮入口です。投稿名はこのハンドル固定です（コテハン）。信用スコアは作りません。
+            英数字と _ のみ。公開の顔・メールの「さん」はログイン後の
+            <span className="text-viscum-ink">アカウント名</span>
+            （プロフィール）で別途設定します。PFコメントのコテハンはこの英語IDです。
           </p>
         </form>
 
