@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
+  fileToAvatarDataUrl,
   readLocalProfile,
   writeLocalProfile,
 } from "@/lib/local-profile";
@@ -12,7 +13,11 @@ import {
 export default function ProfileEditPage() {
   const { data: session, status } = useSession();
   const [bio, setBio] = useState("");
+  const [avatar, setAvatar] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const handle = session?.user?.handle;
 
@@ -20,6 +25,7 @@ export default function ProfileEditPage() {
     if (!handle) return;
     const p = readLocalProfile(handle);
     setBio(p?.bio ?? "");
+    setAvatar(p?.avatarDataUrl ?? null);
   }, [handle]);
 
   if (status === "loading") {
@@ -33,7 +39,7 @@ export default function ProfileEditPage() {
   if (!session?.user || !handle) {
     return (
       <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-        <SiteHeader backHref="/" />
+        <SiteHeader backHref="/" hidePostCta />
         <main className="px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">
             プロフィール編集
@@ -52,31 +58,125 @@ export default function ProfileEditPage() {
     );
   }
 
-  function save(e: React.FormEvent) {
-    e.preventDefault();
-    if (!handle) return;
+  function persist(next: { bio?: string; avatarDataUrl?: string | null }) {
+    const prev = readLocalProfile(handle!) ?? {
+      handle: handle!,
+      bio: "",
+      updatedAt: new Date().toISOString(),
+    };
+    const avatarDataUrl =
+      next.avatarDataUrl === null
+        ? undefined
+        : (next.avatarDataUrl ?? prev.avatarDataUrl);
     writeLocalProfile({
-      handle,
-      bio: bio.trim().slice(0, 200),
+      handle: handle!,
+      bio: (next.bio ?? prev.bio).trim().slice(0, 200),
+      avatarDataUrl,
       updatedAt: new Date().toISOString(),
     });
+    window.dispatchEvent(new Event("viscum-profile-updated"));
+  }
+
+  function save(e: React.FormEvent) {
+    e.preventDefault();
+    persist({ bio });
     setSaved(true);
+    setError(null);
+  }
+
+  async function onPickFile(file: File | null) {
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    setSaved(false);
+    try {
+      const dataUrl = await fileToAvatarDataUrl(file);
+      setAvatar(dataUrl);
+      persist({ bio, avatarDataUrl: dataUrl });
+      setSaved(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "アップロードに失敗しました");
+    } finally {
+      setBusy(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   }
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/me" hidePostCta />
+      <SiteHeader backHref="/me/settings" hidePostCta />
       <main className="space-y-6 px-4 py-6">
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">
             プロフィール編集
           </h1>
           <p className="mt-1 text-[12px] text-viscum-muted">
-            デモ段階は端末内に保存。ハンドルはログイン名のままです。
+            デモ段階は端末内に保存。ハンドルはログイン名のままです。通知などの設定は
+            <Link href="/me/settings" className="text-viscum-brand underline">
+              設定
+            </Link>
+            へ。
           </p>
         </div>
 
-        <form onSubmit={save} className="space-y-4">
+        <form onSubmit={save} className="space-y-5">
+          <div className="space-y-2">
+            <p className="text-[12px] text-viscum-muted">アイコン</p>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={busy}
+                className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border border-viscum-line bg-viscum-berry text-2xl font-semibold text-white hover:opacity-90 disabled:opacity-60"
+                title="画像を選ぶ"
+              >
+                {avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={avatar}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  handle.slice(0, 1).toUpperCase()
+                )}
+              </button>
+              <div className="min-w-0 flex-1 space-y-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => void onPickFile(e.target.files?.[0] ?? null)}
+                />
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => fileRef.current?.click()}
+                  className="rounded-md border border-viscum-brand px-3 py-2 text-[13px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft disabled:opacity-60"
+                >
+                  {busy ? "処理中…" : "画像をアップロード"}
+                </button>
+                {avatar && (
+                  <button
+                    type="button"
+                    className="ml-2 text-[12px] text-viscum-muted underline"
+                    onClick={() => {
+                      setAvatar(null);
+                      persist({ bio, avatarDataUrl: null });
+                      setSaved(true);
+                    }}
+                  >
+                    削除
+                  </button>
+                )}
+                <p className="text-[11px] leading-relaxed text-viscum-muted">
+                  正方形に切り抜いて端末内に保存します（本番はサーバ保管へ）。
+                </p>
+              </div>
+            </div>
+          </div>
+
           <label className="block space-y-1">
             <span className="text-[12px] text-viscum-muted">ハンドル</span>
             <input
@@ -99,7 +199,10 @@ export default function ProfileEditPage() {
               className="w-full resize-y rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand"
             />
           </label>
-          {saved && (
+          {error && (
+            <p className="text-[12px] text-viscum-berry-deep">{error}</p>
+          )}
+          {saved && !error && (
             <p className="text-[13px] text-viscum-brand">保存しました</p>
           )}
           <button

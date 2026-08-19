@@ -8,6 +8,7 @@ import {
   readLocalNotifies,
   unreadNotifyCount,
 } from "@/lib/local-notifies";
+import { readAvatarDataUrl } from "@/lib/local-profile";
 
 /** 通知・アカウントメニュー（note寄り：プロフィール頭＋ダッシュ／設定＋履歴） */
 export function HeaderAccountActions({
@@ -20,8 +21,10 @@ export function HeaderAccountActions({
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+  const [localAvatar, setLocalAvatar] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+  const handle = session?.user?.handle;
 
   useEffect(() => {
     if (readLocalNotifies().length === 0) installDemoNotifies();
@@ -31,6 +34,20 @@ export function HeaderAccountActions({
     return () => window.removeEventListener("focus", onFocus);
   }, []);
 
+  useEffect(() => {
+    if (!handle) {
+      setLocalAvatar(null);
+      return;
+    }
+    const sync = () => setLocalAvatar(readAvatarDataUrl(handle));
+    sync();
+    window.addEventListener("viscum-profile-updated", sync);
+    window.addEventListener("focus", sync);
+    return () => {
+      window.removeEventListener("viscum-profile-updated", sync);
+      window.removeEventListener("focus", sync);
+    };
+  }, [handle]);
   useEffect(() => {
     if (!open) return;
     function onDoc(e: MouseEvent) {
@@ -48,11 +65,10 @@ export function HeaderAccountActions({
   }, [open]);
 
   const close = () => setOpen(false);
-  const handle = session?.user?.handle;
   const portfolioHref = handle
     ? `/u/${encodeURIComponent(handle)}`
     : "/";
-
+  const avatarSrc = localAvatar ?? session?.user?.image ?? null;
   return (
     <div className={`flex items-center gap-0.5 ${className}`}>
       <Link
@@ -85,11 +101,7 @@ export function HeaderAccountActions({
             onClick={() => setOpen((v) => !v)}
             className="flex items-center gap-1 rounded-md px-1.5 py-1 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
           >
-            <Avatar
-              handle={handle}
-              image={session.user.image}
-              size="sm"
-            />
+            <Avatar handle={handle} image={avatarSrc} size="sm" />
             <span className="hidden max-w-[5.5rem] truncate text-[11px] font-medium sm:inline">
               @{handle}
             </span>
@@ -103,7 +115,7 @@ export function HeaderAccountActions({
             >
               {/* 頭：アバター＋名前＋公開ページ */}
               <div className="flex items-start gap-3 border-b border-viscum-line px-3.5 py-3">
-                <Avatar handle={handle} image={session.user.image} size="lg" />
+                <Avatar handle={handle} image={avatarSrc} size="lg" />
                 <div className="min-w-0 flex-1 pt-0.5">
                   <p className="truncate text-[14px] font-semibold text-viscum-ink">
                     @{handle}
@@ -136,7 +148,7 @@ export function HeaderAccountActions({
                   </span>
                 </Link>
                 <Link
-                  href="/me/profile"
+                  href="/me/settings"
                   role="menuitem"
                   onClick={close}
                   className="flex flex-col items-center gap-1 rounded-lg border border-viscum-line bg-viscum-paper/80 px-2 py-2.5 text-center transition hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
@@ -146,11 +158,10 @@ export function HeaderAccountActions({
                     設定
                   </span>
                   <span className="text-[10px] leading-tight text-viscum-muted">
-                    プロフィール
+                    通知など
                   </span>
                 </Link>
               </div>
-
               {/* シード */}
               <Section label="シード">
                 <MenuRow href="/me" onNavigate={close}>

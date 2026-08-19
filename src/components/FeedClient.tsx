@@ -32,6 +32,10 @@ export function FeedClient() {
 
   useEffect(() => {
     setSpecialty(searchParams.get("tag"));
+    const feed = searchParams.get("feed");
+    if (feed === "open" || feed === "follow" || feed === "all") {
+      setFilter(feed);
+    }
   }, [searchParams]);
 
   const selectTag = useCallback(

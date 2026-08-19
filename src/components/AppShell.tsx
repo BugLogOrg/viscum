@@ -14,6 +14,11 @@ export const DEMO_SPECIALTIES = [
   "ツール",
 ] as const;
 
+/**
+ * 左カラム＋メイン。
+ * - feed: フィード上でフィルタを state 操作
+ * - chrome: 作品詳細など閲覧面。ナビはホームへのリンク（左カラム常時）
+ */
 export function AppShell({
   children,
   activeTag,
@@ -22,6 +27,7 @@ export function AppShell({
   onFeedFilter,
   openCount,
   showSpecialty = true,
+  variant = "feed",
 }: {
   children: ReactNode;
   activeTag?: string | null;
@@ -30,12 +36,25 @@ export function AppShell({
   onFeedFilter?: (f: "all" | "open" | "follow") => void;
   openCount?: number;
   showSpecialty?: boolean;
+  variant?: "feed" | "chrome";
 }) {
   const { data: session } = useSession();
-  const shelfActive = feedFilter === "all";
-  const followActive = feedFilter === "follow";
-  const openActive = feedFilter === "open";
   const handle = session?.user?.handle;
+  const interactive = variant === "feed" && !!onFeedFilter;
+  const shelfActive = interactive && feedFilter === "all";
+  const followActive = interactive && feedFilter === "follow";
+  const openActive = interactive && feedFilter === "open";
+
+  function navClass(active: boolean, emphasize?: "leaf" | "berry") {
+    if (active) {
+      return emphasize === "berry"
+        ? "bg-viscum-berry/15 font-medium text-viscum-berry-deep"
+        : "bg-viscum-leaf-soft font-medium text-viscum-leaf-deep";
+    }
+    return emphasize === "berry" && !interactive
+      ? "text-viscum-ink hover:bg-viscum-paper-2"
+      : "text-viscum-ink hover:bg-viscum-paper-2";
+  }
 
   return (
     <div className="mx-auto min-h-dvh max-w-7xl bg-viscum-paper md:flex">
@@ -53,44 +72,66 @@ export function AppShell({
           </Link>
         </div>
         <nav className="flex flex-col gap-1 px-3 py-3 text-sm">
-          <button
-            type="button"
-            onClick={() => onFeedFilter?.("all")}
-            className={`rounded-md px-2 py-1.5 text-left transition ${
-              shelfActive
-                ? "bg-viscum-leaf-soft font-medium text-viscum-leaf-deep"
-                : "font-medium text-viscum-ink hover:bg-viscum-paper-2"
-            }`}
-          >
-            すべて
-          </button>
-          <button
-            type="button"
-            onClick={() => onFeedFilter?.("follow")}
-            className={`rounded-md px-2 py-1.5 text-left transition ${
-              followActive
-                ? "bg-viscum-leaf-soft font-medium text-viscum-leaf-deep"
-                : "text-viscum-ink hover:bg-viscum-paper-2"
-            }`}
-          >
-            フォロー中
-          </button>
-          <button
-            type="button"
-            onClick={() => onFeedFilter?.("open")}
-            className={`rounded-md px-2 py-1.5 text-left transition ${
-              openActive
-                ? "bg-viscum-berry/15 font-medium text-viscum-berry-deep"
-                : "text-viscum-ink hover:bg-viscum-paper-2"
-            }`}
-          >
-            開催中
-            {typeof openCount === "number" && (
-              <span className="ml-1 text-xs text-viscum-muted">
-                ({openCount})
-              </span>
-            )}
-          </button>
+          {interactive ? (
+            <>
+              <button
+                type="button"
+                onClick={() => onFeedFilter("all")}
+                className={`rounded-md px-2 py-1.5 text-left transition ${
+                  shelfActive
+                    ? "bg-viscum-leaf-soft font-medium text-viscum-leaf-deep"
+                    : "font-medium text-viscum-ink hover:bg-viscum-paper-2"
+                }`}
+              >
+                すべて
+              </button>
+              <button
+                type="button"
+                onClick={() => onFeedFilter("follow")}
+                className={`rounded-md px-2 py-1.5 text-left transition ${navClass(followActive)}`}
+              >
+                フォロー中
+              </button>
+              <button
+                type="button"
+                onClick={() => onFeedFilter("open")}
+                className={`rounded-md px-2 py-1.5 text-left transition ${navClass(openActive, "berry")}`}
+              >
+                開催中
+                {typeof openCount === "number" && (
+                  <span className="ml-1 text-xs text-viscum-muted">
+                    ({openCount})
+                  </span>
+                )}
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/"
+                className="rounded-md px-2 py-1.5 font-medium text-viscum-ink hover:bg-viscum-paper-2"
+              >
+                すべて
+              </Link>
+              <Link
+                href="/?feed=follow"
+                className="rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
+              >
+                フォロー中
+              </Link>
+              <Link
+                href="/?feed=open"
+                className="rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
+              >
+                開催中
+                {typeof openCount === "number" && (
+                  <span className="ml-1 text-xs text-viscum-muted">
+                    ({openCount})
+                  </span>
+                )}
+              </Link>
+            </>
+          )}
           <Link
             href="/new"
             className="mt-1 rounded-md bg-viscum-berry px-2 py-2 text-left text-sm font-medium text-white transition hover:bg-viscum-berry-deep"
@@ -126,6 +167,14 @@ export function AppShell({
               </li>
               <li>
                 <Link
+                  href="/me/settings"
+                  className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
+                >
+                  設定
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/me/profile"
                   className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
                 >
@@ -150,31 +199,49 @@ export function AppShell({
             </p>
             <ul className="space-y-0.5">
               <li>
-                <button
-                  type="button"
-                  onClick={() => onSelectTag?.(null)}
-                  className={`w-full rounded-md px-2 py-1.5 text-left text-xs ${
-                    !activeTag
-                      ? "bg-viscum-leaf-soft font-medium text-viscum-leaf-deep"
-                      : "text-viscum-muted hover:bg-viscum-paper-2"
-                  }`}
-                >
-                  すべて
-                </button>
+                {interactive ? (
+                  <button
+                    type="button"
+                    onClick={() => onSelectTag?.(null)}
+                    className={`w-full rounded-md px-2 py-1.5 text-left text-xs ${
+                      !activeTag
+                        ? "bg-viscum-leaf-soft font-medium text-viscum-leaf-deep"
+                        : "text-viscum-muted hover:bg-viscum-paper-2"
+                    }`}
+                  >
+                    すべて
+                  </button>
+                ) : (
+                  <Link
+                    href="/"
+                    className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-viscum-muted hover:bg-viscum-paper-2"
+                  >
+                    すべて
+                  </Link>
+                )}
               </li>
               {DEMO_SPECIALTIES.map((tag) => (
                 <li key={tag}>
-                  <button
-                    type="button"
-                    onClick={() => onSelectTag?.(tag)}
-                    className={`w-full rounded-md px-2 py-1.5 text-left text-xs ${
-                      activeTag === tag
-                        ? "bg-viscum-berry/15 font-medium text-viscum-berry-deep"
-                        : "text-viscum-ink hover:bg-viscum-paper-2"
-                    }`}
-                  >
-                    {tag}
-                  </button>
+                  {interactive ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelectTag?.(tag)}
+                      className={`w-full rounded-md px-2 py-1.5 text-left text-xs ${
+                        activeTag === tag
+                          ? "bg-viscum-berry/15 font-medium text-viscum-berry-deep"
+                          : "text-viscum-ink hover:bg-viscum-paper-2"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ) : (
+                    <Link
+                      href={`/?tag=${encodeURIComponent(tag)}`}
+                      className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-viscum-ink hover:bg-viscum-paper-2"
+                    >
+                      {tag}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

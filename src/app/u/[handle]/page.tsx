@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { FollowButton } from "@/components/FollowButton";
@@ -30,9 +31,10 @@ export default async function SeederPortfolioPage({ params }: Props) {
     mentored.length > 0;
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/" hidePostCta />
+    <BrowseChrome>
+      <SiteHeader backHref="/" hideOnMd hidePostCta />
 
+      <div className="mx-auto max-w-lg">
       <header className="border-b border-viscum-line px-4 py-5">
         <p className="text-xs text-viscum-muted">シーダー／メンター</p>
         <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
@@ -199,6 +201,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
           TOP
         </Link>
       </p>
-    </div>
+      </div>
+    </BrowseChrome>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getWork } from "@/data/dummy-works";
 import { DirectRequestForm } from "./DirectRequestForm";
@@ -12,9 +13,9 @@ export default async function DirectRequestPage({ params }: Props) {
   if (!work) notFound();
 
   return (
-    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref={`/w/${work.id}`} />
-      <main className="px-4 py-6">
+    <BrowseChrome>
+      <SiteHeader backHref={`/w/${work.id}`} hideOnMd hidePostCta />
+      <main className="mx-auto max-w-lg px-4 py-6">
         <p className="text-xs text-viscum-muted">S06 · 直依頼デモ</p>
         <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
           メンターに頼む
@@ -34,6 +35,6 @@ export default async function DirectRequestPage({ params }: Props) {
           </Link>
         </p>
       </main>
-    </div>
+    </BrowseChrome>
   );
 }
