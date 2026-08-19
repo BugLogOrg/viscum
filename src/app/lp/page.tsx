@@ -56,7 +56,7 @@ export default function LandingPage() {
               height={933}
             />
             <figcaption className="border-t border-viscum-line px-4 py-3 text-[13px] leading-relaxed text-viscum-muted">
-              ヤドリギは木に寄り添う丸い房。鳥が実を運び、種を落とす——つくった人が種を撒き、反応が寄り添い、また次が育つ。
+              一本の木に、いくつもの丸いヤドリギ——それぞれの種が、それぞれの世界を育てる。鳥が実を運び、反応が寄り添う。
             </figcaption>
           </figure>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
