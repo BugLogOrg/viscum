@@ -42,7 +42,7 @@ export default function MePage() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/" hideOnMd />
-        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+        <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
       </BrowseChrome>
@@ -53,7 +53,7 @@ export default function MePage() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/" hideOnMd />
-        <main className="mx-auto max-w-lg px-4 py-10">
+        <main className="max-w-lg px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">マイシード</h1>
           <p className="mt-2 text-[14px] text-viscum-muted">
             ログインすると、シードごとの広告の届き方が見られます。
@@ -74,7 +74,7 @@ export default function MePage() {
   return (
     <BrowseChrome>
       <SiteHeader backHref="/" hideOnMd />
-      <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
+      <main className="max-w-lg space-y-6 px-4 py-6">
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-xs text-viscum-muted">シーダー</p>

@@ -15,7 +15,7 @@ export default async function DirectRequestPage({ params }: Props) {
   return (
     <BrowseChrome>
       <SiteHeader backHref={`/w/${work.id}`} hideOnMd />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="max-w-lg px-4 py-6">
         <p className="text-xs text-viscum-muted">S06 · 直依頼デモ</p>
         <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
           メンターに頼む

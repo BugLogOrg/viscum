@@ -8,7 +8,7 @@ export default function NewWorkPage() {
   return (
     <BrowseChrome>
       <SiteHeader backHref="/" hideOnMd hidePostCta />
-      <main className="mx-auto max-w-lg px-4 py-6">
+      <main className="max-w-lg px-4 py-6">
         <p className="text-xs text-viscum-muted">S04 · 投稿デモ</p>
         <h1 className="mt-1 text-xl font-semibold text-viscum-ink">シードする</h1>
         <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">

@@ -64,7 +64,7 @@ export default function SeedStatsPage() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/me" hideOnMd hidePostCta />
-        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+        <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
       </BrowseChrome>
@@ -75,7 +75,7 @@ export default function SeedStatsPage() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/me" hideOnMd hidePostCta />
-        <main className="mx-auto max-w-lg px-4 py-10">
+        <main className="max-w-lg px-4 py-10">
           <p className="text-[14px] text-viscum-muted">
             成績シートはログイン後に見られます。
           </p>
@@ -94,7 +94,7 @@ export default function SeedStatsPage() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/me" hideOnMd hidePostCta />
-        <main className="mx-auto max-w-lg px-4 py-10">
+        <main className="max-w-lg px-4 py-10">
           <p className="text-[14px] text-viscum-muted">
             このシードの成績が見つかりません。
           </p>
@@ -148,7 +148,7 @@ export default function SeedStatsPage() {
   return (
     <BrowseChrome>
       <SiteHeader backHref="/me" hideOnMd hidePostCta />
-      <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
+      <main className="max-w-lg space-y-6 px-4 py-6">
         <div className="space-y-2">
           <p className="text-[11px] font-medium tracking-wide text-viscum-muted">
             成績シート

@@ -45,7 +45,7 @@ export default async function WorkDetailPage({ params }: Props) {
     <BrowseChrome>
       <SiteHeader backHref="/" hideOnMd />
 
-      <div className="mx-auto max-w-lg">
+      <div className="max-w-lg">
         <article>
           <div
             className={`w-full ${THUMB_ASPECT} ${TONE[work.thumbTone]} flex items-end p-4`}

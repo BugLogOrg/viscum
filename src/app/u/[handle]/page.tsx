@@ -34,7 +34,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
     <BrowseChrome>
       <SiteHeader backHref="/" hideOnMd />
 
-      <div className="mx-auto max-w-lg">
+      <div className="max-w-lg">
       <header className="border-b border-viscum-line px-4 py-5">
         <PortfolioHeader
           handle={display}

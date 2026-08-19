@@ -27,7 +27,7 @@ export default function SettingsPage() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/me" hideOnMd hidePostCta />
-        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+        <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
       </BrowseChrome>
@@ -38,7 +38,7 @@ export default function SettingsPage() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/" hideOnMd hidePostCta />
-        <main className="mx-auto max-w-lg px-4 py-10">
+        <main className="max-w-lg px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">設定</h1>
           <p className="mt-2 text-[14px] text-viscum-muted">
             ログインが必要です。
@@ -57,7 +57,7 @@ export default function SettingsPage() {
   return (
     <BrowseChrome>
       <SiteHeader backHref="/me" hideOnMd hidePostCta />
-      <main className="mx-auto max-w-lg space-y-6 px-4 py-6">
+      <main className="max-w-lg space-y-6 px-4 py-6">
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">設定</h1>
           <p className="mt-1 text-[12px] text-viscum-muted">

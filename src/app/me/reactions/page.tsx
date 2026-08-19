@@ -66,7 +66,7 @@ function MyReactionsInner() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/me" hideOnMd hidePostCta />
-        <div className="mx-auto max-w-lg px-4 py-10 text-sm text-viscum-muted">
+        <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
       </BrowseChrome>
@@ -77,7 +77,7 @@ function MyReactionsInner() {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/me" hideOnMd hidePostCta />
-        <main className="mx-auto max-w-lg px-4 py-10">
+        <main className="max-w-lg px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">
             スキ・気になる
           </h1>
@@ -101,7 +101,7 @@ function MyReactionsInner() {
   return (
     <BrowseChrome>
       <SiteHeader backHref="/me" hideOnMd hidePostCta />
-      <main className="mx-auto max-w-lg space-y-5 px-4 py-6">
+      <main className="max-w-lg space-y-5 px-4 py-6">
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">
             スキ・気になる
