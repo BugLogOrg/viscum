@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="VISCUM">
+  <rect width="180" height="180" rx="40" fill="#2f5d3a"/>
+  <ellipse cx="64" cy="108" rx="42" ry="24" fill="#3f6f4a" transform="rotate(-32 64 108)"/>
+  <ellipse cx="116" cy="108" rx="42" ry="24" fill="#3f6f4a" transform="rotate(32 116 108)"/>
+  <circle cx="122" cy="58" r="22" fill="#c45c3e"/>
+</svg>
