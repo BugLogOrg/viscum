@@ -94,8 +94,13 @@ export function PortfolioHeader({
             <h1 className="truncate text-2xl font-semibold text-viscum-ink">
               {accountName}
             </h1>
-            <p className="mt-0.5 truncate text-[13px] text-viscum-muted">
-              @{handle}
+            <p className="mt-0.5 flex flex-wrap items-center gap-2 truncate text-[13px] text-viscum-muted">
+              <span>@{handle}</span>
+              {seed ? (
+                <span className="shrink-0 rounded-full bg-viscum-line/70 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
+                  デモアカウントです
+                </span>
+              ) : null}
             </p>
           </div>
         </div>
