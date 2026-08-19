@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ViscumMark } from "@/components/ViscumMark";
 import { SiteFooter } from "@/components/SiteFooter";
+import { LpWorldviewArt } from "@/components/LpWorldviewArt";
 
 /** シーダー主語のLP。柔らかく・正確に「どんなサービスか」を伝える */
 export default function LandingPage() {
@@ -48,13 +49,7 @@ export default function LandingPage() {
             つくったあとって、「誰かに見てもらいたい」のに、投稿しても流れていく感じ、ありませんか。SNSに載せても既読スルーだったり、友人に頼むのは気後れしたり。あの、ちょっと寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。見るだけの人は、お金を払わずに、いま何が盛り上がっているのかを眺めていられます。
           </p>
           <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
-            <img
-              src="/lp-worldview.svg"
-              alt="鳥がヤドリギの実を運び、種を落として芽が育つ世界観のイラスト"
-              className="h-auto w-full"
-              width={720}
-              height={320}
-            />
+            <LpWorldviewArt />
             <figcaption className="border-t border-viscum-line px-4 py-3 text-[13px] leading-relaxed text-viscum-muted">
               鳥が実をくわえて運んで、種を落とす——つくった人が種を撒き、反応が寄り添い、また次が育つ。
             </figcaption>
