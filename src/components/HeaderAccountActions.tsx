@@ -177,62 +177,23 @@ export function HeaderAccountActions({
                 </div>
               </div>
 
-              {/* ダッシュボード／設定（noteの二ボタン） */}
-              <div className="grid grid-cols-2 gap-2 border-b border-viscum-line px-3.5 py-3">
-                <Link
-                  href="/dashboard"
-                  role="menuitem"
-                  onClick={close}
-                  className="flex flex-col items-center gap-1 rounded-lg border border-viscum-line bg-viscum-paper/80 px-2 py-2.5 text-center transition hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
-                >
-                  <ChartIcon className="h-5 w-5 text-viscum-brand" />
-                  <span className="text-[12px] font-medium text-viscum-ink">
-                    ダッシュボード
-                  </span>
-                  <span className="text-[10px] leading-tight text-viscum-muted">
-                    届き方
-                  </span>
-                </Link>
-                <Link
-                  href="/dashboard/settings"
-                  role="menuitem"
-                  onClick={close}
-                  className="flex flex-col items-center gap-1 rounded-lg border border-viscum-line bg-viscum-paper/80 px-2 py-2.5 text-center transition hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
-                >
-                  <GearIcon className="h-5 w-5 text-viscum-trunk" />
-                  <span className="text-[12px] font-medium text-viscum-ink">
-                    設定
-                  </span>
-                  <span className="text-[10px] leading-tight text-viscum-muted">
-                    通知など
-                  </span>
-                </Link>
-              </div>
-              {/* シード */}
-              <Section label="シード">
+              <div className="border-b border-viscum-line py-1.5">
                 <MenuRow href="/dashboard" onNavigate={close}>
-                  シードごとの届き方
+                  ダッシュボード
                 </MenuRow>
-                <MenuRow href="/dashboard/messages" onNavigate={close}>
-                  ご依頼DM
+                <MenuRow href="/dashboard/settings" onNavigate={close}>
+                  設定
                 </MenuRow>
                 <MenuRow href="/dashboard/notifications" onNavigate={close}>
                   通知
                   {unread > 0 ? `（未読 ${unread}）` : ""}
                 </MenuRow>
-                <MenuRow href="/new" onNavigate={close}>
-                  シードする
-                </MenuRow>
-              </Section>
-
-              {/* 履歴：中ページでスキ／気になるを切り替え */}
-              <div className="border-b border-viscum-line py-1.5">
                 <MenuRow href="/dashboard/reactions" onNavigate={close}>
                   履歴
                 </MenuRow>
               </div>
 
-              <div className="border-t border-viscum-line px-2 py-1.5">
+              <div className="px-2 py-1.5">
                 <button
                   type="button"
                   role="menuitem"
@@ -258,23 +219,6 @@ export function HeaderAccountActions({
           <UserIcon className="h-5 w-5" />
         </Link>
       )}
-    </div>
-  );
-}
-
-function Section({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-b border-viscum-line py-1.5 last:border-b-0">
-      <p className="px-3.5 pb-0.5 pt-1 text-[11px] font-medium text-viscum-muted">
-        {label}
-      </p>
-      {children}
     </div>
   );
 }
@@ -328,44 +272,6 @@ function Avatar({
     >
       {letter}
     </span>
-  );
-}
-
-function ChartIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <path d="M3 3v18h18" />
-      <path d="M7 16v-5" />
-      <path d="M12 16V8" />
-      <path d="M17 16v-9" />
-    </svg>
-  );
-}
-
-function GearIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden
-    >
-      <circle cx="12" cy="12" r="3" />
-      <path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" />
-    </svg>
   );
 }
 
