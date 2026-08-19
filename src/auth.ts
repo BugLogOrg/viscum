@@ -24,7 +24,11 @@ async function upsertUser(input: {
       .update(users)
       .set({
         handle: input.handle,
-        name: input.name ?? existing[0].name,
+        // 既存のアカウント名はログインのたびに上書きしない
+        name:
+          existing[0].name != null && existing[0].name !== ""
+            ? existing[0].name
+            : (input.name ?? existing[0].name),
         email: input.email ?? existing[0].email,
         image: input.image ?? existing[0].image,
       })
@@ -34,7 +38,7 @@ async function upsertUser(input: {
   await db.insert(users).values({
     id: input.id,
     handle: input.handle,
-    name: input.name,
+    name: input.name ?? input.handle,
     email: input.email,
     image: input.image,
   });
@@ -83,13 +87,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const handle =
           raw.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 24) || "mDB";
         const id = `demo:${handle}`;
+        // name は渡さない（毎ログインでアカウント名を潰さない）
         await upsertUser({
           id,
           handle,
-          name: handle,
           email: `${handle}@demo.viscum.local`,
         });
-        return { id, name: handle, email: `${handle}@demo.viscum.local`, handle };
+        return {
+          id,
+          name: handle,
+          email: `${handle}@demo.viscum.local`,
+          handle,
+        };
       },
     }),
   ],

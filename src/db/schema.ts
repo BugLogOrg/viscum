@@ -10,9 +10,13 @@ import {
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
   handle: text("handle").notNull().unique(),
+  /** アカウント名（表示名・メール「さん」） */
   name: text("name"),
   email: text("email").unique(),
+  /** アイコンURLまたは data URL（デモ可） */
   image: text("image"),
+  /** 公開一言 */
+  bio: text("bio"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .defaultNow()
     .notNull(),

@@ -3,7 +3,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   displayAccountName,
+  fetchRemoteProfile,
   readLocalProfile,
+  writeLocalProfile,
 } from "@/lib/local-profile";
 
 /** 公開PF頭：アカウント名が主、@英語IDは副。一言はその下 */
@@ -19,15 +21,36 @@ export function PortfolioHeader({
   const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
-    const sync = () => {
+    let cancelled = false;
+    const applyLocal = () => {
       const p = readLocalProfile(handle);
       setAccountName(displayAccountName(handle, p));
       setBio(p?.bio?.trim() ? p.bio.trim() : null);
       setAvatar(p?.avatarDataUrl ?? null);
     };
-    sync();
+    applyLocal();
+    void (async () => {
+      const remote = await fetchRemoteProfile(handle);
+      if (cancelled || !remote?.persisted) return;
+      if (!remote.accountName && !remote.bio && !remote.image) return;
+      setAccountName(remote.accountName?.trim() || handle);
+      setBio(remote.bio?.trim() || null);
+      setAvatar(remote.image);
+      writeLocalProfile({
+        handle,
+        accountName: remote.accountName?.trim() || undefined,
+        bio: remote.bio ?? "",
+        avatarDataUrl: remote.image ?? undefined,
+        updatedAt: new Date().toISOString(),
+      });
+      window.dispatchEvent(new Event("viscum-profile-updated"));
+    })();
+    const sync = () => applyLocal();
     window.addEventListener("viscum-profile-updated", sync);
-    return () => window.removeEventListener("viscum-profile-updated", sync);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("viscum-profile-updated", sync);
+    };
   }, [handle]);
 
   const letter = accountName.slice(0, 1).toUpperCase();

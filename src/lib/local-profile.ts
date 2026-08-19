@@ -1,4 +1,5 @@
-/** プロフィール編集の端末内控え（Neon前） */
+/** プロフィール控え。端末内はフォールバック。本番同期は Neon `/api/profile`（DATABASE_URL）。 */
+
 export type LocalProfile = {
   handle: string;
   /**
@@ -8,30 +9,55 @@ export type LocalProfile = {
   accountName?: string;
   /** 一言（公開ポートフォリオ向け） */
   bio: string;
-  /** アイコン（data URL。デモは端末内のみ） */
+  /** アイコン（data URL） */
   avatarDataUrl?: string;
   updatedAt: string;
 };
 
-const KEY = "viscum_local_profile_v1";
-const MAX_AVATAR_BYTES = 180_000; // localStorage 圧迫を避ける
+const KEY_V1 = "viscum_local_profile_v1";
+const KEY_V2 = "viscum_local_profiles_v2";
+const MAX_AVATAR_BYTES = 180_000;
 const MAX_ACCOUNT_NAME = 40;
 
-export function readLocalProfile(handle: string): LocalProfile | null {
-  if (typeof window === "undefined") return null;
+type ProfileMap = Record<string, LocalProfile>;
+
+function readMap(): ProfileMap {
+  if (typeof window === "undefined") return {};
   try {
-    const raw = localStorage.getItem(KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as LocalProfile;
-    if (!parsed || parsed.handle !== handle) return null;
-    return parsed;
+    const raw = localStorage.getItem(KEY_V2);
+    if (raw) {
+      const parsed = JSON.parse(raw) as ProfileMap;
+      return parsed && typeof parsed === "object" ? parsed : {};
+    }
+    // v1 → v2 移行（1ユーザー分）
+    const legacy = localStorage.getItem(KEY_V1);
+    if (legacy) {
+      const one = JSON.parse(legacy) as LocalProfile;
+      if (one?.handle) {
+        const map: ProfileMap = { [one.handle]: one };
+        localStorage.setItem(KEY_V2, JSON.stringify(map));
+        return map;
+      }
+    }
+    return {};
   } catch {
-    return null;
+    return {};
   }
 }
 
+function writeMap(map: ProfileMap) {
+  localStorage.setItem(KEY_V2, JSON.stringify(map));
+}
+
+export function readLocalProfile(handle: string): LocalProfile | null {
+  if (typeof window === "undefined") return null;
+  return readMap()[handle] ?? null;
+}
+
 export function writeLocalProfile(profile: LocalProfile) {
-  localStorage.setItem(KEY, JSON.stringify(profile));
+  const map = readMap();
+  map[profile.handle] = profile;
+  writeMap(map);
 }
 
 export function readAvatarDataUrl(handle: string): string | null {
@@ -52,7 +78,59 @@ export function normalizeAccountName(raw: string): string {
   return raw.replace(/\s+/g, " ").trim().slice(0, MAX_ACCOUNT_NAME);
 }
 
-/** 正方形に寄せて JPEG data URL 化（端末内デモ用） */
+export type RemoteProfile = {
+  handle: string;
+  accountName: string | null;
+  bio: string | null;
+  image: string | null;
+  persisted: boolean;
+};
+
+/** サーバにプロフィールがあれば取る。DATABASE_URL 未設定時は null */
+export async function fetchRemoteProfile(
+  handle: string,
+): Promise<RemoteProfile | null> {
+  try {
+    const res = await fetch(
+      `/api/profile?handle=${encodeURIComponent(handle)}`,
+      { cache: "no-store" },
+    );
+    if (!res.ok) return null;
+    return (await res.json()) as RemoteProfile;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveRemoteProfile(input: {
+  accountName: string;
+  bio: string;
+  image?: string | null;
+}): Promise<{ ok: boolean; persisted: boolean; error?: string }> {
+  try {
+    const res = await fetch("/api/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      persisted?: boolean;
+      error?: string;
+    };
+    if (!res.ok) {
+      return {
+        ok: false,
+        persisted: false,
+        error: data.error || `保存に失敗（${res.status}）`,
+      };
+    }
+    return { ok: true, persisted: Boolean(data.persisted) };
+  } catch {
+    return { ok: false, persisted: false, error: "ネットワークエラー" };
+  }
+}
+
+/** 正方形に寄せて JPEG data URL 化 */
 export function fileToAvatarDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) {

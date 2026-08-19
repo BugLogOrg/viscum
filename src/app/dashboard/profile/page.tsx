@@ -6,9 +6,11 @@ import { useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
+  fetchRemoteProfile,
   fileToAvatarDataUrl,
   normalizeAccountName,
   readLocalProfile,
+  saveRemoteProfile,
   writeLocalProfile,
 } from "@/lib/local-profile";
 
@@ -20,16 +22,40 @@ export default function ProfileEditPage() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [serverSynced, setServerSynced] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handle = session?.user?.handle;
 
   useEffect(() => {
     if (!handle) return;
-    const p = readLocalProfile(handle);
-    setAccountName(p?.accountName?.trim() ? p.accountName : "");
-    setBio(p?.bio ?? "");
-    setAvatar(p?.avatarDataUrl ?? null);
+    let cancelled = false;
+    (async () => {
+      const local = readLocalProfile(handle);
+      const remote = await fetchRemoteProfile(handle);
+      if (cancelled) return;
+      if (remote?.persisted && (remote.accountName || remote.bio || remote.image)) {
+        setAccountName(remote.accountName?.trim() || local?.accountName || "");
+        setBio(remote.bio ?? local?.bio ?? "");
+        setAvatar(remote.image ?? local?.avatarDataUrl ?? null);
+        setServerSynced(true);
+        writeLocalProfile({
+          handle,
+          accountName: remote.accountName?.trim() || undefined,
+          bio: remote.bio ?? "",
+          avatarDataUrl: remote.image ?? undefined,
+          updatedAt: new Date().toISOString(),
+        });
+        return;
+      }
+      setServerSynced(false);
+      setAccountName(local?.accountName?.trim() ? local.accountName : "");
+      setBio(local?.bio ?? "");
+      setAvatar(local?.avatarDataUrl ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [handle]);
 
   if (status === "loading") {
@@ -65,7 +91,7 @@ export default function ProfileEditPage() {
     );
   }
 
-  function persist(next: {
+  function persistLocal(next: {
     accountName?: string;
     bio?: string;
     avatarDataUrl?: string | null;
@@ -93,18 +119,45 @@ export default function ProfileEditPage() {
     window.dispatchEvent(new Event("viscum-profile-updated"));
   }
 
-  function save(e: React.FormEvent) {
+  async function persistAll(next: {
+    accountName: string;
+    bio: string;
+    avatarDataUrl?: string | null;
+  }) {
+    persistLocal(next);
+    const image =
+      next.avatarDataUrl === null
+        ? null
+        : (next.avatarDataUrl ?? avatar ?? undefined);
+    const remote = await saveRemoteProfile({
+      accountName: next.accountName,
+      bio: next.bio,
+      image: image === undefined ? undefined : image,
+    });
+    setServerSynced(remote.persisted);
+    if (!remote.ok) {
+      setError(remote.error || "サーバ保存に失敗（端末内には保存済み）");
+      return false;
+    }
+    return true;
+  }
+
+  async function save(e: React.FormEvent) {
     e.preventDefault();
     const name = normalizeAccountName(accountName);
     if (!name) {
-      setError("アカウント名を入れてください（メールの「さん」や公開の顔になります）");
+      setError(
+        "アカウント名を入れてください（メールの「さん」や公開の顔になります）",
+      );
       setSaved(false);
       return;
     }
-    persist({ accountName: name, bio });
-    setAccountName(name);
-    setSaved(true);
+    setBusy(true);
     setError(null);
+    const ok = await persistAll({ accountName: name, bio, avatarDataUrl: avatar });
+    setAccountName(name);
+    setSaved(ok);
+    setBusy(false);
   }
 
   async function onPickFile(file: File | null) {
@@ -115,12 +168,18 @@ export default function ProfileEditPage() {
     try {
       const dataUrl = await fileToAvatarDataUrl(file);
       setAvatar(dataUrl);
-      persist({
-        accountName: normalizeAccountName(accountName) || undefined,
-        bio,
-        avatarDataUrl: dataUrl,
-      });
-      setSaved(true);
+      const name = normalizeAccountName(accountName);
+      if (!name) {
+        persistLocal({ avatarDataUrl: dataUrl });
+        setError("アイコンは端末に保存しました。アカウント名を入れて保存してください");
+      } else {
+        await persistAll({
+          accountName: name,
+          bio,
+          avatarDataUrl: dataUrl,
+        });
+        setSaved(true);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "アップロードに失敗しました");
     } finally {
@@ -140,7 +199,10 @@ export default function ProfileEditPage() {
             プロフィール編集
           </h1>
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-            デモ段階は端末内に保存。英語IDとアカウント名は別です（メールの送り主はアカウント名）。通知などの設定は
+            {serverSynced
+              ? "サーバに同期済み（モバイルとWebで共有できます）。"
+              : "いまは端末内保存です。スマホとPCは別々になります。Neon（DATABASE_URL）接続後に横断同期できます。"}{" "}
+            通知などの設定は
             <Link href="/dashboard/settings" className="text-viscum-brand underline">
               設定
             </Link>
@@ -148,7 +210,7 @@ export default function ProfileEditPage() {
           </p>
         </div>
 
-        <form onSubmit={save} className="space-y-5">
+        <form onSubmit={(e) => void save(e)} className="space-y-5">
           <div className="space-y-2">
             <p className="text-[12px] text-viscum-muted">アイコン</p>
             <div className="flex items-center gap-4">
@@ -192,8 +254,9 @@ export default function ProfileEditPage() {
                     className="ml-2 text-[12px] text-viscum-muted underline"
                     onClick={() => {
                       setAvatar(null);
-                      persist({
-                        accountName: normalizeAccountName(accountName) || undefined,
+                      void persistAll({
+                        accountName:
+                          normalizeAccountName(accountName) || handle,
                         bio,
                         avatarDataUrl: null,
                       });
@@ -203,9 +266,6 @@ export default function ProfileEditPage() {
                     削除
                   </button>
                 )}
-                <p className="text-[11px] leading-relaxed text-viscum-muted">
-                  正方形に切り抜いて端末内に保存します（本番はサーバ保管へ）。
-                </p>
               </div>
             </div>
           </div>
@@ -219,9 +279,6 @@ export default function ProfileEditPage() {
               readOnly
               className="w-full rounded-md border border-viscum-line bg-viscum-paper-2 px-3 py-2 text-[14px] text-viscum-muted"
             />
-            <span className="block text-[11px] text-viscum-muted">
-              URL・ログイン・PFコメントのコテハンに使います。
-            </span>
           </label>
 
           <label className="block space-y-1">
@@ -238,7 +295,7 @@ export default function ProfileEditPage() {
               className="w-full rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand"
             />
             <span className="block text-[11px] leading-relaxed text-viscum-muted">
-              公開の顔・直依頼メールの送り主（「さん」）に使います。日本語可。
+              公開の顔・直依頼メールの送り主（「さん」）に使います。
               {accountName.trim()
                 ? ` プレビュー: ${previewName} さん（@${handle}）`
                 : null}
@@ -263,11 +320,15 @@ export default function ProfileEditPage() {
             <p className="text-[12px] text-viscum-berry-deep">{error}</p>
           )}
           {saved && !error && (
-            <p className="text-[13px] text-viscum-brand">保存しました</p>
+            <p className="text-[13px] text-viscum-brand">
+              保存しました
+              {serverSynced ? "（サーバ同期）" : "（この端末のみ）"}
+            </p>
           )}
           <button
             type="submit"
-            className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+            disabled={busy}
+            className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-60"
           >
             保存する
           </button>
