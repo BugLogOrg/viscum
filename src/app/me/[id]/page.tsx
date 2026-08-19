@@ -6,7 +6,11 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { AnalyticsChart } from "@/components/AnalyticsChart";
+import {
+  AnalyticsChart,
+  ANALYTICS_METRIC_LABEL,
+  type AnalyticsMetric,
+} from "@/components/AnalyticsChart";
 import { formatYen } from "@/data/dummy-works";
 import {
   readLocalSeeds,
@@ -27,6 +31,7 @@ export default function SeedStatsPage() {
   const id = decodeURIComponent(rawId ?? "");
   const { data: session, status } = useSession();
   const [seed, setSeed] = useState<LocalSeed | null | undefined>(undefined);
+  const [metric, setMetric] = useState<AnalyticsMetric>("views");
 
   useEffect(() => {
     if (!id) {
@@ -101,6 +106,40 @@ export default function SeedStatsPage() {
   }
 
   const detailHref = workDetailHref(seed);
+  const metricLabel = ANALYTICS_METRIC_LABEL[metric];
+  const periodForMetric = totals ? totals[metric] : 0;
+  const todayForMetric = today ? today[metric] : 0;
+  const lifetimeForMetric =
+    metric === "views"
+      ? seed.viewCount
+      : metric === "emo"
+        ? seed.emoCount
+        : metric === "bookmark"
+          ? seed.bookmarkCount
+          : seed.commentCount;
+
+  const metricCards: {
+    key: AnalyticsMetric;
+    period: number;
+    day: number;
+  }[] = [
+    {
+      key: "views",
+      period: totals?.views ?? 0,
+      day: today?.views ?? 0,
+    },
+    { key: "emo", period: totals?.emo ?? 0, day: today?.emo ?? 0 },
+    {
+      key: "bookmark",
+      period: totals?.bookmark ?? 0,
+      day: today?.bookmark ?? 0,
+    },
+    {
+      key: "comment",
+      period: totals?.comment ?? 0,
+      day: today?.comment ?? 0,
+    },
+  ];
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
@@ -132,76 +171,83 @@ export default function SeedStatsPage() {
           </h1>
         </div>
 
+        <section className="grid grid-cols-4 gap-1.5">
+          {metricCards.map(({ key, period, day }) => {
+            const active = metric === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => setMetric(key)}
+                aria-pressed={active}
+                className={`rounded-lg border px-1 py-2.5 text-center transition-colors ${
+                  active
+                    ? "border-viscum-brand bg-viscum-leaf-soft/60 ring-1 ring-viscum-brand"
+                    : "border-viscum-line bg-white/50 hover:border-viscum-brand/50"
+                }`}
+              >
+                <p
+                  className={`text-[9px] leading-tight ${
+                    active ? "font-medium text-viscum-brand" : "text-viscum-muted"
+                  }`}
+                >
+                  {ANALYTICS_METRIC_LABEL[key]}
+                </p>
+                <p className="mt-0.5 text-[16px] font-semibold tabular-nums text-viscum-ink">
+                  {period}
+                </p>
+                <p
+                  className={`text-[10px] font-medium tabular-nums ${
+                    day > 0
+                      ? "text-viscum-brand"
+                      : "text-viscum-muted"
+                  }`}
+                >
+                  今日 {formatDelta(day)}
+                </p>
+              </button>
+            );
+          })}
+        </section>
+        <p className="-mt-4 text-[11px] text-viscum-muted">
+          指標をタップすると下の折れ線が切り替わります。
+        </p>
+
         <section className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
           <div className="flex items-baseline justify-between gap-2">
             <div>
               <h2 className="text-[14px] font-semibold text-viscum-ink">
-                閲覧（日次）
+                {metricLabel}（日次）
               </h2>
               <p className="text-[11px] text-viscum-muted">
                 直近14日 · YouTubeアナリティクス風
               </p>
             </div>
-            {today && (
-              <p className="text-right">
-                <span className="block text-[10px] text-viscum-muted">今日</span>
-                <span
-                  className={`text-[15px] font-semibold tabular-nums ${
-                    today.views > 0
-                      ? "text-viscum-brand"
-                      : "text-viscum-muted"
-                  }`}
-                >
-                  {formatDelta(today.views)}
-                </span>
-              </p>
-            )}
+            <p className="text-right">
+              <span className="block text-[10px] text-viscum-muted">今日</span>
+              <span
+                className={`text-[15px] font-semibold tabular-nums ${
+                  todayForMetric > 0
+                    ? "text-viscum-brand"
+                    : "text-viscum-muted"
+                }`}
+              >
+                {formatDelta(todayForMetric)}
+              </span>
+            </p>
           </div>
           {series && (
             <div className="mt-3">
-              <AnalyticsChart days={series.days} metric="views" />
+              <AnalyticsChart days={series.days} metric={metric} />
             </div>
           )}
-          {totals && (
-            <p className="mt-2 border-t border-viscum-line pt-2 text-[12px] tabular-nums text-viscum-ink">
-              期間合計{" "}
-              <span className="text-[16px] font-semibold">{totals.views}</span>
-              <span className="ml-2 text-viscum-muted">
-                （生涯 {seed.viewCount}）
-              </span>
-            </p>
-          )}
-        </section>
-
-        <section className="grid grid-cols-3 gap-2">
-          {(
-            [
-              ["EMO", totals?.emo ?? 0, today?.emo ?? 0],
-              ["気になる", totals?.bookmark ?? 0, today?.bookmark ?? 0],
-              ["コメント", totals?.comment ?? 0, today?.comment ?? 0],
-            ] as const
-          ).map(([label, period, day]) => (
-            <div
-              key={label}
-              className="rounded-lg border border-viscum-line bg-white/50 px-2 py-2.5 text-center"
-            >
-              <p className="text-[10px] text-viscum-muted">{label}</p>
-              <p className="mt-0.5 text-[18px] font-semibold tabular-nums text-viscum-ink">
-                {period}
-              </p>
-              <p
-                className={`text-[11px] font-medium tabular-nums ${
-                  day > 0
-                    ? "text-viscum-brand"
-                    : day < 0
-                      ? "text-viscum-berry"
-                      : "text-viscum-muted"
-                }`}
-              >
-                今日 {formatDelta(day)}
-              </p>
-            </div>
-          ))}
+          <p className="mt-2 border-t border-viscum-line pt-2 text-[12px] tabular-nums text-viscum-ink">
+            期間合計{" "}
+            <span className="text-[16px] font-semibold">{periodForMetric}</span>
+            <span className="ml-2 text-viscum-muted">
+              （生涯 {lifetimeForMetric}）
+            </span>
+          </p>
         </section>
 
         <section className="overflow-hidden rounded-lg border border-viscum-line bg-white/70">
@@ -210,7 +256,7 @@ export default function SeedStatsPage() {
               日別の数字
             </h2>
             <p className="text-[11px] text-viscum-muted">
-              新しい日が上 · タップした日付と対応
+              新しい日が上 · グラフの選択日と対応
             </p>
           </div>
           <div className="overflow-x-auto">
@@ -218,18 +264,27 @@ export default function SeedStatsPage() {
               <thead>
                 <tr className="bg-viscum-paper-2/80 text-[10px] text-viscum-muted">
                   <th className="px-2 py-2 font-medium">日付</th>
-                  <th className="px-1 py-2 text-right font-medium tabular-nums">
-                    閲覧
-                  </th>
-                  <th className="px-1 py-2 text-right font-medium tabular-nums">
-                    EMO
-                  </th>
-                  <th className="px-1 py-2 text-right font-medium tabular-nums">
-                    気になる
-                  </th>
-                  <th className="px-2 py-2 text-right font-medium tabular-nums">
-                    コメント
-                  </th>
+                  {(
+                    [
+                      ["views", "閲覧"],
+                      ["emo", "EMO"],
+                      ["bookmark", "気になる"],
+                      ["comment", "コメント"],
+                    ] as const
+                  ).map(([key, label], i) => (
+                    <th
+                      key={key}
+                      className={`py-2 text-right font-medium tabular-nums ${
+                        i === 3 ? "px-2" : "px-1"
+                      } ${
+                        metric === key
+                          ? "bg-viscum-leaf-soft/50 text-viscum-brand"
+                          : ""
+                      }`}
+                    >
+                      {label}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -248,18 +303,29 @@ export default function SeedStatsPage() {
                           {formatDateJa(row.date)}
                         </span>
                       </td>
-                      <td className="px-1 py-2 text-right tabular-nums font-medium text-viscum-ink">
-                        {row.views}
-                      </td>
-                      <td className="px-1 py-2 text-right tabular-nums text-viscum-ink">
-                        {row.emo}
-                      </td>
-                      <td className="px-1 py-2 text-right tabular-nums text-viscum-ink">
-                        {row.bookmark}
-                      </td>
-                      <td className="px-2 py-2 text-right tabular-nums text-viscum-ink">
-                        {row.comment}
-                      </td>
+                      {(
+                        [
+                          "views",
+                          "emo",
+                          "bookmark",
+                          "comment",
+                        ] as const
+                      ).map((key, i) => (
+                        <td
+                          key={key}
+                          className={`py-2 text-right tabular-nums text-viscum-ink ${
+                            i === 3 ? "px-2" : "px-1"
+                          } ${
+                            key === "views" ? "font-medium" : ""
+                          } ${
+                            metric === key
+                              ? "bg-viscum-leaf-soft/40 font-semibold"
+                              : ""
+                          }`}
+                        >
+                          {row[key]}
+                        </td>
+                      ))}
                     </tr>
                   );
                 })}
@@ -270,18 +336,25 @@ export default function SeedStatsPage() {
                     <td className="px-2 py-2 text-[11px] font-semibold text-viscum-ink">
                       期間合計
                     </td>
-                    <td className="px-1 py-2 text-right text-[12px] font-semibold tabular-nums">
-                      {totals.views}
-                    </td>
-                    <td className="px-1 py-2 text-right text-[12px] font-semibold tabular-nums">
-                      {totals.emo}
-                    </td>
-                    <td className="px-1 py-2 text-right text-[12px] font-semibold tabular-nums">
-                      {totals.bookmark}
-                    </td>
-                    <td className="px-2 py-2 text-right text-[12px] font-semibold tabular-nums">
-                      {totals.comment}
-                    </td>
+                    {(
+                      [
+                        "views",
+                        "emo",
+                        "bookmark",
+                        "comment",
+                      ] as const
+                    ).map((key, i) => (
+                      <td
+                        key={key}
+                        className={`py-2 text-right text-[12px] font-semibold tabular-nums ${
+                          i === 3 ? "px-2" : "px-1"
+                        } ${
+                          metric === key ? "bg-viscum-leaf-soft/50" : ""
+                        }`}
+                      >
+                        {totals[key]}
+                      </td>
+                    ))}
                   </tr>
                 </tfoot>
               )}

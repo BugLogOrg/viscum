@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   formatDateAxis,
   formatDateJa,
@@ -8,9 +8,9 @@ import {
   type ReachDay,
 } from "@/lib/reach-series";
 
-type Metric = "views" | "emo" | "bookmark" | "comment";
+export type AnalyticsMetric = "views" | "emo" | "bookmark" | "comment";
 
-const METRIC_LABEL: Record<Metric, string> = {
+export const ANALYTICS_METRIC_LABEL: Record<AnalyticsMetric, string> = {
   views: "閲覧",
   emo: "EMO",
   bookmark: "気になる",
@@ -26,9 +26,13 @@ export function AnalyticsChart({
   metric = "views",
 }: {
   days: ReachDay[];
-  metric?: Metric;
+  metric?: AnalyticsMetric;
 }) {
   const [selected, setSelected] = useState(days.length - 1);
+
+  useEffect(() => {
+    setSelected(Math.max(0, days.length - 1));
+  }, [metric, days.length]);
 
   const values = useMemo(() => days.map((d) => d[metric]), [days, metric]);
   const max = Math.max(1, ...values);
@@ -90,7 +94,7 @@ export function AnalyticsChart({
             {selDay[metric]}
           </p>
           <p className="text-[10px] text-viscum-muted">
-            {METRIC_LABEL[metric]}
+            {ANALYTICS_METRIC_LABEL[metric]}
           </p>
         </div>
       </div>
@@ -99,7 +103,7 @@ export function AnalyticsChart({
         viewBox={`0 0 ${w} ${h}`}
         className="h-44 w-full touch-manipulation"
         role="img"
-        aria-label={`${METRIC_LABEL[metric]}の日次推移`}
+        aria-label={`${ANALYTICS_METRIC_LABEL[metric]}の日次推移`}
       >
         {yTicks.map((t) => {
           const y = padT + plotH - (t / yMax) * plotH;
