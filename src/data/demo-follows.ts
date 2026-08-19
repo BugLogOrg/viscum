@@ -1,12 +1,9 @@
-/** デモ用フォロー中シーダー（本番は購読グラフ） */
-export const DEMO_FOLLOWING = new Set([
-  "mdb",
-  "ayu",
-  "ken",
-  "sana",
-  "neo",
-]);
+/**
+ * @deprecated 固定デモフォローは廃止。実フォローは `@/lib/local-follows`。
+ * 互換のため空のまま残置（参照が残っていても誤爆しない）。
+ */
+export const DEMO_FOLLOWING = new Set<string>();
 
-export function isDemoFollowing(handle: string): boolean {
-  return DEMO_FOLLOWING.has(handle.toLowerCase());
+export function isDemoFollowing(_handle: string): boolean {
+  return false;
 }

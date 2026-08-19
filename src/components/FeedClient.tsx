@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
+import Link from "next/link";
 import { DUMMY_WORKS } from "@/data/dummy-works";
-import { DEMO_FOLLOWING } from "@/data/demo-follows";
+import { FOLLOWS_UPDATED, listFollowing } from "@/lib/local-follows";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -25,9 +27,12 @@ function matchesQuery(
 export function FeedClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
+  const myHandle = session?.user?.handle?.trim() || "";
   const [filter, setFilter] = useState<Filter>("all");
   const [specialty, setSpecialty] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [followingHandles, setFollowingHandles] = useState<string[]>([]);
 
   useEffect(() => {
     setSpecialty(searchParams.get("tag"));
@@ -36,6 +41,19 @@ export function FeedClient() {
       setFilter(feed);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    const sync = () => {
+      setFollowingHandles(myHandle ? listFollowing(myHandle) : []);
+    };
+    sync();
+    window.addEventListener(FOLLOWS_UPDATED, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(FOLLOWS_UPDATED, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [myHandle]);
 
   const selectTag = useCallback(
     (tag: string | null) => {
@@ -49,8 +67,10 @@ export function FeedClient() {
     [router, searchParams],
   );
 
+  const followSet = new Set(followingHandles);
+
   const followed = DUMMY_WORKS.filter((w) => {
-    if (!DEMO_FOLLOWING.has(w.seeder.toLowerCase())) return false;
+    if (!followSet.has(w.seeder.toLowerCase())) return false;
     if (!matchesQuery(w, query)) return false;
     if (specialty && !w.tags.includes(specialty)) return false;
     if (filter === "open") {
@@ -82,10 +102,13 @@ export function FeedClient() {
   const title =
     filter === "open" ? "開催中" : filter === "follow" ? "フォロー中" : "すべて";
 
-  /** 見出し下の帯：説明＋専門／検索をパンくずで（常時表示で高さ固定） */
   const contextCrumbs: string[] = [
     filter === "follow"
-      ? "フォローしたシーダーの作品（デモ・固定リスト）"
+      ? myHandle
+        ? followingHandles.length > 0
+          ? "フォローしたシーダーの作品"
+          : "まだ誰もフォローしていません"
+        : "ログインするとフォロー中が表示されます"
       : filter === "open"
         ? "コメントコンペ開催中 · チップ付きで反応を募集"
         : "シーダーがシードした作品",
@@ -154,7 +177,6 @@ export function FeedClient() {
         {contextLine}
       </p>
 
-      {/* モバイル用フィルタ（デスクトップは左ナビ） */}
       <div className="flex items-center gap-2 border-b border-viscum-line px-3 py-1.5 md:hidden">
         <button
           type="button"
@@ -209,7 +231,30 @@ export function FeedClient() {
             className="lg:border-viscum-line"
           />
         ))}
-        {rest.length === 0 && (
+        {rest.length === 0 && filter === "follow" && (
+          <div className="col-span-full px-4 py-10 text-center text-sm text-viscum-muted">
+            {!myHandle ? (
+              <p>
+                ログインすると、フォローしたシーダーの作品がここに並びます。{" "}
+                <Link
+                  href="/login?callbackUrl=%2F%3Ffeed%3Dfollow"
+                  className="font-medium text-viscum-brand underline-offset-2 hover:underline"
+                >
+                  ログイン
+                </Link>
+              </p>
+            ) : followingHandles.length === 0 ? (
+              <p>
+                まだ誰もフォローしていません。公開PFの「フォロー」からシーダーを追加すると、ここに作品が流れます。
+              </p>
+            ) : (
+              <p>
+                フォロー中のシーダーに、条件に合う作品がまだありません。
+              </p>
+            )}
+          </div>
+        )}
+        {rest.length === 0 && filter !== "follow" && (
           <p className="col-span-full px-4 py-8 text-center text-sm text-viscum-muted">
             「{query.trim() || specialty || "条件"}」に合う作品がありません
           </p>
