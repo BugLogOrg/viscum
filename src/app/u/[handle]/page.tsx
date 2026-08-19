@@ -4,6 +4,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { FollowButton } from "@/components/FollowButton";
 import { PortfolioHeader } from "@/components/PortfolioBio";
+import { PortfolioWall } from "@/components/PortfolioWall";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   formatYen,
@@ -121,6 +122,8 @@ export default async function SeederPortfolioPage({ params }: Props) {
           どちらもスコアや順位ではありません。決済・採用が完了した件数と金額の事実です。メンターの累計受取は「いくら稼いだ自慢」ではなく、ちゃんと払われた透明性のための表示です。
         </p>
       </header>
+
+      <PortfolioWall handle={display} />
 
       <section className="border-b border-viscum-line">
         <p className="px-4 pt-4 text-[13px] font-medium text-viscum-ink">
