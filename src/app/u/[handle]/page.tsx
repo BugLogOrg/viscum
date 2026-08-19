@@ -31,7 +31,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
 
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
-      <SiteHeader backHref="/" />
+      <SiteHeader backHref="/" hidePostCta />
 
       <header className="border-b border-viscum-line px-4 py-5">
         <p className="text-xs text-viscum-muted">シーダー／メンター</p>

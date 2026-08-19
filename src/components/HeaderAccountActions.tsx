@@ -3,19 +3,33 @@
 import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import {
+  installDemoNotifies,
+  readLocalNotifies,
+  unreadNotifyCount,
+} from "@/lib/local-notifies";
 
 /** 通知・アカウントメニュー（note寄り：プロフィール頭＋ダッシュ／設定＋履歴） */
 export function HeaderAccountActions({
   className = "",
-  notifyDot = true,
 }: {
   className?: string;
+  /** @deprecated 未読は local notifies から計算 */
   notifyDot?: boolean;
 }) {
   const { data: session, status } = useSession();
   const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
+
+  useEffect(() => {
+    if (readLocalNotifies().length === 0) installDemoNotifies();
+    setUnread(unreadNotifyCount());
+    const onFocus = () => setUnread(unreadNotifyCount());
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -41,25 +55,21 @@ export function HeaderAccountActions({
 
   return (
     <div className={`flex items-center gap-0.5 ${className}`}>
-      <button
-        type="button"
-        title="通知（準備中）"
+      <Link
+        href={session?.user ? "/me/notifications" : "/login"}
+        title="通知"
         aria-label="通知"
         className="relative rounded-md p-2 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
-        onClick={() => {
-          window.alert(
-            "【デモ】通知は準備中です。\n直依頼・採用・チップ・専門タグの開催中などが届く想定です。",
-          );
-        }}
+        onClick={() => setUnread(unreadNotifyCount())}
       >
         <BellIcon className="h-5 w-5" />
-        {notifyDot && (
+        {session?.user && unread > 0 && (
           <span
             className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-viscum-berry"
             aria-hidden
           />
         )}
-      </button>
+      </Link>
 
       {status === "loading" ? (
         <span className="px-2 text-[11px] text-viscum-muted">…</span>
@@ -145,6 +155,10 @@ export function HeaderAccountActions({
               <Section label="シード">
                 <MenuRow href="/me" onNavigate={close}>
                   シードごとの届き方
+                </MenuRow>
+                <MenuRow href="/me/notifications" onNavigate={close}>
+                  通知
+                  {unread > 0 ? `（未読 ${unread}）` : ""}
                 </MenuRow>
                 <MenuRow href="/new" onNavigate={close}>
                   シードする
