@@ -4,15 +4,24 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 
-const ALLOW_PREFIX = ["/login", "/onboarding", "/api", "/lp"];
+/** ログイン不要／オンボ中でも見てよい公開面 */
+const PUBLIC_PREFIX = [
+  "/login",
+  "/onboarding",
+  "/api",
+  "/lp",
+  "/u",
+  "/w",
+];
 
-function isAllowed(pathname: string) {
-  return ALLOW_PREFIX.some(
+function isPublicPath(pathname: string) {
+  if (pathname === "/") return true;
+  return PUBLIC_PREFIX.some(
     (p) => pathname === p || pathname.startsWith(`${p}/`),
   );
 }
 
-/** 英語ID未設定 → handle。初回ウェルカム未了 → welcome。2回目以降は出さない */
+/** 英語ID未設定 → handle。初回ウェルカム未了 → welcome。公開棚は止めない */
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { data, status } = useSession();
   const pathname = usePathname();
@@ -20,10 +29,14 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    if (status === "loading") return;
-    const allowed = isAllowed(pathname);
+    // 未ログイン／読み込み中は絶対にオンボへ送らない（ログアウト直後のちらつき対策）
+    if (status !== "authenticated") {
+      setReady(true);
+      return;
+    }
 
-    if (data?.user?.needsHandle && !allowed) {
+    const pub = isPublicPath(pathname);
+    if (data?.user?.needsHandle && !pub) {
       router.replace("/onboarding/handle");
       return;
     }
@@ -31,7 +44,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
       data?.user &&
       !data.user.needsHandle &&
       data.user.needsOnboarding &&
-      !allowed
+      !pub
     ) {
       router.replace("/onboarding/welcome");
       return;
@@ -46,9 +59,13 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     router,
   ]);
 
-  if (status === "loading") return children;
+  if (status !== "authenticated") {
+    return <>{children}</>;
+  }
 
-  if (data?.user?.needsHandle && !isAllowed(pathname)) {
+  const pub = isPublicPath(pathname);
+
+  if (data?.user?.needsHandle && !pub) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg items-center justify-center bg-viscum-paper px-4 text-sm text-viscum-muted">
         英語IDの設定へ…
@@ -59,7 +76,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
     data?.user &&
     !data.user.needsHandle &&
     data.user.needsOnboarding &&
-    !isAllowed(pathname)
+    !pub
   ) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg items-center justify-center bg-viscum-paper px-4 text-sm text-viscum-muted">

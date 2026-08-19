@@ -200,7 +200,16 @@ export function HeaderAccountActions({
                   className="w-full rounded-md px-2.5 py-2.5 text-left text-[13px] text-viscum-ink hover:bg-viscum-paper-2"
                   onClick={() => {
                     close();
-                    void signOut({ callbackUrl: "/" });
+                    const path =
+                      typeof window !== "undefined"
+                        ? window.location.pathname
+                        : "/";
+                    const stay =
+                      path === "/" ||
+                      path.startsWith("/u/") ||
+                      path.startsWith("/w/") ||
+                      path.startsWith("/lp");
+                    void signOut({ callbackUrl: stay ? path : "/" });
                   }}
                 >
                   ログアウト
