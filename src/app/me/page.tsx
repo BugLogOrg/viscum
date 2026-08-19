@@ -25,19 +25,6 @@ export default function MePage() {
     return seeds.filter((s) => s.seederHandle === h);
   }, [seeds, session?.user?.handle]);
 
-  const totals = useMemo(() => {
-    return mine.reduce(
-      (acc, s) => {
-        acc.views += s.viewCount;
-        acc.emo += s.emoCount;
-        acc.bookmarks += s.bookmarkCount;
-        acc.comments += s.commentCount;
-        return acc;
-      },
-      { views: 0, emo: 0, bookmarks: 0, comments: 0 },
-    );
-  }, [mine]);
-
   if (status === "loading") {
     return (
       <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper px-4 py-10 text-sm text-viscum-muted">
@@ -53,7 +40,7 @@ export default function MePage() {
         <main className="px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">マイシード</h1>
           <p className="mt-2 text-[14px] text-viscum-muted">
-            ログインすると、自分のシードの広告実績が見られます。
+            ログインすると、シードごとの広告の届き方が見られます。
           </p>
           <Link
             href="/login"
@@ -76,8 +63,9 @@ export default function MePage() {
             <h1 className="text-xl font-semibold text-viscum-ink">
               @{session.user.handle}
             </h1>
-            <p className="mt-1 text-[12px] text-viscum-muted">
-              ここは自分用の成績です。公開プロフィールの信用欄には出しません（支払い事実とは分離）。
+            <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
+              広告の届き方は<strong className="font-medium text-viscum-ink">シードごと</strong>
+              に見ます（キャンペーン単位）。合計だけでは次に何を直すか分かりません。公開プロフィールの信用欄には出しません。
             </p>
           </div>
           <button
@@ -89,45 +77,10 @@ export default function MePage() {
           </button>
         </div>
 
-        <section className="rounded-xl border border-viscum-line bg-white/50 px-4 py-4">
-          <h2 className="text-[14px] font-semibold text-viscum-ink">
-            広告の届き方（合計）
-          </h2>
-          <dl className="mt-3 grid grid-cols-2 gap-3 text-[13px]">
-            <div>
-              <dt className="text-viscum-muted">閲覧</dt>
-              <dd className="text-lg font-semibold text-viscum-ink">
-                {totals.views}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-viscum-muted">EMO（スキ相当）</dt>
-              <dd className="text-lg font-semibold text-viscum-ink">
-                {totals.emo}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-viscum-muted">気になる</dt>
-              <dd className="text-lg font-semibold text-viscum-ink">
-                {totals.bookmarks}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-viscum-muted">コメント</dt>
-              <dd className="text-lg font-semibold text-viscum-ink">
-                {totals.comments}
-              </dd>
-            </div>
-          </dl>
-          <p className="mt-3 text-[11px] leading-relaxed text-viscum-muted">
-            Neon未接続のあいだは、この端末に保存したシードの集計です。DB接続後はサーバ集計に切り替えます。
-          </p>
-        </section>
-
         <section className="space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2">
             <h2 className="text-[15px] font-semibold text-viscum-ink">
-              自分のシード
+              シードごとの届き方
             </h2>
             <Link
               href="/new"
@@ -136,17 +89,22 @@ export default function MePage() {
               シードする
             </Link>
           </div>
+          <p className="text-[11px] leading-relaxed text-viscum-muted">
+            Neon未接続のあいだは、この端末に保存したシードのみ。DB接続後はサーバ集計に切り替えます。
+          </p>
 
           {mine.length === 0 ? (
-            <p className="rounded-lg border border-dashed border-viscum-line px-4 py-6 text-[13px] text-viscum-muted">
-              まだありません。ログインした状態でシードすると、ここに成績が並びます。
+            <p className="rounded-lg border border-dashed border-viscum-line px-4 py-6 text-[13px] leading-relaxed text-viscum-muted">
+              まだありません。ログインした状態でシードすると、ここに
+              <span className="text-viscum-ink">1本ごとの</span>
+              閲覧・EMO・気になる・コメントが並びます。
             </p>
           ) : (
             <ul className="space-y-3">
               {mine.map((s) => (
                 <li
                   key={s.id}
-                  className="rounded-lg border border-viscum-line bg-white/40 px-3 py-3"
+                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
                 >
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusBadge
@@ -156,17 +114,39 @@ export default function MePage() {
                     />
                     {s.prizeYen != null && s.status === "open" && (
                       <span className="text-[11px] text-viscum-muted">
-                        {formatYen(s.prizeYen)}
+                        チップ {formatYen(s.prizeYen)}
                       </span>
                     )}
                   </div>
                   <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
                     {s.title}
                   </p>
-                  <p className="mt-2 text-[12px] text-viscum-muted">
-                    閲覧 {s.viewCount} · EMO {s.emoCount} · 気になる{" "}
-                    {s.bookmarkCount} · コメント {s.commentCount}
-                  </p>
+                  <dl className="mt-3 grid grid-cols-4 gap-2 border-t border-viscum-line pt-3 text-center">
+                    <div>
+                      <dt className="text-[10px] text-viscum-muted">閲覧</dt>
+                      <dd className="text-[15px] font-semibold text-viscum-ink">
+                        {s.viewCount}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] text-viscum-muted">EMO</dt>
+                      <dd className="text-[15px] font-semibold text-viscum-ink">
+                        {s.emoCount}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] text-viscum-muted">気になる</dt>
+                      <dd className="text-[15px] font-semibold text-viscum-ink">
+                        {s.bookmarkCount}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="text-[10px] text-viscum-muted">コメント</dt>
+                      <dd className="text-[15px] font-semibold text-viscum-ink">
+                        {s.commentCount}
+                      </dd>
+                    </div>
+                  </dl>
                 </li>
               ))}
             </ul>
