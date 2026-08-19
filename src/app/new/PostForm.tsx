@@ -6,6 +6,12 @@ import { useSession } from "next-auth/react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import { formatYen, type CompStatus } from "@/data/dummy-works";
+import {
+  SEED_COURSES,
+  MAX_COURSE_QUESTIONS,
+  courseById,
+  type SeedCourseId,
+} from "@/data/seed-courses";
 import { addLocalSeed } from "@/lib/local-seeds";
 
 const RECOMMENDED_TAGS = [
@@ -19,7 +25,6 @@ const RECOMMENDED_TAGS = [
   "LP",
 ] as const;
 
-const PRIZE_PRESETS = [5000, 10000, 30000] as const;
 /** 公開ブースト（プランD）本命帯。旗艦は¥30,000パッケージ */
 const EXT_REVIEW_PRESETS = [5000, 10000, 30000] as const;
 
@@ -59,7 +64,10 @@ export function PostForm() {
   const [customTag, setCustomTag] = useState("");
   const [compOn, setCompOn] = useState(false);
   const [extReviewOn, setExtReviewOn] = useState(false);
-  const [prizeYen, setPrizeYen] = useState<(typeof PRIZE_PRESETS)[number]>(5000);
+  const [courseId, setCourseId] = useState<SeedCourseId>("first_impression");
+  const [questions, setQuestions] = useState<string[]>(() => [
+    ...courseById("first_impression").questions,
+  ]);
   const [extPrizeYen, setExtPrizeYen] =
     useState<(typeof EXT_REVIEW_PRESETS)[number]>(5000);
   const [closesInDays, setClosesInDays] = useState(7);
@@ -67,6 +75,9 @@ export function PostForm() {
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
   const [thumbName, setThumbName] = useState<string | null>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
+
+  const course = courseById(courseId);
+  const prizeYen = course.yen;
 
   useEffect(() => {
     return () => {
@@ -103,22 +114,51 @@ export function PostForm() {
 
   const status: CompStatus = compOn ? "open" : "none";
 
-  /** コンペON時：お願い文の改行＝お題（最大3） */
+  /** コンペON時：編集済み質問リスト（空行は落とす） */
   const promptList = useMemo(() => {
     if (!compOn) return [] as string[];
-    return focusNote
-      .split(/\n+/)
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .slice(0, 3);
-  }, [compOn, focusNote]);
+    return questions.map((q) => q.trim()).filter(Boolean).slice(0, MAX_COURSE_QUESTIONS);
+  }, [compOn, questions]);
 
   const canSave =
     title.trim().length > 0 &&
     externalUrl.trim().length > 8 &&
     description.trim().length > 0 &&
-    (!compOn || prizeYen >= 5000) &&
+    (!compOn || (prizeYen >= 5000 && promptList.length >= 1)) &&
     (!extReviewOn || extPrizeYen >= 5000);
+
+  function applyCourse(id: SeedCourseId) {
+    const next = courseById(id);
+    setCourseId(id);
+    setQuestions([...next.questions]);
+    if (id === "boost") {
+      setExtPrizeYen(30000);
+    }
+  }
+
+  function setQuestionAt(index: number, value: string) {
+    setQuestions((prev) => {
+      const copy = [...prev];
+      copy[index] = value;
+      return copy;
+    });
+  }
+
+  function addQuestion() {
+    setQuestions((prev) =>
+      prev.length >= MAX_COURSE_QUESTIONS ? prev : [...prev, ""],
+    );
+  }
+
+  function removeQuestion(index: number) {
+    setQuestions((prev) =>
+      prev.length <= 1 ? prev : prev.filter((_, i) => i !== index),
+    );
+  }
+
+  function resetQuestionsToTemplate() {
+    setQuestions([...course.questions]);
+  }
 
   function toggleTag(tag: string) {
     setTags((prev) =>
@@ -145,7 +185,7 @@ export function PostForm() {
       );
     } else if (compOn) {
       lines.push(
-        `【VISCUM】コメントコンペ開催中 · チップ ${formatYen(prizeYen)}`,
+        `【VISCUM】${course.name} · チップ ${formatYen(prizeYen)}`,
       );
     } else if (extReviewOn) {
       lines.push(
@@ -208,14 +248,19 @@ export function PostForm() {
               タグ：{tags.join(" / ")}
             </p>
           )}
-          {focusNote.trim() && (
+          {(compOn ? promptList.length > 0 : Boolean(focusNote.trim())) && (
             <div className="text-[14px] leading-relaxed text-viscum-ink">
-              {promptList.length > 0 ? (
-                <ul className="list-inside list-disc space-y-0.5">
-                  {promptList.map((p) => (
-                    <li key={p}>お題: {p}</li>
-                  ))}
-                </ul>
+              {compOn && promptList.length > 0 ? (
+                <>
+                  <p className="mb-1 text-[12px] font-medium text-viscum-muted">
+                    {course.name}
+                  </p>
+                  <ul className="list-inside list-disc space-y-0.5">
+                    {promptList.map((p) => (
+                      <li key={p}>お題: {p}</li>
+                    ))}
+                  </ul>
+                </>
               ) : (
                 <p>{focusNote.trim()}</p>
               )}
@@ -223,7 +268,8 @@ export function PostForm() {
           )}
           {compOn && (
             <p className="text-[13px] text-viscum-ink">
-              チップ {formatYen(prizeYen)} · 締切 あと約{closesInDays}日
+              {course.name} · チップ {formatYen(prizeYen)} · 締切 あと約
+              {closesInDays}日
             </p>
           )}
         </div>
@@ -308,7 +354,8 @@ export function PostForm() {
             seederHandle: session.user.handle,
             title: title.trim(),
             description: description.trim(),
-            focusNote: focusNote.trim() || undefined,
+            focusNote:
+              (compOn ? promptList.join("\n") : focusNote.trim()) || undefined,
             externalUrl: externalUrl.trim(),
             tags,
             status: compOn ? "open" : "none",
@@ -434,29 +481,23 @@ export function PostForm() {
         <label className="block text-[13px] font-medium text-viscum-ink">
           メンターへのお願い
         </label>
-        <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
-          見てほしいところの入口です。書いていない論点を書かれても大丈夫（採用・チップはシーダーが選びます）。
-          {compOn
-            ? " コンペ中は、改行するとお題として最大3つ並び、シェア文にも入ります。"
-            : " コンペにしなくても書けます。"}
-        </p>
-        <textarea
-          value={focusNote}
-          onChange={(e) => setFocusNote(e.target.value)}
-          rows={compOn ? 4 : 2}
-          placeholder={
-            compOn
-              ? "例（1行＝1お題）:\n初見の分かりやすさ\n払いたくなるか\n名前の印象"
-              : "例: 冒頭1秒で何の製品か分かるか"
-          }
-          className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] leading-relaxed text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none"
-        />
-        {compOn && promptList.length > 0 && (
-          <ul className="mt-2 list-inside list-disc text-[13px] text-viscum-ink">
-            {promptList.map((p) => (
-              <li key={p}>お題プレビュー: {p}</li>
-            ))}
-          </ul>
+        {!compOn ? (
+          <>
+            <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
+              見てほしいところの入口です。書いていない論点を書かれても大丈夫（採用・チップはシーダーが選びます）。コンペにしなくても書けます。
+            </p>
+            <textarea
+              value={focusNote}
+              onChange={(e) => setFocusNote(e.target.value)}
+              rows={2}
+              placeholder="例: 冒頭1秒で何の製品か分かるか"
+              className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] leading-relaxed text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none"
+            />
+          </>
+        ) : (
+          <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
+            コンペON中は下の「コース」でおすすめ質問を足場にします。編集・追加・削除できます。
+          </p>
         )}
       </div>
 
@@ -518,7 +559,13 @@ export function PostForm() {
           <input
             type="checkbox"
             checked={compOn}
-            onChange={(e) => setCompOn(e.target.checked)}
+            onChange={(e) => {
+              const on = e.target.checked;
+              setCompOn(on);
+              if (on && promptList.length === 0) {
+                setQuestions([...course.questions]);
+              }
+            }}
             className="mt-1"
           />
           <span>
@@ -526,7 +573,7 @@ export function PostForm() {
               コメントコンペにする
             </span>
             <span className="mt-0.5 block text-[12px] leading-relaxed text-viscum-muted">
-              チップを用意して、反応を募集します。必須ではありません。
+              コースを選んで、おすすめ質問を足場に反応を募集します。必須ではありません。無料のまま並べるだけでもOKです。
             </span>
           </span>
         </label>
@@ -537,6 +584,9 @@ export function PostForm() {
             status={status}
             prizeYen={compOn ? prizeYen : undefined}
           />
+          {compOn && (
+            <span className="text-[12px] text-viscum-ink">{course.name}</span>
+          )}
         </div>
 
         {compOn && (
@@ -569,33 +619,110 @@ export function PostForm() {
                 {title.trim() || "（タイトルがヘッドラインになります）"}
               </p>
               <p className="mt-1 text-[12px] text-viscum-ink">
-                チップ {formatYen(prizeYen)} · 締切 あと約{closesInDays}日
+                {course.name} · チップ {formatYen(prizeYen)} · 締切 あと約
+                {closesInDays}日
               </p>
             </div>
 
             <div>
-              <p className="text-[13px] font-medium text-viscum-ink">
-                チップ額
+              <p className="text-[13px] font-medium text-viscum-ink">コース</p>
+              <p className="mt-0.5 text-[12px] text-viscum-muted">
+                価格で質を保証しません。集め方の型が変わります。選ぶとおすすめ質問に戻します。
               </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {PRIZE_PRESETS.map((yen) => (
-                  <button
-                    key={yen}
-                    type="button"
-                    onClick={() => setPrizeYen(yen)}
-                    className={`rounded-md border px-3 py-1.5 text-[13px] font-medium transition ${
-                      prizeYen === yen
-                        ? "border-viscum-berry bg-viscum-berry text-white"
-                        : "border-viscum-line bg-white/70 text-viscum-ink hover:border-viscum-berry"
-                    }`}
-                  >
-                    {formatYen(yen)}
-                  </button>
-                ))}
+              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+                {SEED_COURSES.map((c) => {
+                  const on = courseId === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => applyCourse(c.id)}
+                      className={`rounded-md border px-3 py-2.5 text-left transition ${
+                        on
+                          ? "border-viscum-berry bg-viscum-berry text-white"
+                          : "border-viscum-line bg-white/70 text-viscum-ink hover:border-viscum-berry"
+                      }`}
+                    >
+                      <span className="block text-[13px] font-medium">
+                        {c.name}
+                      </span>
+                      <span
+                        className={`mt-0.5 block text-[12px] ${on ? "text-white/90" : "text-viscum-muted"}`}
+                      >
+                        {formatYen(c.yen)}
+                      </span>
+                      <span
+                        className={`mt-1 block text-[11px] leading-snug ${on ? "text-white/85" : "text-viscum-muted"}`}
+                      >
+                        {c.purpose}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
               <p className="mt-1.5 text-[11px] text-viscum-muted">
-                下限 ¥5,000。払うのは採用したあと（デモでは決済しません）。型はテンプレ、聞く内容はあなたが決める。
+                下限 ¥5,000。払うのは採用したあと（デモでは決済しません）。
+                {courseId === "boost"
+                  ? " ブーストは下の「公開ブースト」とセットがおすすめです。"
+                  : ""}
               </p>
+            </div>
+
+            <div>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[13px] font-medium text-viscum-ink">
+                  聞くこと（足場）
+                </p>
+                <button
+                  type="button"
+                  onClick={resetQuestionsToTemplate}
+                  className="text-[12px] text-viscum-brand underline"
+                >
+                  おすすめに戻す
+                </button>
+              </div>
+              <p className="mt-0.5 text-[12px] text-viscum-muted">
+                テンプレは足場です。文言を変えても、空欄を足しても大丈夫（最大
+                {MAX_COURSE_QUESTIONS}問）。
+              </p>
+              <ul className="mt-2 space-y-2">
+                {questions.map((q, i) => (
+                  <li key={i} className="flex gap-2">
+                    <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
+                      {i + 1}.
+                    </span>
+                    <input
+                      type="text"
+                      value={q}
+                      onChange={(e) => setQuestionAt(i, e.target.value)}
+                      className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeQuestion(i)}
+                      disabled={questions.length <= 1}
+                      className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
+                      aria-label={`質問${i + 1}を削除`}
+                    >
+                      削除
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {questions.length < MAX_COURSE_QUESTIONS && (
+                <button
+                  type="button"
+                  onClick={addQuestion}
+                  className="mt-2 text-[13px] font-medium text-viscum-brand underline"
+                >
+                  ＋質問を自由に追加
+                </button>
+              )}
+              {promptList.length === 0 && (
+                <p className="mt-2 text-[12px] text-viscum-berry-deep">
+                  1問以上入れてください（空だとシードできません）。
+                </p>
+              )}
             </div>
 
             <div>
@@ -618,7 +745,11 @@ export function PostForm() {
               </select>
               <p className="mt-1.5 text-[12px] text-viscum-ink">
                 いま選ぶと →{" "}
-                <time dateTime={new Date(Date.now() + closesInDays * 86400000).toISOString()}>
+                <time
+                  dateTime={new Date(
+                    Date.now() + closesInDays * 86400000,
+                  ).toISOString()}
+                >
                   {formatClosesAtPreview(closesInDays)}
                 </time>{" "}
                 ごろ
