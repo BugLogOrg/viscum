@@ -17,7 +17,7 @@ export const DEMO_SPECIALTIES = [
 /**
  * 左カラム＋メイン。
  * - feed: フィード上でフィルタを state 操作
- * - chrome: 作品詳細・/me など。ナビはホームへのリンク（左カラム常時）
+ * - chrome: 作品詳細・/dashboard など。ナビはホームへのリンク（左カラム常時）
  * アカウント操作は右上メニューへ（左には棚ナビのみ）
  */
 export function AppShell({

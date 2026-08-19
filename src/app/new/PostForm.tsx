@@ -180,8 +180,8 @@ export function PostForm() {
           </p>
           <p className="mt-1 text-[13px] leading-relaxed text-viscum-ink">
             {session?.user
-              ? "この端末の成績に保存しました。マイシード（/me）で閲覧・スキ・気になるの集計を確認できます（Neon接続前は端末内）。"
-              : "ログインしていないため成績には残していません。ログインしてからシードすると /me に並びます。"}
+              ? "この端末の成績に保存しました。ダッシュボード（/dashboard）で閲覧・スキ・気になるの集計を確認できます（Neon接続前は端末内）。"
+              : "ログインしていないため成績には残していません。ログインしてからシードするとダッシュボードに並びます。"}
           </p>
         </div>
 
@@ -288,8 +288,8 @@ export function PostForm() {
         </button>
         {session?.user && (
           <p className="text-center text-sm">
-            <Link href="/me" className="text-viscum-brand underline">
-              マイシードで成績を見る
+            <Link href="/dashboard" className="text-viscum-brand underline">
+              ダッシュボードで成績を見る
             </Link>
           </p>
         )}

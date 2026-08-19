@@ -72,7 +72,7 @@ export default function NotificationsPage() {
             <h1 className="text-xl font-semibold text-viscum-ink">通知</h1>
             <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
               初期はシーダー向け（自分のシードへの反応・締切など）が主です。通知のオンオフは
-              <Link href="/me/settings" className="text-viscum-brand underline">
+              <Link href="/dashboard/settings" className="text-viscum-brand underline">
                 設定
               </Link>
               へ。
@@ -92,7 +92,7 @@ export default function NotificationsPage() {
 
         <div className="flex justify-end gap-3">
           <Link
-            href="/me/settings"
+            href="/dashboard/settings"
             className="text-[12px] text-viscum-brand underline"
           >
             通知の設定
@@ -118,7 +118,7 @@ export default function NotificationsPage() {
         {rows.length === 0 ? (
           <p className="rounded-lg border border-dashed border-viscum-line px-4 py-8 text-center text-[13px] text-viscum-muted">
             通知はありません。
-            <Link href="/me/settings" className="text-viscum-brand underline">
+            <Link href="/dashboard/settings" className="text-viscum-brand underline">
               設定
             </Link>
             を確認するか、デモ通知を入れてみてください。

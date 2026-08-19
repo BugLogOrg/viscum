@@ -72,7 +72,7 @@ export function HeaderAccountActions({
   return (
     <div className={`flex items-center gap-0.5 ${className}`}>
       <Link
-        href={session?.user ? "/me/notifications" : "/login"}
+        href={session?.user ? "/dashboard/notifications" : "/login"}
         title="通知"
         aria-label="通知"
         className="relative rounded-md p-2 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
@@ -134,7 +134,7 @@ export function HeaderAccountActions({
               {/* ダッシュボード／設定（noteの二ボタン） */}
               <div className="grid grid-cols-2 gap-2 border-b border-viscum-line px-3.5 py-3">
                 <Link
-                  href="/me"
+                  href="/dashboard"
                   role="menuitem"
                   onClick={close}
                   className="flex flex-col items-center gap-1 rounded-lg border border-viscum-line bg-viscum-paper/80 px-2 py-2.5 text-center transition hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
@@ -148,7 +148,7 @@ export function HeaderAccountActions({
                   </span>
                 </Link>
                 <Link
-                  href="/me/settings"
+                  href="/dashboard/settings"
                   role="menuitem"
                   onClick={close}
                   className="flex flex-col items-center gap-1 rounded-lg border border-viscum-line bg-viscum-paper/80 px-2 py-2.5 text-center transition hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
@@ -164,10 +164,10 @@ export function HeaderAccountActions({
               </div>
               {/* シード */}
               <Section label="シード">
-                <MenuRow href="/me" onNavigate={close}>
+                <MenuRow href="/dashboard" onNavigate={close}>
                   シードごとの届き方
                 </MenuRow>
-                <MenuRow href="/me/notifications" onNavigate={close}>
+                <MenuRow href="/dashboard/notifications" onNavigate={close}>
                   通知
                   {unread > 0 ? `（未読 ${unread}）` : ""}
                 </MenuRow>
@@ -178,7 +178,7 @@ export function HeaderAccountActions({
 
               {/* 履歴：中ページでスキ／気になるを切り替え */}
               <div className="border-b border-viscum-line py-1.5">
-                <MenuRow href="/me/reactions" onNavigate={close}>
+                <MenuRow href="/dashboard/reactions" onNavigate={close}>
                   履歴
                 </MenuRow>
               </div>

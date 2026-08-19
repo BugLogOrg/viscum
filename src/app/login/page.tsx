@@ -18,14 +18,14 @@ export default function LoginPage() {
     const res = await signIn("demo", {
       handle,
       redirect: false,
-      callbackUrl: "/me",
+      callbackUrl: "/dashboard",
     });
     setPending(false);
     if (res?.error) {
       setError("ログインに失敗しました。デモログインが無効かもしれません。");
       return;
     }
-    window.location.href = "/me";
+    window.location.href = "/dashboard";
   }
 
   return (
@@ -34,7 +34,7 @@ export default function LoginPage() {
       <main className="px-4 py-8">
         <h1 className="text-xl font-semibold text-viscum-ink">ログイン</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
-          見る・読むは登録なしのままです。ログインすると、自分のシードの届き方（広告実績）と、シード／書く／払うが使えます。
+          見る・読むは登録なしのままです。ログインすると、自分用のダッシュボード（シードの届き方）と、シード／書く／払うが使えます。
         </p>
 
         <form onSubmit={demoLogin} className="mt-8 space-y-4">
@@ -57,7 +57,7 @@ export default function LoginPage() {
             disabled={pending}
             className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
           >
-            {pending ? "入っています…" : "デモログインして /me へ"}
+            {pending ? "入っています…" : "デモログインしてダッシュボードへ"}
           </button>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
             段階Bの仮入口です。本番では GitHub 等に置き換えます。信用スコアは作りません（支払い事実と広告KPIは分離・ADR-014）。
@@ -68,7 +68,7 @@ export default function LoginPage() {
           <button
             type="button"
             className="mt-4 w-full rounded-md border border-viscum-line px-4 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2"
-            onClick={() => signIn("github", { callbackUrl: "/me" })}
+            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
           >
             GitHubでログイン
           </button>

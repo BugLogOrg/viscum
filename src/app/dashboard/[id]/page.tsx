@@ -63,7 +63,7 @@ export default function SeedStatsPage() {
   if (status === "loading" || seed === undefined) {
     return (
       <BrowseChrome>
-        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
         <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
@@ -74,7 +74,7 @@ export default function SeedStatsPage() {
   if (!session?.user) {
     return (
       <BrowseChrome>
-        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
         <main className="max-w-lg px-4 py-10">
           <p className="text-[14px] text-viscum-muted">
             成績シートはログイン後に見られます。
@@ -93,13 +93,13 @@ export default function SeedStatsPage() {
   if (!seed || seed.seederHandle !== session.user.handle) {
     return (
       <BrowseChrome>
-        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
         <main className="max-w-lg px-4 py-10">
           <p className="text-[14px] text-viscum-muted">
             このシードの成績が見つかりません。
           </p>
           <Link
-            href="/me"
+            href="/dashboard"
             className="mt-4 inline-flex text-sm font-medium text-viscum-brand underline"
           >
             マイシードへ
@@ -147,7 +147,7 @@ export default function SeedStatsPage() {
 
   return (
     <BrowseChrome>
-      <SiteHeader backHref="/me" hideOnMd hidePostCta />
+      <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
       <main className="max-w-lg space-y-6 px-4 py-6">
         <div className="space-y-2">
           <p className="text-[11px] font-medium tracking-wide text-viscum-muted">
@@ -388,7 +388,7 @@ export default function SeedStatsPage() {
             </p>
           )}
           <Link
-            href="/me"
+            href="/dashboard"
             className="flex w-full items-center justify-center py-2 text-[13px] text-viscum-brand underline"
           >
             マイシード一覧へ

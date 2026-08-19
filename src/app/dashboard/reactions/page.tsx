@@ -65,7 +65,7 @@ function MyReactionsInner() {
   if (status === "loading") {
     return (
       <BrowseChrome>
-        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
         <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
@@ -76,7 +76,7 @@ function MyReactionsInner() {
   if (!session?.user) {
     return (
       <BrowseChrome>
-        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
         <main className="max-w-lg px-4 py-10">
           <h1 className="text-xl font-semibold text-viscum-ink">
             スキ・気になる
@@ -100,7 +100,7 @@ function MyReactionsInner() {
 
   return (
     <BrowseChrome>
-      <SiteHeader backHref="/me" hideOnMd hidePostCta />
+      <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
       <main className="max-w-lg space-y-5 px-4 py-6">
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">
@@ -115,12 +115,12 @@ function MyReactionsInner() {
           <div className="flex gap-1 rounded-lg border border-viscum-line bg-white/50 p-0.5 text-[12px]">
             {(
               [
-                ["all", `すべて (${rows.length})`, "/me/reactions"],
-                ["suki", `スキ (${sukiN})`, "/me/reactions?tab=suki"],
+                ["all", `すべて (${rows.length})`, "/dashboard/reactions"],
+                ["suki", `スキ (${sukiN})`, "/dashboard/reactions?tab=suki"],
                 [
                   "bookmark",
                   `気になる (${bmN})`,
-                  "/me/reactions?tab=bookmark",
+                  "/dashboard/reactions?tab=bookmark",
                 ],
               ] as const
             ).map(([key, label, href]) => (
@@ -213,7 +213,7 @@ function MyReactionsInner() {
         )}
 
         <p className="pb-8 text-center text-sm">
-          <Link href="/me" className="text-viscum-brand underline">
+          <Link href="/dashboard" className="text-viscum-brand underline">
             マイシード（成績）へ
           </Link>
         </p>

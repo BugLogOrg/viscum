@@ -10,7 +10,7 @@ import { bumpLocalSeedStat } from "@/lib/local-seeds";
 
 /**
  * 作品詳細のスキ／気になる。
- * 自分の打刻は /me/reactions で一覧できる。
+ * 自分の打刻は /dashboard/reactions で一覧できる。
  */
 export function WorkReactionBar({
   workId,

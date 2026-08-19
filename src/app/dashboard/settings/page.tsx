@@ -26,7 +26,7 @@ export default function SettingsPage() {
   if (status === "loading") {
     return (
       <BrowseChrome>
-        <SiteHeader backHref="/me" hideOnMd hidePostCta />
+        <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
         <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
@@ -56,7 +56,7 @@ export default function SettingsPage() {
 
   return (
     <BrowseChrome>
-      <SiteHeader backHref="/me" hideOnMd hidePostCta />
+      <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
       <main className="max-w-lg space-y-6 px-4 py-6">
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">設定</h1>
@@ -71,7 +71,7 @@ export default function SettingsPage() {
             アイコン・一言など、公開に出る情報
           </p>
           <Link
-            href="/me/profile"
+            href="/dashboard/profile"
             className="mt-3 flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
           >
             プロフィールを編集
@@ -125,7 +125,7 @@ export default function SettingsPage() {
             </span>
           </label>
           <Link
-            href="/me/notifications"
+            href="/dashboard/notifications"
             className="inline-block text-[12px] text-viscum-brand underline"
           >
             通知一覧へ

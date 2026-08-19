@@ -72,7 +72,7 @@ export function bumpLocalSeedStat(
 /** 表示デモ用。id は `/w/[id]` のダミー作品と一致させ、クリックで詳細へ行けるようにする */
 const DEMO_SEED_IDS = ["promo-15s", "note-clip", "recipe-site"] as const;
 
-/** /me の見た目確認用。シードごとの届き方の差が分かる3本 */
+/** /dashboard の見た目確認用。シードごとの届き方の差が分かる3本 */
 export function installDemoSeeds(seederHandle: string): LocalSeed[] {
   const demos: LocalSeed[] = [
     {

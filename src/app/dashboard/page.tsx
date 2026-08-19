@@ -16,7 +16,7 @@ import {
   type LocalSeed,
 } from "@/lib/local-seeds";
 
-export default function MePage() {
+export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [seeds, setSeeds] = useState<LocalSeed[]>([]);
   const [demoOn, setDemoOn] = useState(false);
@@ -77,18 +77,24 @@ export default function MePage() {
       <main className="max-w-lg space-y-6 px-4 py-6">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="text-xs text-viscum-muted">シーダー</p>
+            <p className="text-xs text-viscum-muted">自分だけが見る画面</p>
             <h1 className="text-xl font-semibold text-viscum-ink">
-              @{handle}
+              ダッシュボード
             </h1>
+            <p className="mt-0.5 text-[13px] text-viscum-muted">@{handle}</p>
             <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-              広告の届き方は
-              <strong className="font-medium text-viscum-ink">シードごと</strong>
-              に見ます（キャンペーン単位）。公開プロフィールの信用欄には出しません。
+              シードごとの届き方・成績はここに閉じます（キャンペーン単位）。
+              公開プロフィールの信用欄には出しません。
             </p>
-            <p className="mt-2">
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
               <Link
-                href="/me/reactions"
+                href={`/u/${encodeURIComponent(handle)}`}
+                className="text-[13px] font-medium text-viscum-brand underline"
+              >
+                公開ポートフォリオを見る
+              </Link>
+              <Link
+                href="/dashboard/reactions"
                 className="text-[13px] font-medium text-viscum-brand underline"
               >
                 自分が押したスキ・気になる（打刻つき）
@@ -168,7 +174,7 @@ export default function MePage() {
               {mine.map((s) => (
                 <li key={s.id}>
                   <Link
-                    href={`/me/${encodeURIComponent(s.id)}`}
+                    href={`/dashboard/${encodeURIComponent(s.id)}`}
                     className="block rounded-lg border border-viscum-line bg-white/50 px-3 py-3 transition-colors hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
                   >
                     <div className="flex flex-wrap items-center gap-2">

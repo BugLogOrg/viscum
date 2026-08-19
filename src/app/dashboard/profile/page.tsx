@@ -32,7 +32,7 @@ export default function ProfileEditPage() {
   if (status === "loading") {
     return (
       <BrowseChrome>
-        <SiteHeader backHref="/me/settings" hideOnMd hidePostCta />
+        <SiteHeader backHref="/dashboard/settings" hideOnMd hidePostCta />
         <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
@@ -108,7 +108,7 @@ export default function ProfileEditPage() {
 
   return (
     <BrowseChrome>
-      <SiteHeader backHref="/me/settings" hideOnMd hidePostCta />
+      <SiteHeader backHref="/dashboard/settings" hideOnMd hidePostCta />
       <main className="max-w-lg space-y-6 px-4 py-6">
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">
@@ -116,7 +116,7 @@ export default function ProfileEditPage() {
           </h1>
           <p className="mt-1 text-[12px] text-viscum-muted">
             デモ段階は端末内に保存。ハンドルはログイン名のままです。通知などの設定は
-            <Link href="/me/settings" className="text-viscum-brand underline">
+            <Link href="/dashboard/settings" className="text-viscum-brand underline">
               設定
             </Link>
             へ。

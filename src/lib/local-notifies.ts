@@ -123,7 +123,7 @@ export function installDemoNotifies() {
       kind: "deadline",
       title: "締切が近づいています",
       body: "開催中のシードがあと約1日で締切です。",
-      href: "/me",
+      href: "/dashboard",
       createdAt: new Date(now - 3 * 3600000).toISOString(),
       read: false,
       audience: "seeder",
