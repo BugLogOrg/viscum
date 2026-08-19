@@ -9,6 +9,7 @@ import { FOLLOWS_UPDATED, listFollowing } from "@/lib/local-follows";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SuggestFollows } from "@/components/SuggestFollows";
 
 type Filter = "all" | "open" | "follow";
 
@@ -244,9 +245,12 @@ export function FeedClient() {
                 </Link>
               </p>
             ) : followingHandles.length === 0 ? (
-              <p>
-                まだ誰もフォローしていません。公開PFの「フォロー」からシーダーを追加すると、ここに作品が流れます。
-              </p>
+              <div className="mx-auto max-w-lg px-2">
+                <p className="text-center">
+                  まだ誰もフォローしていません。下から選ぶか、公開PFの「フォロー」でも追加できます。
+                </p>
+                <SuggestFollows title="おすすめ（デモ棚）" />
+              </div>
             ) : (
               <p>
                 フォロー中のシーダーに、条件に合う作品がまだありません。

@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { DEMO_SPECIALTIES } from "@/data/specialties";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SuggestFollows } from "@/components/SuggestFollows";
 
 const POST_KEY = "viscum.postOnboarding";
 
@@ -150,7 +151,7 @@ function WelcomeBody() {
           気になる専門はありますか？
         </h2>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
-          あとから変えられます。選ぶと、開催中の通知や見つけやすさの材料になります（準備中の機能含む）。スキップもできます。
+          選ばなくても棚は見られます。選ぶと、あとからの通知や見つけやすさの材料になります（準備中）。スキップ可。
         </p>
 
         <ul className="mt-6 flex flex-wrap gap-2">
@@ -174,6 +175,8 @@ function WelcomeBody() {
             );
           })}
         </ul>
+
+        <SuggestFollows />
 
         {error && (
           <p className="mt-4 text-[13px] text-viscum-berry-deep">{error}</p>
