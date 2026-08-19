@@ -25,20 +25,14 @@ export function writeLocalPortfolioWall(
 
 export function addLocalPortfolioWallPost(
   portfolioHandle: string,
-  input: {
-    kind: PortfolioWallPost["kind"];
-    tradeLabel?: PortfolioWallPost["tradeLabel"];
-    author: string;
-    body: string;
-  },
+  input: { author: string; body: string },
 ): PortfolioWallPost {
   const h = portfolioHandle.replace(/^@/, "");
+  const author = input.author.replace(/^@/, "").trim();
   const row: PortfolioWallPost = {
     id: `local_wall_${Date.now().toString(36)}`,
     portfolioHandle: h,
-    kind: input.kind,
-    tradeLabel: input.kind === "trade" ? input.tradeLabel ?? "やりとり" : undefined,
-    author: input.author.trim() || "you",
+    author,
     body: input.body.trim(),
     hoursAgo: 0,
   };

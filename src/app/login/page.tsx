@@ -5,27 +5,40 @@ import { signIn } from "next-auth/react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
+function safeCallback(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/dashboard";
+  return raw;
+}
+
 export default function LoginPage() {
   const [handle, setHandle] = useState("mDB");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const githubEnabled = process.env.NEXT_PUBLIC_AUTH_GITHUB === "1";
 
+  function readCallback(): string {
+    if (typeof window === "undefined") return "/dashboard";
+    return safeCallback(
+      new URLSearchParams(window.location.search).get("callbackUrl"),
+    );
+  }
+
   async function demoLogin(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
     setError(null);
+    const callbackUrl = readCallback();
     const res = await signIn("demo", {
       handle,
       redirect: false,
-      callbackUrl: "/dashboard",
+      callbackUrl,
     });
     setPending(false);
     if (res?.error) {
       setError("ログインに失敗しました。デモログインが無効かもしれません。");
       return;
     }
-    window.location.href = "/dashboard";
+    window.location.href = callbackUrl;
   }
 
   return (
@@ -34,13 +47,13 @@ export default function LoginPage() {
       <main className="px-4 py-8">
         <h1 className="text-xl font-semibold text-viscum-ink">ログイン</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
-          見る・読むは登録なしのままです。ログインすると、自分用のダッシュボード（シードの届き方）と、シード／書く／払うが使えます。
+          見る・読むは登録なしのままです。ログインすると、自分用のダッシュボードと、シード／書く／払う／PFコメントが使えます。
         </p>
 
         <form onSubmit={demoLogin} className="mt-8 space-y-4">
           <div>
             <label className="text-[13px] font-medium text-viscum-ink">
-              ハンドル（デモ）
+              ハンドル（コテハン・デモ）
             </label>
             <input
               value={handle}
@@ -57,10 +70,10 @@ export default function LoginPage() {
             disabled={pending}
             className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
           >
-            {pending ? "入っています…" : "デモログインしてダッシュボードへ"}
+            {pending ? "入っています…" : "デモログイン"}
           </button>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
-            段階Bの仮入口です。本番では GitHub 等に置き換えます。信用スコアは作りません（支払い事実と広告KPIは分離・ADR-014）。
+            段階Bの仮入口です。投稿名はこのハンドル固定です（コテハン）。信用スコアは作りません。
           </p>
         </form>
 
@@ -68,7 +81,9 @@ export default function LoginPage() {
           <button
             type="button"
             className="mt-4 w-full rounded-md border border-viscum-line px-4 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2"
-            onClick={() => signIn("github", { callbackUrl: "/dashboard" })}
+            onClick={() =>
+              signIn("github", { callbackUrl: readCallback() })
+            }
           >
             GitHubでログイン
           </button>
