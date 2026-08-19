@@ -54,9 +54,9 @@ export default function DashboardPage() {
       <BrowseChrome>
         <SiteHeader backHref="/" hideOnMd />
         <main className="max-w-lg px-4 py-10">
-          <h1 className="text-xl font-semibold text-viscum-ink">マイシード</h1>
+          <h1 className="text-xl font-semibold text-viscum-ink">ダッシュボード</h1>
           <p className="mt-2 text-[14px] text-viscum-muted">
-            ログインすると、シードごとの広告の届き方が見られます。
+            ログインすると、シードごとの届き方が見られます。
           </p>
           <Link
             href="/login"

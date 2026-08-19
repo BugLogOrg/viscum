@@ -214,7 +214,7 @@ function MyReactionsInner() {
 
         <p className="pb-8 text-center text-sm">
           <Link href="/dashboard" className="text-viscum-brand underline">
-            マイシード（成績）へ
+            ダッシュボードへ
           </Link>
         </p>
       </main>

@@ -102,7 +102,7 @@ export default function SeedStatsPage() {
             href="/dashboard"
             className="mt-4 inline-flex text-sm font-medium text-viscum-brand underline"
           >
-            マイシードへ
+            ダッシュボードへ
           </Link>
         </main>
       </BrowseChrome>
@@ -391,7 +391,7 @@ export default function SeedStatsPage() {
             href="/dashboard"
             className="flex w-full items-center justify-center py-2 text-[13px] text-viscum-brand underline"
           >
-            マイシード一覧へ
+            ダッシュボードへ
           </Link>
         </div>
       </main>
