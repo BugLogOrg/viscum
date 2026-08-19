@@ -145,7 +145,7 @@ export function PostForm() {
       );
     } else if (compOn) {
       lines.push(
-        `【VISCUM】コメントコンペ開催中 · チップ ${formatYen(prizeYen)}（広告費）`,
+        `【VISCUM】コメントコンペ開催中 · チップ ${formatYen(prizeYen)}`,
       );
     } else if (extReviewOn) {
       lines.push(
@@ -223,7 +223,7 @@ export function PostForm() {
           )}
           {compOn && (
             <p className="text-[13px] text-viscum-ink">
-              チップ {formatYen(prizeYen)}（広告費） · 締切 あと約{closesInDays}日
+              チップ {formatYen(prizeYen)} · 締切 あと約{closesInDays}日
             </p>
           )}
         </div>
@@ -523,10 +523,10 @@ export function PostForm() {
           />
           <span>
             <span className="block text-[14px] font-medium text-viscum-ink">
-              コメントコンペにする（小さな広告）
+              コメントコンペにする
             </span>
             <span className="mt-0.5 block text-[12px] leading-relaxed text-viscum-muted">
-              チップを広告費として用意し、反応を募集します。必須ではありません。
+              チップを用意して、反応を募集します。必須ではありません。
             </span>
           </span>
         </label>
@@ -543,7 +543,7 @@ export function PostForm() {
           <div className="space-y-4 border-t border-viscum-line pt-4">
             <div className="rounded-md border border-viscum-berry/25 bg-white/60 px-3 py-3">
               <p className="text-[11px] font-medium tracking-wide text-viscum-berry-deep">
-                広告の見え方（プレビュー）
+                見え方（プレビュー）
               </p>
               {thumbUrl ? (
                 <div
@@ -575,7 +575,7 @@ export function PostForm() {
 
             <div>
               <p className="text-[13px] font-medium text-viscum-ink">
-                チップ額（広告費として）
+                チップ額
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {PRIZE_PRESETS.map((yen) => (
@@ -670,7 +670,7 @@ export function PostForm() {
                 ))}
               </div>
               <p className="mt-1.5 text-[11px] text-viscum-muted">
-                下限 ¥5,000。合格確定後に支払い（デモでは決済しません）。決済手数料はシーダー負担（向こう持ち）。
+                下限 ¥5,000。合格確定後に支払い（デモでは決済しません）。決済手数料はお支払いに上乗せ（シーダー負担）。
               </p>
             </div>
             <p className="text-[12px] leading-relaxed text-viscum-muted">
