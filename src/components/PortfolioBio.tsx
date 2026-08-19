@@ -28,13 +28,20 @@ export function PortfolioHeader({
   const [avatar, setAvatar] = useState<string | null>(null);
 
   useEffect(() => {
+    // デモ棚の人物像はローカル／Neonの実名で上書きしない（tori に mDB が乗る事故防止）
+    if (demo) {
+      setAccountName(demo.displayName);
+      setBio(demo.bio);
+      setAvatar(null);
+      return;
+    }
+
     let cancelled = false;
     const applyLocal = () => {
       const p = readLocalProfile(handle);
-      const seed = getDemoSeederProfile(handle);
       const localName = p?.accountName?.trim();
-      setAccountName(localName || seed?.displayName || handle);
-      setBio(p?.bio?.trim() || seed?.bio || null);
+      setAccountName(localName || handle);
+      setBio(p?.bio?.trim() || null);
       setAvatar(p?.avatarDataUrl ?? null);
     };
     applyLocal();
@@ -42,11 +49,8 @@ export function PortfolioHeader({
       const remote = await fetchRemoteProfile(handle);
       if (cancelled || !remote?.persisted) return;
       if (!remote.accountName && !remote.bio && !remote.image) return;
-      const seed = getDemoSeederProfile(handle);
-      setAccountName(
-        remote.accountName?.trim() || seed?.displayName || handle,
-      );
-      setBio(remote.bio?.trim() || seed?.bio || null);
+      setAccountName(remote.accountName?.trim() || handle);
+      setBio(remote.bio?.trim() || null);
       setAvatar(remote.image);
       writeLocalProfile({
         handle,
@@ -63,12 +67,11 @@ export function PortfolioHeader({
       cancelled = true;
       window.removeEventListener("viscum-profile-updated", sync);
     };
-  }, [handle]);
+  }, [handle, demo?.handle]);
 
-  const seed = getDemoSeederProfile(handle);
-  const letter = seed?.glyph ?? accountName.slice(0, 1).toUpperCase();
-  const toneClass = seed
-    ? `${THUMB_TONE_CLASS[seed.thumbTone]} ${seed.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`
+  const letter = demo?.glyph ?? accountName.slice(0, 1).toUpperCase();
+  const toneClass = demo
+    ? `${THUMB_TONE_CLASS[demo.thumbTone]} ${demo.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`
     : "bg-viscum-berry text-white";
 
   return (
@@ -96,7 +99,7 @@ export function PortfolioHeader({
             </h1>
             <p className="mt-0.5 flex flex-wrap items-center gap-2 truncate text-[13px] text-viscum-muted">
               <span>@{handle}</span>
-              {seed ? (
+              {demo ? (
                 <span className="shrink-0 rounded-full bg-viscum-line/70 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
                   デモアカウントです
                 </span>

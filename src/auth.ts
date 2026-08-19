@@ -6,6 +6,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { eq } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db";
 import { accounts, users, verificationTokens } from "@/db/schema";
+import { isReservedDemoHandle } from "@/data/suggested-seeders";
 
 async function upsertUser(input: {
   id: string;
@@ -60,8 +61,17 @@ async function loadUserFlags(userId: string): Promise<{
     .where(eq(users.id, userId))
     .limit(1);
   const row = rows[0];
+  let handle = row?.handle ?? null;
+  // デモ棚IDを実アカウントが掴んでいたら解放し、英語ID選び直しへ
+  if (handle && isReservedDemoHandle(handle) && !userId.startsWith("demo:")) {
+    await db
+      .update(users)
+      .set({ handle: null })
+      .where(eq(users.id, userId));
+    handle = null;
+  }
   return {
-    handle: row?.handle ?? null,
+    handle,
     onboardingDone: Boolean(row?.onboardingCompletedAt),
   };
 }

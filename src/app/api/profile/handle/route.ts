@@ -3,6 +3,7 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { users } from "@/db/schema";
+import { isReservedDemoHandle } from "@/data/suggested-seeders";
 
 function normalizeHandle(raw: string) {
   return raw
@@ -113,6 +114,16 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: "handle too short", message: "英語IDは2文字以上（英数字と_）" },
       { status: 400 },
+    );
+  }
+  if (isReservedDemoHandle(handle)) {
+    return NextResponse.json(
+      {
+        error: "handle reserved",
+        message:
+          "この英語IDはデモ棚用のため使えません。別のものを選んでください",
+      },
+      { status: 409 },
     );
   }
 

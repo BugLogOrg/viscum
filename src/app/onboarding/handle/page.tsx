@@ -31,7 +31,8 @@ export default function OnboardingHandlePage() {
     if (!res.ok) {
       if (
         json?.error === "handle taken" ||
-        /使われて|already|taken|存在/i.test(json?.message ?? "")
+        json?.error === "handle reserved" ||
+        /使われて|already|taken|存在|デモ棚/i.test(json?.message ?? "")
       ) {
         setError(
           json?.message ||

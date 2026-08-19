@@ -58,6 +58,15 @@ export function getDemoSeederProfile(
   return PROFILES.find((p) => p.handle.toLowerCase() === key);
 }
 
+/** デモ棚の英語ID。実アカウント登録では使えない */
+export function isReservedDemoHandle(handle: string): boolean {
+  return Boolean(getDemoSeederProfile(handle));
+}
+
+export function listReservedDemoHandles(): string[] {
+  return PROFILES.map((p) => p.handle);
+}
+
 /** 棚デモからおすすめシーダーを組み立て（本物の活発ユーザーが出るまでの仮） */
 export function getSuggestedSeeders(limit = 5): SuggestedSeeder[] {
   const counts = new Map<string, number>();
