@@ -82,6 +82,18 @@ export function FeedClient() {
   const title =
     filter === "open" ? "開催中" : filter === "follow" ? "フォロー中" : "すべて";
 
+  /** 見出し下の帯：説明＋専門／検索をパンくずで（常時表示で高さ固定） */
+  const contextCrumbs: string[] = [
+    filter === "follow"
+      ? "フォローしたシーダーの作品（デモ・固定リスト）"
+      : filter === "open"
+        ? "コメントコンペ開催中 · チップ付きで反応を募集"
+        : "シーダーがシードした作品",
+  ];
+  if (specialty) contextCrumbs.push(specialty);
+  if (query.trim()) contextCrumbs.push(`「${query.trim()}」`);
+  const contextLine = contextCrumbs.join(" › ");
+
   return (
     <AppShell
       activeTag={specialty}
@@ -92,16 +104,7 @@ export function FeedClient() {
     >
       <SiteHeader hideOnMd />
       <div className="border-b border-viscum-line px-4 py-3">
-        <div className="flex items-baseline justify-between gap-2">
-          <h1 className="text-xl font-semibold text-viscum-ink">{title}</h1>
-          {(specialty || query.trim()) && (
-            <p className="truncate text-xs text-viscum-muted">
-              {specialty ? `専門: ${specialty}` : ""}
-              {specialty && query.trim() ? " · " : ""}
-              {query.trim() ? `「${query.trim()}」` : ""}
-            </p>
-          )}
-        </div>
+        <h1 className="text-xl font-semibold text-viscum-ink">{title}</h1>
 
         <label className="sr-only" htmlFor="feed-search">
           キーワード検索
@@ -144,11 +147,12 @@ export function FeedClient() {
         </div>
       </div>
 
-      {filter === "follow" && !specialty && !query.trim() && (
-        <p className="border-b border-viscum-line bg-viscum-leaf-soft/30 px-3 py-2 text-[12px] text-viscum-muted">
-          フォローしたシーダーの作品（デモ・固定リスト）
-        </p>
-      )}
+      <p
+        className="border-b border-viscum-line bg-viscum-leaf-soft/30 px-3 py-2 text-[12px] leading-snug text-viscum-muted"
+        aria-live="polite"
+      >
+        {contextLine}
+      </p>
 
       {/* モバイル用フィルタ（デスクトップは左ナビ） */}
       <div className="flex items-center gap-2 border-b border-viscum-line px-3 py-1.5 md:hidden">
