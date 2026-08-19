@@ -1,0 +1,85 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { signIn } from "next-auth/react";
+import { SiteHeader } from "@/components/SiteHeader";
+
+export default function LoginPage() {
+  const [handle, setHandle] = useState("mDB");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const githubEnabled = process.env.NEXT_PUBLIC_AUTH_GITHUB === "1";
+
+  async function demoLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+    const res = await signIn("demo", {
+      handle,
+      redirect: false,
+      callbackUrl: "/me",
+    });
+    setPending(false);
+    if (res?.error) {
+      setError("ログインに失敗しました。デモログインが無効かもしれません。");
+      return;
+    }
+    window.location.href = "/me";
+  }
+
+  return (
+    <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
+      <SiteHeader backHref="/" hidePostCta />
+      <main className="px-4 py-8">
+        <h1 className="text-xl font-semibold text-viscum-ink">ログイン</h1>
+        <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
+          見る・読むは登録なしのままです。ログインすると、自分のシードの届き方（広告実績）と、シード／書く／払うが使えます。
+        </p>
+
+        <form onSubmit={demoLogin} className="mt-8 space-y-4">
+          <div>
+            <label className="text-[13px] font-medium text-viscum-ink">
+              ハンドル（デモ）
+            </label>
+            <input
+              value={handle}
+              onChange={(e) => setHandle(e.target.value)}
+              className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] focus:border-viscum-brand focus:outline-none"
+              placeholder="mDB"
+            />
+          </div>
+          {error && (
+            <p className="text-[13px] text-viscum-berry-deep">{error}</p>
+          )}
+          <button
+            type="submit"
+            disabled={pending}
+            className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+          >
+            {pending ? "入っています…" : "デモログインして /me へ"}
+          </button>
+          <p className="text-[11px] leading-relaxed text-viscum-muted">
+            段階Bの仮入口です。本番では GitHub 等に置き換えます。信用スコアは作りません（支払い事実と広告KPIは分離・ADR-014）。
+          </p>
+        </form>
+
+        {githubEnabled && (
+          <button
+            type="button"
+            className="mt-4 w-full rounded-md border border-viscum-line px-4 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2"
+            onClick={() => signIn("github", { callbackUrl: "/me" })}
+          >
+            GitHubでログイン
+          </button>
+        )}
+
+        <p className="mt-10 text-center text-sm">
+          <Link href="/lp" className="text-viscum-brand underline">
+            LPを読む
+          </Link>
+        </p>
+      </main>
+    </div>
+  );
+}

@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import { formatYen, type CompStatus } from "@/data/dummy-works";
+import { addLocalSeed } from "@/lib/local-seeds";
 
 const RECOMMENDED_TAGS = [
   "アプリ",
@@ -46,6 +48,7 @@ const DEMO_REQUEST_HREF = `/w/${DEMO_WORK_ID}/request`;
 const DEMO_DM_HREF = `/dm/${DEMO_WORK_ID}?to=${encodeURIComponent("太郎")}`;
 
 export function PostForm() {
+  const { data: session } = useSession();
   const [title, setTitle] = useState("");
   const [externalUrl, setExternalUrl] = useState("https://");
   const [description, setDescription] = useState("");
@@ -157,7 +160,9 @@ export function PostForm() {
             デモ：シードした体で保存しました（まだDBには載りません）
           </p>
           <p className="mt-1 text-[13px] leading-relaxed text-viscum-ink">
-            本番ではここで詳細へ飛び、「共有する」と「直依頼」をシーダー向けに出します。詳細の公開画面には直依頼を置きません（見る人向けのページだからです）。
+            {session?.user
+              ? "この端末の成績に保存しました。マイシード（/me）で閲覧・EMO・気になるの集計を確認できます（Neon接続前は端末内）。"
+              : "ログインしていないため成績には残していません。ログインしてからシードすると /me に並びます。"}
           </p>
         </div>
 
@@ -262,6 +267,13 @@ export function PostForm() {
         >
           フォームに戻る
         </button>
+        {session?.user && (
+          <p className="text-center text-sm">
+            <Link href="/me" className="text-viscum-brand underline">
+              マイシードで成績を見る
+            </Link>
+          </p>
+        )}
       </div>
     );
   }
@@ -272,6 +284,19 @@ export function PostForm() {
       onSubmit={(e) => {
         e.preventDefault();
         if (!canSave) return;
+        if (session?.user?.handle) {
+          addLocalSeed({
+            seederHandle: session.user.handle,
+            title: title.trim(),
+            description: description.trim(),
+            focusNote: focusNote.trim() || undefined,
+            externalUrl: externalUrl.trim(),
+            tags,
+            status: compOn ? "open" : "none",
+            prizeYen: compOn ? prizeYen : undefined,
+            closesInDays: compOn ? closesInDays : undefined,
+          });
+        }
         setSaved(true);
       }}
     >
