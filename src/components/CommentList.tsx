@@ -69,7 +69,7 @@ export function CommentList({
     }
   }, [comments]);
 
-  const tipLabel = prizeYen ? formatYen(prizeYen) : "¥3,000";
+  const tipLabel = prizeYen ? formatYen(prizeYen) : "¥5,000";
 
   return (
     <section className="border-t border-viscum-line pt-4" aria-label="コメント">
@@ -195,7 +195,7 @@ export function CommentList({
                       <>
                         <span className="rounded border border-viscum-berry/40 bg-viscum-berry/10 px-2 py-0.5 text-[11px] font-medium text-viscum-berry-deep">
                           チップ支払い済み{" "}
-                          {formatYen(c.tipYen ?? prizeYen ?? 3000)}
+                          {formatYen(c.tipYen ?? prizeYen ?? 5000)}
                         </span>
                         <button
                           type="button"

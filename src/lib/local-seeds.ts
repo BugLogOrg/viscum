@@ -85,7 +85,7 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       externalUrl: "https://example.com/promo",
       tags: ["動画"],
       status: "open",
-      prizeYen: 3000,
+      prizeYen: 5000,
       closesInDays: 5,
       viewCount: 428,
       emoCount: 36,

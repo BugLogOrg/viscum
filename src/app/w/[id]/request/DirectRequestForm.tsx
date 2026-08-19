@@ -102,7 +102,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
             readLocalProfile(fromHandle),
           ),
           toHandle: selected.handle,
-          amountYen: 3000,
+          amountYen: 5000,
           pitch: message.trim(),
         });
         router.push(`/dashboard/messages/${encodeURIComponent(row.id)}`);

@@ -19,9 +19,9 @@ const RECOMMENDED_TAGS = [
   "LP",
 ] as const;
 
-const PRIZE_PRESETS = [3000, 5000, 10000] as const;
-/** 公開ブースト（プランD）本命帯。場内コンペより上 */
-const EXT_REVIEW_PRESETS = [5000, 10000, 20000] as const;
+const PRIZE_PRESETS = [5000, 10000, 30000] as const;
+/** 公開ブースト（プランD）本命帯。旗艦は¥30,000パッケージ */
+const EXT_REVIEW_PRESETS = [5000, 10000, 30000] as const;
 
 /** 締切のプリセット（相対日数）。カレンダーよりミスりにくい */
 const CLOSE_PRESETS = [
@@ -59,7 +59,7 @@ export function PostForm() {
   const [customTag, setCustomTag] = useState("");
   const [compOn, setCompOn] = useState(false);
   const [extReviewOn, setExtReviewOn] = useState(false);
-  const [prizeYen, setPrizeYen] = useState<(typeof PRIZE_PRESETS)[number]>(3000);
+  const [prizeYen, setPrizeYen] = useState<(typeof PRIZE_PRESETS)[number]>(5000);
   const [extPrizeYen, setExtPrizeYen] =
     useState<(typeof EXT_REVIEW_PRESETS)[number]>(5000);
   const [closesInDays, setClosesInDays] = useState(7);
@@ -117,7 +117,7 @@ export function PostForm() {
     title.trim().length > 0 &&
     externalUrl.trim().length > 8 &&
     description.trim().length > 0 &&
-    (!compOn || prizeYen >= 3000) &&
+    (!compOn || prizeYen >= 5000) &&
     (!extReviewOn || extPrizeYen >= 5000);
 
   function toggleTag(tag: string) {
@@ -594,7 +594,7 @@ export function PostForm() {
                 ))}
               </div>
               <p className="mt-1.5 text-[11px] text-viscum-muted">
-                下限 ¥3,000。払うのは採用したあと（デモでは決済しません）。
+                下限 ¥5,000。払うのは採用したあと（デモでは決済しません）。型はテンプレ、聞く内容はあなたが決める。
               </p>
             </div>
 

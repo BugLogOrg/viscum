@@ -137,7 +137,7 @@ export function installDemoRequestDms(viewerHandle: string) {
       fromHandle: "ken",
       fromAccountName: "ken",
       toHandle: viewerHandle,
-      amountYen: 3000,
+      amountYen: 5000,
       pitch: "あなただけに見てほしいです。見る範囲は説明どおりで大丈夫です。",
       status: "pending",
       createdAt: new Date(now - 45 * 60000).toISOString(),
