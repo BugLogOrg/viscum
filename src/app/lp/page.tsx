@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ViscumMark } from "@/components/ViscumMark";
+import { SiteFooter } from "@/components/SiteFooter";
 
 /** シーダー主語のLP。柔らかく・正確に「どんなサービスか」を伝える */
 export default function LandingPage() {
@@ -199,19 +200,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <p className="mt-14 text-center text-[12px] leading-relaxed text-viscum-muted">
-          <span className="tracking-[0.12em] text-viscum-brand">VISCUM</span>
-          <br />
-          ヤドリギ候補 ·{" "}
-          <a
-            href="https://viscum.org"
-            className="underline"
-            target="_blank"
-            rel="noreferrer"
-          >
-            viscum.org
-          </a>
-        </p>
+        <SiteFooter />
       </main>
     </div>
   );

@@ -226,15 +226,6 @@ export function FeedClient() {
           </p>
         )}
       </section>
-
-      <footer className="px-4 py-8 text-center text-[11px] text-viscum-muted">
-        <Link href="/lp" className="text-viscum-brand hover:underline">
-          LP
-        </Link>
-        {" · "}
-        <span className="tracking-[0.08em]">VISCUM</span>
-        {" · ダミーデータ"}
-      </footer>
     </AppShell>
   );
 }

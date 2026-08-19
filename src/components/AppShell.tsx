@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
+import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
 
 /** 加入時専門のチップ一覧（本番はプロフィールから） */
@@ -203,6 +204,7 @@ export function AppShell({
           <HeaderAccountActions />
         </div>
         {children}
+        <SiteFooter />
       </div>
     </div>
   );

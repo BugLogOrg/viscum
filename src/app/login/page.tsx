@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { signIn } from "next-auth/react";
+import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
 export default function LoginPage() {
@@ -74,11 +74,7 @@ export default function LoginPage() {
           </button>
         )}
 
-        <p className="mt-10 text-center text-sm">
-          <Link href="/lp" className="text-viscum-brand underline">
-            LPを読む
-          </Link>
-        </p>
+        <SiteFooter />
       </main>
     </div>
   );

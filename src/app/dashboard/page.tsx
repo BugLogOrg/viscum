@@ -232,15 +232,6 @@ export default function DashboardPage() {
             </ul>
           )}
         </section>
-
-        <p className="text-center text-sm">
-          <Link
-            href={`/u/${encodeURIComponent(handle)}`}
-            className="text-viscum-brand underline"
-          >
-            公開ポートフォリオ（支払い事実）
-          </Link>
-        </p>
       </main>
     </BrowseChrome>
   );

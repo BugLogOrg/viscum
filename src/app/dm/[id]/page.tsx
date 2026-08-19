@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
 import {
   formatDeadlineLine,
@@ -107,12 +108,7 @@ export default async function DmInvitePage({ params, searchParams }: Props) {
           </Link>
         </section>
 
-        <p className="mt-8 text-center text-[11px] text-viscum-muted">
-          DM用URLデモ ·{" "}
-          <Link href="/" className="text-viscum-brand underline">
-            TOP
-          </Link>
-        </p>
+        <SiteFooter />
       </main>
     </div>
   );
