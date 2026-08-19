@@ -2,6 +2,7 @@ import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { FollowButton } from "@/components/FollowButton";
+import { PortfolioBio } from "@/components/PortfolioBio";
 import {
   formatYen,
   getSeederPayFacts,
@@ -35,6 +36,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
         <p className="mt-2 text-[14px] text-viscum-muted">
           ポートフォリオ（デモ）
         </p>
+        <PortfolioBio handle={display} />
 
         <div className="mt-4 rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3">
           <div className="flex flex-wrap items-center gap-2">

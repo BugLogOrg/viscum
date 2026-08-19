@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useSession } from "next-auth/react";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
 
 /** 加入時専門のチップ一覧（本番はプロフィールから） */
@@ -30,9 +31,11 @@ export function AppShell({
   openCount?: number;
   showSpecialty?: boolean;
 }) {
+  const { data: session } = useSession();
   const shelfActive = feedFilter === "all";
   const followActive = feedFilter === "follow";
   const openActive = feedFilter === "open";
+  const handle = session?.user?.handle;
 
   return (
     <div className="mx-auto min-h-dvh max-w-7xl bg-viscum-paper md:flex">
@@ -83,7 +86,9 @@ export function AppShell({
           >
             開催中
             {typeof openCount === "number" && (
-              <span className="ml-1 text-xs text-viscum-muted">({openCount})</span>
+              <span className="ml-1 text-xs text-viscum-muted">
+                ({openCount})
+              </span>
             )}
           </button>
           <Link
@@ -96,6 +101,48 @@ export function AppShell({
             </span>
           </Link>
         </nav>
+
+        <div className="mt-1 border-t border-viscum-line px-3 py-3">
+          <p className="mb-2 text-[11px] font-medium tracking-wide text-viscum-brand">
+            アカウント
+          </p>
+          {handle ? (
+            <ul className="space-y-0.5 text-xs">
+              <li>
+                <Link
+                  href="/me"
+                  className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
+                >
+                  シードごとの届き方
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/me/reactions"
+                  className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
+                >
+                  スキ・気になる
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/me/profile"
+                  className="block rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
+                >
+                  プロフィール編集
+                </Link>
+              </li>
+            </ul>
+          ) : (
+            <Link
+              href="/login"
+              className="block rounded-md px-2 py-1.5 text-xs text-viscum-brand hover:bg-viscum-paper-2"
+            >
+              ログイン
+            </Link>
+          )}
+        </div>
+
         {showSpecialty && (
           <div className="mt-2 border-t border-viscum-line px-3 py-3">
             <p className="mb-2 text-[11px] font-medium tracking-wide text-viscum-brand">
