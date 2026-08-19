@@ -2,49 +2,66 @@ import { DUMMY_WORKS, type Work } from "@/data/dummy-works";
 
 export type SuggestedSeeder = {
   handle: string;
+  displayName: string;
+  bio: string;
   /** フィードと同じ一文字タイル用 */
   thumbTone: Work["thumbTone"];
   glyph: string;
-  blurb: string;
   workCount: number;
 };
 
-const BLURBS: Record<string, string> = {
-  tori: "VISCUMの見本シード。場の型を見るのに向く",
-  ayu: "朝活・短尺まわりのサンプル",
-  ken: "ツール・個人開発系の見本",
-  sana: "小説・長文まわり",
-  neo: "デザイン寄りのサンプル",
-};
+/** デモ棚の人物像（handle は dummy-works の seeder と揃える） */
+const PROFILES: Omit<SuggestedSeeder, "workCount">[] = [
+  {
+    handle: "tori",
+    displayName: "鳥居はな",
+    bio: "週末に個人アプリを出す人。初見の迷いを一言ほしい",
+    thumbTone: "leaf",
+    glyph: "鳥",
+  },
+  {
+    handle: "ayu",
+    displayName: "鮎川あさ",
+    bio: "朝活の短い動画。テンポと掴みの感想ください",
+    thumbTone: "moss",
+    glyph: "鮎",
+  },
+  {
+    handle: "ken",
+    displayName: "健一郎",
+    bio: "個人ツール屋。使い心地のツッコミ歓迎",
+    thumbTone: "berry",
+    glyph: "健",
+  },
+  {
+    handle: "sana",
+    displayName: "沙奈",
+    bio: "短編小説。読み心地と途中離脱ポイントが知りたい",
+    thumbTone: "trunk",
+    glyph: "沙",
+  },
+  {
+    handle: "neo",
+    displayName: "根尾レン",
+    bio: "UIの第一印象集め中。色と余白の違和感ください",
+    thumbTone: "bark",
+    glyph: "根",
+  },
+];
 
 /** 棚デモからおすすめシーダーを組み立て（本物の活発ユーザーが出るまでの仮） */
 export function getSuggestedSeeders(limit = 5): SuggestedSeeder[] {
-  const map = new Map<string, SuggestedSeeder>();
+  const counts = new Map<string, number>();
   for (const w of DUMMY_WORKS) {
     const key = w.seeder.toLowerCase();
-    const existing = map.get(key);
-    if (existing) {
-      existing.workCount += 1;
-      continue;
-    }
-    map.set(key, {
-      handle: w.seeder,
-      thumbTone: w.thumbTone,
-      glyph: w.title.slice(0, 1),
-      blurb: BLURBS[key] ?? "デモ棚に作品あり",
-      workCount: 1,
-    });
+    counts.set(key, (counts.get(key) ?? 0) + 1);
   }
-  const preferred = ["tori", "ayu", "ken", "sana", "neo"];
-  const ordered: SuggestedSeeder[] = [];
-  for (const p of preferred) {
-    const s = map.get(p);
-    if (s) ordered.push(s);
-  }
-  for (const s of map.values()) {
-    if (!preferred.includes(s.handle.toLowerCase())) ordered.push(s);
-  }
-  return ordered.slice(0, limit);
+  return PROFILES.filter((p) => counts.has(p.handle.toLowerCase()))
+    .map((p) => ({
+      ...p,
+      workCount: counts.get(p.handle.toLowerCase()) ?? 0,
+    }))
+    .slice(0, limit);
 }
 
 export const THUMB_TONE_CLASS: Record<Work["thumbTone"], string> = {
