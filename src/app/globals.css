@@ -1,1 +1,75 @@
 @import "tailwindcss";
+
+:root {
+  /* Leaf */
+  --viscum-leaf-deep: #2f5d3a;
+  --viscum-leaf: #3f6f4a;
+  --viscum-moss: #7a9b6a;
+  --viscum-leaf-soft: #d5e3c8;
+
+  /* Berry */
+  --viscum-berry: #c45c3e;
+  --viscum-berry-soft: #e07a5f;
+  --viscum-berry-deep: #9e3f2a;
+
+  /* Trunk */
+  --viscum-trunk: #5c4033;
+  --viscum-bark: #c4a882;
+  --viscum-bark-soft: #e8dcc8;
+
+  /* Ground / paper */
+  --viscum-paper: #f3ede3;
+  --viscum-paper-2: #ebe3d6;
+  --viscum-ink: #2a2420;
+  --viscum-ink-muted: #6b635c;
+  --viscum-line: #d9d0c4;
+
+  --viscum-bg: var(--viscum-paper);
+  --viscum-fg: var(--viscum-ink);
+  --viscum-accent: var(--viscum-berry);
+  --viscum-brand: var(--viscum-leaf-deep);
+  --viscum-success: var(--viscum-moss);
+}
+
+@theme inline {
+  --color-viscum-paper: var(--viscum-paper);
+  --color-viscum-paper-2: var(--viscum-paper-2);
+  --color-viscum-ink: var(--viscum-ink);
+  --color-viscum-muted: var(--viscum-ink-muted);
+  --color-viscum-line: var(--viscum-line);
+  --color-viscum-brand: var(--viscum-brand);
+  --color-viscum-leaf: var(--viscum-leaf);
+  --color-viscum-leaf-soft: var(--viscum-leaf-soft);
+  --color-viscum-berry: var(--viscum-berry);
+  --color-viscum-berry-soft: var(--viscum-berry-soft);
+  --color-viscum-moss: var(--viscum-moss);
+  --color-viscum-trunk: var(--viscum-trunk);
+  --color-viscum-bark: var(--viscum-bark);
+  --color-viscum-bark-soft: var(--viscum-bark-soft);
+}
+
+body {
+  background: var(--viscum-bg);
+  color: var(--viscum-fg);
+  font-family:
+    "Hiragino Sans",
+    "Hiragino Kaku Gothic ProN",
+    "Noto Sans JP",
+    Meiryo,
+    sans-serif;
+}
+
+.badge-open {
+  background: var(--viscum-berry);
+  color: #fff;
+}
+
+.badge-closed {
+  background: #9a9088;
+  color: #fff;
+}
+
+.badge-none {
+  background: var(--viscum-leaf-soft);
+  color: var(--viscum-leaf-deep);
+}
