@@ -13,6 +13,7 @@ import {
   getWorksBySeeder,
   getWorksMentoredBy,
 } from "@/data/dummy-works";
+import { accountLabelForHandle } from "@/data/suggested-seeders";
 
 type Props = { params: Promise<{ handle: string }> };
 
@@ -180,7 +181,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
                     {work.title}
                   </p>
                   <p className="mt-1 text-[11px] text-viscum-muted">
-                    シーダー @{work.seeder}
+                    シーダー {accountLabelForHandle(work.seeder).line}
                     {commentSubject ? ` · 「${commentSubject}」` : ""}
                   </p>
                 </Link>

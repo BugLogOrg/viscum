@@ -14,6 +14,7 @@ import {
   postedAtFromHoursAgo,
   type Work,
 } from "@/data/dummy-works";
+import { accountLabelForHandle } from "@/data/suggested-seeders";
 
 const TONE: Record<Work["thumbTone"], string> = {
   leaf: "bg-viscum-leaf-deep",
@@ -33,6 +34,7 @@ export default async function WorkDetailPage({ params }: Props) {
   const postedAt = postedAtFromHoursAgo(work.hoursAgo);
   const postedLine = formatPostedLine(work.hoursAgo);
   const deadlineLine = formatDeadlineLine(work.closesInHours, work.status);
+  const seeder = accountLabelForHandle(work.seeder);
   const closesAt =
     work.closesInHours != null
       ? closesAtFromHours(work.closesInHours)
@@ -68,11 +70,11 @@ export default async function WorkDetailPage({ params }: Props) {
                   <dt className="inline text-viscum-muted">シーダー：</dt>
                   <dd className="inline">
                     <Link
-                      href={`/u/${encodeURIComponent(work.seeder)}`}
+                      href={`/u/${encodeURIComponent(seeder.handle)}`}
                       className="font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
                       title="ポートフォリオを見る"
                     >
-                      @{work.seeder}
+                      {seeder.line}
                     </Link>
                   </dd>
                 </div>

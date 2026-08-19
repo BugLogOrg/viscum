@@ -6,6 +6,7 @@ import {
   formatHoursAgo,
   postedAtFromHoursAgo,
 } from "@/data/dummy-works";
+import { accountLabelForHandle } from "@/data/suggested-seeders";
 import { StatusBadge } from "@/components/StatusBadge";
 
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1） */
@@ -29,6 +30,7 @@ export function WorkFeedRow({
 }) {
   const deadline = formatDeadlineFeed(work.closesInHours, work.status);
   const postedShort = formatMonthDay(postedAtFromHoursAgo(work.hoursAgo));
+  const seeder = accountLabelForHandle(work.seeder);
 
   return (
     <Link
@@ -78,8 +80,8 @@ export function WorkFeedRow({
           <span aria-hidden>·</span>
           <span>💬 {work.comments.length}</span>
           <span aria-hidden>·</span>
-          <span className="truncate text-viscum-trunk" title="投稿者">
-            @{work.seeder}
+          <span className="truncate text-viscum-trunk" title="シーダー">
+            {seeder.line}
           </span>
         </div>
       </div>
