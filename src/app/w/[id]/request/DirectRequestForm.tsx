@@ -40,15 +40,25 @@ type Draft = {
 };
 
 function draftKey(workId: string, fromHandle: string) {
-  return `viscum_request_draft_v2:${workId}:${fromHandle.toLowerCase() || "anon"}`;
+  return `viscum_request_draft_v3:${workId}:${fromHandle.toLowerCase() || "anon"}`;
 }
 
-/** 旧テンプレ下書き（作品タイトル断片＋定型文）は復元しない */
-function isStaleTemplatePitch(text: string) {
-  return (
-    text.includes("あなただけに見てほしいです") ||
-    text.includes("見る範囲は説明どおりで大丈夫です")
-  );
+/** 作品タイトル由来の旧テンプレは復元しない */
+function isStaleTemplatePitch(text: string, workTitle?: string) {
+  const t = text.trim();
+  if (!t) return false;
+  if (
+    t.includes("あなただけに見てほしいです") ||
+    t.includes("見る範囲は説明どおりで大丈夫です")
+  ) {
+    return true;
+  }
+  // タイトル先頭をそのまま貼っただけもテンプレ扱い
+  if (workTitle) {
+    const head = workTitle.trim().slice(0, 24);
+    if (head.length >= 12 && t.startsWith(head)) return true;
+  }
+  return false;
 }
 
 function optionFromHandle(
@@ -127,6 +137,13 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [guestName, setGuestName] = useState("");
+  const [copyNote, setCopyNote] = useState<string | null>(null);
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     const sync = () => setTick((n) => n + 1);
@@ -138,30 +155,37 @@ export function DirectRequestForm({ work }: { work: Work }) {
     };
   }, []);
 
-  // 下書き復元（v2のみ。旧テンプレは捨てる）
+  // 下書き復元（v3）。タイトル由来テンプレは捨てる
   useEffect(() => {
     try {
-      const legacy = `viscum_request_draft_v1:${work.id}:${fromHandle.toLowerCase() || "anon"}`;
-      localStorage.removeItem(legacy);
+      const base = `${work.id}:${fromHandle.toLowerCase() || "anon"}`;
+      localStorage.removeItem(`viscum_request_draft_v1:${base}`);
+      localStorage.removeItem(`viscum_request_draft_v2:${base}`);
       const raw = localStorage.getItem(draftKey(work.id, fromHandle));
-      if (!raw) return;
+      if (!raw) {
+        setMessage("");
+        return;
+      }
       const d = JSON.parse(raw) as Draft;
       if (d.mentor) setMentor(d.mentor);
+      if (typeof d.closed === "boolean") setClosed(d.closed);
       if (typeof d.message === "string" && d.message.trim()) {
-        if (isStaleTemplatePitch(d.message)) {
+        if (isStaleTemplatePitch(d.message, work.title)) {
           setMessage("");
+          localStorage.removeItem(draftKey(work.id, fromHandle));
         } else {
           setMessage(d.message);
           setDraftNote(
             `下書きあり（${new Date(d.updatedAt).toLocaleString("ja-JP")}）`,
           );
         }
+      } else {
+        setMessage("");
       }
-      if (typeof d.closed === "boolean") setClosed(d.closed);
     } catch {
-      /* ignore */
+      setMessage("");
     }
-  }, [work.id, fromHandle]);
+  }, [work.id, work.title, fromHandle]);
 
   // 検索語で Neon プロフィールを拾う
   useEffect(() => {
@@ -374,6 +398,9 @@ export function DirectRequestForm({ work }: { work: Work }) {
           >
             お願い一文
           </label>
+          <p className="mt-0.5 text-[12px] text-viscum-muted">
+            空欄から自分で書いてください。作品タイトルの自動文は入れません。
+          </p>
           <textarea
             id="request-message"
             rows={4}
@@ -382,6 +409,15 @@ export function DirectRequestForm({ work }: { work: Work }) {
             className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
             placeholder="見る範囲・なぜあなたに頼むかを短く"
           />
+          {work.description?.trim() ? (
+            <button
+              type="button"
+              onClick={() => setMessage(work.description.trim())}
+              className="mt-1.5 text-[12px] font-medium text-viscum-brand underline"
+            >
+              作品の説明を入れる
+            </button>
+          ) : null}
         </div>
 
         <details className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-3 py-2">
@@ -403,22 +439,59 @@ export function DirectRequestForm({ work }: { work: Work }) {
                 </span>
               </span>
             </label>
-            <div className="text-[12px] text-viscum-muted">
-              <p className="font-medium text-viscum-ink">未登録の人へはURL</p>
-              <p className="mt-1 break-all font-mono text-[11px] text-viscum-trunk">
-                {typeof window !== "undefined"
-                  ? `${window.location.origin}/dm/${work.id}?to=`
-                  : `/dm/${work.id}?to=`}
-                （名前）
+            <div className="space-y-2 text-[12px] text-viscum-muted">
+              <p className="font-medium text-viscum-ink">
+                未登録の人へ共有（アドレスをコピー）
               </p>
-              <Link
-                href={`/dm/${work.id}?to=${encodeURIComponent("相手の名前")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-1 inline-block text-viscum-brand underline"
-              >
-                外部向けページをプレビュー（別タブ）
-              </Link>
+              <label className="block text-[12px] text-viscum-ink">
+                相手の呼び方
+                <input
+                  type="text"
+                  value={guestName}
+                  onChange={(e) => {
+                    setGuestName(e.target.value);
+                    setCopyNote(null);
+                  }}
+                  placeholder="例: 太郎"
+                  className="mt-1 w-full rounded-md border border-viscum-line bg-white/80 px-2.5 py-1.5 text-[13px] text-viscum-ink"
+                />
+              </label>
+              <p className="break-all rounded border border-viscum-line bg-white/70 px-2 py-1.5 font-mono text-[11px] text-viscum-trunk">
+                {origin
+                  ? `${origin}/dm/${work.id}?to=${encodeURIComponent(guestName.trim() || "相手の名前")}`
+                  : `/dm/${work.id}?to=…`}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = guestName.trim();
+                    if (!name) {
+                      setCopyNote("先に相手の呼び方を入れてください");
+                      return;
+                    }
+                    const url = `${window.location.origin}/dm/${work.id}?to=${encodeURIComponent(name)}`;
+                    void navigator.clipboard?.writeText(url).then(
+                      () => setCopyNote("コピーしました。そのまま貼れます"),
+                      () => setCopyNote("コピーに失敗しました"),
+                    );
+                  }}
+                  className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white"
+                >
+                  アドレスをコピー
+                </button>
+                <Link
+                  href={`/dm/${work.id}?to=${encodeURIComponent(guestName.trim() || "相手の名前")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand"
+                >
+                  プレビュー（別タブ）
+                </Link>
+              </div>
+              {copyNote && (
+                <p className="text-[12px] text-viscum-brand">{copyNote}</p>
+              )}
             </div>
           </div>
         </details>
