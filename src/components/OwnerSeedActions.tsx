@@ -8,6 +8,7 @@ import {
   deleteLocalSeed,
   isLocalSeedListed,
   isLocalSeedOwner,
+  publishLocalSeedToShelf,
   readLocalSeeds,
   unlistLocalSeed,
   type LocalSeed,
@@ -88,7 +89,34 @@ export function OwnerSeedActions({
           >
             下書きに戻す（棚から外す）
           </button>
-        ) : null}
+        ) : (
+          <button
+            type="button"
+            disabled={busy}
+            className="rounded-md bg-viscum-berry px-3 py-1.5 text-[13px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+            onClick={() => {
+              if (
+                !window.confirm(
+                  "トップの「みんなの作品」に公開しますか？",
+                )
+              ) {
+                return;
+              }
+              setError(null);
+              setBusy(true);
+              const row = publishLocalSeedToShelf(workId);
+              setBusy(false);
+              if (!row) {
+                setError("公開に失敗しました");
+                return;
+              }
+              setSeed(row);
+              router.push(`/?published=${encodeURIComponent(workId)}`);
+            }}
+          >
+            公開する（トップに出す）
+          </button>
+        )}
         <button
           type="button"
           disabled={busy}
@@ -96,7 +124,7 @@ export function OwnerSeedActions({
           onClick={() => {
             if (
               !window.confirm(
-                "このシードを削除しますか？トップからも詳細からも消えます（デモ端末内データ）。",
+                "このシードを削除しますか？トップからも詳細からも消えます（デモ端末内データ）。成績（閲覧・スキ等）も一緒に消えます。",
               )
             ) {
               return;
@@ -117,7 +145,7 @@ export function OwnerSeedActions({
       </div>
       {!listed && seed ? (
         <p className="text-[12px] leading-relaxed text-viscum-muted">
-          いまは下書き（未公開）です。ダッシュボードの「下書き」一覧から公開できます。{" "}
+          いまは下書き（未公開）です。公開しても成績の数字はそのまま残ります。{" "}
           <Link href="/dashboard#drafts" className="text-viscum-brand underline">
             下書き一覧へ
           </Link>

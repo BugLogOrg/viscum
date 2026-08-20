@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { accountLabelForHandle } from "@/data/suggested-seeders";
+import {
+  accountLabelForHandle,
+  getDemoSeederProfile,
+  isReservedDemoHandle,
+} from "@/data/suggested-seeders";
 import {
   displayAccountName,
   fetchRemoteProfile,
@@ -17,6 +21,9 @@ export function formatSeederLine(handle: string, accountName: string): string {
 
 function resolveAccountName(handle: string, preferredName?: string): string {
   const h = handle.replace(/^@/, "").trim();
+  const demo = getDemoSeederProfile(h);
+  if (demo) return demo.displayName;
+
   const cached = peekCachedAccountName(h)?.trim() || "";
   const localName = displayAccountName(h, readLocalProfile(h));
   const liveLocal =
@@ -32,7 +39,7 @@ function resolveAccountName(handle: string, preferredName?: string): string {
 
 /**
  * シーダー表示名。メモリキャッシュ → 端末 → API → シード時スナップショット。
- * 再マウントしてもキャッシュがあればチラつかない。
+ * 予約デモIDはデモ名固定（端末の実名で上書きしない）。
  */
 export function useSeederDisplayLine(
   handle: string,
@@ -49,6 +56,8 @@ export function useSeederDisplayLine(
 
   useEffect(() => {
     refresh();
+
+    if (isReservedDemoHandle(h)) return;
 
     let cancelled = false;
     void fetchRemoteProfile(h).then((remote) => {

@@ -275,9 +275,9 @@ export default function DashboardPage() {
                       className="px-1 py-1.5 text-[12px] text-viscum-berry-deep underline"
                       onClick={() => {
                         if (
-                          !window.confirm(
-                            "この下書きを削除しますか？元に戻せません。",
-                          )
+                            !window.confirm(
+                              "この下書きを削除しますか？成績の数字も一緒に消えます。",
+                            )
                         ) {
                           return;
                         }
@@ -386,7 +386,7 @@ export default function DashboardPage() {
                         onClick={() => {
                           if (
                             !window.confirm(
-                              "このシードを削除しますか？元に戻せません。",
+                              "このシードを削除しますか？成績の数字も一緒に消えます。",
                             )
                           ) {
                             return;

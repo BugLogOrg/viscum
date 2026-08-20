@@ -70,6 +70,15 @@ export function accountLabelForHandle(
 } {
   const h = handle.replace(/^@/, "").trim();
   const demo = getDemoSeederProfile(h);
+  // デモ棚の予約IDは端末／APIで上書きしない（実アカウント名が混ざる事故防止）
+  if (demo) {
+    const accountName = demo.displayName;
+    const line =
+      accountName.toLowerCase() === h.toLowerCase()
+        ? `@${h}`
+        : `${accountName} @${h}`;
+    return { handle: h, accountName, line };
+  }
   const local =
     typeof window !== "undefined"
       ? listLocalProfiles().find(
@@ -83,7 +92,6 @@ export function accountLabelForHandle(
     cached?.trim() ||
     local?.accountName?.trim() ||
     preferredName?.trim() ||
-    demo?.displayName ||
     h;
   const line =
     accountName.toLowerCase() === h.toLowerCase()
