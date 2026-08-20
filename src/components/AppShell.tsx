@@ -51,13 +51,13 @@ export function AppShell({
   return (
     <div className="mx-auto min-h-dvh max-w-7xl bg-viscum-paper md:flex">
       <aside className="hidden w-52 shrink-0 border-r border-viscum-line md:flex md:flex-col md:sticky md:top-0 md:h-dvh md:overflow-y-auto">
-        <div className="border-b border-viscum-line px-4 py-3">
+        <div className="flex h-12 shrink-0 items-center border-b border-viscum-line px-4">
           <Link
             href="/"
-            className="flex items-center gap-1.5 text-sm font-semibold tracking-[0.12em] text-viscum-brand"
+            className="flex items-center gap-2 text-[15px] font-semibold tracking-[0.12em] text-viscum-brand"
             title="VISCUM／ヤドリギ"
           >
-            <ViscumMark className="h-5 w-5" />
+            <ViscumMark className="h-6 w-6" />
             VISCUM
           </Link>
         </div>
