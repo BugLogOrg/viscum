@@ -172,7 +172,7 @@ export function HeaderAccountActions({
                     onClick={close}
                     className="mt-0.5 inline-block text-[12px] text-viscum-brand underline underline-offset-2"
                   >
-                    公開ポートフォリオ
+                    プロフィール
                   </Link>
                 </div>
               </div>

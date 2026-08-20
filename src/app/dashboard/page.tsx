@@ -91,7 +91,7 @@ export default function DashboardPage() {
                 href={`/u/${encodeURIComponent(handle)}`}
                 className="text-[13px] font-medium text-viscum-brand underline"
               >
-                公開ポートフォリオを見る
+                プロフィールを見る
               </Link>
               <Link
                 href="/dashboard/messages"

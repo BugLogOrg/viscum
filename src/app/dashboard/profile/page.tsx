@@ -344,7 +344,7 @@ export default function ProfileEditPage() {
             href={`/u/${encodeURIComponent(handle)}`}
             className="text-viscum-brand underline"
           >
-            公開ポートフォリオを見る
+            プロフィールを見る
           </Link>
         </p>
       </main>

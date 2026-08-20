@@ -76,7 +76,7 @@ export default async function WorkDetailPage({ params }: Props) {
                     <Link
                       href={`/u/${encodeURIComponent(seeder.handle)}`}
                       className="font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
-                      title="ポートフォリオを見る"
+                      title="プロフィールを見る"
                     >
                       {seeder.line}
                     </Link>

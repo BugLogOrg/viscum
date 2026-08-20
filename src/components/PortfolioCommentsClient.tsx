@@ -183,7 +183,7 @@ export function PortfolioCommentsClient({
   return (
     <section
       className="border-b border-viscum-line"
-      aria-label="ポートフォリオのコメント"
+      aria-label="プロフィールのコメント"
     >
       <div className="flex flex-wrap items-end justify-between gap-2 px-4 pt-4">
         <div>
