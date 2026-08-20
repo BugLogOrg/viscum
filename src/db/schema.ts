@@ -151,9 +151,8 @@ export const payments = pgTable("payments", {
     .$defaultFn(() => crypto.randomUUID()),
   /** field_adopt | public_boost_reward | direct_request */
   kind: text("kind").notNull(),
-  workId: text("work_id").references(() => works.id, {
-    onDelete: "set null",
-  }),
+  /** デモ作品IDも可のため FK なし（comments.work_id と同方針） */
+  workId: text("work_id"),
   commentId: text("comment_id").references(() => comments.id, {
     onDelete: "set null",
   }),

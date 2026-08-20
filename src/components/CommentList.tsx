@@ -8,8 +8,15 @@ import { formatHoursAgo, formatYen } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import { readLocalProfile } from "@/lib/local-profile";
 
+const NEON_COMMENT_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function isPortfolioHandle(raw: string) {
   return /^[a-zA-Z0-9_]{2,24}$/.test(raw);
+}
+
+function isNeonCommentId(id: string) {
+  return NEON_COMMENT_ID.test(id);
 }
 
 /** 英語IDなら PF へ。アカウント名があれば併記 */
@@ -53,23 +60,53 @@ export function CommentList({
   comments,
   status,
   prizeYen,
+  workId,
 }: {
   comments: Comment[];
   status: CompStatus;
   prizeYen?: number;
+  workId: string;
 }) {
   const [openId, setOpenId] = useState<string | null>(
     comments.find((c) => c.adopted)?.id ?? comments[0]?.id ?? null,
   );
+  const [payingId, setPayingId] = useState<string | null>(null);
+  const [payError, setPayError] = useState<string | null>(null);
 
   useEffect(() => {
     const newest = comments[0];
-    if (newest?.id.startsWith("local_c_")) {
+    if (newest?.id.startsWith("local_c_") || isNeonCommentId(newest?.id ?? "")) {
       setOpenId(newest.id);
     }
   }, [comments]);
 
   const tipLabel = prizeYen ? formatYen(prizeYen) : "¥5,000";
+  const amountYen = prizeYen && prizeYen >= 5000 ? prizeYen : 5000;
+
+  async function startCheckout(commentId: string) {
+    setPayError(null);
+    setPayingId(commentId);
+    try {
+      const res = await fetch("/api/checkout/adopt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ commentId, workId, amountYen }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.url) {
+        setPayError(data.error || `Checkout 開始に失敗（${res.status}）`);
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setPayError("ネットワークエラー");
+    } finally {
+      setPayingId(null);
+    }
+  }
 
   return (
     <section className="border-t border-viscum-line pt-4" aria-label="コメント">
@@ -79,6 +116,11 @@ export function CommentList({
       <p className="mt-1 text-[11px] text-viscum-muted">
         件名をタップして本文を展開（Gmail型）
       </p>
+      {payError && (
+        <p className="mt-2 rounded-md border border-viscum-berry/40 bg-viscum-berry/10 px-3 py-2 text-[12px] text-viscum-berry-deep">
+          {payError}
+        </p>
+      )}
 
       {comments.length === 0 && (
         <p className="mt-3 text-sm text-viscum-muted">
@@ -89,6 +131,13 @@ export function CommentList({
       <ul className="mt-3 divide-y divide-viscum-line overflow-hidden rounded-lg border border-viscum-line bg-white/50">
         {comments.map((c) => {
           const open = openId === c.id;
+          const neon = isNeonCommentId(c.id);
+          const canPayLive =
+            neon &&
+            !c.tipped &&
+            !c.afterClose &&
+            status !== "none" &&
+            status !== "closed";
           return (
             <li key={c.id}>
               <button
@@ -148,7 +197,7 @@ export function CommentList({
                 <div className="border-t border-viscum-line/80 bg-viscum-paper px-3 py-3 pl-9">
                   <CommentBody body={c.body} imageUrls={c.imageUrls} />
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {!c.adopted && !c.afterClose && (
+                    {!c.adopted && !c.afterClose && !neon && (
                       <>
                         <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
                           ありがとう
@@ -169,23 +218,38 @@ export function CommentList({
                       </span>
                     )}
 
-                    {c.adopted && !c.tipped && status !== "none" && (
+                    {canPayLive && (
+                      <button
+                        type="button"
+                        disabled={payingId === c.id}
+                        className="rounded-md bg-viscum-berry px-2.5 py-1 text-[11px] font-medium text-white disabled:opacity-60"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void startCheckout(c.id);
+                        }}
+                      >
+                        {payingId === c.id
+                          ? "Checkoutへ…"
+                          : `採用して支払う ${tipLabel}`}
+                      </button>
+                    )}
+
+                    {!neon && c.adopted && !c.tipped && status !== "none" && (
                       <button
                         type="button"
                         className="rounded-md bg-viscum-berry px-2.5 py-1 text-[11px] font-medium text-white"
                         onClick={() => {
                           window.alert(
                             [
-                              "【デモ】採用時支払い（Checkout）",
+                              "デモ初期コメントは実決済対象外です。",
                               "",
-                              `金額: ${tipLabel}（広告費として）`,
-                              "次: Stripe Checkout（実決済なし）",
-                              "完了後: コメントに「支払い済み」＋メンターへ出金リンク",
+                              "Neonに保存されたコメント（ログイン投稿）を開き、",
+                              "「採用して支払う」で Stripe Checkout に進みます。",
                             ].join("\n"),
                           );
                         }}
                       >
-                        採用して支払う {tipLabel}
+                        採用して支払う {tipLabel}（デモ）
                       </button>
                     )}
 
@@ -201,16 +265,16 @@ export function CommentList({
                           onClick={() => {
                             window.alert(
                               [
-                                "【デモ】メンター出金（Connect）",
+                                "メンター出金（Connect）は次段です。",
                                 "",
-                                "コメント時は口座登録なし（三鉄則）。",
-                                "採用・支払い確定後だけ「受け取る」→ Connect オンボーディング。",
-                                "このデモでは実際の出金は行いません。",
+                                "いまはシーダーの Checkout（入金）まで。",
+                                "支払い済み後に payout=eligible になり、",
+                                "出金リンクは Connect 配線後に有効化します。",
                               ].join("\n"),
                             );
                           }}
                         >
-                          受け取る（Connect・デモ）
+                          受け取る（Connect・準備中）
                         </button>
                       </>
                     )}

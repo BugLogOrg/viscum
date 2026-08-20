@@ -86,6 +86,37 @@ export function WorkEngage({
   }, [workId]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get("checkout");
+    const paymentId = params.get("payment");
+    if (checkout !== "success" && checkout !== "cancel") return;
+
+    void (async () => {
+      if (checkout === "success" && paymentId) {
+        try {
+          await fetch("/api/checkout/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId }),
+          });
+        } catch {
+          /* webhook 側で拾える */
+        }
+      }
+      const res = await fetchWorkComments(workId);
+      setRemoteExtra(res.comments);
+      if (checkout === "cancel") {
+        setError("Checkout をキャンセルしました。未払いのままです。");
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.delete("checkout");
+      url.searchParams.delete("payment");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    })();
+  }, [workId]);
+
+  useEffect(() => {
     void fetchBlobConfigured().then(setBlobOn);
   }, []);
 
@@ -687,6 +718,7 @@ export function WorkEngage({
         comments={comments}
         status={status}
         prizeYen={prizeYen}
+        workId={workId}
       />
     </div>
   );

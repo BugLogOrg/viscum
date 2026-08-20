@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, inArray, and } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
-import { comments, users } from "@/db/schema";
+import { comments, payments, users } from "@/db/schema";
 import type { Comment } from "@/data/dummy-works";
 
 function hoursAgoFrom(date: Date): number {
@@ -12,17 +12,20 @@ function hoursAgoFrom(date: Date): number {
   );
 }
 
-function toClientComment(row: {
-  id: string;
-  subject: string;
-  body: string;
-  imageUrls: string[] | null;
-  adoptedAt: Date | null;
-  afterClose: boolean;
-  createdAt: Date;
-  handle: string | null;
-  name: string | null;
-}): Comment {
+function toClientComment(
+  row: {
+    id: string;
+    subject: string;
+    body: string;
+    imageUrls: string[] | null;
+    adoptedAt: Date | null;
+    afterClose: boolean;
+    createdAt: Date;
+    handle: string | null;
+    name: string | null;
+  },
+  paid?: { tipped: boolean; tipYen?: number },
+): Comment {
   const handle = (row.handle ?? "").replace(/^@/, "").trim() || "unknown";
   const name = row.name?.trim();
   return {
@@ -34,12 +37,14 @@ function toClientComment(row: {
     body: row.body,
     imageUrls: row.imageUrls?.length ? row.imageUrls : undefined,
     hoursAgo: hoursAgoFrom(row.createdAt),
-    adopted: Boolean(row.adoptedAt),
+    adopted: Boolean(row.adoptedAt) || Boolean(paid?.tipped),
+    tipped: paid?.tipped || undefined,
+    tipYen: paid?.tipYen,
     afterClose: row.afterClose || undefined,
   };
 }
 
-/** 作品のコメント一覧（新しい順） */
+/** 作品のコメント一覧（新しい順）。支払い済みは payments から合成 */
 export async function GET(req: Request) {
   const workId = new URL(req.url).searchParams.get("workId")?.trim();
   if (!workId) {
@@ -73,8 +78,32 @@ export async function GET(req: Request) {
     .orderBy(desc(comments.createdAt))
     .limit(80);
 
+  const ids = rows.map((r) => r.id);
+  const paidMap = new Map<string, { tipped: boolean; tipYen: number }>();
+  if (ids.length > 0) {
+    const paidRows = await db
+      .select({
+        commentId: payments.commentId,
+        amountYen: payments.amountYen,
+      })
+      .from(payments)
+      .where(
+        and(
+          eq(payments.checkoutStatus, "paid"),
+          inArray(payments.commentId, ids),
+        ),
+      );
+    for (const p of paidRows) {
+      if (p.commentId) {
+        paidMap.set(p.commentId, { tipped: true, tipYen: p.amountYen });
+      }
+    }
+  }
+
   return NextResponse.json({
-    comments: rows.map(toClientComment),
+    comments: rows.map((r) =>
+      toClientComment(r, paidMap.get(r.id)),
+    ),
     persisted: true,
   });
 }
