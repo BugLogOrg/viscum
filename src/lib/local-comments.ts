@@ -30,6 +30,7 @@ export function addLocalComment(
     subject: string;
     body: string;
     afterClose?: boolean;
+    imageUrls?: string[];
   },
 ): Comment {
   const row: Comment & { afterClose?: boolean } = {
@@ -40,6 +41,7 @@ export function addLocalComment(
     body: input.body.trim(),
     hoursAgo: 0,
     afterClose: input.afterClose,
+    imageUrls: input.imageUrls?.length ? input.imageUrls : undefined,
   };
   const next = [row, ...readLocalComments(workId)];
   writeLocalComments(workId, next);

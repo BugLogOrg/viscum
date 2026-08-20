@@ -28,6 +28,13 @@ npm run db:push
 - 履歴SQL: `drizzle/`（新規環境用スナップショット。既存Neonは push 運用）
 - 集計ヘルパ: `src/db/payment-facts.ts`（層B・バッジ用。UI未配線）
 
+## コメント画像（Vercel Blob）
+
+- ブラウザが **Blob に直接**上げる（関数の約4.5MB制限を避ける）
+- 環境変数: `BLOB_READ_WRITE_TOKEN`（Vercel Storage → Blob）
+- 未設定時: 端末内の圧縮 JPEG（data URL）でデモ
+- R2 との差: 同Vault `_knowledge/02_Architecture.md` の「画像ストレージ」節
+
 - **公開デモ（段階A・2026-08-19）**: https://viscum.vercel.app （別名 https://app-opal-xi-rw82xi0vc5.vercel.app ）
 - **GitHub**: https://github.com/BugLogOrg/viscum （単独リポ。Vaultドキュメントは入れない）
 - `viscum.org` DNS は中身確認後（ADR-011）

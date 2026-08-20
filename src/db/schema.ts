@@ -126,6 +126,8 @@ export const comments = pgTable("comments", {
     .references(() => users.id),
   subject: text("subject").notNull(),
   body: text("body").notNull(),
+  /** Blob 等の公開URL配列（本体バイナリはDBに置かない） */
+  imageUrls: jsonb("image_urls").$type<string[]>().notNull().default([]),
   /** シーダーが採用した時刻。null＝未採用 */
   adoptedAt: timestamp("adopted_at", { withTimezone: true }),
   /** 締切後投稿（賞金対象外・ADR-015） */

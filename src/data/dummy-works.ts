@@ -18,6 +18,8 @@ export type Comment = {
   subject: string;
   body: string;
   hoursAgo: number;
+  /** 指摘スクショ等（Blob URL またはデモ用URL） */
+  imageUrls?: string[];
   adopted?: boolean;
   /** 採用後にチップ／賞金を支払済み */
   tipped?: boolean;
@@ -301,11 +303,15 @@ const DUMMY_WORKS_RAW: Work[] = [
         id: "c1",
         author: "メンターH",
         subject: "ナビが一段深い。設定をトップへ",
-        body: "メイン導線から設定までタップが一つ多く、親指ゾーンの外に重要項目がありました。終了コンペのアーカイブとして残すなら、『採用済み』が件名横にあるとシーダーの学びログにもなります。長文レビューも件名だけで流し読みできると助かります。",
+        body: "メイン導線から設定までタップが一つ多く、親指ゾーンの外に重要項目がありました。終了コンペのアーカイブとして残すなら、『採用済み』が件名横にあるとシーダーの学びログにもなります。長文レビューも件名だけで流し読みできると助かります。スクショは下（デモ画像）を参照。",
         hoursAgo: 40,
         adopted: true,
         tipped: true,
         tipYen: 5000,
+        imageUrls: [
+          "https://picsum.photos/seed/viscum-nav/960/540",
+          "https://picsum.photos/seed/viscum-thumb/960/540",
+        ],
       },
       {
         id: "c2",

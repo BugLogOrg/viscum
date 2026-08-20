@@ -1,0 +1,64 @@
+import { NextResponse } from "next/server";
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
+import { auth } from "@/auth";
+
+/**
+ * Vercel Blob クライアント直アップロード用トークン発行。
+ * ブラウザ → Blob（関数ボディを通さない＝4.5MB制限を避ける）
+ */
+export async function POST(request: Request): Promise<NextResponse> {
+  if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
+    return NextResponse.json(
+      {
+        error:
+          "BLOB_READ_WRITE_TOKEN 未設定。Vercel の Blob ストアを接続してください。",
+      },
+      { status: 503 },
+    );
+  }
+
+  const body = (await request.json()) as HandleUploadBody;
+
+  try {
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async () => {
+        const session = await auth();
+        return {
+          allowedContentTypes: [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+            "image/gif",
+          ],
+          /** 圧縮後想定。原寸大の直上げは避けてもらう */
+          maximumSizeInBytes: 4 * 1024 * 1024,
+          addRandomSuffix: true,
+          tokenPayload: JSON.stringify({
+            userId: session?.user?.id ?? "guest",
+            handle: session?.user?.handle ?? null,
+          }),
+        };
+      },
+      onUploadCompleted: async () => {
+        // localhost では届かないことがある。URL はクライアント upload() の戻りを正とする
+      },
+    });
+    return NextResponse.json(jsonResponse);
+  } catch (error) {
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 400 },
+    );
+  }
+}
+
+/** UI が Blob 利用可否を知る */
+export async function GET() {
+  return NextResponse.json({
+    configured: Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()),
+    provider: "vercel-blob",
+    maxImages: 8,
+  });
+}

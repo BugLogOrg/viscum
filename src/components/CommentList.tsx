@@ -149,6 +149,29 @@ export function CommentList({
                   <p className="text-sm leading-relaxed text-viscum-ink">
                     <LinkifiedText text={c.body} />
                   </p>
+                  {c.imageUrls && c.imageUrls.length > 0 && (
+                    <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+                      {c.imageUrls.map((src) => (
+                        <li key={src}>
+                          <a
+                            href={src}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block overflow-hidden rounded-md border border-viscum-line bg-viscum-paper-2"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={src}
+                              alt=""
+                              className="aspect-video w-full object-cover"
+                              loading="lazy"
+                            />
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <div className="mt-3 flex flex-wrap gap-2">
                     {!c.adopted && !c.afterClose && (
                       <>
