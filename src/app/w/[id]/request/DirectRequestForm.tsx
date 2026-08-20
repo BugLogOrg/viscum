@@ -1,59 +1,130 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Work } from "@/data/dummy-works";
 import { createRequestDm } from "@/lib/local-request-dms";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
+import {
+  FOLLOWS_UPDATED,
+  isFollowing,
+  listFollowing,
+} from "@/lib/local-follows";
+import { accountLabelForHandle } from "@/data/suggested-seeders";
 
-const MENTORS = [
-  {
-    handle: "mentorA",
-    label: "メンターA",
-    specialty: "動画",
+type MentorOption = {
+  handle: string;
+  label: string;
+  specialty: string;
+  accepting: boolean;
+  blurb: string;
+  mutual?: boolean;
+  sample?: boolean;
+};
+
+/** 受付OFFの見本だけ残す（実候補ではない） */
+const SAMPLE_OFF: MentorOption = {
+  handle: "kansatsuI",
+  label: "観察I",
+  specialty: "デザイン",
+  accepting: false,
+  blurb: "受付OFF（送れない見本）",
+  sample: true,
+};
+
+function mentorFromHandle(
+  handle: string,
+  opts: { mutual?: boolean },
+): MentorOption {
+  const profile = readLocalProfile(handle);
+  const label = displayAccountName(handle, profile);
+  const demo = accountLabelForHandle(handle);
+  return {
+    handle,
+    label: label !== handle ? label : demo.accountName,
+    specialty: opts.mutual ? "相互フォロー" : "フォロー中",
     accepting: true,
-    blurb: "Shorts／冒頭1秒の伝わり方",
-  },
-  {
-    handle: "mentorJ",
-    label: "メンターJ",
-    specialty: "アプリ",
-    accepting: true,
-    blurb: "初見3秒・空状態",
-  },
-  {
-    handle: "kansatsuI",
-    label: "観察I",
-    specialty: "デザイン",
-    accepting: false,
-    blurb: "受付OFF（送れない見本）",
-  },
-] as const;
+    blurb: opts.mutual
+      ? "相互フォロー。サイト内メンター候補"
+      : "あなたがフォロー中（相互でなくても依頼可）",
+    mutual: opts.mutual,
+  };
+}
+
+function buildMentorOptions(me: string): MentorOption[] {
+  const self = me.replace(/^@/, "").trim().toLowerCase();
+  if (!self) return [SAMPLE_OFF];
+
+  const following = listFollowing(self).filter((h) => h !== self);
+  const mutual: MentorOption[] = [];
+  const oneWay: MentorOption[] = [];
+
+  for (const h of following) {
+    const isMutual = isFollowing(h, self);
+    const row = mentorFromHandle(h, { mutual: isMutual });
+    if (isMutual) mutual.push(row);
+    else oneWay.push(row);
+  }
+
+  // 相互を上に
+  const live = [...mutual, ...oneWay];
+  return [...live, SAMPLE_OFF];
+}
 
 export function DirectRequestForm({ work }: { work: Work }) {
   const router = useRouter();
   const { data: session } = useSession();
-  const [mentor, setMentor] = useState<string>(MENTORS[0].handle);
+  const fromHandle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
+  const [tick, setTick] = useState(0);
+  const [mentor, setMentor] = useState("");
   const [message, setMessage] = useState(
     `${work.title.slice(0, 40)}… を、あなただけに見てほしいです。見る範囲は説明どおりで大丈夫です。`,
   );
   const [closed, setClosed] = useState(false);
 
-  const selected = MENTORS.find((m) => m.handle === mentor);
-  const canSend = selected?.accepting && message.trim().length > 0;
-  const fromHandle = session?.user?.handle ?? "guest";
+  useEffect(() => {
+    const sync = () => setTick((n) => n + 1);
+    window.addEventListener(FOLLOWS_UPDATED, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(FOLLOWS_UPDATED, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, []);
+
+  const mentors = useMemo(
+    () => buildMentorOptions(fromHandle),
+    // tick: フォロー変更で再計算
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [fromHandle, tick],
+  );
+
+  const liveMentors = mentors.filter((m) => m.accepting);
+  const defaultHandle = liveMentors[0]?.handle ?? "";
+
+  useEffect(() => {
+    if (!mentor && defaultHandle) setMentor(defaultHandle);
+    if (mentor && !mentors.some((m) => m.handle === mentor && m.accepting)) {
+      setMentor(defaultHandle);
+    }
+  }, [mentor, defaultHandle, mentors]);
+
+  const selected = mentors.find((m) => m.handle === mentor);
+  const canSend = Boolean(selected?.accepting && message.trim().length > 0);
 
   return (
     <div className="space-y-5">
       <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-3 text-[13px] text-viscum-ink">
         <p className="font-medium">内部向け（登録済みメンター）</p>
         <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-          本番では<strong className="font-medium text-viscum-ink">登録メールが本命</strong>
-          （休眠でも届く・呼び戻し）。あわせて
+          候補は<strong className="font-medium text-viscum-ink">フォロー中</strong>
+          （相互は上）。本番では
+          <strong className="font-medium text-viscum-ink">登録メールが本命</strong>
+          。あわせて
           <strong className="font-medium text-viscum-ink">この依頼だけの薄いDM</strong>
-          が開き、ベルは補助。フォロー必須にはしない。
+          が開き、ベルは補助。フォロー必須にはしない（後段でハンドル指名も可）。
         </p>
       </div>
 
@@ -88,135 +159,156 @@ export function DirectRequestForm({ work }: { work: Work }) {
         </div>
       </div>
 
-    <form
-      className="space-y-5"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!canSend || !selected) return;
-        const row = createRequestDm({
-          workId: work.id,
-          workTitle: work.title,
-          fromHandle,
-          fromAccountName: displayAccountName(
+      <form
+        className="space-y-5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!canSend || !selected || !fromHandle) return;
+          const row = createRequestDm({
+            workId: work.id,
+            workTitle: work.title,
             fromHandle,
-            readLocalProfile(fromHandle),
-          ),
-          toHandle: selected.handle,
-          amountYen: 5000,
-          pitch: message.trim(),
-        });
-        router.push(`/dashboard/messages/${encodeURIComponent(row.id)}`);
-      }}
-    >
-      <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-3 text-[13px] text-viscum-ink">
-        <p className="font-medium">直依頼は「あなたに頼みたい」専用です</p>
-        <p className="mt-1 text-viscum-muted leading-relaxed">
-          公開コンペ（開催中・賞金）とは別の行為です。依頼文に「コンペもあります」は載せません——相手を予備に見せるからです。両方やるなら、コンペは別タイミング・別メッセージで。
-        </p>
-      </div>
-
-      <div>
-        <p className="text-[13px] text-viscum-muted">作品</p>
-        <p className="mt-0.5 text-[14px] font-medium text-viscum-ink line-clamp-2">
-          {work.title}
-        </p>
-        <Link
-          href={`/w/${work.id}`}
-          className="mt-1 inline-block text-[12px] text-viscum-brand underline"
-        >
-          作品ページを見る
-        </Link>
-      </div>
-
-      <fieldset>
-        <legend className="text-[13px] font-medium text-viscum-ink">
-          指名するメンター
-        </legend>
-        <ul className="mt-2 space-y-2">
-          {MENTORS.map((m) => (
-            <li key={m.handle}>
-              <label
-                className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-2.5 ${
-                  mentor === m.handle
-                    ? "border-viscum-brand bg-viscum-leaf-soft/40"
-                    : "border-viscum-line bg-white/40"
-                } ${!m.accepting ? "opacity-60" : ""}`}
-              >
-                <input
-                  type="radio"
-                  name="mentor"
-                  className="mt-1"
-                  checked={mentor === m.handle}
-                  disabled={!m.accepting}
-                  onChange={() => setMentor(m.handle)}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium text-viscum-ink">
-                      {m.label}
-                    </span>
-                    <span className="text-[11px] text-viscum-muted">
-                      @{m.handle} · {m.specialty}
-                    </span>
-                    {!m.accepting && (
-                      <span className="rounded bg-viscum-line/80 px-1.5 py-0.5 text-[10px] text-viscum-muted">
-                        受付OFF
-                      </span>
-                    )}
-                  </span>
-                  <span className="mt-0.5 block text-[12px] text-viscum-muted">
-                    {m.blurb}
-                  </span>
-                </span>
-              </label>
-            </li>
-          ))}
-        </ul>
-      </fieldset>
-
-      <div>
-        <label
-          htmlFor="request-message"
-          className="text-[13px] font-medium text-viscum-ink"
-        >
-          一文（お願い）
-        </label>
-        <textarea
-          id="request-message"
-          rows={4}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
-          placeholder="見る範囲・なぜあなたに頼むかを短く"
-        />
-        <p className="mt-1 text-[11px] text-viscum-muted">
-          コンペ・賞金・「他の人も募集中」は書かない（デモの礼儀ガイド）。
-        </p>
-      </div>
-
-      <label className="flex items-start gap-2 text-[13px] text-viscum-ink">
-        <input
-          type="checkbox"
-          className="mt-0.5"
-          checked={closed}
-          onChange={(e) => setClosed(e.target.checked)}
-        />
-        <span>
-          <span className="font-medium">クローズド（指名者のみ閲覧）</span>
-          <span className="mt-0.5 block text-[12px] text-viscum-muted">
-            創作の盗用不安など。非公開＝直依頼そのものではありません。依頼は常に個人宛てです。
-          </span>
-        </span>
-      </label>
-
-      <button
-        type="submit"
-        disabled={!canSend}
-        className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+            fromAccountName: displayAccountName(
+              fromHandle,
+              readLocalProfile(fromHandle),
+            ),
+            toHandle: selected.handle,
+            amountYen: 5000,
+            pitch: message.trim(),
+          });
+          router.push(`/dashboard/messages/${encodeURIComponent(row.id)}`);
+        }}
       >
-        直依頼を送る（デモ・サイト内のメンター向け）
-      </button>
-    </form>
+        <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-3 text-[13px] text-viscum-ink">
+          <p className="font-medium">直依頼は「あなたに頼みたい」専用です</p>
+          <p className="mt-1 text-viscum-muted leading-relaxed">
+            公開コンペ（開催中・賞金）とは別の行為です。依頼文に「コンペもあります」は載せません——相手を予備に見せるからです。両方やるなら、コンペは別タイミング・別メッセージで。
+          </p>
+        </div>
+
+        <div>
+          <p className="text-[13px] text-viscum-muted">作品</p>
+          <p className="mt-0.5 text-[14px] font-medium text-viscum-ink line-clamp-2">
+            {work.title}
+          </p>
+          <Link
+            href={`/w/${work.id}`}
+            className="mt-1 inline-block text-[12px] text-viscum-brand underline"
+          >
+            作品ページを見る
+          </Link>
+        </div>
+
+        <fieldset>
+          <legend className="text-[13px] font-medium text-viscum-ink">
+            指名するメンター
+          </legend>
+          {!fromHandle && (
+            <p className="mt-2 text-[12px] text-viscum-muted">
+              ログインすると、フォロー中の人がここに出ます。{" "}
+              <Link
+                href={`/login?callbackUrl=${encodeURIComponent(`/w/${work.id}/request`)}`}
+                className="text-viscum-brand underline"
+              >
+                ログイン
+              </Link>
+            </p>
+          )}
+          {fromHandle && liveMentors.length === 0 && (
+            <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[12px] text-viscum-muted">
+              フォロー中の人がまだいません。先にプロフィールからフォローするか、外部向けURLで頼んでください。
+            </p>
+          )}
+          <ul className="mt-2 space-y-2">
+            {mentors.map((m) => (
+              <li key={m.handle}>
+                <label
+                  className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-2.5 ${
+                    mentor === m.handle
+                      ? "border-viscum-brand bg-viscum-leaf-soft/40"
+                      : "border-viscum-line bg-white/40"
+                  } ${!m.accepting ? "opacity-60" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="mentor"
+                    className="mt-1"
+                    checked={mentor === m.handle}
+                    disabled={!m.accepting}
+                    onChange={() => setMentor(m.handle)}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-viscum-ink">
+                        {m.label}
+                      </span>
+                      <span className="text-[11px] text-viscum-muted">
+                        @{m.handle} · {m.specialty}
+                      </span>
+                      {m.mutual && (
+                        <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                          相互
+                        </span>
+                      )}
+                      {!m.accepting && (
+                        <span className="rounded bg-viscum-line/80 px-1.5 py-0.5 text-[10px] text-viscum-muted">
+                          受付OFF
+                        </span>
+                      )}
+                    </span>
+                    <span className="mt-0.5 block text-[12px] text-viscum-muted">
+                      {m.blurb}
+                    </span>
+                  </span>
+                </label>
+              </li>
+            ))}
+          </ul>
+        </fieldset>
+
+        <div>
+          <label
+            htmlFor="request-message"
+            className="text-[13px] font-medium text-viscum-ink"
+          >
+            一文（お願い）
+          </label>
+          <textarea
+            id="request-message"
+            rows={4}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
+            placeholder="見る範囲・なぜあなたに頼むかを短く"
+          />
+          <p className="mt-1 text-[11px] text-viscum-muted">
+            コンペ・賞金・「他の人も募集中」は書かない（デモの礼儀ガイド）。
+          </p>
+        </div>
+
+        <label className="flex items-start gap-2 text-[13px] text-viscum-ink">
+          <input
+            type="checkbox"
+            className="mt-0.5"
+            checked={closed}
+            onChange={(e) => setClosed(e.target.checked)}
+          />
+          <span>
+            <span className="font-medium">クローズド（指名者のみ閲覧）</span>
+            <span className="mt-0.5 block text-[12px] text-viscum-muted">
+              創作の盗用不安など。非公開＝直依頼そのものではありません。依頼は常に個人宛てです。
+            </span>
+          </span>
+        </label>
+
+        <button
+          type="submit"
+          disabled={!canSend}
+          className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+        >
+          直依頼を送る（サイト内メンター向け）
+        </button>
+      </form>
     </div>
   );
 }
