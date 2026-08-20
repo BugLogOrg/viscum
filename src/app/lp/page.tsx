@@ -206,6 +206,21 @@ export default function LandingPage() {
           </p>
         </section>
 
+        <section className="mt-14 space-y-4">
+          <h2 className="text-lg font-semibold text-viscum-brand">
+            よくある質問
+          </h2>
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            誰が払うのか、書いてくれる人はどこから来るのか、力量やフィードバックのズレなど、最初に聞かれやすいことは別ページにまとめました。
+          </p>
+          <Link
+            href="/faq"
+            className="inline-flex rounded-md border border-viscum-brand px-5 py-2.5 text-sm font-medium text-viscum-brand transition hover:bg-viscum-leaf-soft"
+          >
+            FAQを読む
+          </Link>
+        </section>
+
         <section className="mt-14 border-t border-viscum-line pt-10">
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             誰でも作れる時代だからこそ、育て方が問われる。つくったものをちゃんと見てもらって、「ここが良かった」と言ってもらう。それが嬉しい。そして、その一言にちゃんとお金が乗ることも、うれしいことです。褒賞はおまけではありません。反応に値段をつけること自体が、この場所の大事な一部です。

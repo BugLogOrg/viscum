@@ -8,6 +8,10 @@ export function SiteFooter() {
         LP
       </Link>
       {" · "}
+      <Link href="/faq" className="text-viscum-brand hover:underline">
+        FAQ
+      </Link>
+      {" · "}
       <span className="tracking-[0.08em]">VISCUM</span>
       {" · "}
       <span>フィード作品の一部はサンプル</span>
