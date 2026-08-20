@@ -267,7 +267,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="例: mdb / wanado / ワナド"
+            placeholder="英語IDや表示名で検索"
             className="mt-2 w-full rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
             autoComplete="off"
           />
@@ -367,10 +367,12 @@ export function DirectRequestForm({ work }: { work: Work }) {
                 （名前）
               </p>
               <Link
-                href={`/dm/${work.id}?to=${encodeURIComponent("太郎")}`}
+                href={`/dm/${work.id}?to=${encodeURIComponent("相手の名前")}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="mt-1 inline-block text-viscum-brand underline"
               >
-                外部向けページをプレビュー
+                外部向けページをプレビュー（別タブ）
               </Link>
             </div>
           </div>
