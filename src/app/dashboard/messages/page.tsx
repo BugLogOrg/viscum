@@ -7,6 +7,7 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   formatYen,
+  clearLocalRequestDms,
   statusLabel,
   type RequestDm,
 } from "@/lib/local-request-dms";
@@ -18,6 +19,10 @@ export default function MessagesIndexPage() {
   const [persisted, setPersisted] = useState(false);
   const [loading, setLoading] = useState(true);
   const handle = session?.user?.handle?.replace(/^@/, "").trim();
+
+  useEffect(() => {
+    clearLocalRequestDms();
+  }, []);
 
   useEffect(() => {
     if (!handle) {

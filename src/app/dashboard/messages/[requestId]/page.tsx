@@ -7,7 +7,9 @@ import { useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
+  clearLocalRequestDms,
   formatYen,
+  isLegacyLocalRequestId,
   statusLabel,
   type RequestDm,
 } from "@/lib/local-request-dms";
@@ -25,7 +27,19 @@ export default function RequestDmThreadPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    clearLocalRequestDms();
+  }, []);
+
+  useEffect(() => {
     if (!handle) {
+      setLoading(false);
+      return;
+    }
+    if (isLegacyLocalRequestId(requestId)) {
+      setRow(null);
+      setError(
+        "これは移行前の端末内データです。相手には届いていません。直依頼画面から送り直してください。",
+      );
       setLoading(false);
       return;
     }
@@ -83,12 +97,17 @@ export default function RequestDmThreadPage() {
           <p className="text-[14px] text-viscum-muted">
             {error || "このご依頼は見つかりません。"}
           </p>
-          <Link
-            href="/dashboard/messages"
-            className="mt-4 inline-block text-[13px] text-viscum-brand underline"
-          >
-            一覧へ
-          </Link>
+          <div className="mt-4 flex flex-wrap gap-3 text-[13px]">
+            <Link
+              href="/dashboard/messages"
+              className="text-viscum-brand underline"
+            >
+              一覧へ
+            </Link>
+            <Link href="/w/promo-15s/request" className="text-viscum-brand underline">
+              直依頼から送り直す
+            </Link>
+          </div>
         </main>
       </BrowseChrome>
     );

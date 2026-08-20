@@ -40,6 +40,20 @@ export function readRequestDms(): RequestDm[] {
   }
 }
 
+/** Neon移行後の残骸掃除（デモ・端末のみの旧依頼） */
+export function clearLocalRequestDms() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
+export function isLegacyLocalRequestId(id: string) {
+  return id.startsWith("req_") || id.startsWith("req_demo_");
+}
+
 function writeRequestDms(rows: RequestDm[]) {
   localStorage.setItem(KEY, JSON.stringify(rows.slice(0, 40)));
 }
