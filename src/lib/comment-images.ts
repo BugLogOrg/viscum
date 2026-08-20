@@ -1,11 +1,19 @@
-/** コメント添付用のクライアント圧縮（Blob 送信前） */
+/**
+ * コメント添付用のクライアント圧縮（Blob 送信前・必須）。
+ * 方針: Vercel Hobby 無料枠内（課金しない）。超過しても請求されず枠が止まるだけだが、
+ * スクショ用途なら圧縮で十分収まる想定。
+ */
 
-export const MAX_COMMENT_IMAGES = 8;
-/** 圧縮後の目安（1枚）。data URL フォールバック時も同じ */
-export const COMMENT_IMAGE_TARGET_CHARS = 420_000;
-export const COMMENT_IMAGE_MAX_EDGE = 1600;
+/** 指摘スクショ用途。枚数より1枚の軽さを優先 */
+export const MAX_COMMENT_IMAGES = 6;
+/** 圧縮後の目安バイト（1枚）。Hobby 保存枠を食いすぎない */
+export const COMMENT_IMAGE_MAX_BYTES = 280_000;
+/** data URL フォールバック時の文字列長目安（base64膨張込み） */
+export const COMMENT_IMAGE_TARGET_CHARS = 380_000;
+/** 長辺。UI指摘なら 1280 で足りる */
+export const COMMENT_IMAGE_MAX_EDGE = 1280;
 
-/** File → JPEG File（長辺制限＋品質調整） */
+/** File → JPEG File（長辺制限＋品質調整・必須） */
 export function compressImageForComment(file: File): Promise<File> {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
@@ -31,7 +39,7 @@ export function compressImageForComment(file: File): Promise<File> {
         return;
       }
       ctx.drawImage(img, 0, 0, w, h);
-      let quality = 0.86;
+      let quality = 0.82;
       const toBlob = (): void => {
         canvas.toBlob(
           (blob) => {
@@ -39,10 +47,17 @@ export function compressImageForComment(file: File): Promise<File> {
               reject(new Error("圧縮に失敗しました"));
               return;
             }
-            // data URL 長の目安に寄せて再圧縮
-            if (blob.size > COMMENT_IMAGE_TARGET_CHARS * 0.75 && quality > 0.45) {
-              quality -= 0.12;
+            if (blob.size > COMMENT_IMAGE_MAX_BYTES && quality > 0.4) {
+              quality -= 0.1;
               toBlob();
+              return;
+            }
+            if (blob.size > COMMENT_IMAGE_MAX_BYTES) {
+              reject(
+                new Error(
+                  "圧縮しても大きすぎます。別のスクショか切り抜きを試してください",
+                ),
+              );
               return;
             }
             const name = file.name.replace(/\.\w+$/, "") || "shot";

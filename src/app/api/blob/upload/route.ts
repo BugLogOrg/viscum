@@ -26,14 +26,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       onBeforeGenerateToken: async () => {
         const session = await auth();
         return {
-          allowedContentTypes: [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/gif",
-          ],
-          /** 圧縮後想定。原寸大の直上げは避けてもらう */
-          maximumSizeInBytes: 4 * 1024 * 1024,
+          /** クライアントで JPEG 圧縮済みのみ受け付ける */
+          allowedContentTypes: ["image/jpeg"],
+          /** 圧縮後の上限（Hobby無料枠前提・原寸直上げ拒否） */
+          maximumSizeInBytes: 320_000,
           addRandomSuffix: true,
           tokenPayload: JSON.stringify({
             userId: session?.user?.id ?? "guest",
@@ -59,6 +55,7 @@ export async function GET() {
   return NextResponse.json({
     configured: Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()),
     provider: "vercel-blob",
-    maxImages: 8,
+    maxImages: 6,
+    billing: "hobby-free-cap",
   });
 }

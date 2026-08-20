@@ -385,9 +385,9 @@ export function WorkEngage({
             </div>
             <p className="text-[11px] leading-relaxed text-viscum-muted">
               {blobOn === true
-                ? "Vercel Blob に直接アップロードします（関数の4.5MB制限を避けます）。貼り付けも可。"
+                ? "必ず圧縮してから Blob へ直送します（課金なし・Hobby無料枠内想定）。貼り付け可。"
                 : blobOn === false
-                  ? "Blob 未接続のため、この端末内の圧縮画像でデモします。本番は BLOB_READ_WRITE_TOKEN を設定。"
+                  ? "Blob 未接続のため、圧縮画像をこの端末内に置いてデモします。本番は BLOB_READ_WRITE_TOKEN（Hobby無料で可）。"
                   : "保存先を確認中…"}
             </p>
             {images.length > 0 && (
