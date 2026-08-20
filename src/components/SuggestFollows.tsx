@@ -41,12 +41,9 @@ export function SuggestFollows({
 
   const followSet = new Set(following.map((h) => h.toLowerCase()));
   const meKey = me.toLowerCase();
-  const list = getSuggestedSeeders(limit + followSet.size)
-    .filter(
-      (s) =>
-        !followSet.has(s.handle.toLowerCase()) &&
-        s.handle.toLowerCase() !== meKey,
-    )
+  // フォロー済みも消さず残す（ボタンが「フォロー中」になる）
+  const list = getSuggestedSeeders(limit)
+    .filter((s) => s.handle.toLowerCase() !== meKey)
     .slice(0, limit);
 
   if (list.length === 0) return null;
@@ -55,13 +52,15 @@ export function SuggestFollows({
     <section className="mt-8">
       <h2 className="text-lg font-semibold text-viscum-ink">{title}</h2>
       <p className="mt-1 text-[13px] leading-relaxed text-viscum-muted">
-        いまはデモ棚のユーザーです。何人でもフォローできます（この場に留まります）。
+        いまはデモ棚のユーザーです。何人でもフォローできます（この場に留まります）。押すと「フォロー中」に変わります。
       </p>
       <ul className="mt-4 divide-y divide-viscum-line overflow-hidden rounded-lg border border-viscum-line bg-white/50">
-        {list.map((s) => (
+        {list.map((s) => {
+          const isFollowed = followSet.has(s.handle.toLowerCase());
+          return (
           <li
             key={s.handle}
-            className="flex items-center gap-2 px-3 py-2.5"
+            className={`flex items-center gap-2 px-3 py-2.5 ${isFollowed ? "bg-viscum-paper-2/40" : ""}`}
           >
             <Link
               href={`/u/${encodeURIComponent(s.handle)}`}
@@ -92,7 +91,8 @@ export function SuggestFollows({
               loginCallbackUrl={loginCallbackUrl}
             />
           </li>
-        ))}
+          );
+        })}
       </ul>
     </section>
   );
