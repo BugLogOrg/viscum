@@ -181,15 +181,15 @@ export function HeaderAccountActions({
                 <MenuRow href="/dashboard" onNavigate={close}>
                   ダッシュボード
                 </MenuRow>
-                <MenuRow href="/dashboard/settings" onNavigate={close}>
-                  設定
-                </MenuRow>
                 <MenuRow href="/dashboard/reactions" onNavigate={close}>
                   スキ・気になる
                 </MenuRow>
               </div>
 
               <div className="px-2 py-1.5">
+                <MenuRow href="/dashboard/settings" onNavigate={close}>
+                  設定
+                </MenuRow>
                 <button
                   type="button"
                   role="menuitem"
