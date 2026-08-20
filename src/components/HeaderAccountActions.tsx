@@ -18,7 +18,7 @@ import {
   pendingRequestCount,
 } from "@/lib/local-request-dms";
 
-/** 通知・アカウントメニュー（note寄り：プロフィール頭＋ダッシュ／設定＋履歴） */
+/** ベル＝通知。アカウントメニュー＝ダッシュ／設定／スキ・気になる */
 export function HeaderAccountActions({
   className = "",
 }: {
@@ -184,12 +184,8 @@ export function HeaderAccountActions({
                 <MenuRow href="/dashboard/settings" onNavigate={close}>
                   設定
                 </MenuRow>
-                <MenuRow href="/dashboard/notifications" onNavigate={close}>
-                  通知
-                  {unread > 0 ? `（未読 ${unread}）` : ""}
-                </MenuRow>
                 <MenuRow href="/dashboard/reactions" onNavigate={close}>
-                  履歴
+                  スキ・気になる
                 </MenuRow>
               </div>
 
