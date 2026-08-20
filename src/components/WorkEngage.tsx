@@ -10,6 +10,10 @@ import {
   readLocalComments,
 } from "@/lib/local-comments";
 import {
+  fetchWorkComments,
+  postWorkComment,
+} from "@/lib/remote-comments";
+import {
   countImagesInBlocks,
   emptyComposeBlocks,
   newBlockId,
@@ -55,28 +59,46 @@ export function WorkEngage({
   const canWrite = Boolean(session?.user?.id && handle);
 
   const [localExtra, setLocalExtra] = useState<Comment[]>([]);
+  const [remoteExtra, setRemoteExtra] = useState<Comment[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [subject, setSubject] = useState("");
   const [blocks, setBlocks] = useState<CommentBlock[]>(emptyComposeBlocks);
   const [error, setError] = useState<string | null>(null);
   const [justPosted, setJustPosted] = useState(false);
+  const [lastPersisted, setLastPersisted] = useState<boolean | null>(null);
   const [blobOn, setBlobOn] = useState<boolean | null>(null);
   const [busyUpload, setBusyUpload] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [insertAfterId, setInsertAfterId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLocalExtra(readLocalComments(workId));
+    setRemoteExtra([]);
+    let cancelled = false;
+    void fetchWorkComments(workId).then((res) => {
+      if (cancelled) return;
+      setRemoteExtra(res.comments);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [workId]);
 
   useEffect(() => {
     void fetchBlobConfigured().then(setBlobOn);
   }, []);
 
-  const comments = useMemo(
-    () => [...localExtra, ...initialComments],
-    [localExtra, initialComments],
-  );
+  const comments = useMemo(() => {
+    const seen = new Set<string>();
+    const merged: Comment[] = [];
+    for (const c of [...remoteExtra, ...localExtra, ...initialComments]) {
+      if (seen.has(c.id)) continue;
+      seen.add(c.id);
+      merged.push(c);
+    }
+    return merged;
+  }, [remoteExtra, localExtra, initialComments]);
 
   const showCompBand =
     status === "open" || status === "pay_soon" || status === "closed";
@@ -231,7 +253,7 @@ export function WorkEngage({
     });
   }
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!canWrite) {
       setError("コメントにはログインと英語ID（コテハン）が必要です。");
@@ -260,19 +282,47 @@ export function WorkEngage({
       session.user.name.trim().toLowerCase() !== handle.toLowerCase()
         ? session.user.name.trim()
         : undefined;
-    addLocalComment(workId, {
-      author: handle,
-      accountName,
-      subject: s,
-      body,
-      afterClose: compClosed,
-      imageUrls,
-    });
-    setLocalExtra(readLocalComments(workId));
-    resetForm();
-    setOpenForm(false);
-    setJustPosted(true);
+
+    setSubmitting(true);
     setError(null);
+    try {
+      const remote = await postWorkComment({
+        workId,
+        subject: s,
+        body,
+        imageUrls,
+        afterClose: compClosed,
+      });
+      if (remote.ok && remote.comment) {
+        setRemoteExtra((prev) => [remote.comment!, ...prev]);
+        resetForm();
+        setOpenForm(false);
+        setJustPosted(true);
+        setLastPersisted(true);
+        return;
+      }
+      // DB未接続など: 端末にフォールバック（他端末では見えない）
+      addLocalComment(workId, {
+        author: handle,
+        accountName,
+        subject: s,
+        body,
+        afterClose: compClosed,
+        imageUrls,
+      });
+      setLocalExtra(readLocalComments(workId));
+      resetForm();
+      setOpenForm(false);
+      setJustPosted(true);
+      setLastPersisted(false);
+      if (remote.error) {
+        setError(
+          `${remote.error}（この端末には保存しました）`,
+        );
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function composeGate() {
@@ -382,7 +432,10 @@ export function WorkEngage({
       {justPosted && (
         <p className="rounded-md border border-viscum-moss/40 bg-viscum-leaf-soft/50 px-3 py-2 text-[13px] text-viscum-leaf-deep">
           コメントを受け付けました
-          {compClosed ? "（終了後・賞金対象外）" : ""}。下の一覧に追加されています。
+          {compClosed ? "（終了後・賞金対象外）" : ""}
+          {lastPersisted
+            ? "。サーバーに保存され、他の人・他の端末からも見えます。"
+            : "。いまはこの端末のみです。"}
         </p>
       )}
 
@@ -593,12 +646,13 @@ export function WorkEngage({
                 <button
                   type="submit"
                   disabled={
+                    submitting ||
                     busyUpload ||
                     blocks.some((b) => b.type === "image" && b.uploading)
                   }
                   className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
                 >
-                  送信する
+                  {submitting ? "保存中…" : "送信する"}
                 </button>
                 <button
                   type="button"

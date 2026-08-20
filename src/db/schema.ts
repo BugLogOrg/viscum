@@ -6,6 +6,7 @@ import {
   jsonb,
   boolean,
   primaryKey,
+  index,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "@auth/core/adapters";
 
@@ -113,29 +114,32 @@ export const works = pgTable("works", {
 /**
  * コメント／公開ブースト報告。
  * 採用マークは adopted_at。支払いは payments へ。
+ * work_id はデモ作品IDも許すため FK なし（works 全面 Neon 化までアプリ整合）。
  */
-export const comments = pgTable("comments", {
-  id: text("id")
-    .primaryKey()
-    .$defaultFn(() => crypto.randomUUID()),
-  workId: text("work_id")
-    .notNull()
-    .references(() => works.id, { onDelete: "cascade" }),
-  authorId: text("author_id")
-    .notNull()
-    .references(() => users.id),
-  subject: text("subject").notNull(),
-  body: text("body").notNull(),
-  /** Blob 等の公開URL配列（本体バイナリはDBに置かない） */
-  imageUrls: jsonb("image_urls").$type<string[]>().notNull().default([]),
-  /** シーダーが採用した時刻。null＝未採用 */
-  adoptedAt: timestamp("adopted_at", { withTimezone: true }),
-  /** 締切後投稿（賞金対象外・ADR-015） */
-  afterClose: boolean("after_close").notNull().default(false),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
+export const comments = pgTable(
+  "comments",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    workId: text("work_id").notNull(),
+    authorId: text("author_id")
+      .notNull()
+      .references(() => users.id),
+    subject: text("subject").notNull(),
+    body: text("body").notNull(),
+    /** Blob 等の公開URL配列（本体バイナリはDBに置かない） */
+    imageUrls: jsonb("image_urls").$type<string[]>().notNull().default([]),
+    /** シーダーが採用した時刻。null＝未採用 */
+    adoptedAt: timestamp("adopted_at", { withTimezone: true }),
+    /** 締切後投稿（賞金対象外・ADR-015） */
+    afterClose: boolean("after_close").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("comments_work_id_idx").on(t.workId)],
+);
 
 /**
  * 1払い＝1行。Stripe の正本（段階C）。
