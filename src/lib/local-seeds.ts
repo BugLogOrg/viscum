@@ -55,6 +55,26 @@ export function writeLocalSeeds(seeds: LocalSeed[]) {
   localStorage.setItem(KEY, JSON.stringify(seeds.slice(0, 50)));
 }
 
+/** アカウント名変更時、自シードの表示用スナップショットも揃える */
+export function syncSeederAccountNameOnSeeds(
+  handle: string,
+  accountName: string,
+): number {
+  const h = handle.replace(/^@/, "").trim().toLowerCase();
+  const name = accountName.trim();
+  if (!h || !name || typeof window === "undefined") return 0;
+  const seeds = readLocalSeeds();
+  let changed = 0;
+  const next = seeds.map((s) => {
+    if (s.seederHandle.replace(/^@/, "").trim().toLowerCase() !== h) return s;
+    if ((s.seederAccountName ?? "").trim() === name) return s;
+    changed += 1;
+    return { ...s, seederAccountName: name };
+  });
+  if (changed > 0) writeLocalSeeds(next);
+  return changed;
+}
+
 export function addLocalSeed(
   seed: Omit<
     LocalSeed,

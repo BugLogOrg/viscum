@@ -1,5 +1,5 @@
 import { DUMMY_WORKS, type Work } from "@/data/dummy-works";
-import { listLocalProfiles } from "@/lib/local-profile";
+import { listLocalProfiles, peekCachedAccountName } from "@/lib/local-profile";
 
 export type DemoSeederProfile = {
   handle: string;
@@ -77,8 +77,10 @@ export function accountLabelForHandle(
             p.handle.replace(/^@/, "").trim().toLowerCase() === h.toLowerCase(),
         )
       : undefined;
-  // 端末の最新アカウント名を優先（シード時スナップショットはフォールバック）
+  // キャッシュ／端末の最新名を優先（シード時スナップショットはフォールバック）
+  const cached = peekCachedAccountName(h);
   const accountName =
+    cached?.trim() ||
     local?.accountName?.trim() ||
     preferredName?.trim() ||
     demo?.displayName ||

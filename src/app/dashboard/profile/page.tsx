@@ -10,9 +10,11 @@ import {
   fileToAvatarDataUrl,
   normalizeAccountName,
   readLocalProfile,
+  rememberAccountName,
   saveRemoteProfile,
   writeLocalProfile,
 } from "@/lib/local-profile";
+import { syncSeederAccountNameOnSeeds } from "@/lib/local-seeds";
 
 export default function ProfileEditPage() {
   const { data: session, status } = useSession();
@@ -116,6 +118,10 @@ export default function ProfileEditPage() {
       avatarDataUrl,
       updatedAt: new Date().toISOString(),
     });
+    if (nextName) {
+      rememberAccountName(handle!, nextName);
+      syncSeederAccountNameOnSeeds(handle!, nextName);
+    }
     window.dispatchEvent(new Event("viscum-profile-updated"));
   }
 

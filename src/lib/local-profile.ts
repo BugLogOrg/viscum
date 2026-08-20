@@ -49,9 +49,52 @@ function writeMap(map: ProfileMap) {
   localStorage.setItem(KEY_V2, JSON.stringify(map));
 }
 
+function normalizeHandleKey(handle: string): string {
+  return handle.replace(/^@/, "").trim();
+}
+
+/** セッション内の最新アカウント名（マウント直後のチラつき防止） */
+const accountNameCache = new Map<string, string>();
+
+export function peekCachedAccountName(handle: string): string | null {
+  const key = normalizeHandleKey(handle).toLowerCase();
+  return accountNameCache.get(key) ?? null;
+}
+
+/** メモリ＋端末プロフィールにアカウント名を揃える */
+export function rememberAccountName(handle: string, accountName: string) {
+  const h = normalizeHandleKey(handle);
+  const name = accountName.trim();
+  if (!h || !name) return;
+  accountNameCache.set(h.toLowerCase(), name);
+  if (typeof window === "undefined") return;
+  const prev = readLocalProfile(h);
+  const same =
+    prev?.accountName?.trim() === name &&
+    prev.handle.replace(/^@/, "").trim().toLowerCase() === h.toLowerCase();
+  if (!same) {
+    writeLocalProfile({
+      handle: prev?.handle || h,
+      accountName: name,
+      bio: prev?.bio ?? "",
+      avatarDataUrl: prev?.avatarDataUrl,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+  // 表示スナップショットも揃える（遅延 import で循環を避ける）
+  void import("@/lib/local-seeds").then(({ syncSeederAccountNameOnSeeds }) => {
+    syncSeederAccountNameOnSeeds(h, name);
+  });
+}
+
 export function readLocalProfile(handle: string): LocalProfile | null {
   if (typeof window === "undefined") return null;
-  return readMap()[handle] ?? null;
+  const map = readMap();
+  const key = normalizeHandleKey(handle);
+  if (map[key]) return map[key];
+  const lower = key.toLowerCase();
+  const found = Object.entries(map).find(([k]) => k.toLowerCase() === lower);
+  return found?.[1] ?? null;
 }
 
 /** 端末に残っている公開プロフィール一覧（検索用） */
@@ -102,7 +145,10 @@ export async function fetchRemoteProfile(
       { cache: "no-store" },
     );
     if (!res.ok) return null;
-    return (await res.json()) as RemoteProfile;
+    const remote = (await res.json()) as RemoteProfile;
+    const name = remote.accountName?.trim();
+    if (name) rememberAccountName(remote.handle || handle, name);
+    return remote;
   } catch {
     return null;
   }

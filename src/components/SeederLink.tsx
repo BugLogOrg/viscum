@@ -1,19 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { accountLabelForHandle } from "@/data/suggested-seeders";
-import {
-  displayAccountName,
-  fetchRemoteProfile,
-  readLocalProfile,
-} from "@/lib/local-profile";
-
-function formatLine(handle: string, accountName: string): string {
-  const h = handle.replace(/^@/, "").trim();
-  const name = accountName.trim() || h;
-  return name.toLowerCase() === h.toLowerCase() ? `@${h}` : `${name} @${h}`;
-}
+import { useSeederDisplayLine } from "@/hooks/useSeederDisplayLine";
 
 /**
  * シーダー表示：アカウント名＋@英語ID。
@@ -30,32 +18,7 @@ export function SeederLink({
   className?: string;
 }) {
   const h = handle.replace(/^@/, "").trim();
-  const [line, setLine] = useState(() =>
-    accountLabelForHandle(h, preferredName).line,
-  );
-
-  useEffect(() => {
-    // ライブ名（端末→API）を優先。シード時スナップショットはフォールバックのみ。
-    const localName = displayAccountName(h, readLocalProfile(h));
-    const seedName = preferredName?.trim() || "";
-    const liveLocal =
-      localName.toLowerCase() !== h.toLowerCase() ? localName : "";
-    const start =
-      liveLocal ||
-      seedName ||
-      accountLabelForHandle(h).accountName;
-    setLine(formatLine(h, start));
-
-    let cancelled = false;
-    void fetchRemoteProfile(h).then((remote) => {
-      if (cancelled) return;
-      const remoteName = remote?.accountName?.trim();
-      if (remoteName) setLine(formatLine(h, remoteName));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [h, preferredName]);
+  const line = useSeederDisplayLine(h, preferredName);
 
   return (
     <Link
