@@ -17,11 +17,12 @@ import {
   FOLLOWS_UPDATED,
   isFollowing,
   listFollowing,
+  rememberViewer,
 } from "@/lib/local-follows";
+import { isDemoSeed } from "@/lib/local-seeds";
 import {
   accountLabelForHandle,
-  getSuggestedSeeders,
-  searchDemoUsers,
+  getDemoSeederProfile,
 } from "@/data/suggested-seeders";
 
 type MentorOption = {
@@ -71,20 +72,23 @@ function optionFromHandle(
   const demo = accountLabelForHandle(key);
   const following = Boolean(me) && isFollowing(me, key);
   const mutual = following && isFollowing(key, me);
-  let hint = "ハンドル指名";
-  if (mutual) hint = "相互フォロー";
-  else if (following) hint = "フォロー中";
-  else if (profile?.bio?.trim()) hint = profile.bio.trim().slice(0, 40);
-  else if (demo.accountName !== key) hint = "候補";
+  const bio =
+    profile?.bio?.trim() ||
+    getDemoSeederProfile(key)?.bio?.trim() ||
+    "";
+  let hint = bio || "（自己紹介未設定）";
+  if (mutual) hint = bio ? bio.slice(0, 80) : "相互フォロー";
+  else if (following && !bio) hint = "フォロー中 · 自己紹介未設定";
   return {
     handle: key,
     label: label !== key ? label : demo.accountName,
-    hint,
+    hint: hint.slice(0, 80),
     mutual,
     following,
   };
 }
 
+/** 未検索＝フォロー中のみ。検索＝フォロー一致＋ローカル／入力ID（デモ棚は出さない） */
 function collectCandidates(me: string, query: string): MentorOption[] {
   const needle = query.trim().toLowerCase().replace(/^@/, "");
   const hit = new Map<string, MentorOption>();
@@ -102,17 +106,10 @@ function collectCandidates(me: string, query: string): MentorOption[] {
   if (me) {
     for (const h of listFollowing(me)) put(h);
   }
-  for (const p of listLocalProfiles()) put(p.handle);
-  for (const s of searchDemoUsers(needle || "a", 12)) {
-    // needle empty: skip demo flood; only when searching
-    if (needle) put(s.handle);
-  }
-  if (!needle && me) {
-    // 未検索時はフォロー＋サジェスト数人
-    for (const s of getSuggestedSeeders(5)) put(s.handle);
-  }
-  if (needle && needle.length >= 2) {
-    put(needle); // 入力中のハンドルを候補に含める
+
+  if (needle) {
+    for (const p of listLocalProfiles()) put(p.handle);
+    if (needle.length >= 2) put(needle);
   }
 
   const rows = [...hit.values()];
@@ -144,6 +141,10 @@ export function DirectRequestForm({ work }: { work: Work }) {
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
+
+  useEffect(() => {
+    if (fromHandle) rememberViewer(fromHandle);
+  }, [fromHandle]);
 
   useEffect(() => {
     const sync = () => setTick((n) => n + 1);
@@ -208,7 +209,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
       setRemoteHint({
         handle: key,
         label: remote.accountName?.trim() || key,
-        hint: remote.bio?.trim()?.slice(0, 40) || "登録ユーザー",
+        hint: remote.bio?.trim()?.slice(0, 80) || "（自己紹介未設定）",
         following: fromHandle ? isFollowing(fromHandle, key) : false,
         mutual:
           fromHandle && isFollowing(fromHandle, key)
@@ -261,6 +262,13 @@ export function DirectRequestForm({ work }: { work: Work }) {
         <p className="mt-0.5 text-[14px] font-medium text-viscum-ink line-clamp-2">
           {work.title}
         </p>
+        {isDemoSeed(work.id) && (
+          <p className="mt-2 rounded-md border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-2 text-[12px] leading-relaxed text-viscum-ink">
+            いま開いているのは<strong>見本作品</strong>です。自分のシードに紐づけるには、シード完了画面の「サイト内のメンターに頼む」から開いてください（URLに{" "}
+            <code className="text-[11px]">promo-</code>{" "}
+            が入っていたら見本です）。
+          </p>
+        )}
       </div>
 
       <form
@@ -268,16 +276,14 @@ export function DirectRequestForm({ work }: { work: Work }) {
         onSubmit={(e) => {
           e.preventDefault();
           if (!canSend || !selected || !fromHandle || sending) return;
-          const shortTitle =
-            work.tagline?.trim() ||
-            work.title.trim().slice(0, 48) +
-              (work.title.trim().length > 48 ? "…" : "");
+          const workTitle = work.title.trim().slice(0, 120) || work.id;
           setSendError(null);
           setSending(true);
           void (async () => {
             const remote = await postRequestDm({
               workId: work.id,
-              workTitle: shortTitle,
+              workTitle,
+              workExternalUrl: work.externalUrl?.trim() || undefined,
               toHandle: selected.handle,
               amountYen: 5000,
               pitch: message.trim(),
@@ -296,7 +302,8 @@ export function DirectRequestForm({ work }: { work: Work }) {
             // Neon失敗時のみ端末フォールバック（相手端末には届かない）
             const row = createRequestDm({
               workId: work.id,
-              workTitle: shortTitle,
+              workTitle,
+              workExternalUrl: work.externalUrl?.trim() || undefined,
               fromHandle,
               fromAccountName: displayAccountName(
                 fromHandle,
@@ -319,7 +326,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
             誰に頼むか
           </legend>
           <p className="mt-1 text-[12px] text-viscum-muted">
-            フォローの有無は問いません。英語IDや名前で検索できます。
+            最初はフォロー中だけ出ます。他の人は英語IDや名前で検索。もう一度タップで選択解除できます。
           </p>
           {!fromHandle && (
             <p className="mt-2 text-[12px] text-viscum-muted">
@@ -343,7 +350,11 @@ export function DirectRequestForm({ work }: { work: Work }) {
           <ul className="mt-2 max-h-56 space-y-2 overflow-y-auto">
             {candidates.length === 0 && (
               <li className="rounded-md border border-dashed border-viscum-line px-3 py-2 text-[12px] text-viscum-muted">
-                候補がありません。英語IDを入力して検索してください。
+                {query.trim()
+                  ? "一致する人がいません。英語IDを確認して検索してください。"
+                  : fromHandle
+                    ? "フォロー中の人はまだいません。先にフォローするか、上で英語IDを検索してください。"
+                    : "ログイン後、フォロー中の人がここに出ます。"}
               </li>
             )}
             {candidates.map((m) => (
@@ -361,6 +372,12 @@ export function DirectRequestForm({ work }: { work: Work }) {
                     className="mt-1"
                     checked={mentor === m.handle}
                     onChange={() => setMentor(m.handle)}
+                    onClick={(e) => {
+                      if (mentor === m.handle) {
+                        e.preventDefault();
+                        setMentor("");
+                      }
+                    }}
                   />
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
@@ -381,7 +398,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
                         </span>
                       )}
                     </span>
-                    <span className="mt-0.5 block text-[12px] text-viscum-muted">
+                    <span className="mt-0.5 block text-[12px] leading-snug text-viscum-muted">
                       {m.hint}
                     </span>
                   </span>
@@ -389,6 +406,15 @@ export function DirectRequestForm({ work }: { work: Work }) {
               </li>
             ))}
           </ul>
+          {mentor ? (
+            <button
+              type="button"
+              onClick={() => setMentor("")}
+              className="mt-2 text-[12px] text-viscum-muted underline"
+            >
+              選択を外す
+            </button>
+          ) : null}
         </fieldset>
 
         <div>
@@ -399,7 +425,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
             お願い一文
           </label>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            空欄から自分で書いてください。作品タイトルの自動文は入れません。
+            空欄から自分で書いてください。作品タイトルの自動文は入れません。相手にはあなたのプロフィール（支払い実績）へのリンクも付きます。
           </p>
           <textarea
             id="request-message"

@@ -11,6 +11,7 @@ import {
   statusLabel,
   type RequestDm,
 } from "@/lib/local-request-dms";
+import { displayRequestWorkTitle } from "@/lib/local-seeds";
 import { fetchMyRequests } from "@/lib/remote-requests";
 
 export default function MessagesIndexPage() {
@@ -144,7 +145,7 @@ export default function MessagesIndexPage() {
                   </div>
                   <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
                     {incoming ? "受信" : "送信"} · {formatYen(r.amountYen)} ·{" "}
-                    {r.workTitle}
+                    {displayRequestWorkTitle(r.workId, r.workTitle)}
                   </p>
                 </Link>
               </li>

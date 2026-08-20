@@ -1,0 +1,122 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
+import {
+  deleteLocalSeed,
+  isLocalSeedListed,
+  isLocalSeedOwner,
+  readLocalSeeds,
+  unlistLocalSeed,
+  type LocalSeed,
+} from "@/lib/local-seeds";
+
+/**
+ * シーダー本人だけ：棚から外す／削除。
+ * local_* 以外（デモ棚）には出さない。
+ */
+export function OwnerSeedActions({
+  workId,
+  seederHandle,
+}: {
+  workId: string;
+  seederHandle: string;
+}) {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [seed, setSeed] = useState<LocalSeed | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const handle = session?.user?.handle?.trim() ?? "";
+  const stub: LocalSeed = {
+    id: workId,
+    seederHandle,
+    title: "",
+    description: "",
+    externalUrl: "",
+    tags: [],
+    status: "none",
+    viewCount: 0,
+    emoCount: 0,
+    bookmarkCount: 0,
+    commentCount: 0,
+    createdAt: "",
+  };
+
+  useEffect(() => {
+    if (!workId.startsWith("local_")) {
+      setSeed(null);
+      return;
+    }
+    setSeed(readLocalSeeds().find((s) => s.id === workId) ?? null);
+  }, [workId]);
+
+  if (!workId.startsWith("local_")) return null;
+  if (status === "loading") return null;
+  if (!isLocalSeedOwner(seed ?? stub, handle)) return null;
+
+  const listed = seed ? isLocalSeedListed(seed) : false;
+
+  return (
+    <div className="rounded-lg border border-viscum-line bg-white/60 px-3 py-3 space-y-2">
+      <p className="text-[12px] font-medium text-viscum-ink">
+        シーダー操作（本人のみ）
+      </p>
+      <p className="text-[11px] leading-relaxed text-viscum-muted">
+        公開の取り消しは「棚から外す」。完全に消すときは「削除」。ログイン中のシーダー本人だけ操作できます。
+      </p>
+      <div className="flex flex-wrap gap-2">
+        {listed ? (
+          <button
+            type="button"
+            disabled={busy}
+            className="rounded-md border border-viscum-line px-3 py-1.5 text-[13px] font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:opacity-50"
+            onClick={() => {
+              setError(null);
+              setBusy(true);
+              const res = unlistLocalSeed(workId, handle);
+              setBusy(false);
+              if (!res.ok) {
+                setError(res.error);
+                return;
+              }
+              setSeed(res.seed);
+            }}
+          >
+            棚から外す（未公開に戻す）
+          </button>
+        ) : null}
+        <button
+          type="button"
+          disabled={busy}
+          className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[13px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+          onClick={() => {
+            if (
+              !window.confirm(
+                "このシードを削除しますか？トップからも詳細からも消えます（デモ端末内データ）。",
+              )
+            ) {
+              return;
+            }
+            setError(null);
+            setBusy(true);
+            const res = deleteLocalSeed(workId, handle);
+            setBusy(false);
+            if (!res.ok) {
+              setError(res.error);
+              return;
+            }
+            router.push("/dashboard");
+          }}
+        >
+          削除する
+        </button>
+      </div>
+      {error ? (
+        <p className="text-[12px] text-viscum-berry-deep">{error}</p>
+      ) : null}
+    </div>
+  );
+}

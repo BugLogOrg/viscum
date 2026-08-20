@@ -101,13 +101,20 @@ export function countFollowing(viewerHandle: string): number {
   return listFollowing(viewerHandle).length;
 }
 
+/** その人をフォローしている英語ID一覧（端末内グラフ） */
+export function listFollowers(targetHandle: string): string[] {
+  const target = normalize(targetHandle);
+  if (!target) return [];
+  const out: string[] = [];
+  for (const [viewer, list] of Object.entries(readMap())) {
+    if ((list ?? []).some((h) => normalize(h) === target)) {
+      out.push(normalize(viewer));
+    }
+  }
+  return out;
+}
+
 /** その人をフォローしている人数（端末内グラフ全体を集計） */
 export function countFollowers(targetHandle: string): number {
-  const target = normalize(targetHandle);
-  if (!target) return 0;
-  let n = 0;
-  for (const list of Object.values(readMap())) {
-    if ((list ?? []).some((h) => normalize(h) === target)) n += 1;
-  }
-  return n;
+  return listFollowers(targetHandle).length;
 }

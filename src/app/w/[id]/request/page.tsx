@@ -1,20 +1,21 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getWork } from "@/data/dummy-works";
-import { DirectRequestForm } from "./DirectRequestForm";
+import { DirectRequestGate } from "./DirectRequestGate";
 
 type Props = { params: Promise<{ id: string }> };
 
 export default async function DirectRequestPage({ params }: Props) {
   const { id } = await params;
-  const work = getWork(id);
-  if (!work) notFound();
+  const initialWork = getWork(id) ?? null;
 
   return (
     <BrowseChrome>
-      <SiteHeader backHref={`/w/${work.id}`} hideOnMd />
+      <SiteHeader
+        backHref={initialWork ? `/w/${initialWork.id}` : "/"}
+        hideOnMd
+      />
       <main className="max-w-lg px-4 py-6">
         <p className="text-xs text-viscum-muted">直依頼</p>
         <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
@@ -24,14 +25,14 @@ export default async function DirectRequestPage({ params }: Props) {
           公開コンペとは別の、個人宛てのお願いです。候補は検索できます（フォロー不要）。
         </p>
         <div className="mt-6">
-          <DirectRequestForm work={work} />
+          <DirectRequestGate workId={id} initialWork={initialWork} />
         </div>
         <p className="mt-8 text-center text-sm text-viscum-muted">
           <Link
-            href={`/w/${work.id}`}
+            href={initialWork ? `/w/${initialWork.id}` : "/"}
             className="text-viscum-brand hover:underline"
           >
-            ← この作品のページへ戻る
+            ← {initialWork ? "この作品のページへ戻る" : "ホームへ戻る"}
           </Link>
         </p>
       </main>

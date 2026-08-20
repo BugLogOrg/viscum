@@ -52,7 +52,11 @@ export function WorkReactionBar({
         <strong className="font-medium text-viscum-ink">スキ</strong>
         ＝いまの好意 ·{" "}
         <strong className="font-medium text-viscum-ink">気になる</strong>
-        ＝あとで戻る（ブックマーク）。数字は他の人も含めた件数です。打刻はマイページの一覧で見られます。
+        ＝あとで戻る（ブックマーク）。
+        {workId.startsWith("local_")
+          ? "この端末の件数です。"
+          : "数字は他の人も含めた件数です。"}
+        打刻はマイページの一覧で見られます。
       </p>
       <div className="flex gap-2">
         <button

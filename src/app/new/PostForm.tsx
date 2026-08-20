@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { StatusBadge } from "@/components/StatusBadge";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import { formatYen, type CompStatus } from "@/data/dummy-works";
@@ -15,6 +17,10 @@ import {
   type SeedPlanId,
 } from "@/data/seed-courses";
 import { addLocalSeed } from "@/lib/local-seeds";
+import {
+  displayAccountName,
+  readLocalProfile,
+} from "@/lib/local-profile";
 
 const RECOMMENDED_TAGS = [
   "アプリ",
@@ -47,14 +53,9 @@ function formatClosesAtPreview(days: number, now = new Date()): string {
   }).format(at);
 }
 
-/** デモ保存後の「詳細」見本（実DBなし） */
-const DEMO_WORK_ID = "promo-15s";
-const DEMO_DETAIL_HREF = `/w/${DEMO_WORK_ID}`;
-const DEMO_REQUEST_HREF = `/w/${DEMO_WORK_ID}/request`;
-const DEMO_DM_HREF = `/dm/${DEMO_WORK_ID}?to=${encodeURIComponent("太郎")}`;
-
 export function PostForm() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [externalUrl, setExternalUrl] = useState("https://");
   const [description, setDescription] = useState("");
@@ -69,9 +70,16 @@ export function PostForm() {
     ...PUBLIC_BOOST.criteria,
   ]);
   const [closesInDays, setClosesInDays] = useState(7);
-  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  /** 切り抜き後（プレビュー／保存に使う） */
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+  /** 確定した元画像（再調整用） */
+  const [thumbSourceUrl, setThumbSourceUrl] = useState<string | null>(null);
+  /** いまダイアログに載せている画像（差し替え途中含む） */
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [thumbName, setThumbName] = useState<string | null>(null);
+  const [pendingName, setPendingName] = useState<string | null>(null);
+  const [cropOpen, setCropOpen] = useState(false);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
   const compOn = isFieldCourse(seedPlan);
@@ -92,10 +100,10 @@ export function PostForm() {
 
   const previewMeta = (() => {
     if (extReviewOn) {
-      return `公開ブースト · 予算 ${formatYen(extPrizeYen)} · 記入後報告→選んで褒賞`;
+      return `公開ブースト · 褒賞 ${formatYen(extPrizeYen)} · 記入後報告→選んで褒賞`;
     }
     if (compOn) {
-      return `${course.name} · 予算 ${formatYen(prizeYen)} · 締切 あと約${closesInDays}日`;
+      return `${course.name} · 褒賞 ${formatYen(prizeYen)} · 締切 あと約${closesInDays}日`;
     }
     return "無料コメント · コメント歓迎";
   })();
@@ -103,15 +111,29 @@ export function PostForm() {
   useEffect(() => {
     return () => {
       if (thumbUrl) URL.revokeObjectURL(thumbUrl);
+      if (thumbSourceUrl) URL.revokeObjectURL(thumbSourceUrl);
+      if (cropSrc && cropSrc !== thumbSourceUrl) URL.revokeObjectURL(cropSrc);
     };
-  }, [thumbUrl]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount cleanup only
+  }, []);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, []);
 
   function clearThumb() {
-    setThumbUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return null;
-    });
+    const source = thumbSourceUrl;
+    const crop = cropSrc;
+    const thumb = thumbUrl;
+    setThumbUrl(null);
+    setThumbSourceUrl(null);
+    setCropSrc(null);
     setThumbName(null);
+    setPendingName(null);
+    setCropOpen(false);
+    if (thumb) URL.revokeObjectURL(thumb);
+    if (source) URL.revokeObjectURL(source);
+    if (crop && crop !== source) URL.revokeObjectURL(crop);
     if (thumbInputRef.current) thumbInputRef.current.value = "";
   }
 
@@ -126,11 +148,48 @@ export function PostForm() {
       window.alert("デモでは5MBまでです");
       return;
     }
+    const next = URL.createObjectURL(file);
+    setCropSrc((prev) => {
+      if (prev && prev !== thumbSourceUrl) URL.revokeObjectURL(prev);
+      return next;
+    });
+    setPendingName(file.name);
+    setCropOpen(true);
+    if (thumbInputRef.current) thumbInputRef.current.value = "";
+  }
+
+  function onCropApply(blob: Blob) {
+    if (!cropSrc) return;
+    const nextThumb = URL.createObjectURL(blob);
     setThumbUrl((prev) => {
       if (prev) URL.revokeObjectURL(prev);
-      return URL.createObjectURL(file);
+      return nextThumb;
     });
-    setThumbName(file.name);
+    if (cropSrc !== thumbSourceUrl) {
+      setThumbSourceUrl((prev) => {
+        if (prev) URL.revokeObjectURL(prev);
+        return cropSrc;
+      });
+    }
+    if (pendingName) setThumbName(pendingName);
+    setPendingName(null);
+    setCropOpen(false);
+  }
+
+  function onCropCancel() {
+    setCropOpen(false);
+    if (cropSrc && cropSrc !== thumbSourceUrl) {
+      URL.revokeObjectURL(cropSrc);
+      setCropSrc(thumbSourceUrl);
+    }
+    setPendingName(null);
+  }
+
+  function openRecrop() {
+    if (!thumbSourceUrl) return;
+    setCropSrc(thumbSourceUrl);
+    setPendingName(null);
+    setCropOpen(true);
   }
 
   const status: CompStatus = compOn ? "open" : "none";
@@ -197,193 +256,49 @@ export function PostForm() {
     setCustomTag("");
   }
 
-  function shareText() {
-    const url =
-      typeof window !== "undefined"
-        ? `${window.location.origin}${DEMO_DETAIL_HREF}`
-        : DEMO_DETAIL_HREF;
-    const lines: string[] = [];
-    if (compOn) {
-      lines.push(
-        `【VISCUM】${course.name} · 予算 ${formatYen(prizeYen)}`,
-      );
-    } else if (extReviewOn) {
-      lines.push(
-        `【VISCUM】公開ブースト · 予算 ${formatYen(extPrizeYen)}（記入後報告→選んで褒賞）`,
-      );
-    } else {
-      lines.push(`【VISCUM】コメント歓迎`);
-    }
-    lines.push(title.trim() || "（タイトル）", url);
-    if (compOn) {
-      if (promptList.length > 0) {
-        lines.push("", ...promptList.map((p) => `・${p}`));
-      } else {
-        lines.push("", "見て書いてくれる人、募集しています。");
-      }
-    }
-    if (extReviewOn) {
-      lines.push(
-        "",
-        "ストア／拡張／SNSなど公開の場所への正直な反応・投稿を募集（記入後に報告。褒賞はシーダーが選ぶ／全員払いではない）。",
-      );
-      const crit = boostCriteria.map((c) => c.trim()).filter(Boolean);
-      if (crit.length > 0) {
-        lines.push("", ...crit.map((c) => `・${c}`));
-      }
-    }
-    return lines.join("\n");
-  }
-
-  if (saved) {
-    return (
-      <div className="space-y-6">
-        <div className="rounded-lg border border-viscum-leaf/40 bg-viscum-leaf-soft/40 px-4 py-4">
-          <p className="text-[13px] font-medium text-viscum-leaf-deep">
-            デモ：シードした体で保存しました（まだDBには載りません）
-          </p>
-          <p className="mt-1 text-[13px] leading-relaxed text-viscum-ink">
-            {session?.user
-              ? "この端末の成績に保存しました。ダッシュボード（/dashboard）で閲覧・スキ・気になるの集計を確認できます（Neon接続前は端末内）。"
-              : "ログインしていないため成績には残していません。ログインしてからシードするとダッシュボードに並びます。"}
-          </p>
-        </div>
-
-        <div className="space-y-2">
-          {thumbUrl && (
-            <div
-              className={`w-full overflow-hidden rounded-lg border border-viscum-line ${THUMB_ASPECT}`}
-              style={{ aspectRatio: "1280 / 670" }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={thumbUrl}
-                alt="サムネプレビュー"
-                className="h-full w-full object-cover"
-              />
-            </div>
-          )}
-          <StatusBadge status={status} prizeYen={compOn ? prizeYen : undefined} />
-          <h2 className="text-xl font-semibold leading-snug text-viscum-ink">
-            {title.trim()}
-          </h2>
-          {tags.length > 0 && (
-            <p className="text-[12px] text-viscum-muted">
-              タグ：{tags.join(" / ")}
-            </p>
-          )}
-          {(compOn ? promptList.length > 0 : Boolean(focusNote.trim())) && (
-            <div className="text-[14px] leading-relaxed text-viscum-ink">
-              {compOn && promptList.length > 0 ? (
-                <>
-                  <p className="mb-1 text-[12px] font-medium text-viscum-muted">
-                    {course.name}
-                  </p>
-                  <ul className="list-inside list-disc space-y-0.5">
-                    {promptList.map((p) => (
-                      <li key={p}>お題: {p}</li>
-                    ))}
-                  </ul>
-                </>
-              ) : (
-                <p>{focusNote.trim()}</p>
-              )}
-            </div>
-          )}
-          {compOn && (
-            <p className="text-[13px] text-viscum-ink">
-              {course.name} · 予算 {formatYen(prizeYen)} · 締切 あと約
-              {closesInDays}日
-            </p>
-          )}
-          {extReviewOn && (
-            <p className="text-[13px] text-viscum-ink">
-              公開ブースト · 予算 {formatYen(extPrizeYen)} · 記入後報告→選んで褒賞
-            </p>
-          )}
-          {!compOn && !extReviewOn && (
-            <p className="text-[13px] text-viscum-ink">無料コメント · コメント歓迎</p>
-          )}
-        </div>
-
-        <div className="rounded-lg border border-viscum-berry/30 bg-viscum-berry/5 px-4 py-4 space-y-3">
-          <p className="text-[14px] font-medium text-viscum-berry-deep">
-            共有する（拡散が候補を集める）
-          </p>
-          <p className="text-[12px] leading-relaxed text-viscum-muted">
-            足場の質問はそのままでも大丈夫です。気づいたことがあれば、追加でアレンジしても構いません——そちらの方が、シーダーの参考になることもあります。あとはURLを広げて候補を集めましょう。
-          </p>
-          <pre className="whitespace-pre-wrap break-all rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[12px] text-viscum-trunk">
-            {shareText()}
-          </pre>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="rounded-md bg-viscum-berry px-4 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
-              onClick={() => {
-                void navigator.clipboard?.writeText(shareText());
-                window.alert("【デモ】コピーしました");
-              }}
-            >
-              文面をコピー
-            </button>
-            <Link
-              href={DEMO_DETAIL_HREF}
-              className="inline-flex items-center rounded-md border border-viscum-brand px-4 py-2 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-            >
-              見本の詳細を見る
-            </Link>
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-viscum-line bg-white/50 px-4 py-4 space-y-3">
-          <p className="text-[14px] font-medium text-viscum-ink">直依頼する</p>
-          <p className="text-[12px] leading-relaxed text-viscum-muted">
-            公開コンペとは別で、「あなたに書いてほしい」と特定の人だけに声をかけます。VISCUMにいるメンター向けと、まだ知らない人向け（DM用URL）があります。
-          </p>
-          <div className="flex flex-col gap-2">
-            <Link
-              href={DEMO_REQUEST_HREF}
-              className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand bg-viscum-paper px-3 py-2 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-            >
-              サイト内のメンターに頼む
-            </Link>
-            <Link
-              href={DEMO_DM_HREF}
-              className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
-            >
-              外部DM用ページ（例）
-            </Link>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="text-sm text-viscum-brand underline"
-          onClick={() => setSaved(false)}
-        >
-          フォームに戻る
-        </button>
-        {session?.user && (
-          <p className="text-center text-sm">
-            <Link href="/dashboard" className="text-viscum-brand underline">
-              ダッシュボードで成績を見る
-            </Link>
-          </p>
-        )}
-      </div>
-    );
-  }
-
   return (
     <form
       className="space-y-6"
       onSubmit={(e) => {
         e.preventDefault();
-        if (!canSave) return;
-        if (session?.user?.handle) {
-          addLocalSeed({
-            seederHandle: session.user.handle,
+        if (!canSave || saving) return;
+        void (async () => {
+          setSaving(true);
+          try {
+          let thumbDataUrl: string | undefined;
+          if (thumbUrl) {
+            try {
+              const res = await fetch(thumbUrl);
+              const blob = await res.blob();
+              // localStorage 上限対策：大きすぎるサムネは捨てる
+              if (blob.size <= 450_000) {
+                thumbDataUrl = await new Promise<string>((resolve, reject) => {
+                  const r = new FileReader();
+                  r.onload = () => resolve(String(r.result));
+                  r.onerror = () => reject(new Error("read"));
+                  r.readAsDataURL(blob);
+                });
+              }
+            } catch {
+              /* ignore */
+            }
+          }
+          const seederHandle =
+            session?.user?.handle?.replace(/^@/, "").trim() || "guest";
+          const fromSession =
+            session?.user?.name?.trim() &&
+            session.user.name.trim().toLowerCase() !== seederHandle.toLowerCase()
+              ? session.user.name.trim()
+              : undefined;
+          const seederAccountName =
+            fromSession ||
+            displayAccountName(seederHandle, readLocalProfile(seederHandle));
+          const row = addLocalSeed({
+            seederHandle,
+            seederAccountName:
+              seederAccountName.toLowerCase() !== seederHandle.toLowerCase()
+                ? seederAccountName
+                : undefined,
             title: title.trim(),
             description: description.trim(),
             focusNote:
@@ -395,9 +310,20 @@ export function PostForm() {
             closesInDays: compOn ? closesInDays : undefined,
             extReviewOn: extReviewOn || undefined,
             extPrizeYen: extReviewOn ? extPrizeYen : undefined,
+            seedPlan,
+            planLabel: extReviewOn
+              ? PUBLIC_BOOST.name
+              : compOn
+                ? course.name
+                : "無料コメント",
+            thumbDataUrl,
           });
-        }
-        setSaved(true);
+          // 二枚目の完了画面は作らず、場内詳細へ（共有帯は ?seeded=1）
+          router.push(`/w/${row.id}?seeded=1`);
+          } finally {
+            setSaving(false);
+          }
+        })();
       }}
     >
       <div>
@@ -422,7 +348,7 @@ export function PostForm() {
           <span className="font-normal text-viscum-muted">任意・推奨</span>
         </p>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
-          下のプレビューで確認できます。横長（約16:9）推奨。未設定なら色面です。
+          選んだあと、ズームと位置で枠に合わせられます（Xのプロフィール画像に近い操作）。未設定なら色面です。
         </p>
         <input
           ref={thumbInputRef}
@@ -439,6 +365,15 @@ export function PostForm() {
           >
             {thumbUrl ? "差し替え" : "画像を選ぶ"}
           </button>
+          {thumbSourceUrl && (
+            <button
+              type="button"
+              onClick={openRecrop}
+              className="rounded-md border border-viscum-line bg-white/80 px-3 py-1.5 text-[13px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
+            >
+              ズーム・切り抜き
+            </button>
+          )}
           {thumbUrl ? (
             <>
               <span className="max-w-[12rem] truncate text-[12px] text-viscum-muted">
@@ -825,14 +760,23 @@ export function PostForm() {
 
       <button
         type="submit"
-        disabled={!canSave}
+        disabled={!canSave || saving}
         className="w-full rounded-md bg-viscum-berry px-4 py-3 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-45"
       >
-        シードする（デモ）
+        {saving ? "シード中…" : "シードする（デモ）"}
       </button>
       <p className="text-center text-[11px] text-viscum-muted">
         認証・保存はまだありません。見た目と流れの確認用です。
       </p>
+
+      {cropSrc && (
+        <ImageCropDialog
+          src={cropSrc}
+          open={cropOpen}
+          onCancel={onCropCancel}
+          onApply={onCropApply}
+        />
+      )}
     </form>
   );
 }

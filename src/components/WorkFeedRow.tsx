@@ -33,7 +33,10 @@ export function WorkFeedRow({
 }) {
   const deadline = formatDeadlineFeed(work.closesInHours, work.status);
   const postedShort = formatMonthDay(postedAtFromHoursAgo(work.hoursAgo));
-  const seeder = accountLabelForHandle(work.seeder);
+  const seeder = accountLabelForHandle(
+    work.seeder,
+    work.seederAccountName,
+  );
   const rx = getWorkReactionCounts(work);
 
   return (
@@ -43,12 +46,19 @@ export function WorkFeedRow({
       <div className="w-[9.5rem] shrink-0 self-start">
         <Link
           href={`/w/${work.id}`}
-          className={`block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]} flex items-center justify-center text-base font-semibold text-white/90`}
+          className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
           style={{ aspectRatio: "1280 / 670" }}
           aria-hidden
           tabIndex={-1}
         >
-          {work.title.slice(0, 1)}
+          {work.thumbUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={work.thumbUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : null}
         </Link>
         <FeedThumbReactions
           workId={work.id}

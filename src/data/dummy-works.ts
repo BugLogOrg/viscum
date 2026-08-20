@@ -33,6 +33,8 @@ export type Work = {
   title: string;
   tagline: string;
   seeder: string;
+  /** シーダーのアカウント名（英語IDと別。無いときは handle から補完） */
+  seederAccountName?: string;
   tags: string[];
   status: CompStatus;
   /** デモ上のコース（価格表と揃える） */
@@ -47,6 +49,8 @@ export type Work = {
   externalUrl: string;
   /** サムネ用の葉〜実の色キー */
   thumbTone: "leaf" | "moss" | "berry" | "bark" | "trunk";
+  /** 任意サムネ（data URL や https）。無いとき色面 */
+  thumbUrl?: string;
   comments: Comment[];
   paymentsDone?: number;
   /** フィード人気表示用（他ユーザ含めたデモ集計。未指定時は合成） */

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { useSession } from "next-auth/react";
 import {
   fetchRemoteProfile,
   readLocalProfile,
@@ -11,11 +12,17 @@ import {
   THUMB_TONE_CLASS,
 } from "@/data/suggested-seeders";
 import { LinkifiedText } from "@/components/LinkifiedText";
+import { FollowGraphList } from "@/components/FollowGraphList";
+import { SuggestFollows } from "@/components/SuggestFollows";
 import {
   countFollowers,
   countFollowing,
   FOLLOWS_UPDATED,
+  listFollowers,
+  listFollowing,
 } from "@/lib/local-follows";
+
+type GraphTab = "following" | "followers";
 
 /** 公開PF頭：アカウント名が主、@英語IDは副。一言はその下 */
 export function PortfolioHeader({
@@ -25,6 +32,8 @@ export function PortfolioHeader({
   handle: string;
   action?: ReactNode;
 }) {
+  const { data: session } = useSession();
+  const me = session?.user?.handle?.trim() || "";
   const demo = getDemoSeederProfile(handle);
   const [accountName, setAccountName] = useState(
     demo?.displayName ?? handle,
@@ -33,6 +42,9 @@ export function PortfolioHeader({
   const [avatar, setAvatar] = useState<string | null>(null);
   const [followingN, setFollowingN] = useState(0);
   const [followerN, setFollowerN] = useState(0);
+  const [tab, setTab] = useState<GraphTab | null>(null);
+  const [followingHandles, setFollowingHandles] = useState<string[]>([]);
+  const [followerHandles, setFollowerHandles] = useState<string[]>([]);
 
   useEffect(() => {
     // デモ棚の人物像はローカル／Neonの実名で上書きしない（tori に mDB が乗る事故防止）
@@ -80,6 +92,8 @@ export function PortfolioHeader({
     const sync = () => {
       setFollowingN(countFollowing(handle));
       setFollowerN(countFollowers(handle));
+      setFollowingHandles(listFollowing(handle));
+      setFollowerHandles(listFollowers(handle));
     };
     sync();
     window.addEventListener(FOLLOWS_UPDATED, sync);
@@ -90,10 +104,22 @@ export function PortfolioHeader({
     };
   }, [handle]);
 
+  useEffect(() => {
+    setTab(null);
+  }, [handle]);
+
   const letter = demo?.glyph ?? accountName.slice(0, 1).toUpperCase();
   const toneClass = demo
     ? `${THUMB_TONE_CLASS[demo.thumbTone]} ${demo.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`
     : "bg-viscum-berry text-white";
+  const loginCb = `/u/${encodeURIComponent(handle)}`;
+  const isOwn =
+    Boolean(me) &&
+    me.replace(/^@/, "").toLowerCase() === handle.toLowerCase();
+
+  function toggleTab(next: GraphTab) {
+    setTab((cur) => (cur === next ? null : next));
+  }
 
   return (
     <div>
@@ -131,15 +157,69 @@ export function PortfolioHeader({
         {action ? <div className="shrink-0 pt-1">{action}</div> : null}
       </div>
       <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-viscum-ink">
-        <span>
+        <button
+          type="button"
+          onClick={() => toggleTab("following")}
+          className={`rounded-md px-1.5 py-0.5 text-left transition ${
+            tab === "following"
+              ? "bg-viscum-leaf-soft text-viscum-leaf-deep"
+              : "hover:bg-viscum-paper-2"
+          }`}
+          aria-expanded={tab === "following"}
+        >
           <span className="font-semibold tabular-nums">{followingN}</span>
           <span className="ml-1 text-viscum-muted">フォロー</span>
-        </span>
-        <span>
+        </button>
+        <button
+          type="button"
+          onClick={() => toggleTab("followers")}
+          className={`rounded-md px-1.5 py-0.5 text-left transition ${
+            tab === "followers"
+              ? "bg-viscum-leaf-soft text-viscum-leaf-deep"
+              : "hover:bg-viscum-paper-2"
+          }`}
+          aria-expanded={tab === "followers"}
+        >
           <span className="font-semibold tabular-nums">{followerN}</span>
           <span className="ml-1 text-viscum-muted">フォロワー</span>
-        </span>
+        </button>
       </p>
+
+      {tab ? (
+        <section className="mt-3 overflow-hidden rounded-lg border border-viscum-line bg-white/60">
+          <div className="flex items-center justify-between border-b border-viscum-line px-3 py-2">
+            <p className="text-[13px] font-medium text-viscum-ink">
+              {tab === "following" ? "フォロー中" : "フォロワー"}
+            </p>
+            <button
+              type="button"
+              onClick={() => setTab(null)}
+              className="text-[12px] text-viscum-muted underline"
+            >
+              閉じる
+            </button>
+          </div>
+          <FollowGraphList
+            handles={tab === "following" ? followingHandles : followerHandles}
+            emptyText={
+              tab === "following"
+                ? "まだ誰もフォローしていません。"
+                : "フォロワーはまだいません。"
+            }
+            loginCallbackUrl={loginCb}
+          />
+          {tab === "following" && isOwn && followingHandles.length === 0 ? (
+            <div className="border-t border-viscum-line px-3 pb-3">
+              <SuggestFollows
+                title="おすすめ"
+                limit={5}
+                loginCallbackUrl={loginCb}
+              />
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
       {bio ? (
         <div className="mt-3 text-[14px] leading-relaxed text-viscum-ink">
           <LinkifiedText text={bio} />

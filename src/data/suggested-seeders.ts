@@ -60,14 +60,28 @@ export function getDemoSeederProfile(
 }
 
 /** 表示用：アカウント名＋@英語ID（同名なら @ID のみ） */
-export function accountLabelForHandle(handle: string): {
+export function accountLabelForHandle(
+  handle: string,
+  preferredName?: string,
+): {
   handle: string;
   accountName: string;
   line: string;
 } {
   const h = handle.replace(/^@/, "").trim();
   const demo = getDemoSeederProfile(h);
-  const accountName = demo?.displayName ?? h;
+  const local =
+    typeof window !== "undefined"
+      ? listLocalProfiles().find(
+          (p) =>
+            p.handle.replace(/^@/, "").trim().toLowerCase() === h.toLowerCase(),
+        )
+      : undefined;
+  const accountName =
+    preferredName?.trim() ||
+    local?.accountName?.trim() ||
+    demo?.displayName ||
+    h;
   const line =
     accountName.toLowerCase() === h.toLowerCase()
       ? `@${h}`

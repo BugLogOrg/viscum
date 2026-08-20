@@ -14,6 +14,8 @@ export type RequestDm = {
   id: string;
   workId: string;
   workTitle: string;
+  /** 作品の外部URL（あれば） */
+  workExternalUrl?: string;
   /** 依頼する側 */
   fromHandle: string;
   fromAccountName?: string;
@@ -70,6 +72,7 @@ export function upsertRequestDm(row: RequestDm) {
 export function createRequestDm(input: {
   workId: string;
   workTitle: string;
+  workExternalUrl?: string;
   fromHandle: string;
   fromAccountName?: string;
   toHandle: string;
@@ -82,6 +85,7 @@ export function createRequestDm(input: {
     id,
     workId: input.workId,
     workTitle: input.workTitle,
+    workExternalUrl: input.workExternalUrl?.trim() || undefined,
     fromHandle: input.fromHandle,
     fromAccountName: input.fromAccountName,
     toHandle: input.toHandle,

@@ -16,6 +16,7 @@ function toClient(
     id: row.id,
     workId: row.workId,
     workTitle: row.workTitle,
+    workExternalUrl: row.workExternalUrl?.trim() || undefined,
     fromHandle: (from.handle ?? "").replace(/^@/, "") || "unknown",
     fromAccountName: from.name?.trim() || undefined,
     toHandle: (to.handle ?? "").replace(/^@/, "") || "unknown",

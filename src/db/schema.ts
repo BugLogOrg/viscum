@@ -196,6 +196,8 @@ export const requestDms = pgTable(
       .$defaultFn(() => crypto.randomUUID()),
     workId: text("work_id").notNull(),
     workTitle: text("work_title").notNull(),
+    /** 作品の外部URL（local_* で公開ページ未接続でも辿り着ける） */
+    workExternalUrl: text("work_external_url"),
     fromUserId: text("from_user_id")
       .notNull()
       .references(() => users.id),

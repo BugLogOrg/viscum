@@ -13,6 +13,9 @@ import {
   clearDemoSeeds,
   hasDemoSeeds,
   isDemoSeed,
+  isLocalSeedListed,
+  deleteLocalSeed,
+  unlistLocalSeed,
   type LocalSeed,
 } from "@/lib/local-seeds";
 
@@ -99,12 +102,6 @@ export default function DashboardPage() {
               >
                 ご依頼DM
               </Link>
-              <Link
-                href="/dashboard/reactions"
-                className="text-[13px] font-medium text-viscum-brand underline"
-              >
-                自分が押したスキ・気になる（打刻つき）
-              </Link>
             </p>
           </div>
           <button
@@ -178,10 +175,13 @@ export default function DashboardPage() {
           ) : (
             <ul className="space-y-3">
               {mine.map((s) => (
-                <li key={s.id}>
+                <li
+                  key={s.id}
+                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
+                >
                   <Link
                     href={`/dashboard/${encodeURIComponent(s.id)}`}
-                    className="block rounded-lg border border-viscum-line bg-white/50 px-3 py-3 transition-colors hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
+                    className="block transition-colors hover:opacity-90"
                   >
                     <div className="flex flex-wrap items-center gap-2">
                       <StatusBadge
@@ -195,12 +195,23 @@ export default function DashboardPage() {
                           表示デモ
                         </span>
                       )}
-                      {(s.prizeYen != null || s.extPrizeYen != null) &&
-                        s.status === "open" && (
-                        <span className="text-[11px] text-viscum-muted">
-                          予算 {formatYen(s.prizeYen ?? s.extPrizeYen ?? 0)}
+                      {s.id.startsWith("local_") && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                            isLocalSeedListed(s)
+                              ? "bg-viscum-leaf-soft text-viscum-leaf-deep"
+                              : "bg-viscum-paper-2 text-viscum-muted"
+                          }`}
+                        >
+                          {isLocalSeedListed(s) ? "公開中" : "未公開"}
                         </span>
                       )}
+                      {(s.prizeYen != null || s.extPrizeYen != null) &&
+                        s.status === "open" && (
+                          <span className="text-[11px] text-viscum-muted">
+                            予算 {formatYen(s.prizeYen ?? s.extPrizeYen ?? 0)}
+                          </span>
+                        )}
                     </div>
                     <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
                       {s.title}
@@ -235,6 +246,47 @@ export default function DashboardPage() {
                       成績を見る →
                     </p>
                   </Link>
+                  {s.id.startsWith("local_") && !isDemoSeed(s.id) ? (
+                    <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                      {isLocalSeedListed(s) ? (
+                        <button
+                          type="button"
+                          className="text-[12px] text-viscum-muted underline"
+                          onClick={() => {
+                            const res = unlistLocalSeed(s.id, handle);
+                            if (res.ok) refresh();
+                            else window.alert(res.error);
+                          }}
+                        >
+                          棚から外す
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className="text-[12px] text-viscum-berry-deep underline"
+                        onClick={() => {
+                          if (
+                            !window.confirm(
+                              "このシードを削除しますか？元に戻せません。",
+                            )
+                          ) {
+                            return;
+                          }
+                          const res = deleteLocalSeed(s.id, handle);
+                          if (res.ok) refresh();
+                          else window.alert(res.error);
+                        }}
+                      >
+                        削除
+                      </button>
+                      <Link
+                        href={`/w/${encodeURIComponent(s.id)}`}
+                        className="text-[12px] text-viscum-brand underline"
+                      >
+                        詳細
+                      </Link>
+                    </div>
+                  ) : null}
                 </li>
               ))}
             </ul>

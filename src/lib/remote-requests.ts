@@ -44,6 +44,7 @@ export async function fetchRequestDm(
 export async function postRequestDm(input: {
   workId: string;
   workTitle: string;
+  workExternalUrl?: string;
   toHandle: string;
   amountYen: number;
   pitch: string;

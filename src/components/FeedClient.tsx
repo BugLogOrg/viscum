@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { DUMMY_WORKS } from "@/data/dummy-works";
+import { DUMMY_WORKS, type Work } from "@/data/dummy-works";
 import {
   FOLLOWS_UPDATED,
   clearRememberedViewer,
@@ -19,17 +19,21 @@ import {
   type SuggestedSeeder,
 } from "@/data/suggested-seeders";
 import { fetchRemoteProfile } from "@/lib/local-profile";
+import {
+  isLocalSeedListed,
+  readLocalSeeds,
+  workFromLocalSeed,
+} from "@/lib/local-seeds";
+import { buildWorkShareText } from "@/lib/work-share-text";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SuggestFollows } from "@/components/SuggestFollows";
+import { FollowButton } from "@/components/FollowButton";
 
 type Filter = "all" | "open" | "follow";
 
-function matchesQuery(
-  w: (typeof DUMMY_WORKS)[number],
-  q: string,
-): boolean {
+function matchesQuery(w: Work, q: string): boolean {
   const needle = q.trim().toLowerCase().replace(/^@/, "");
   if (!needle) return true;
   const demo = getDemoSeederProfile(w.seeder);
@@ -37,6 +41,7 @@ function matchesQuery(
     w.title,
     w.tagline,
     w.seeder,
+    w.seederAccountName ?? "",
     demo?.displayName ?? "",
     w.description,
     ...w.tags,
@@ -50,6 +55,16 @@ function initialFilter(searchParams: URLSearchParams): Filter {
   const feed = searchParams.get("feed");
   if (feed === "open" || feed === "follow" || feed === "all") return feed;
   return "all";
+}
+
+/** 公開済み端末内シード＋デモ。デモID重複はデモ側を正とする */
+function loadShelfWorks(): Work[] {
+  const locals = readLocalSeeds()
+    .filter((s) => s.id.startsWith("local_") && isLocalSeedListed(s))
+    .map(workFromLocalSeed);
+  const demoIds = new Set(DUMMY_WORKS.map((w) => w.id));
+  const onlyLocals = locals.filter((w) => !demoIds.has(w.id));
+  return [...onlyLocals, ...DUMMY_WORKS];
 }
 
 export function FeedClient() {
@@ -67,6 +82,16 @@ export function FeedClient() {
   const [viewerHandle, setViewerHandle] = useState("");
   const [followingHandles, setFollowingHandles] = useState<string[]>([]);
   const [remotePeople, setRemotePeople] = useState<SuggestedSeeder[]>([]);
+  const [shelf, setShelf] = useState<Work[]>(() => [...DUMMY_WORKS]);
+  const publishedId = searchParams.get("published");
+  const [shareCopied, setShareCopied] = useState(false);
+
+  useEffect(() => {
+    const refresh = () => setShelf(loadShelfWorks());
+    refresh();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [publishedId]);
 
   useEffect(() => {
     setSpecialty(searchParams.get("tag"));
@@ -155,7 +180,7 @@ export function FeedClient() {
 
   const followSet = new Set(followingHandles);
 
-  const followed = DUMMY_WORKS.filter((w) => {
+  const followed = shelf.filter((w) => {
     if (!followSet.has(w.seeder.toLowerCase())) return false;
     if (!matchesQuery(w, query)) return false;
     if (specialty && !w.tags.includes(specialty)) return false;
@@ -165,23 +190,23 @@ export function FeedClient() {
     return true;
   });
 
-  let rest: (typeof DUMMY_WORKS)[number][];
+  let rest: Work[];
   if (filter === "follow") {
     rest = followed;
   } else if (specialty || query.trim()) {
-    rest = DUMMY_WORKS.filter((w) => matchesQuery(w, query));
+    rest = shelf.filter((w) => matchesQuery(w, query));
     if (specialty) {
       rest = rest.filter((w) => w.tags.includes(specialty));
     }
   } else {
-    rest = [...DUMMY_WORKS];
+    rest = [...shelf];
   }
 
   if (filter === "open") {
     rest = rest.filter((w) => w.status === "open" || w.status === "pay_soon");
   }
 
-  const openCount = DUMMY_WORKS.filter(
+  const openCount = shelf.filter(
     (w) => w.status === "open" || w.status === "pay_soon",
   ).length;
 
@@ -231,6 +256,46 @@ export function FeedClient() {
       openCount={openCount}
     >
       <SiteHeader hideOnMd />
+      {publishedId ? (
+        <div className="border-b border-viscum-leaf/40 bg-viscum-leaf-soft/50 px-4 py-3">
+          <p className="text-[14px] font-medium text-viscum-leaf-deep">
+            公開しました — トップの「すべて」に載っています
+          </p>
+          <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
+            外への告知文は詳細からコピーできます。直依頼も詳細の導線から送れます。
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link
+              href={`/w/${encodeURIComponent(publishedId)}`}
+              className="inline-flex rounded-md border border-viscum-brand px-3 py-1.5 text-[13px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+            >
+              公開した詳細を見る
+            </Link>
+            <button
+              type="button"
+              className="inline-flex rounded-md border border-viscum-line px-3 py-1.5 text-[13px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
+              onClick={() => {
+                const w = shelf.find((x) => x.id === publishedId);
+                if (!w) return;
+                const t = buildWorkShareText(w, window.location.origin);
+                void navigator.clipboard?.writeText(t).then(() => {
+                  setShareCopied(true);
+                  window.setTimeout(() => setShareCopied(false), 2000);
+                });
+              }}
+            >
+              {shareCopied ? "コピーしました" : "告知文をコピー"}
+            </button>
+            <button
+              type="button"
+              className="text-[12px] text-viscum-muted underline"
+              onClick={() => router.replace("/")}
+            >
+              この表示を消す
+            </button>
+          </div>
+        </div>
+      ) : null}
       <div className="border-b border-viscum-line px-4 py-3">
         <h1 className="text-xl font-semibold text-viscum-ink">{title}</h1>
 
@@ -341,10 +406,13 @@ export function FeedClient() {
           </p>
           <ul className="space-y-1.5">
             {peopleHits.map((p) => (
-              <li key={p.handle}>
+              <li
+                key={p.handle}
+                className="flex items-center gap-2 rounded-md px-1.5 py-1.5 hover:bg-viscum-paper-2"
+              >
                 <Link
                   href={`/u/${encodeURIComponent(p.handle)}`}
-                  className="flex items-center gap-2 rounded-md px-1.5 py-1.5 transition hover:bg-viscum-paper-2"
+                  className="flex min-w-0 flex-1 items-center gap-2"
                 >
                   <span
                     className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${THUMB_TONE_CLASS[p.thumbTone]} ${p.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`}
@@ -373,6 +441,12 @@ export function FeedClient() {
                     </span>
                   </span>
                 </Link>
+                <span className="shrink-0">
+                  <FollowButton
+                    handle={p.handle}
+                    loginCallbackUrl="/"
+                  />
+                </span>
               </li>
             ))}
           </ul>

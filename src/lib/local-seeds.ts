@@ -1,9 +1,12 @@
 /** ブラウザ端末内のシード控え（Neon未接続時のB段階フォールバック） */
 import { courseById, PUBLIC_BOOST } from "@/data/seed-courses";
+import { getWork, type Work } from "@/data/dummy-works";
 
 export type LocalSeed = {
   id: string;
   seederHandle: string;
+  /** 投稿時点のアカウント名（表示用） */
+  seederAccountName?: string;
   title: string;
   description: string;
   focusNote?: string;
@@ -17,6 +20,16 @@ export type LocalSeed = {
   extPrizeYen?: number;
   /** バッジ用（ADR-031 4コース） */
   planLabel?: string;
+  /** コースID（共有文・詳細の plan 用） */
+  seedPlan?: "free_comment" | "first_impression" | "brush_up" | "public_boost";
+  /** サムネ（data URL。blob URL は永続化不可） */
+  thumbDataUrl?: string;
+  /**
+   * トップの「すべて」等に載せるか。
+   * 新規シードは false（未公開）。全体告知で true にする。
+   * 未定義＝移行前データ扱いで公開済みとみなす。
+   */
+  listedOnShelf?: boolean;
   viewCount: number;
   emoCount: number;
   bookmarkCount: number;
@@ -51,6 +64,7 @@ export function addLocalSeed(
   const row: LocalSeed = {
     ...seed,
     id: `local_${Date.now().toString(36)}`,
+    listedOnShelf: seed.listedOnShelf ?? false,
     viewCount: 0,
     emoCount: 0,
     bookmarkCount: 0,
@@ -60,6 +74,73 @@ export function addLocalSeed(
   const next = [row, ...readLocalSeeds()];
   writeLocalSeeds(next);
   return row;
+}
+
+/** トップ棚に載せる＝公開 */
+export function publishLocalSeedToShelf(id: string): LocalSeed | null {
+  const seeds = readLocalSeeds();
+  const i = seeds.findIndex((s) => s.id === id);
+  if (i < 0) return null;
+  seeds[i] = { ...seeds[i], listedOnShelf: true };
+  writeLocalSeeds(seeds);
+  return seeds[i];
+}
+
+/** 棚に出す対象か（未定義は移行前＝公開扱い） */
+export function isLocalSeedListed(seed: LocalSeed): boolean {
+  return seed.listedOnShelf !== false;
+}
+
+function normalizeHandle(h: string): string {
+  return h.replace(/^@/, "").trim().toLowerCase();
+}
+
+/** シーダー本人か */
+export function isLocalSeedOwner(
+  seed: LocalSeed,
+  actorHandle: string | null | undefined,
+): boolean {
+  if (!actorHandle) return false;
+  return normalizeHandle(seed.seederHandle) === normalizeHandle(actorHandle);
+}
+
+export type LocalSeedOwnerResult =
+  | { ok: true; seed: LocalSeed }
+  | { ok: false; error: string };
+
+/** 棚から外す（未公開に戻す）。本人のみ */
+export function unlistLocalSeed(
+  id: string,
+  actorHandle: string,
+): LocalSeedOwnerResult {
+  const seeds = readLocalSeeds();
+  const i = seeds.findIndex((s) => s.id === id);
+  if (i < 0) return { ok: false, error: "見つかりません" };
+  if (!isLocalSeedOwner(seeds[i], actorHandle)) {
+    return { ok: false, error: "シーダー本人だけ操作できます" };
+  }
+  seeds[i] = { ...seeds[i], listedOnShelf: false };
+  writeLocalSeeds(seeds);
+  return { ok: true, seed: seeds[i] };
+}
+
+/** シードを削除。本人のみ。デモ棚IDは消さない */
+export function deleteLocalSeed(
+  id: string,
+  actorHandle: string,
+): LocalSeedOwnerResult {
+  if (isDemoSeed(id)) {
+    return { ok: false, error: "表示デモは「デモを消す」からまとめて外してください" };
+  }
+  const seeds = readLocalSeeds();
+  const i = seeds.findIndex((s) => s.id === id);
+  if (i < 0) return { ok: false, error: "見つかりません" };
+  const seed = seeds[i];
+  if (!isLocalSeedOwner(seed, actorHandle)) {
+    return { ok: false, error: "シーダー本人だけ削除できます" };
+  }
+  writeLocalSeeds(seeds.filter((_, j) => j !== i));
+  return { ok: true, seed };
 }
 
 export function bumpLocalSeedStat(
@@ -200,9 +281,71 @@ export function isDemoSeed(id: string) {
   return (DEMO_SEED_IDS as readonly string[]).includes(id);
 }
 
-/** 詳細があるシードだけ `/w/[id]`。local_* は Neon 前は詳細未接続 */
-export function workDetailHref(seed: LocalSeed): string | null {
-  if (isDemoSeed(seed.id)) return `/w/${seed.id}`;
-  if (seed.id.startsWith("local_")) return null;
+/** 場内シード詳細は常に `/w/[id]`（local_* 含む） */
+export function workDetailHref(seed: LocalSeed): string {
   return `/w/${seed.id}`;
 }
+
+/** 直依頼／DM用に LocalSeed → Work 形へ（デモ詳細なしでもタイトルを載せる） */
+export function workFromLocalSeed(seed: LocalSeed): Work {
+  const plan =
+    seed.seedPlan ??
+    (seed.extReviewOn
+      ? ("public_boost" as const)
+      : seed.status === "none" || seed.prizeYen == null
+        ? ("free_comment" as const)
+        : ("first_impression" as const));
+  return {
+    id: seed.id,
+    title: seed.title,
+    tagline: seed.title.slice(0, 48),
+    seeder: seed.seederHandle,
+    seederAccountName: seed.seederAccountName,
+    tags: seed.tags,
+    status: seed.status,
+    plan,
+    prizeYen: seed.prizeYen,
+    hoursAgo: 0,
+    closesInHours:
+      seed.closesInDays != null ? seed.closesInDays * 24 : undefined,
+    description: seed.description,
+    prompts: seed.focusNote
+      ? seed.focusNote.split("\n").map((s) => s.trim()).filter(Boolean)
+      : undefined,
+    externalUrl: seed.externalUrl,
+    thumbTone: "leaf",
+    thumbUrl: seed.thumbDataUrl,
+    comments: [],
+    /** 自分のシードは合成デモ件数を載せない */
+    sukiCount: seed.emoCount,
+    bookmarkCount: seed.bookmarkCount,
+  };
+}
+
+/** ダミー作品 or 端末内シード */
+export function resolveWorkClient(id: string): Work | null {
+  const demo = getWork(id);
+  if (demo) return demo;
+  const seed = readLocalSeeds().find((s) => s.id === id);
+  return seed ? workFromLocalSeed(seed) : null;
+}
+
+/** ご依頼DMの作品名表示。local_* は端末の最新タイトル、それ以外は保存値を尊重 */
+export function displayRequestWorkTitle(
+  workId: string,
+  storedTitle: string,
+): string {
+  if (workId.startsWith("local_")) {
+    const live = resolveWorkClient(workId)?.title?.trim();
+    if (live) return live;
+  }
+  // デモ作品IDでも getWork の長文タイトルで上書きしない（名残・ごっちゃ防止）
+  return storedTitle.trim() || workId;
+}
+
+/** ご依頼DM・共有から作品へ辿る主リンク（常に場内 `/w/[id]`） */
+export function requestWorkPrimaryHref(workId: string): string | null {
+  if (!workId) return null;
+  return `/w/${encodeURIComponent(workId)}`;
+}
+

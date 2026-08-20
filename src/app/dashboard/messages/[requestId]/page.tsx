@@ -14,7 +14,13 @@ import {
   type RequestDm,
 } from "@/lib/local-request-dms";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
+import {
+  displayRequestWorkTitle,
+  isDemoSeed,
+  resolveWorkClient,
+} from "@/lib/local-seeds";
 import { fetchRequestDm, patchRequestDm } from "@/lib/remote-requests";
+import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 
 export default function RequestDmThreadPage() {
   const params = useParams();
@@ -104,8 +110,8 @@ export default function RequestDmThreadPage() {
             >
               一覧へ
             </Link>
-            <Link href="/w/promo-15s/request" className="text-viscum-brand underline">
-              直依頼から送り直す
+            <Link href="/new" className="text-viscum-brand underline">
+              シードして直依頼から送り直す
             </Link>
           </div>
         </main>
@@ -134,6 +140,34 @@ export default function RequestDmThreadPage() {
   const peerLabel = isRecipient
     ? row.fromAccountName || row.fromHandle
     : row.toHandle;
+
+  /** pitch は作成時に messages[0] にも入るので、スレでは重複表示しない */
+  const pitchText = row.pitch?.trim() ?? "";
+  const threadMessages = (() => {
+    if (!pitchText || row.messages.length === 0) return row.messages;
+    const [first, ...rest] = row.messages;
+    if (
+      first.fromHandle.toLowerCase() === row.fromHandle.toLowerCase() &&
+      first.body.trim() === pitchText
+    ) {
+      return rest;
+    }
+    return row.messages;
+  })();
+
+  const workTitle = displayRequestWorkTitle(row.workId, row.workTitle);
+  const isLocal = row.workId.startsWith("local_");
+  const liveExternal = resolveWorkClient(row.workId)?.externalUrl?.trim();
+  const externalUrl =
+    row.workExternalUrl?.trim() ||
+    (liveExternal && liveExternal !== "https://" ? liveExternal : "") ||
+    "";
+  /** タイトル＝場内シード詳細 `/w/...`（外部URLではない） */
+  const titleHref = `/w/${encodeURIComponent(row.workId)}`;
+  const isSeeder = row.fromHandle.toLowerCase() === me;
+  const statsHref = isLocal
+    ? `/dashboard/${encodeURIComponent(row.workId)}`
+    : null;
 
   async function refresh() {
     const res = await fetchRequestDm(requestId);
@@ -175,22 +209,66 @@ export default function RequestDmThreadPage() {
           <p className="text-[13px] text-viscum-ink">
             <span className="text-viscum-muted">作品 · </span>
             <Link
-              href={`/w/${encodeURIComponent(row.workId)}`}
-              className="text-viscum-brand underline"
+              href={titleHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="break-words text-viscum-brand underline"
+              title="場内のシード詳細"
             >
-              {row.workTitle}
+              {workTitle}
             </Link>
           </p>
+          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
+            {externalUrl ? (
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-viscum-brand underline"
+              >
+                外部の作品を開く
+              </a>
+            ) : null}
+            {statsHref && isSeeder ? (
+              <Link
+                href={statsHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-viscum-muted underline"
+              >
+                成績を見る
+              </Link>
+            ) : null}
+            {!externalUrl && !statsHref && (
+              <span className="text-viscum-muted">
+                タイトル＝場内のシード詳細（/w/…）
+              </span>
+            )}
+          </p>
+          {isLocal && !externalUrl && (
+            <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
+              タイトルは `/w/…` のシード詳細へ。プロダクト本体のURLは「外部の作品」。
+            </p>
+          )}
+          {isDemoSeed(row.workId) && (
+            <p className="mt-2 rounded-md border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-2 text-[12px] leading-relaxed text-viscum-ink">
+              このご依頼は<strong>見本作品</strong>（{row.workId}
+              ）に紐づいています。さっきシードした作品ではありません。完了画面の「サイト内のメンターに頼む」から送り直すと、自分の作品名で残ります。
+            </p>
+          )}
           <p className="text-[12px] text-viscum-muted">
             状態: {statusLabel(row.status)}
           </p>
-          {row.pitch?.trim() ? (
+          {isRecipient ? (
+            <SeederCredibilityLink handle={row.fromHandle} className="mt-3" />
+          ) : null}
+          {pitchText ? (
             <div className="mt-3 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2">
               <p className="text-[11px] font-medium text-viscum-muted">
-                お願い文（送った内容）
+                最初のお願い（依頼時）
               </p>
               <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
-                {row.pitch}
+                {pitchText}
               </p>
             </div>
           ) : null}
@@ -216,7 +294,7 @@ export default function RequestDmThreadPage() {
         )}
 
         <ul className="mt-5 space-y-3">
-          {row.messages.map((m) => {
+          {threadMessages.map((m) => {
             const mine = m.fromHandle.toLowerCase() === me;
             const name = mine
               ? displayAccountName(handle, readLocalProfile(handle))

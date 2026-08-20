@@ -31,6 +31,7 @@ function toClient(
     id: row.id,
     workId: row.workId,
     workTitle: row.workTitle,
+    workExternalUrl: row.workExternalUrl?.trim() || undefined,
     fromHandle: (from.handle ?? "").replace(/^@/, "") || "unknown",
     fromAccountName: from.name?.trim() || undefined,
     toHandle: (to.handle ?? "").replace(/^@/, "") || "unknown",
@@ -117,6 +118,7 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as {
     workId?: string;
     workTitle?: string;
+    workExternalUrl?: string;
     toHandle?: string;
     amountYen?: number;
     pitch?: string;
@@ -124,6 +126,7 @@ export async function POST(req: Request) {
 
   const workId = body?.workId?.trim() ?? "";
   const workTitle = (body?.workTitle?.trim() || workId).slice(0, 120);
+  const workExternalUrl = body?.workExternalUrl?.trim().slice(0, 2000) || null;
   const toHandle = body?.toHandle?.replace(/^@/, "").trim().toLowerCase() ?? "";
   const pitch = body?.pitch?.trim().slice(0, 4000) ?? "";
   const amountYen =
@@ -164,6 +167,7 @@ export async function POST(req: Request) {
     .values({
       workId,
       workTitle,
+      workExternalUrl,
       fromUserId,
       toUserId: toUser.id,
       amountYen,
