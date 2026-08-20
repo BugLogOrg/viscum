@@ -1,4 +1,5 @@
 import { DUMMY_WORKS, type Work } from "@/data/dummy-works";
+import { listLocalProfiles } from "@/lib/local-profile";
 
 export type DemoSeederProfile = {
   handle: string;
@@ -98,8 +99,12 @@ export function getSuggestedSeeders(limit = 5): SuggestedSeeder[] {
     .slice(0, limit);
 }
 
-/** 検索用：表示名・@ID でユーザーを拾う（作品コンペ有無に依存しない） */
-export function searchDemoUsers(query: string, limit = 8): SuggestedSeeder[] {
+/** 検索用：表示名・@ID でユーザーを拾う（作品の有無に依存しない） */
+export function searchDemoUsers(
+  query: string,
+  limit = 8,
+  extras?: { handles?: string[] },
+): SuggestedSeeder[] {
   const needle = query.trim().toLowerCase().replace(/^@/, "");
   if (!needle) return [];
   const counts = new Map<string, number>();
@@ -108,12 +113,19 @@ export function searchDemoUsers(query: string, limit = 8): SuggestedSeeder[] {
     counts.set(key, (counts.get(key) ?? 0) + 1);
   }
   const hit = new Map<string, SuggestedSeeder>();
+
+  function put(row: SuggestedSeeder) {
+    const key = row.handle.toLowerCase();
+    if (hit.has(key)) return;
+    hit.set(key, row);
+  }
+
   for (const p of PROFILES) {
     if (
       p.handle.toLowerCase().includes(needle) ||
       p.displayName.toLowerCase().includes(needle)
     ) {
-      hit.set(p.handle.toLowerCase(), {
+      put({
         ...p,
         workCount: counts.get(p.handle.toLowerCase()) ?? 0,
       });
@@ -121,9 +133,9 @@ export function searchDemoUsers(query: string, limit = 8): SuggestedSeeder[] {
   }
   for (const w of DUMMY_WORKS) {
     const key = w.seeder.toLowerCase();
-    if (!key.includes(needle) || hit.has(key)) continue;
+    if (!key.includes(needle)) continue;
     const demo = getDemoSeederProfile(key);
-    hit.set(key, {
+    put({
       handle: w.seeder,
       displayName: demo?.displayName ?? w.seeder,
       bio: demo?.bio ?? "",
@@ -132,6 +144,38 @@ export function searchDemoUsers(query: string, limit = 8): SuggestedSeeder[] {
       workCount: counts.get(key) ?? 0,
     });
   }
+
+  // 作品ゼロの実アカウント（端末プロフィール）
+  for (const lp of listLocalProfiles()) {
+    const key = lp.handle.replace(/^@/, "").trim().toLowerCase();
+    if (!key) continue;
+    const name = (lp.accountName ?? "").toLowerCase();
+    if (!key.includes(needle) && !name.includes(needle)) continue;
+    const demo = getDemoSeederProfile(key);
+    put({
+      handle: key,
+      displayName: lp.accountName?.trim() || demo?.displayName || key,
+      bio: lp.bio?.trim() || demo?.bio || "作品はまだありません",
+      thumbTone: demo?.thumbTone ?? "leaf",
+      glyph: demo?.glyph ?? (lp.accountName?.trim() || key).slice(0, 1),
+      workCount: counts.get(key) ?? 0,
+    });
+  }
+
+  for (const h of extras?.handles ?? []) {
+    const key = h.replace(/^@/, "").trim().toLowerCase();
+    if (!key || !key.includes(needle)) continue;
+    const demo = getDemoSeederProfile(key);
+    put({
+      handle: key,
+      displayName: demo?.displayName ?? key,
+      bio: demo?.bio ?? "作品はまだありません",
+      thumbTone: demo?.thumbTone ?? "leaf",
+      glyph: demo?.glyph ?? key.slice(0, 1).toUpperCase(),
+      workCount: counts.get(key) ?? 0,
+    });
+  }
+
   return [...hit.values()].slice(0, limit);
 }
 

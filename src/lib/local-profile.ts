@@ -54,6 +54,12 @@ export function readLocalProfile(handle: string): LocalProfile | null {
   return readMap()[handle] ?? null;
 }
 
+/** 端末に残っている公開プロフィール一覧（検索用） */
+export function listLocalProfiles(): LocalProfile[] {
+  if (typeof window === "undefined") return [];
+  return Object.values(readMap()).filter((p) => Boolean(p?.handle));
+}
+
 export function writeLocalProfile(profile: LocalProfile) {
   const map = readMap();
   map[profile.handle] = profile;

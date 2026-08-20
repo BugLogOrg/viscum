@@ -16,7 +16,9 @@ import {
   getDemoSeederProfile,
   searchDemoUsers,
   THUMB_TONE_CLASS,
+  type SuggestedSeeder,
 } from "@/data/suggested-seeders";
+import { fetchRemoteProfile } from "@/lib/local-profile";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -64,6 +66,7 @@ export function FeedClient() {
   const [query, setQuery] = useState("");
   const [viewerHandle, setViewerHandle] = useState("");
   const [followingHandles, setFollowingHandles] = useState<string[]>([]);
+  const [remotePeople, setRemotePeople] = useState<SuggestedSeeder[]>([]);
 
   useEffect(() => {
     setSpecialty(searchParams.get("tag"));
@@ -100,6 +103,41 @@ export function FeedClient() {
       window.removeEventListener("storage", sync);
     };
   }, [viewerHandle]);
+
+  useEffect(() => {
+    const needle = query.trim().toLowerCase().replace(/^@/, "");
+    if (!needle || needle.length < 2) {
+      setRemotePeople([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const remote = await fetchRemoteProfile(needle);
+      if (cancelled || !remote?.handle) {
+        if (!cancelled) setRemotePeople([]);
+        return;
+      }
+      const key = remote.handle.toLowerCase();
+      const demo = getDemoSeederProfile(key);
+      setRemotePeople([
+        {
+          handle: key,
+          displayName: remote.accountName?.trim() || demo?.displayName || key,
+          bio: remote.bio?.trim() || demo?.bio || "作品はまだありません",
+          thumbTone: demo?.thumbTone ?? "leaf",
+          glyph:
+            demo?.glyph ??
+            (remote.accountName?.trim() || key).slice(0, 1).toUpperCase(),
+          workCount: DUMMY_WORKS.filter(
+            (w) => w.seeder.toLowerCase() === key,
+          ).length,
+        },
+      ]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [query]);
 
   const myHandle = viewerHandle;
   const sessionPending = status === "loading" && !myHandle;
@@ -167,7 +205,22 @@ export function FeedClient() {
   if (query.trim()) contextCrumbs.push(`「${query.trim()}」`);
   const contextLine = contextCrumbs.join(" › ");
 
-  const peopleHits = query.trim() ? searchDemoUsers(query, 6) : [];
+  const peopleHits = (() => {
+    if (!query.trim()) return [] as SuggestedSeeder[];
+    const extras = [
+      myHandle,
+      ...followingHandles,
+    ].filter(Boolean);
+    const local = searchDemoUsers(query, 8, { handles: extras });
+    const seen = new Set(local.map((p) => p.handle.toLowerCase()));
+    const merged = [...local];
+    for (const p of remotePeople) {
+      if (seen.has(p.handle.toLowerCase())) continue;
+      merged.push(p);
+      seen.add(p.handle.toLowerCase());
+    }
+    return merged.slice(0, 8);
+  })();
 
   return (
     <AppShell
@@ -313,6 +366,11 @@ export function FeedClient() {
                         {p.bio}
                       </span>
                     ) : null}
+                    <span className="mt-0.5 block text-[11px] text-viscum-muted">
+                      {p.workCount > 0
+                        ? `作品 ${p.workCount}`
+                        : "作品はまだありません"}
+                    </span>
                   </span>
                 </Link>
               </li>
@@ -365,9 +423,17 @@ export function FeedClient() {
         )}
         {rest.length === 0 && filter !== "follow" && peopleHits.length === 0 && (
           <p className="col-span-full px-4 py-8 text-center text-sm text-viscum-muted">
-            「{query.trim() || specialty || "条件"}」に合う作品がありません
+            「{query.trim() || specialty || "条件"}」に合うユーザー・作品がありません
           </p>
         )}
+        {rest.length === 0 &&
+          filter !== "follow" &&
+          peopleHits.length > 0 &&
+          query.trim() && (
+            <p className="col-span-full px-4 py-6 text-center text-sm text-viscum-muted">
+              作品のヒットはありません（上のユーザーからプロフィールへ）
+            </p>
+          )}
       </section>
     </AppShell>
   );
