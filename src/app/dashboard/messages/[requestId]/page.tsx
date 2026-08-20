@@ -7,30 +7,47 @@ import { useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
-  appendRequestDmMessage,
   formatYen,
-  getRequestDm,
-  setRequestDmStatus,
   statusLabel,
   type RequestDm,
 } from "@/lib/local-request-dms";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
+import { fetchRequestDm, patchRequestDm } from "@/lib/remote-requests";
 
 export default function RequestDmThreadPage() {
   const params = useParams();
   const requestId = decodeURIComponent(String(params.requestId ?? ""));
   const { data: session, status } = useSession();
-  const handle = session?.user?.handle;
+  const handle = session?.user?.handle?.replace(/^@/, "").trim();
   const [row, setRow] = useState<RequestDm | null>(null);
   const [draft, setDraft] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!handle) return;
-    // 自動デモ投入はしない（本物の依頼文と混ざる）
-    setRow(getRequestDm(requestId));
+    if (!handle) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    void fetchRequestDm(requestId).then((res) => {
+      if (cancelled) return;
+      if (res.request) {
+        setRow(res.request);
+        setError(null);
+      } else {
+        setRow(null);
+        setError(res.error || "見つかりません");
+      }
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [handle, requestId]);
 
-  if (status === "loading") {
+  if (status === "loading" || (handle && loading)) {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/dashboard/messages" hideOnMd hidePostCta />
@@ -64,7 +81,7 @@ export default function RequestDmThreadPage() {
         <SiteHeader backHref="/dashboard/messages" hideOnMd hidePostCta />
         <main className="max-w-lg px-4 py-10">
           <p className="text-[14px] text-viscum-muted">
-            このご依頼は見つかりません（デモ・端末内）。
+            {error || "このご依頼は見つかりません。"}
           </p>
           <Link
             href="/dashboard/messages"
@@ -77,8 +94,10 @@ export default function RequestDmThreadPage() {
     );
   }
 
-  const isRecipient = row.toHandle === handle;
-  const isParty = isRecipient || row.fromHandle === handle;
+  const me = handle.toLowerCase();
+  const isRecipient = row.toHandle.toLowerCase() === me;
+  const isParty =
+    isRecipient || row.fromHandle.toLowerCase() === me;
   if (!isParty) {
     return (
       <BrowseChrome>
@@ -97,23 +116,25 @@ export default function RequestDmThreadPage() {
     ? row.fromAccountName || row.fromHandle
     : row.toHandle;
 
-  function refresh() {
-    setRow(getRequestDm(requestId));
+  async function refresh() {
+    const res = await fetchRequestDm(requestId);
+    if (res.request) setRow(res.request);
   }
 
-  function respond(next: "accepted" | "declined") {
-    setRequestDmStatus(requestId, next);
-    const note =
-      next === "accepted" ? "やる、と返しました。" : "いまは無理、と返しました。";
-    appendRequestDmMessage(requestId, handle!, note);
-    refresh();
+  async function respond(next: "accepted" | "declined") {
+    const res = await patchRequestDm(requestId, { status: next });
+    if (res.request) setRow(res.request);
+    else await refresh();
   }
 
-  function send(e: React.FormEvent) {
+  async function send(e: React.FormEvent) {
     e.preventDefault();
-    appendRequestDmMessage(requestId, handle!, draft);
+    const text = draft.trim();
+    if (!text) return;
+    const res = await patchRequestDm(requestId, { message: text });
     setDraft("");
-    refresh();
+    if (res.request) setRow(res.request);
+    else await refresh();
   }
 
   return (
@@ -160,14 +181,14 @@ export default function RequestDmThreadPage() {
           <div className="mt-4 flex gap-2">
             <button
               type="button"
-              onClick={() => respond("accepted")}
+              onClick={() => void respond("accepted")}
               className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep"
             >
               やる
             </button>
             <button
               type="button"
-              onClick={() => respond("declined")}
+              onClick={() => void respond("declined")}
               className="flex-1 rounded-md border border-viscum-line bg-white/70 px-3 py-2.5 text-[14px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
             >
               いまは無理
@@ -177,7 +198,7 @@ export default function RequestDmThreadPage() {
 
         <ul className="mt-5 space-y-3">
           {row.messages.map((m) => {
-            const mine = m.fromHandle === handle;
+            const mine = m.fromHandle.toLowerCase() === me;
             const name = mine
               ? displayAccountName(handle, readLocalProfile(handle))
               : m.fromHandle === row.fromHandle
@@ -203,7 +224,7 @@ export default function RequestDmThreadPage() {
           })}
         </ul>
 
-        <form onSubmit={send} className="mt-6 space-y-2">
+        <form onSubmit={(e) => void send(e)} className="mt-6 space-y-2">
           <label className="sr-only" htmlFor="dm-draft">
             メッセージ
           </label>

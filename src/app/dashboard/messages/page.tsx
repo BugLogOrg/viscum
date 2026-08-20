@@ -7,31 +7,55 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   formatYen,
-  readRequestDms,
   statusLabel,
   type RequestDm,
 } from "@/lib/local-request-dms";
+import { fetchMyRequests } from "@/lib/remote-requests";
 
 export default function MessagesIndexPage() {
   const { data: session, status } = useSession();
   const [rows, setRows] = useState<RequestDm[]>([]);
-  const handle = session?.user?.handle;
+  const [persisted, setPersisted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const handle = session?.user?.handle?.replace(/^@/, "").trim();
 
   useEffect(() => {
-    if (!handle) return;
-    setRows(readRequestDms());
+    if (!handle) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    void fetchMyRequests().then((res) => {
+      if (cancelled) return;
+      setRows(res.requests);
+      setPersisted(res.persisted);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [handle]);
 
   const mine = useMemo(() => {
     if (!handle) return [];
+    const me = handle.toLowerCase();
     return rows
-      .filter((r) => r.toHandle === handle || r.fromHandle === handle)
+      .filter(
+        (r) =>
+          r.toHandle.toLowerCase() === me ||
+          r.fromHandle.toLowerCase() === me,
+      )
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   }, [rows, handle]);
 
-  const pending = mine.filter((r) => r.status === "pending" && r.toHandle === handle);
+  const pending = mine.filter(
+    (r) =>
+      r.status === "pending" &&
+      r.toHandle.toLowerCase() === (handle ?? "").toLowerCase(),
+  );
 
-  if (status === "loading") {
+  if (status === "loading" || (handle && loading)) {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
@@ -69,7 +93,10 @@ export default function MessagesIndexPage() {
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">ご依頼DM</h1>
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-            直依頼ごとの薄いやりとりです。全ユーザーの受信箱ではありません（デモ・端末内）。
+            直依頼ごとの薄いやりとりです。全ユーザーの受信箱ではありません。
+            {persisted
+              ? " サーバーに保存され、相手アカウントにも届きます。"
+              : " （サーバー未接続時は端末のみ）"}
           </p>
         </div>
 
@@ -81,7 +108,7 @@ export default function MessagesIndexPage() {
 
         <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
           {mine.map((r) => {
-            const incoming = r.toHandle === handle;
+            const incoming = r.toHandle.toLowerCase() === handle.toLowerCase();
             const peer = incoming ? r.fromHandle : r.toHandle;
             const peerName = incoming
               ? r.fromAccountName || r.fromHandle

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Work } from "@/data/dummy-works";
 import { createRequestDm } from "@/lib/local-request-dms";
+import { postRequestDm } from "@/lib/remote-requests";
 import {
   displayAccountName,
   fetchRemoteProfile,
@@ -116,6 +117,8 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const [closed, setClosed] = useState(false);
   const [draftNote, setDraftNote] = useState<string | null>(null);
   const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   useEffect(() => {
     const sync = () => setTick((n) => n + 1);
@@ -222,29 +225,51 @@ export function DirectRequestForm({ work }: { work: Work }) {
         className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!canSend || !selected || !fromHandle) return;
+          if (!canSend || !selected || !fromHandle || sending) return;
           const shortTitle =
             work.tagline?.trim() ||
             work.title.trim().slice(0, 48) +
               (work.title.trim().length > 48 ? "…" : "");
-          const row = createRequestDm({
-            workId: work.id,
-            workTitle: shortTitle,
-            fromHandle,
-            fromAccountName: displayAccountName(
+          setSendError(null);
+          setSending(true);
+          void (async () => {
+            const remote = await postRequestDm({
+              workId: work.id,
+              workTitle: shortTitle,
+              toHandle: selected.handle,
+              amountYen: 5000,
+              pitch: message.trim(),
+            });
+            if (remote.ok && remote.request) {
+              try {
+                localStorage.removeItem(draftKey(work.id, fromHandle));
+              } catch {
+                /* ignore */
+              }
+              router.push(
+                `/dashboard/messages/${encodeURIComponent(remote.request.id)}`,
+              );
+              return;
+            }
+            // Neon失敗時のみ端末フォールバック（相手端末には届かない）
+            const row = createRequestDm({
+              workId: work.id,
+              workTitle: shortTitle,
               fromHandle,
-              readLocalProfile(fromHandle),
-            ),
-            toHandle: selected.handle,
-            amountYen: 5000,
-            pitch: message.trim(),
-          });
-          try {
-            localStorage.removeItem(draftKey(work.id, fromHandle));
-          } catch {
-            /* ignore */
-          }
-          router.push(`/dashboard/messages/${encodeURIComponent(row.id)}`);
+              fromAccountName: displayAccountName(
+                fromHandle,
+                readLocalProfile(fromHandle),
+              ),
+              toHandle: selected.handle,
+              amountYen: 5000,
+              pitch: message.trim(),
+            });
+            setSendError(
+              `${remote.error || "サーバー保存に失敗"}（この端末のみに保存しました）`,
+            );
+            setSending(false);
+            router.push(`/dashboard/messages/${encodeURIComponent(row.id)}`);
+          })();
         }}
       >
         <fieldset>
@@ -380,6 +405,11 @@ export function DirectRequestForm({ work }: { work: Work }) {
           </div>
         </details>
 
+        {sendError && (
+          <p className="rounded-md border border-viscum-berry/40 bg-viscum-berry/10 px-3 py-2 text-[12px] text-viscum-berry-deep">
+            {sendError}
+          </p>
+        )}
         {draftNote && (
           <p className="text-[12px] text-viscum-muted">{draftNote}</p>
         )}
@@ -394,10 +424,10 @@ export function DirectRequestForm({ work }: { work: Work }) {
           </button>
           <button
             type="submit"
-            disabled={!canSend}
+            disabled={!canSend || sending}
             className="rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50 sm:flex-[1.4]"
           >
-            直依頼を送る
+            {sending ? "送信中…" : "直依頼を送る"}
           </button>
         </div>
       </form>

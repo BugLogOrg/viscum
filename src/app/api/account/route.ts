@@ -6,6 +6,7 @@ import {
   accounts,
   comments,
   payments,
+  requestDms,
   users,
   verificationTokens,
   works,
@@ -51,6 +52,14 @@ export async function DELETE() {
       .delete(payments)
       .where(
         or(eq(payments.fromUserId, userId), eq(payments.toUserId, userId)),
+      );
+    await db
+      .delete(requestDms)
+      .where(
+        or(
+          eq(requestDms.fromUserId, userId),
+          eq(requestDms.toUserId, userId),
+        ),
       );
     await db.delete(comments).where(eq(comments.authorId, userId));
     await db.delete(works).where(eq(works.seederId, userId));

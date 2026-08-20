@@ -184,10 +184,61 @@ export const payments = pgTable("payments", {
     .notNull(),
 });
 
+/**
+ * 直依頼DM（薄い案件単位。全開受信箱ではない・ADR-028）。
+ * work_id はデモ作品も可のため FK なし。
+ */
+export const requestDms = pgTable(
+  "request_dms",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    workId: text("work_id").notNull(),
+    workTitle: text("work_title").notNull(),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => users.id),
+    toUserId: text("to_user_id")
+      .notNull()
+      .references(() => users.id),
+    amountYen: integer("amount_yen").notNull(),
+    pitch: text("pitch").notNull(),
+    /** pending | accepted | declined */
+    status: text("status").notNull().default("pending"),
+    /**
+     * { id, fromHandle, body, createdAt }[]
+     * 薄いスレなので jsonb で十分（MVP）
+     */
+    messages: jsonb("messages")
+      .$type<
+        {
+          id: string;
+          fromHandle: string;
+          body: string;
+          createdAt: string;
+        }[]
+      >()
+      .notNull()
+      .default([]),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("request_dms_from_idx").on(t.fromUserId),
+    index("request_dms_to_idx").on(t.toUserId),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type WorkRow = typeof works.$inferSelect;
 export type CommentRow = typeof comments.$inferSelect;
 export type PaymentRow = typeof payments.$inferSelect;
+export type RequestDmRow = typeof requestDms.$inferSelect;
 
 export type WorkPlan =
   | "free_comment"

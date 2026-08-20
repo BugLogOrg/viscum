@@ -13,9 +13,7 @@ import {
   readAvatarDataUrl,
   readLocalProfile,
 } from "@/lib/local-profile";
-import {
-  pendingRequestCount,
-} from "@/lib/local-request-dms";
+import { fetchMyRequests } from "@/lib/remote-requests";
 
 /** ベル＝通知。アカウントメニュー＝ダッシュ／設定／スキ・気になる */
 export function HeaderAccountActions({
@@ -53,7 +51,14 @@ export function HeaderAccountActions({
     const sync = () => {
       setLocalAvatar(readAvatarDataUrl(handle));
       setAccountName(displayAccountName(handle, readLocalProfile(handle)));
-      setPendingDm(pendingRequestCount(handle));
+      void fetchMyRequests().then((res) => {
+        const me = handle.toLowerCase();
+        const n = res.requests.filter(
+          (r) =>
+            r.status === "pending" && r.toHandle.toLowerCase() === me,
+        ).length;
+        setPendingDm(n);
+      });
     };
     sync();
     window.addEventListener("viscum-profile-updated", sync);
@@ -114,7 +119,16 @@ export function HeaderAccountActions({
         className="relative rounded-md p-2 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
         onClick={() => {
           if (handle) {
-            setPendingDm(pendingRequestCount(handle));
+            void fetchMyRequests().then((res) => {
+              const me = handle.toLowerCase();
+              setPendingDm(
+                res.requests.filter(
+                  (r) =>
+                    r.status === "pending" &&
+                    r.toHandle.toLowerCase() === me,
+                ).length,
+              );
+            });
           }
         }}
       >
