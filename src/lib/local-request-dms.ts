@@ -138,60 +138,9 @@ export function pendingRequestCount(forHandle?: string): number {
   }).length;
 }
 
-export function installDemoRequestDms(viewerHandle: string) {
-  const existing = readRequestDms();
-  if (existing.some((r) => r.id.startsWith("req_demo_"))) return;
-
-  const now = Date.now();
-  const demos: RequestDm[] = [
-    {
-      id: "req_demo_01",
-      workId: "promo-15s",
-      workTitle: "宅配ボックスIoTの15秒プロモ",
-      fromHandle: "ken",
-      fromAccountName: "ken",
-      toHandle: viewerHandle,
-      amountYen: 5000,
-      pitch: "あなただけに見てほしいです。見る範囲は説明どおりで大丈夫です。",
-      status: "pending",
-      createdAt: new Date(now - 45 * 60000).toISOString(),
-      messages: [
-        {
-          id: "req_demo_01_m0",
-          fromHandle: "ken",
-          body: "あなただけに見てほしいです。見る範囲は説明どおりで大丈夫です。",
-          createdAt: new Date(now - 45 * 60000).toISOString(),
-        },
-      ],
-    },
-    {
-      id: "req_demo_02",
-      workId: "note-clip",
-      workTitle: "noteクリップの導線レビュー",
-      fromHandle: viewerHandle,
-      fromAccountName: viewerHandle,
-      toHandle: "ayu",
-      amountYen: 10000,
-      pitch: "冒頭3秒と改善点だけ見てほしいです（直依頼・改善提案帯）。",
-      status: "accepted",
-      createdAt: new Date(now - 2 * 86400000).toISOString(),
-      messages: [
-        {
-          id: "req_demo_02_m0",
-          fromHandle: viewerHandle,
-          body: "冒頭3秒と改善点だけ見てほしいです（直依頼・改善提案帯）。",
-          createdAt: new Date(now - 2 * 86400000).toISOString(),
-        },
-        {
-          id: "req_demo_02_m1",
-          fromHandle: "ayu",
-          body: "やるね。今夜見て返す。",
-          createdAt: new Date(now - 2 * 86400000 + 3600000).toISOString(),
-        },
-      ],
-    },
-  ];
-  writeRequestDms([...demos, ...existing]);
+/** @deprecated Neon移行後は呼ばない。誤って呼ばれても残骸を消すだけ */
+export function installDemoRequestDms(_viewerHandle: string) {
+  clearLocalRequestDms();
 }
 
 export function formatYen(amount: number): string {

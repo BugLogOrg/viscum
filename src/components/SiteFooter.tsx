@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-/** 全画面共通フッター（デモ表記込み） */
+/** 全画面共通フッター。サンプル棚と本番機能を混同させない */
 export function SiteFooter() {
   return (
     <footer className="px-4 py-8 text-center text-[11px] text-viscum-muted">
@@ -9,7 +9,8 @@ export function SiteFooter() {
       </Link>
       {" · "}
       <span className="tracking-[0.08em]">VISCUM</span>
-      {" · ダミーデータ"}
+      {" · "}
+      <span>フィード作品の一部はサンプル</span>
     </footer>
   );
 }
