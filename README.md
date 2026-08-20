@@ -17,7 +17,16 @@ npm run dev
 - LP: http://localhost:3000/lp  
 - 投稿: http://localhost:3000/new  
 
-## Vercel
+## DB（Neon）
+
+```bash
+# schema.ts を Neon に反映（本番・共有DB）
+npm run db:push
+```
+
+- 正本: `src/db/schema.ts`（users／works／**comments**／**payments**）
+- 履歴SQL: `drizzle/`（新規環境用スナップショット。既存Neonは push 運用）
+- 集計ヘルパ: `src/db/payment-facts.ts`（層B・バッジ用。UI未配線）
 
 - **公開デモ（段階A・2026-08-19）**: https://viscum.vercel.app （別名 https://app-opal-xi-rw82xi0vc5.vercel.app ）
 - **GitHub**: https://github.com/BugLogOrg/viscum （単独リポ。Vaultドキュメントは入れない）
