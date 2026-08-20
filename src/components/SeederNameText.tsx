@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import {
   displayAccountName,
@@ -16,18 +15,17 @@ function formatLine(handle: string, accountName: string): string {
 }
 
 /**
- * シーダー表示：アカウント名＋@英語ID。
- * 端末プロフィール → API の順で名前を補完する。
+ * シーダー名の表示のみ（リンクなし）。
+ * 端末プロフィール → API → シード時スナップショットの順。
+ * フィード内の親 Link とネストしないための分離。
  */
-export function SeederLink({
+export function SeederNameText({
   handle,
   preferredName,
-  className = "font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand",
 }: {
   handle: string;
-  /** シード保存時のアカウント名など */
+  /** シード保存時の名前。ライブ名が無ければフォールバック */
   preferredName?: string;
-  className?: string;
 }) {
   const h = handle.replace(/^@/, "").trim();
   const [line, setLine] = useState(() =>
@@ -35,7 +33,6 @@ export function SeederLink({
   );
 
   useEffect(() => {
-    // ライブ名（端末→API）を優先。シード時スナップショットはフォールバックのみ。
     const localName = displayAccountName(h, readLocalProfile(h));
     const seedName = preferredName?.trim() || "";
     const liveLocal =
@@ -57,13 +54,5 @@ export function SeederLink({
     };
   }, [h, preferredName]);
 
-  return (
-    <Link
-      href={`/u/${encodeURIComponent(h)}`}
-      className={className}
-      title="プロフィールを見る"
-    >
-      {line}
-    </Link>
-  );
+  return <>{line}</>;
 }

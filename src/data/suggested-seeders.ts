@@ -77,9 +77,10 @@ export function accountLabelForHandle(
             p.handle.replace(/^@/, "").trim().toLowerCase() === h.toLowerCase(),
         )
       : undefined;
+  // 端末の最新アカウント名を優先（シード時スナップショットはフォールバック）
   const accountName =
-    preferredName?.trim() ||
     local?.accountName?.trim() ||
+    preferredName?.trim() ||
     demo?.displayName ||
     h;
   const line =

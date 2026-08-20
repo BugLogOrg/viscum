@@ -8,9 +8,9 @@ import {
   planBadgeLabel,
   getWorkReactionCounts,
 } from "@/data/dummy-works";
-import { accountLabelForHandle } from "@/data/suggested-seeders";
 import { StatusBadge } from "@/components/StatusBadge";
 import { FeedThumbReactions } from "@/components/FeedThumbReactions";
+import { SeederNameText } from "@/components/SeederNameText";
 
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1） */
 export const THUMB_ASPECT = "aspect-[1280/670]";
@@ -33,10 +33,6 @@ export function WorkFeedRow({
 }) {
   const deadline = formatDeadlineFeed(work.closesInHours, work.status);
   const postedShort = formatMonthDay(postedAtFromHoursAgo(work.hoursAgo));
-  const seeder = accountLabelForHandle(
-    work.seeder,
-    work.seederAccountName,
-  );
   const rx = getWorkReactionCounts(work);
 
   return (
@@ -108,7 +104,10 @@ export function WorkFeedRow({
           <span>💬 {work.comments.length}</span>
           <span aria-hidden>·</span>
           <span className="truncate text-viscum-trunk" title="シーダー">
-            {seeder.line}
+            <SeederNameText
+              handle={work.seeder}
+              preferredName={work.seederAccountName}
+            />
           </span>
         </div>
       </Link>
