@@ -418,10 +418,11 @@ export function PostForm() {
 
       <div>
         <p className="text-[13px] font-medium text-viscum-ink">
-          サムネイル <span className="font-normal text-viscum-muted">任意・推奨</span>
+          サムネイル{" "}
+          <span className="font-normal text-viscum-muted">任意・推奨</span>
         </p>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
-          棚と詳細の顔になります。比率は横長（約16:9寄り／1280×670想定）。なくても色面で仮置きできます。
+          下のプレビューで確認できます。横長（約16:9）推奨。未設定なら色面です。
         </p>
         <input
           ref={thumbInputRef}
@@ -430,30 +431,19 @@ export function PostForm() {
           className="sr-only"
           onChange={(e) => onThumbPick(e.target.files?.[0])}
         />
-        {thumbUrl ? (
-          <div className="mt-2 space-y-2">
-            <div
-              className={`w-full overflow-hidden rounded-lg border border-viscum-line ${THUMB_ASPECT}`}
-              style={{ aspectRatio: "1280 / 670" }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={thumbUrl}
-                alt=""
-                className="h-full w-full object-cover"
-              />
-            </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <p className="truncate text-[12px] text-viscum-muted">
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => thumbInputRef.current?.click()}
+            className="rounded-md border border-viscum-line bg-white/80 px-3 py-1.5 text-[13px] font-medium text-viscum-brand hover:border-viscum-brand hover:bg-viscum-leaf-soft/40"
+          >
+            {thumbUrl ? "差し替え" : "画像を選ぶ"}
+          </button>
+          {thumbUrl ? (
+            <>
+              <span className="max-w-[12rem] truncate text-[12px] text-viscum-muted">
                 {thumbName}
-              </p>
-              <button
-                type="button"
-                onClick={() => thumbInputRef.current?.click()}
-                className="text-[13px] font-medium text-viscum-brand underline"
-              >
-                差し替え
-              </button>
+              </span>
               <button
                 type="button"
                 onClick={clearThumb}
@@ -461,24 +451,13 @@ export function PostForm() {
               >
                 外す
               </button>
-            </div>
-            <p className="text-[11px] text-viscum-muted">
-              デモではこの端末内のプレビューのみ。サーバーには保存しません。
-            </p>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => thumbInputRef.current?.click()}
-            className={`mt-2 flex w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-viscum-line bg-white/50 px-3 py-6 text-viscum-muted transition hover:border-viscum-brand hover:bg-viscum-leaf-soft/40 ${THUMB_ASPECT}`}
-            style={{ aspectRatio: "1280 / 670" }}
-          >
-            <span className="text-[14px] font-medium text-viscum-brand">
-              画像を選ぶ
+            </>
+          ) : (
+            <span className="text-[11px] text-viscum-muted">
+              JPG / PNG / WebP · デモは5MBまで
             </span>
-            <span className="text-[11px]">JPG / PNG / WebP など · デモは5MBまで</span>
-          </button>
-        )}
+          )}
+        </div>
       </div>
 
       <div>
