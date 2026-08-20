@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
@@ -65,7 +66,7 @@ export function OwnerSeedActions({
         シーダー操作（本人のみ）
       </p>
       <p className="text-[11px] leading-relaxed text-viscum-muted">
-        公開の取り消しは「棚から外す」。完全に消すときは「削除」。ログイン中のシーダー本人だけ操作できます。
+        公開の取り消しは「下書きに戻す」。完全に消すときは「削除」。ログイン中のシーダー本人だけ操作できます。
       </p>
       <div className="flex flex-wrap gap-2">
         {listed ? (
@@ -85,7 +86,7 @@ export function OwnerSeedActions({
               setSeed(res.seed);
             }}
           >
-            棚から外す（未公開に戻す）
+            下書きに戻す（棚から外す）
           </button>
         ) : null}
         <button
@@ -108,12 +109,20 @@ export function OwnerSeedActions({
               setError(res.error);
               return;
             }
-            router.push("/dashboard");
+            router.push("/");
           }}
         >
           削除する
         </button>
       </div>
+      {!listed && seed ? (
+        <p className="text-[12px] leading-relaxed text-viscum-muted">
+          いまは下書き（未公開）です。ダッシュボードの「下書き」一覧から公開できます。{" "}
+          <Link href="/dashboard#drafts" className="text-viscum-brand underline">
+            下書き一覧へ
+          </Link>
+        </p>
+      ) : null}
       {error ? (
         <p className="text-[12px] text-viscum-berry-deep">{error}</p>
       ) : null}
