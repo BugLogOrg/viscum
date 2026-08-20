@@ -14,7 +14,6 @@ import {
   readLocalProfile,
 } from "@/lib/local-profile";
 import {
-  installDemoRequestDms,
   pendingRequestCount,
 } from "@/lib/local-request-dms";
 
@@ -54,7 +53,6 @@ export function HeaderAccountActions({
     const sync = () => {
       setLocalAvatar(readAvatarDataUrl(handle));
       setAccountName(displayAccountName(handle, readLocalProfile(handle)));
-      installDemoRequestDms(handle);
       setPendingDm(pendingRequestCount(handle));
     };
     sync();
@@ -116,7 +114,6 @@ export function HeaderAccountActions({
         className="relative rounded-md p-2 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
         onClick={() => {
           if (handle) {
-            installDemoRequestDms(handle);
             setPendingDm(pendingRequestCount(handle));
           }
         }}

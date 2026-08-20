@@ -10,7 +10,6 @@ import {
   appendRequestDmMessage,
   formatYen,
   getRequestDm,
-  installDemoRequestDms,
   setRequestDmStatus,
   statusLabel,
   type RequestDm,
@@ -27,7 +26,7 @@ export default function RequestDmThreadPage() {
 
   useEffect(() => {
     if (!handle) return;
-    installDemoRequestDms(handle);
+    // 自動デモ投入はしない（本物の依頼文と混ざる）
     setRow(getRequestDm(requestId));
   }, [handle, requestId]);
 
@@ -122,15 +121,19 @@ export default function RequestDmThreadPage() {
       <SiteHeader backHref="/dashboard/messages" hideOnMd hidePostCta />
       <main className="mx-auto flex max-w-lg flex-col px-4 pb-8 pt-4">
         <div className="space-y-1 border-b border-viscum-line pb-4">
-          <p className="text-[12px] text-viscum-muted">ご依頼DM · デモ</p>
+          <p className="text-[12px] text-viscum-muted">ご依頼DM</p>
           <h1 className="text-lg font-semibold text-viscum-ink">
             {peerLabel}
             <span className="ml-1 text-[13px] font-normal text-viscum-muted">
               @{peerHandle}
             </span>
           </h1>
-          <p className="text-[13px] text-viscum-muted">
-            {formatYen(row.amountYen)} ·{" "}
+          <p className="text-[13px] text-viscum-ink">
+            <span className="text-viscum-muted">金額 · </span>
+            {formatYen(row.amountYen)}
+          </p>
+          <p className="text-[13px] text-viscum-ink">
+            <span className="text-viscum-muted">作品 · </span>
             <Link
               href={`/w/${encodeURIComponent(row.workId)}`}
               className="text-viscum-brand underline"
@@ -141,6 +144,16 @@ export default function RequestDmThreadPage() {
           <p className="text-[12px] text-viscum-muted">
             状態: {statusLabel(row.status)}
           </p>
+          {row.pitch?.trim() ? (
+            <div className="mt-3 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2">
+              <p className="text-[11px] font-medium text-viscum-muted">
+                お願い文（送った内容）
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
+                {row.pitch}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         {isRecipient && row.status === "pending" && (

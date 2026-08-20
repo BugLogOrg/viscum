@@ -7,7 +7,6 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   formatYen,
-  installDemoRequestDms,
   readRequestDms,
   statusLabel,
   type RequestDm,
@@ -20,7 +19,6 @@ export default function MessagesIndexPage() {
 
   useEffect(() => {
     if (!handle) return;
-    installDemoRequestDms(handle);
     setRows(readRequestDms());
   }, [handle]);
 

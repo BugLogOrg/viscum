@@ -112,9 +112,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const [tick, setTick] = useState(0);
   const [query, setQuery] = useState("");
   const [mentor, setMentor] = useState("");
-  const [message, setMessage] = useState(
-    `${work.title.slice(0, 40)}… を、あなただけに見てほしいです。見る範囲は説明どおりで大丈夫です。`,
-  );
+  const [message, setMessage] = useState("");
   const [closed, setClosed] = useState(false);
   const [draftNote, setDraftNote] = useState<string | null>(null);
   const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
@@ -225,9 +223,13 @@ export function DirectRequestForm({ work }: { work: Work }) {
         onSubmit={(e) => {
           e.preventDefault();
           if (!canSend || !selected || !fromHandle) return;
+          const shortTitle =
+            work.tagline?.trim() ||
+            work.title.trim().slice(0, 48) +
+              (work.title.trim().length > 48 ? "…" : "");
           const row = createRequestDm({
             workId: work.id,
-            workTitle: work.title,
+            workTitle: shortTitle,
             fromHandle,
             fromAccountName: displayAccountName(
               fromHandle,
