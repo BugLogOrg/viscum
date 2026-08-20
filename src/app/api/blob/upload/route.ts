@@ -25,6 +25,10 @@ export async function POST(request: Request): Promise<NextResponse> {
       request,
       onBeforeGenerateToken: async () => {
         const session = await auth();
+        const handle = session?.user?.handle?.replace(/^@/, "").trim();
+        if (!session?.user?.id || !handle) {
+          throw new Error("画像アップロードにはログイン（英語ID）が必要です");
+        }
         return {
           /** クライアントで JPEG 圧縮済みのみ受け付ける */
           allowedContentTypes: ["image/jpeg"],
@@ -32,8 +36,8 @@ export async function POST(request: Request): Promise<NextResponse> {
           maximumSizeInBytes: 320_000,
           addRandomSuffix: true,
           tokenPayload: JSON.stringify({
-            userId: session?.user?.id ?? "guest",
-            handle: session?.user?.handle ?? null,
+            userId: session.user.id,
+            handle,
           }),
         };
       },

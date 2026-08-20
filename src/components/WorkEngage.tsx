@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { CommentList } from "@/components/CommentList";
@@ -9,8 +10,15 @@ import {
   readLocalComments,
 } from "@/lib/local-comments";
 import {
-  MAX_COMMENT_IMAGES,
-  type CommentImageSlot,
+  countImagesInBlocks,
+  emptyComposeBlocks,
+  newBlockId,
+  serializeCommentBlocks,
+  type CommentBlock,
+  type CommentImageBlock,
+} from "@/lib/comment-blocks";
+import { MAX_COMMENT_IMAGES } from "@/lib/comment-images";
+import {
   fetchBlobConfigured,
   prepareCommentImage,
 } from "@/lib/upload-comment-image";
@@ -22,16 +30,14 @@ type Props = {
   paymentsDone?: number;
   deadlineLine: string | null;
   initialComments: Comment[];
-  /** 採用済み未払いがあるか（決済ヒント） */
   hasAdoptedUntipped: boolean;
-  /** 聞くこと／募集の目安（コメント足場） */
   scaffoldLabel?: string;
   scaffoldLines?: string[];
 };
 
 /**
  * コンペ帯＋コメント投稿＋一覧。
- * 締切後もコメント可。賞金対象外であることは必ず明示（ADR-015）。
+ * 投稿はログイン＋英語ID必須（ADR-027）。画像は文中ブロック。
  */
 export function WorkEngage({
   workId,
@@ -44,16 +50,19 @@ export function WorkEngage({
   scaffoldLabel,
   scaffoldLines = [],
 }: Props) {
-  const { data: session } = useSession();
+  const { data: session, status: authStatus } = useSession();
+  const handle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
+  const canWrite = Boolean(session?.user?.id && handle);
+
   const [localExtra, setLocalExtra] = useState<Comment[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [subject, setSubject] = useState("");
-  const [body, setBody] = useState("");
+  const [blocks, setBlocks] = useState<CommentBlock[]>(emptyComposeBlocks);
   const [error, setError] = useState<string | null>(null);
   const [justPosted, setJustPosted] = useState(false);
-  const [images, setImages] = useState<CommentImageSlot[]>([]);
   const [blobOn, setBlobOn] = useState<boolean | null>(null);
   const [busyUpload, setBusyUpload] = useState(false);
+  const [insertAfterId, setInsertAfterId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -73,14 +82,20 @@ export function WorkEngage({
     status === "open" || status === "pay_soon" || status === "closed";
   const compActive = status === "open" || status === "pay_soon";
   const compClosed = status === "closed";
-  /** コンペなし（感想歓迎）も投稿可 */
   const canPost =
     status === "open" ||
     status === "pay_soon" ||
     status === "closed" ||
     status === "none";
 
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/w/${workId}`)}`;
+
   function startCompose() {
+    if (!canWrite) {
+      setOpenForm(true);
+      setError(null);
+      return;
+    }
     setOpenForm(true);
     setJustPosted(false);
     setError(null);
@@ -88,21 +103,46 @@ export function WorkEngage({
 
   function resetForm() {
     setSubject("");
-    setBody("");
-    setImages((prev) => {
-      for (const s of prev) {
-        if (s.previewUrl.startsWith("blob:")) URL.revokeObjectURL(s.previewUrl);
+    setBlocks((prev) => {
+      for (const b of prev) {
+        if (b.type === "image" && b.previewUrl.startsWith("blob:")) {
+          URL.revokeObjectURL(b.previewUrl);
+        }
       }
-      return [];
+      return emptyComposeBlocks();
     });
   }
 
-  async function addFiles(fileList: FileList | File[]) {
+  function addTextBlockAfter(afterId?: string) {
+    const block: CommentBlock = {
+      id: newBlockId("t"),
+      type: "text",
+      text: "",
+    };
+    setBlocks((prev) => {
+      if (!afterId) return [...prev, block];
+      const i = prev.findIndex((b) => b.id === afterId);
+      if (i < 0) return [...prev, block];
+      const next = [...prev];
+      next.splice(i + 1, 0, block);
+      return next;
+    });
+  }
+
+  async function addFilesAfter(
+    fileList: FileList | File[],
+    afterId: string | null,
+  ) {
+    if (!canWrite) {
+      setError("画像の添付にはログインが必要です。");
+      return;
+    }
     const files = Array.from(fileList).filter((f) =>
       f.type.startsWith("image/"),
     );
     if (!files.length) return;
-    const room = MAX_COMMENT_IMAGES - images.length;
+    const used = countImagesInBlocks(blocks);
+    const room = MAX_COMMENT_IMAGES - used;
     if (room <= 0) {
       setError(`画像は最大${MAX_COMMENT_IMAGES}枚までです`);
       return;
@@ -110,90 +150,121 @@ export function WorkEngage({
     setBusyUpload(true);
     setError(null);
     try {
+      let anchor = afterId;
       for (const file of files.slice(0, room)) {
-        const id = `img_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+        const id = newBlockId("img");
         const localPreview = URL.createObjectURL(file);
-        setImages((prev) => [
-          ...prev,
-          { id, previewUrl: localPreview, uploading: true },
-        ]);
+        const placeholder: CommentImageBlock = {
+          id,
+          type: "image",
+          previewUrl: localPreview,
+          caption: "",
+          uploading: true,
+        };
+        setBlocks((prev) => {
+          if (!anchor) return [...prev, placeholder];
+          const i = prev.findIndex((b) => b.id === anchor);
+          if (i < 0) return [...prev, placeholder];
+          const next = [...prev];
+          next.splice(i + 1, 0, placeholder);
+          return next;
+        });
+        anchor = id;
         try {
           const prepared = await prepareCommentImage(file);
           URL.revokeObjectURL(localPreview);
-          setImages((prev) =>
-            prev.map((s) =>
-              s.id === id
+          setBlocks((prev) =>
+            prev.map((b) =>
+              b.id === id && b.type === "image"
                 ? {
-                    id,
+                    ...b,
                     previewUrl: prepared.previewUrl,
                     finalUrl: prepared.finalUrl,
                     uploading: false,
                   }
-                : s,
+                : b,
             ),
           );
         } catch (e) {
           URL.revokeObjectURL(localPreview);
-          setImages((prev) =>
-            prev.map((s) =>
-              s.id === id
+          setBlocks((prev) =>
+            prev.map((b) =>
+              b.id === id && b.type === "image"
                 ? {
-                    ...s,
+                    ...b,
                     uploading: false,
                     error: (e as Error).message || "アップロード失敗",
                   }
-                : s,
+                : b,
             ),
           );
         }
       }
     } finally {
       setBusyUpload(false);
+      setInsertAfterId(null);
       if (fileRef.current) fileRef.current.value = "";
     }
   }
 
-  function removeImage(id: string) {
-    setImages((prev) => {
-      const hit = prev.find((s) => s.id === id);
-      if (hit?.previewUrl.startsWith("blob:")) {
+  function removeBlock(id: string) {
+    setBlocks((prev) => {
+      const hit = prev.find((b) => b.id === id);
+      if (hit?.type === "image" && hit.previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(hit.previewUrl);
       }
-      return prev.filter((s) => s.id !== id);
+      const next = prev.filter((b) => b.id !== id);
+      return next.length ? next : emptyComposeBlocks();
+    });
+  }
+
+  function moveBlock(id: string, dir: -1 | 1) {
+    setBlocks((prev) => {
+      const i = prev.findIndex((b) => b.id === id);
+      const j = i + dir;
+      if (i < 0 || j < 0 || j >= prev.length) return prev;
+      const next = [...prev];
+      const tmp = next[i]!;
+      next[i] = next[j]!;
+      next[j] = tmp;
+      return next;
     });
   }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    const s = subject.trim();
-    const b = body.trim();
-    if (!s || !b) {
-      setError("件名と本文の両方を書いてください。");
+    if (!canWrite) {
+      setError("コメントにはログインと英語ID（コテハン）が必要です。");
       return;
     }
-    if (images.some((i) => i.uploading)) {
+    const s = subject.trim();
+    if (!s) {
+      setError("件名を書いてください。");
+      return;
+    }
+    if (blocks.some((b) => b.type === "image" && b.uploading)) {
       setError("画像のアップロードが終わるまで待ってください。");
       return;
     }
-    if (images.some((i) => i.error)) {
+    if (blocks.some((b) => b.type === "image" && b.error)) {
       setError("失敗した画像を外すか、入れ直してください。");
       return;
     }
-    const imageUrls = images
-      .map((i) => i.finalUrl)
-      .filter((u): u is string => Boolean(u));
-    const handle = session?.user?.handle?.replace(/^@/, "").trim();
-    const author = handle || "ゲスト";
+    const { body, imageUrls } = serializeCommentBlocks(blocks);
+    if (!body.trim()) {
+      setError("本文か画像を入れてください。");
+      return;
+    }
     const accountName =
       session?.user?.name?.trim() &&
-      session.user.name.trim().toLowerCase() !== handle?.toLowerCase()
+      session.user.name.trim().toLowerCase() !== handle.toLowerCase()
         ? session.user.name.trim()
         : undefined;
-    const row = addLocalComment(workId, {
-      author,
+    addLocalComment(workId, {
+      author: handle,
       accountName,
       subject: s,
-      body: b,
+      body,
       afterClose: compClosed,
       imageUrls,
     });
@@ -202,7 +273,33 @@ export function WorkEngage({
     setOpenForm(false);
     setJustPosted(true);
     setError(null);
-    void row;
+  }
+
+  function composeGate() {
+    if (authStatus === "loading") {
+      return (
+        <p className="text-[13px] text-viscum-muted">ログイン状態を確認中…</p>
+      );
+    }
+    if (!canWrite) {
+      return (
+        <div className="rounded-md border border-viscum-line bg-viscum-paper px-3 py-3 text-[13px] leading-relaxed text-viscum-ink">
+          <p className="font-medium text-viscum-berry-deep">
+            コメントはログイン必須です
+          </p>
+          <p className="mt-1 text-[12px] text-viscum-muted">
+            英語ID（コテハン）が残るので、追跡と荒らし防止になります。表示名の自由入力はできません。
+          </p>
+          <Link
+            href={loginHref}
+            className="mt-3 inline-flex rounded-md bg-viscum-berry px-3 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+          >
+            ログインして書く
+          </Link>
+        </div>
+      );
+    }
+    return null;
   }
 
   return (
@@ -290,167 +387,246 @@ export function WorkEngage({
       )}
 
       {openForm && canPost && (
-        <form
-          onSubmit={submit}
-          className="space-y-3 rounded-lg border border-viscum-line bg-white/70 px-3 py-3"
-        >
+        <div className="space-y-3 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
           <h3 className="text-[14px] font-semibold text-viscum-ink">
             {compClosed ? "終了後コメント" : "コメントを書く"}
           </h3>
-          {compClosed && (
-            <p className="text-[12px] leading-relaxed text-viscum-berry-deep">
-              締切済みのため、このコメントはコンペの賞金対象外です。再コンペ希望や感想として送られます。
-            </p>
-          )}
-          <label className="block space-y-1">
-            <span className="text-[12px] text-viscum-muted">件名</span>
-            <input
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              maxLength={80}
-              placeholder="一言の見出し"
-              className="w-full rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand"
-            />
-          </label>
-          <label className="block space-y-1">
-            <span className="text-[12px] text-viscum-muted">本文</span>
-            {scaffoldLabel && scaffoldLines.length > 0 && (
-              <div className="rounded-md border border-viscum-line/80 bg-viscum-paper-2/80 px-2.5 py-2">
-                <p className="text-[11px] font-medium text-viscum-ink">
-                  {scaffoldLabel}に沿って書くと読みやすいです
+          {composeGate()}
+          {canWrite && (
+            <form onSubmit={submit} className="space-y-3">
+              {compClosed && (
+                <p className="text-[12px] leading-relaxed text-viscum-berry-deep">
+                  締切済みのため、このコメントはコンペの賞金対象外です。
                 </p>
-                <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-[11px] leading-snug text-viscum-muted">
-                  {scaffoldLines.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ol>
-              </div>
-            )}
-            <textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              onPaste={(e) => {
-                const items = e.clipboardData?.items;
-                if (!items) return;
-                const files: File[] = [];
-                for (const item of items) {
-                  if (item.type.startsWith("image/")) {
-                    const f = item.getAsFile();
-                    if (f) files.push(f);
-                  }
-                }
-                if (files.length) {
-                  e.preventDefault();
-                  void addFiles(files);
-                }
-              }}
-              rows={5}
-              maxLength={4000}
-              placeholder={
-                compClosed
-                  ? "再コンペの希望、追加の指摘、感想など"
-                  : scaffoldLines.length > 0
-                    ? "番号つきで答えても、自由文でも大丈夫です"
-                    : "気づいたことを書いてください（範囲外もOK）"
-              }
-              className="w-full resize-y rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[14px] leading-relaxed text-viscum-ink outline-none focus:border-viscum-brand"
-            />
-          </label>
-
-          <div className="space-y-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[12px] text-viscum-muted">
-                画像（ミス箇所のスクショなど・最大{MAX_COMMENT_IMAGES}枚）
+              )}
+              <p className="text-[11px] text-viscum-muted">
+                投稿者: @{handle}
+                {session?.user?.name &&
+                session.user.name.trim().toLowerCase() !== handle.toLowerCase()
+                  ? `（${session.user.name.trim()}）`
+                  : ""}
+                　· コテハン固定
               </p>
-              <button
-                type="button"
-                disabled={
-                  busyUpload || images.length >= MAX_COMMENT_IMAGES
-                }
-                onClick={() => fileRef.current?.click()}
-                className="text-[12px] font-medium text-viscum-brand underline disabled:opacity-40"
-              >
-                画像を追加
-              </button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files) void addFiles(e.target.files);
-                }}
-              />
-            </div>
-            <p className="text-[11px] leading-relaxed text-viscum-muted">
-              {blobOn === true
-                ? "必ず圧縮してから Blob へ直送します（課金なし・Hobby無料枠内想定）。貼り付け可。"
-                : blobOn === false
-                  ? "Blob 未接続のため、圧縮画像をこの端末内に置いてデモします。本番は BLOB_READ_WRITE_TOKEN（Hobby無料で可）。"
-                  : "保存先を確認中…"}
-            </p>
-            {images.length > 0 && (
-              <ul className="grid grid-cols-3 gap-2">
-                {images.map((slot) => (
-                  <li
-                    key={slot.id}
-                    className="relative overflow-hidden rounded-md border border-viscum-line bg-viscum-paper-2"
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={slot.previewUrl}
-                      alt=""
-                      className="aspect-square w-full object-cover"
-                    />
-                    {slot.uploading && (
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-[10px] text-white">
-                        圧縮・送信中
-                      </span>
-                    )}
-                    {slot.error && (
-                      <span className="absolute inset-x-0 bottom-0 bg-viscum-berry-deep/90 px-1 py-0.5 text-[9px] text-white">
-                        {slot.error}
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => removeImage(slot.id)}
-                      className="absolute right-1 top-1 rounded bg-black/55 px-1.5 py-0.5 text-[10px] text-white"
-                      aria-label="画像を外す"
-                    >
-                      ×
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
+              <label className="block space-y-1">
+                <span className="text-[12px] text-viscum-muted">件名</span>
+                <input
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                  maxLength={80}
+                  placeholder="一言の見出し"
+                  className="w-full rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand"
+                />
+              </label>
 
-          {error && (
-            <p className="text-[12px] text-viscum-berry-deep">{error}</p>
+              {scaffoldLabel && scaffoldLines.length > 0 && (
+                <div className="rounded-md border border-viscum-line/80 bg-viscum-paper-2/80 px-2.5 py-2">
+                  <p className="text-[11px] font-medium text-viscum-ink">
+                    {scaffoldLabel}に沿って書くと読みやすいです
+                  </p>
+                  <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-[11px] leading-snug text-viscum-muted">
+                    {scaffoldLines.map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <p className="text-[12px] text-viscum-muted">
+                  本文（文章と画像を交互に置けます）
+                </p>
+                {blocks.map((b, index) => (
+                  <div
+                    key={b.id}
+                    className="rounded-md border border-viscum-line bg-viscum-paper px-2.5 py-2"
+                  >
+                    <div className="mb-1.5 flex flex-wrap items-center gap-2">
+                      <span className="text-[10px] font-medium tracking-wide text-viscum-muted">
+                        {b.type === "text" ? "文章" : "画像"} · {index + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => moveBlock(b.id, -1)}
+                        disabled={index === 0}
+                        className="text-[11px] text-viscum-brand underline disabled:opacity-30"
+                      >
+                        上へ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => moveBlock(b.id, 1)}
+                        disabled={index === blocks.length - 1}
+                        className="text-[11px] text-viscum-brand underline disabled:opacity-30"
+                      >
+                        下へ
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeBlock(b.id)}
+                        className="ml-auto text-[11px] text-viscum-muted underline"
+                      >
+                        削除
+                      </button>
+                    </div>
+                    {b.type === "text" ? (
+                      <textarea
+                        value={b.text}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setBlocks((prev) =>
+                            prev.map((x) =>
+                              x.id === b.id && x.type === "text"
+                                ? { ...x, text: v }
+                                : x,
+                            ),
+                          );
+                        }}
+                        onPaste={(e) => {
+                          const items = e.clipboardData?.items;
+                          if (!items) return;
+                          const files: File[] = [];
+                          for (const item of items) {
+                            if (item.type.startsWith("image/")) {
+                              const f = item.getAsFile();
+                              if (f) files.push(f);
+                            }
+                          }
+                          if (files.length) {
+                            e.preventDefault();
+                            void addFilesAfter(files, b.id);
+                          }
+                        }}
+                        rows={4}
+                        maxLength={4000}
+                        placeholder="指摘を書く。画像を貼ると、この段落の直後に入ります"
+                        className="w-full resize-y rounded-md border border-viscum-line bg-white/80 px-2.5 py-2 text-[14px] leading-relaxed text-viscum-ink outline-none focus:border-viscum-brand"
+                      />
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="relative overflow-hidden rounded-md border border-viscum-line bg-viscum-paper-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={b.previewUrl}
+                            alt=""
+                            className="max-h-48 w-full object-contain"
+                          />
+                          {b.uploading && (
+                            <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-[11px] text-white">
+                              圧縮・送信中
+                            </span>
+                          )}
+                          {b.error && (
+                            <span className="absolute inset-x-0 bottom-0 bg-viscum-berry-deep/90 px-1 py-0.5 text-[10px] text-white">
+                              {b.error}
+                            </span>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          value={b.caption}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setBlocks((prev) =>
+                              prev.map((x) =>
+                                x.id === b.id && x.type === "image"
+                                  ? { ...x, caption: v }
+                                  : x,
+                              ),
+                            );
+                          }}
+                          maxLength={80}
+                          placeholder="この画像の一言（例: 設定が深い）"
+                          className="w-full rounded-md border border-viscum-line bg-white/80 px-2.5 py-1.5 text-[13px] text-viscum-ink outline-none focus:border-viscum-brand"
+                        />
+                      </div>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => addTextBlockAfter(b.id)}
+                        className="text-[11px] font-medium text-viscum-brand underline"
+                      >
+                        ＋この下に文章
+                      </button>
+                      <button
+                        type="button"
+                        disabled={
+                          busyUpload ||
+                          countImagesInBlocks(blocks) >= MAX_COMMENT_IMAGES
+                        }
+                        onClick={() => {
+                          setInsertAfterId(b.id);
+                          fileRef.current?.click();
+                        }}
+                        className="text-[11px] font-medium text-viscum-brand underline disabled:opacity-40"
+                      >
+                        ＋この下に画像
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      void addFilesAfter(e.target.files, insertAfterId);
+                    }
+                  }}
+                />
+                <p className="text-[11px] leading-relaxed text-viscum-muted">
+                  {blobOn === true
+                    ? "画像は圧縮して Blob へ直送（課金なし枠）。文章の直後に差し込めます。"
+                    : blobOn === false
+                      ? "Blob 未接続時は端末内デモ。本番はトークン設定済み想定。"
+                      : "保存先を確認中…"}
+                </p>
+              </div>
+
+              {error && (
+                <p className="text-[12px] text-viscum-berry-deep">{error}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={
+                    busyUpload ||
+                    blocks.some((b) => b.type === "image" && b.uploading)
+                  }
+                  className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                >
+                  送信する
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenForm(false);
+                    setError(null);
+                    resetForm();
+                  }}
+                  className="rounded-md border border-viscum-line px-3 py-2.5 text-sm text-viscum-muted"
+                >
+                  やめる
+                </button>
+              </div>
+            </form>
           )}
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={busyUpload || images.some((i) => i.uploading)}
-              className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-            >
-              送信する
-            </button>
+          {!canWrite && (
             <button
               type="button"
               onClick={() => {
                 setOpenForm(false);
                 setError(null);
-                resetForm();
               }}
-              className="rounded-md border border-viscum-line px-3 py-2.5 text-sm text-viscum-muted"
+              className="rounded-md border border-viscum-line px-3 py-2 text-sm text-viscum-muted"
             >
-              やめる
+              閉じる
             </button>
-          </div>
-        </form>
+          )}
+        </div>
       )}
 
       <CommentList

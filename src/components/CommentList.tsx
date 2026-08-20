@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { CommentBody, commentPreviewPlain } from "@/components/CommentBody";
 import type { Comment, CompStatus } from "@/data/dummy-works";
 import { formatHoursAgo, formatYen } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import { readLocalProfile } from "@/lib/local-profile";
-import { LinkifiedText } from "@/components/LinkifiedText";
 
 function isPortfolioHandle(raw: string) {
   return /^[a-zA-Z0-9_]{2,24}$/.test(raw);
@@ -136,7 +136,7 @@ export function CommentList({
                       <>
                         <span className="text-viscum-line"> · </span>
                         <span className="line-clamp-1 font-normal text-viscum-muted/80">
-                          {c.body}
+                          {commentPreviewPlain(c.body)}
                         </span>
                       </>
                     )}
@@ -146,32 +146,7 @@ export function CommentList({
 
               {open && (
                 <div className="border-t border-viscum-line/80 bg-viscum-paper px-3 py-3 pl-9">
-                  <p className="text-sm leading-relaxed text-viscum-ink">
-                    <LinkifiedText text={c.body} />
-                  </p>
-                  {c.imageUrls && c.imageUrls.length > 0 && (
-                    <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-                      {c.imageUrls.map((src) => (
-                        <li key={src}>
-                          <a
-                            href={src}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block overflow-hidden rounded-md border border-viscum-line bg-viscum-paper-2"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={src}
-                              alt=""
-                              className="aspect-video w-full object-cover"
-                              loading="lazy"
-                            />
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <CommentBody body={c.body} imageUrls={c.imageUrls} />
                   <div className="mt-3 flex flex-wrap gap-2">
                     {!c.adopted && !c.afterClose && (
                       <>
