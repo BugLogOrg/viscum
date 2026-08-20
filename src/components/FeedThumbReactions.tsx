@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type MouseEvent } from "react";
+import { formatCount } from "@/data/dummy-works";
 import {
   hasReaction,
   toggleReaction,
@@ -8,13 +9,19 @@ import {
 } from "@/lib/local-reactions";
 import { bumpLocalSeedStat } from "@/lib/local-seeds";
 
-/** TOPサムネ下：ハート＝スキ／目＝気になる */
+/** TOPサムネ下：ハート＝スキ／目＝気になる（他ユーザ込み件数つき） */
 export function FeedThumbReactions({
   workId,
   title,
+  sukiBase = 0,
+  bookmarkBase = 0,
 }: {
   workId: string;
   title: string;
+  /** 他ユーザ分のスキ件数（デモ／集計） */
+  sukiBase?: number;
+  /** 他ユーザ分の気になる件数 */
+  bookmarkBase?: number;
 }) {
   const [sukiOn, setSukiOn] = useState(false);
   const [bmOn, setBmOn] = useState(false);
@@ -37,38 +44,47 @@ export function FeedThumbReactions({
     }
   }
 
+  const sukiN = sukiBase + (sukiOn ? 1 : 0);
+  const bmN = bookmarkBase + (bmOn ? 1 : 0);
+
   return (
     <div
-      className="mt-1 flex items-center justify-center gap-0.5"
+      className="mt-1 flex items-center justify-center gap-1"
       onClick={(e) => e.stopPropagation()}
     >
       <button
         type="button"
-        title={sukiOn ? "スキ済み" : "スキ"}
-        aria-label={sukiOn ? "スキ済み" : "スキ"}
+        title={sukiOn ? `スキ済み · ${sukiN}` : `スキ · ${sukiN}`}
+        aria-label={sukiOn ? `スキ済み ${sukiN}` : `スキ ${sukiN}`}
         aria-pressed={sukiOn}
         onClick={(e) => onToggle(e, "suki")}
-        className={`rounded-md p-1.5 transition ${
+        className={`inline-flex items-center gap-0.5 rounded-md px-1 py-1 transition ${
           sukiOn
             ? "text-viscum-berry"
             : "text-viscum-muted hover:bg-viscum-paper-2 hover:text-viscum-berry"
         }`}
       >
-        <HeartIcon filled={sukiOn} className="h-4 w-4" />
+        <HeartIcon filled={sukiOn} className="h-4 w-4 shrink-0" />
+        <span className="min-w-[1ch] text-[10px] font-medium tabular-nums leading-none">
+          {formatCount(sukiN)}
+        </span>
       </button>
       <button
         type="button"
-        title={bmOn ? "気になる済み" : "気になる"}
-        aria-label={bmOn ? "気になる済み" : "気になる"}
+        title={bmOn ? `気になる済み · ${bmN}` : `気になる · ${bmN}`}
+        aria-label={bmOn ? `気になる済み ${bmN}` : `気になる ${bmN}`}
         aria-pressed={bmOn}
         onClick={(e) => onToggle(e, "bookmark")}
-        className={`rounded-md p-1.5 transition ${
+        className={`inline-flex items-center gap-0.5 rounded-md px-1 py-1 transition ${
           bmOn
             ? "text-viscum-brand"
             : "text-viscum-muted hover:bg-viscum-paper-2 hover:text-viscum-brand"
         }`}
       >
-        <EyeIcon filled={bmOn} className="h-4 w-4" />
+        <EyeIcon filled={bmOn} className="h-4 w-4 shrink-0" />
+        <span className="min-w-[1ch] text-[10px] font-medium tabular-nums leading-none">
+          {formatCount(bmN)}
+        </span>
       </button>
     </div>
   );

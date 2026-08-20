@@ -13,6 +13,7 @@ import {
   getWork,
   postedAtFromHoursAgo,
   planBadgeLabel,
+  getWorkReactionCounts,
   type Work,
 } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
@@ -43,6 +44,7 @@ export default async function WorkDetailPage({ params }: Props) {
   const hasAdoptedUntipped = work.comments.some(
     (c) => c.adopted && !c.tipped,
   );
+  const rx = getWorkReactionCounts(work);
 
   return (
     <BrowseChrome>
@@ -157,7 +159,12 @@ export default async function WorkDetailPage({ params }: Props) {
               </a>
             </p>
 
-            <WorkReactionBar workId={work.id} title={work.title} />
+            <WorkReactionBar
+              workId={work.id}
+              title={work.title}
+              sukiBase={rx.suki}
+              bookmarkBase={rx.bookmark}
+            />
 
             <WorkEngage
               workId={work.id}

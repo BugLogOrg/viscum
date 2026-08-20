@@ -45,6 +45,9 @@ export type Work = {
   thumbTone: "leaf" | "moss" | "berry" | "bark" | "trunk";
   comments: Comment[];
   paymentsDone?: number;
+  /** フィード人気表示用（他ユーザ含めたデモ集計。未指定時は合成） */
+  sukiCount?: number;
+  bookmarkCount?: number;
 };
 
 export function planBadgeLabel(plan?: DemoSeedPlan): string | undefined {
@@ -53,6 +56,32 @@ export function planBadgeLabel(plan?: DemoSeedPlan): string | undefined {
   if (plan === "brush_up") return "改善提案";
   if (plan === "public_boost") return "公開ブースト";
   return undefined;
+}
+
+/** スキ／気になるの他ユーザ込み件数（デモ）。自分の打刻はUI側で+1する */
+export function getWorkReactionCounts(work: Work): {
+  suki: number;
+  bookmark: number;
+} {
+  if (work.sukiCount != null || work.bookmarkCount != null) {
+    return {
+      suki: work.sukiCount ?? 0,
+      bookmark: work.bookmarkCount ?? 0,
+    };
+  }
+  const base = work.comments.length * 4 + (work.featured ? 18 : 0);
+  const fresh = Math.max(0, 24 - Math.min(work.hoursAgo, 24));
+  const prizeBoost = work.prizeYen ? Math.floor(work.prizeYen / 5000) : 0;
+  const suki = base + Math.floor(fresh / 2) + prizeBoost;
+  const bookmark =
+    Math.max(0, Math.floor(suki * 0.45) + (work.status === "open" ? 2 : 0));
+  return { suki, bookmark };
+}
+
+export function formatCount(n: number): string {
+  if (n >= 10000) return `${(n / 10000).toFixed(1).replace(/\.0$/, "")}万`;
+  if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+  return String(n);
 }
 
 export const DUMMY_WORKS: Work[] = [
@@ -74,6 +103,8 @@ export const DUMMY_WORKS: Work[] = [
     externalUrl: "https://viscum.org",
     thumbTone: "leaf",
     paymentsDone: 0,
+    sukiCount: 42,
+    bookmarkCount: 19,
     comments: [
       {
         id: "c1",
@@ -413,6 +444,8 @@ export const DUMMY_WORKS: Work[] = [
     ],
     externalUrl: "https://example.com/ext",
     thumbTone: "leaf",
+    sukiCount: 28,
+    bookmarkCount: 15,
     comments: [
       {
         id: "c1",

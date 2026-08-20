@@ -6,6 +6,7 @@ import {
   formatHoursAgo,
   postedAtFromHoursAgo,
   planBadgeLabel,
+  getWorkReactionCounts,
 } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import { StatusBadge } from "@/components/StatusBadge";
@@ -33,6 +34,7 @@ export function WorkFeedRow({
   const deadline = formatDeadlineFeed(work.closesInHours, work.status);
   const postedShort = formatMonthDay(postedAtFromHoursAgo(work.hoursAgo));
   const seeder = accountLabelForHandle(work.seeder);
+  const rx = getWorkReactionCounts(work);
 
   return (
     <article
@@ -48,7 +50,12 @@ export function WorkFeedRow({
         >
           {work.title.slice(0, 1)}
         </Link>
-        <FeedThumbReactions workId={work.id} title={work.title} />
+        <FeedThumbReactions
+          workId={work.id}
+          title={work.title}
+          sukiBase={rx.suki}
+          bookmarkBase={rx.bookmark}
+        />
       </div>
       <Link
         href={`/w/${work.id}`}
