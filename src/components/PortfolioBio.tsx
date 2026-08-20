@@ -11,6 +11,11 @@ import {
   THUMB_TONE_CLASS,
 } from "@/data/suggested-seeders";
 import { LinkifiedText } from "@/components/LinkifiedText";
+import {
+  countFollowers,
+  countFollowing,
+  FOLLOWS_UPDATED,
+} from "@/lib/local-follows";
 
 /** 公開PF頭：アカウント名が主、@英語IDは副。一言はその下 */
 export function PortfolioHeader({
@@ -26,6 +31,8 @@ export function PortfolioHeader({
   );
   const [bio, setBio] = useState<string | null>(demo?.bio ?? null);
   const [avatar, setAvatar] = useState<string | null>(null);
+  const [followingN, setFollowingN] = useState(0);
+  const [followerN, setFollowerN] = useState(0);
 
   useEffect(() => {
     // デモ棚の人物像はローカル／Neonの実名で上書きしない（tori に mDB が乗る事故防止）
@@ -69,6 +76,20 @@ export function PortfolioHeader({
     };
   }, [handle, demo?.handle]);
 
+  useEffect(() => {
+    const sync = () => {
+      setFollowingN(countFollowing(handle));
+      setFollowerN(countFollowers(handle));
+    };
+    sync();
+    window.addEventListener(FOLLOWS_UPDATED, sync);
+    window.addEventListener("storage", sync);
+    return () => {
+      window.removeEventListener(FOLLOWS_UPDATED, sync);
+      window.removeEventListener("storage", sync);
+    };
+  }, [handle]);
+
   const letter = demo?.glyph ?? accountName.slice(0, 1).toUpperCase();
   const toneClass = demo
     ? `${THUMB_TONE_CLASS[demo.thumbTone]} ${demo.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`
@@ -109,6 +130,16 @@ export function PortfolioHeader({
         </div>
         {action ? <div className="shrink-0 pt-1">{action}</div> : null}
       </div>
+      <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-viscum-ink">
+        <span>
+          <span className="font-semibold tabular-nums">{followingN}</span>
+          <span className="ml-1 text-viscum-muted">フォロー</span>
+        </span>
+        <span>
+          <span className="font-semibold tabular-nums">{followerN}</span>
+          <span className="ml-1 text-viscum-muted">フォロワー</span>
+        </span>
+      </p>
       {bio ? (
         <div className="mt-3 text-[14px] leading-relaxed text-viscum-ink">
           <LinkifiedText text={bio} />

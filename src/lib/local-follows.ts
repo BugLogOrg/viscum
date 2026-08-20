@@ -95,3 +95,19 @@ export function toggleFollowing(
   const now = isFollowing(viewerHandle, targetHandle);
   return setFollowing(viewerHandle, targetHandle, !now);
 }
+
+/** その人がフォローしている人数 */
+export function countFollowing(viewerHandle: string): number {
+  return listFollowing(viewerHandle).length;
+}
+
+/** その人をフォローしている人数（端末内グラフ全体を集計） */
+export function countFollowers(targetHandle: string): number {
+  const target = normalize(targetHandle);
+  if (!target) return 0;
+  let n = 0;
+  for (const list of Object.values(readMap())) {
+    if ((list ?? []).some((h) => normalize(h) === target)) n += 1;
+  }
+  return n;
+}
