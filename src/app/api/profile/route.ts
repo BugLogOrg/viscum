@@ -40,13 +40,7 @@ export async function GET(req: Request) {
     .limit(1);
   const u = rows[0];
   if (!u) {
-    return NextResponse.json({
-      handle,
-      accountName: null,
-      bio: null,
-      image: null,
-      persisted: true,
-    });
+    return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
   return NextResponse.json({
