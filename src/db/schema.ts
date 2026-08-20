@@ -4,6 +4,7 @@ import {
   timestamp,
   integer,
   jsonb,
+  boolean,
   primaryKey,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "@auth/core/adapters";
@@ -71,9 +72,9 @@ export const verificationTokens = pgTable(
 );
 
 /**
- * シード（作品）。
- * soft KPI（閲覧・スキ・気になる）はシーダーの広告実績用。公開信用スコアには使わない（ADR-013／014／016）。
- * emo_count 列名は歴史的。UI表記はスキ。
+ * シード（作品）＝募集の器。
+ * soft KPI はシーダーの広告実績用。公開信用スコアには使わない（ADR-013／014／016）。
+ * 締切は closes_at／status。支払いは payments 表（混ぜない）。
  */
 export const works = pgTable("works", {
   id: text("id").primaryKey(),
@@ -82,10 +83,17 @@ export const works = pgTable("works", {
     .references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
+  /** @deprecated 足場は scaffold_lines へ。互換のため残す */
   focusNote: text("focus_note"),
+  /** 聞くこと／募集の目安（足場） */
+  scaffoldLines: jsonb("scaffold_lines").$type<string[]>(),
   externalUrl: text("external_url").notNull(),
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
-  /** none | open | pay_soon | closed */
+  /**
+   * free_comment | first_impression | brush_up | public_boost
+   */
+  plan: text("plan"),
+  /** none | open | pay_soon | closed — 募集の器のみ */
   status: text("status").notNull().default("none"),
   prizeYen: integer("prize_yen"),
   closesAt: timestamp("closes_at", { withTimezone: true }),
@@ -102,5 +110,103 @@ export const works = pgTable("works", {
     .notNull(),
 });
 
+/**
+ * コメント／公開ブースト報告。
+ * 採用マークは adopted_at。支払いは payments へ。
+ */
+export const comments = pgTable("comments", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  workId: text("work_id")
+    .notNull()
+    .references(() => works.id, { onDelete: "cascade" }),
+  authorId: text("author_id")
+    .notNull()
+    .references(() => users.id),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  /** シーダーが採用した時刻。null＝未採用 */
+  adoptedAt: timestamp("adopted_at", { withTimezone: true }),
+  /** 締切後投稿（賞金対象外・ADR-015） */
+  afterClose: boolean("after_close").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+/**
+ * 1払い＝1行。Stripe の正本（段階C）。
+ * checkout＝シーダー義務完了／payout＝メンター受取（分ける）。
+ */
+export const payments = pgTable("payments", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  /** field_adopt | public_boost_reward | direct_request */
+  kind: text("kind").notNull(),
+  workId: text("work_id").references(() => works.id, {
+    onDelete: "set null",
+  }),
+  commentId: text("comment_id").references(() => comments.id, {
+    onDelete: "set null",
+  }),
+  /** 直依頼案件ID（別表接続は後段） */
+  requestId: text("request_id"),
+  fromUserId: text("from_user_id")
+    .notNull()
+    .references(() => users.id),
+  toUserId: text("to_user_id")
+    .notNull()
+    .references(() => users.id),
+  amountYen: integer("amount_yen").notNull(),
+  /** none | pending | paid | failed | refunded */
+  checkoutStatus: text("checkout_status").notNull().default("none"),
+  /** none | eligible | pending | paid | failed */
+  payoutStatus: text("payout_status").notNull().default("none"),
+  stripeCheckoutSessionId: text("stripe_checkout_session_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripeTransferId: text("stripe_transfer_id"),
+  /** Checkout 成功＝シーダー義務完了・層B加算 */
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  /** Connect 出金完了＝メンター受取 */
+  payoutAt: timestamp("payout_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type WorkRow = typeof works.$inferSelect;
+export type CommentRow = typeof comments.$inferSelect;
+export type PaymentRow = typeof payments.$inferSelect;
+
+export type WorkPlan =
+  | "free_comment"
+  | "first_impression"
+  | "brush_up"
+  | "public_boost";
+
+export type WorkStatus = "none" | "open" | "pay_soon" | "closed";
+
+export type PaymentKind =
+  | "field_adopt"
+  | "public_boost_reward"
+  | "direct_request";
+
+export type CheckoutStatus =
+  | "none"
+  | "pending"
+  | "paid"
+  | "failed"
+  | "refunded";
+
+export type PayoutStatus =
+  | "none"
+  | "eligible"
+  | "pending"
+  | "paid"
+  | "failed";
