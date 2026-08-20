@@ -18,6 +18,9 @@ type Props = {
   initialComments: Comment[];
   /** 採用済み未払いがあるか（決済ヒント） */
   hasAdoptedUntipped: boolean;
+  /** 聞くこと／募集の目安（コメント足場） */
+  scaffoldLabel?: string;
+  scaffoldLines?: string[];
 };
 
 /**
@@ -32,6 +35,8 @@ export function WorkEngage({
   deadlineLine,
   initialComments,
   hasAdoptedUntipped,
+  scaffoldLabel,
+  scaffoldLines = [],
 }: Props) {
   const { data: session } = useSession();
   const [localExtra, setLocalExtra] = useState<Comment[]>([]);
@@ -208,6 +213,18 @@ export function WorkEngage({
           </label>
           <label className="block space-y-1">
             <span className="text-[12px] text-viscum-muted">本文</span>
+            {scaffoldLabel && scaffoldLines.length > 0 && (
+              <div className="rounded-md border border-viscum-line/80 bg-viscum-paper-2/80 px-2.5 py-2">
+                <p className="text-[11px] font-medium text-viscum-ink">
+                  {scaffoldLabel}に沿って書くと読みやすいです
+                </p>
+                <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-[11px] leading-snug text-viscum-muted">
+                  {scaffoldLines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ol>
+              </div>
+            )}
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -216,7 +233,9 @@ export function WorkEngage({
               placeholder={
                 compClosed
                   ? "再コンペの希望、追加の指摘、感想など"
-                  : "気づいたことを書いてください（範囲外もOK）"
+                  : scaffoldLines.length > 0
+                    ? "番号つきで答えても、自由文でも大丈夫です"
+                    : "気づいたことを書いてください（範囲外もOK）"
               }
               className="w-full resize-y rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[14px] leading-relaxed text-viscum-ink outline-none focus:border-viscum-brand"
             />

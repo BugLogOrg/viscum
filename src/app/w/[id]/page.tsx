@@ -16,6 +16,7 @@ import {
   getWorkReactionCounts,
   type Work,
 } from "@/data/dummy-works";
+import { scaffoldForPlan } from "@/data/seed-courses";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 
 const TONE: Record<Work["thumbTone"], string> = {
@@ -45,6 +46,12 @@ export default async function WorkDetailPage({ params }: Props) {
     (c) => c.adopted && !c.tipped,
   );
   const rx = getWorkReactionCounts(work);
+  const scaffold =
+    work.plan != null ? scaffoldForPlan(work.plan) : null;
+  const scaffoldLines = work.prompts?.length
+    ? work.prompts
+    : (scaffold?.lines ?? []);
+  const scaffoldLabel = scaffold?.label ?? null;
 
   return (
     <BrowseChrome>
@@ -140,12 +147,22 @@ export default async function WorkDetailPage({ params }: Props) {
               {work.description}
             </p>
 
-            {work.prompts && work.prompts.length > 0 && (
-              <ul className="list-inside list-disc text-[15px] leading-relaxed text-viscum-ink">
-                {work.prompts.map((p) => (
-                  <li key={p}>お題: {p}</li>
-                ))}
-              </ul>
+            {scaffoldLines.length > 0 && scaffoldLabel && (
+              <div className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+                <p className="text-[13px] font-medium text-viscum-ink">
+                  {scaffoldLabel}
+                </p>
+                <p className="mt-0.5 text-[11px] text-viscum-muted">
+                  {work.plan === "public_boost"
+                    ? "テンプレは足場です。報告コメントでは投稿URLなども含めてください。"
+                    : "テンプレは足場です。そのまま答えても、アレンジしても構いません。"}
+                </p>
+                <ol className="mt-2 list-decimal space-y-1 pl-5 text-[14px] leading-relaxed text-viscum-ink">
+                  {scaffoldLines.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ol>
+              </div>
             )}
 
             <p>
@@ -174,6 +191,8 @@ export default async function WorkDetailPage({ params }: Props) {
               deadlineLine={deadlineLine}
               initialComments={work.comments}
               hasAdoptedUntipped={hasAdoptedUntipped}
+              scaffoldLabel={scaffoldLabel ?? undefined}
+              scaffoldLines={scaffoldLines}
             />
           </div>
         </article>

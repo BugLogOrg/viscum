@@ -65,3 +65,23 @@ export const PUBLIC_BOOST = {
     "記入後に投稿URL等を報告する。褒賞はシーダーが選ぶ（全員払いではない）",
   ],
 } as const;
+
+/** 投稿フォームと同じ足場文言（デモ作品・詳細表示用） */
+export function scaffoldForPlan(plan: SeedPlanId): {
+  label: string;
+  lines: string[];
+} | null {
+  if (plan === "first_impression" || plan === "brush_up") {
+    return {
+      label: "聞くこと（足場）",
+      lines: [...courseById(plan).questions],
+    };
+  }
+  if (plan === "public_boost") {
+    return {
+      label: "募集の目安（足場）",
+      lines: [...PUBLIC_BOOST.criteria],
+    };
+  }
+  return null;
+}

@@ -1,3 +1,5 @@
+import { scaffoldForPlan } from "@/data/seed-courses";
+
 export type CompStatus = "none" | "open" | "pay_soon" | "closed";
 
 /** フィード／詳細デモ用。ADR-031/034 の4コース＋直依頼は別 */
@@ -84,7 +86,7 @@ export function formatCount(n: number): string {
   return String(n);
 }
 
-export const DUMMY_WORKS: Work[] = [
+const DUMMY_WORKS_RAW: Work[] = [
   {
     id: "viscum-self",
     title: "個人が作ったアプリや動画を速報棚に載せて、少額のコメントコンペを広告費としてばらまけるか——Viscum（ヤドリギ候補）自体の初見レビュー募集。開催中バッジと金額、払う顔は伝わる？稼ぐ副業っぽく見えない？名前・色・初動の迷いを一言ください。厳しめで短くて大丈夫です。",
@@ -98,8 +100,7 @@ export const DUMMY_WORKS: Work[] = [
     closesInHours: 46,
     featured: true,
     description:
-      "個人制作物の速報棚＋任意コンペの装置です。初見で迷いやすいところ、払いたくなるか、名前の印象を一言ください。",
-    prompts: ["初見の分かりやすさ", "払いたくなるか", "名前の印象"],
+      "個人制作物の速報棚＋任意コンペの装置です。初見で迷いやすいところを、聞くこと（足場）に沿って一言ください。",
     externalUrl: "https://viscum.org",
     thumbTone: "leaf",
     paymentsDone: 0,
@@ -109,30 +110,30 @@ export const DUMMY_WORKS: Work[] = [
       {
         id: "c1",
         author: "メンターA",
-        subject: "開催中バッジで安心。稼ぐ顔だと違う場に見える",
-        body: "トップの開催中バッジと金額が一目で分かって安心しました。もしLPや導線が「稼ごう／ポイ活」寄りだと、UluやPolishと同列の仕事板に見えてしまいます。Viscumは『広告費の出口』なので、シーダー主語のまま押し切った方が差別化になります。細かい点では、詳細に入る前に一言がtruncateされているのもスキャンしやすいです。",
+        subject: "広告費の出口に見える。稼ぐ顔だけ避けたい",
+        body: "1. 何の作品／サービスだと思いましたか？\n個人の作品を棚に載せて、少額コンペを広告費として撒く場だと思います。\n\n2. どんな人向けだと思いましたか？\n自分のアプリや動画を出したばかりで、知人以外の目が欲しい作り手。\n\n3. 興味を持ちましたか？理由も一言\n興味あり。開催中バッジと金額が一目で『払う側の祭り』に見えるのが強いです。\n\n4. 一番気になったところはどこですか？\nLPが稼ぐ／ポイ活寄りだと仕事板に寄るので、シーダー主語のまま押し切りたいです。",
         hoursAgo: 1,
         adopted: true,
       },
       {
         id: "c2",
         author: "レビュアーB",
-        subject: "一覧はサムネ＋見出し、コメントは詳細で展開が正解",
-        body: "大量にコンペが並ぶ前提なら、フィードにコメント本文を出すと縦に死にます。Product Hunt型で見出しとサムネに寄せ、コメントは作品詳細へ。さらにコメント自体も長文になりうるので、件名だけ見せて本文はGmailのように展開できると、シーダーもメンターも読みやすいと思います。",
+        subject: "棚の速報装置。コメントは詳細で展開が正解",
+        body: "1. 何の作品／サービスだと思いましたか？\n制作物の速報棚＋任意コンペの装置。\n\n2. どんな人向けだと思いましたか？\nフィードを流し見して刺さった作品だけ深掘りしたいメンター寄り。\n\n3. 興味を持ちましたか？理由も一言\n興味あり。件名だけ見せて本文をGmail型で展開できると長文でも読める。\n\n4. 一番気になったところはどこですか？\n一覧にコメント本文を出すと縦に死ぬので、サムネ＋見出しに寄せた判断は良いです。",
         hoursAgo: 3,
       },
       {
         id: "c3",
         author: "作り手C",
-        subject: "¥5,000は『広告費』と言い換えるとDMしやすい",
-        body: "知人にタダで見て、より他人に『払うから参加して』の方が心理的に楽、という仮説に近いです。金額も無料帯の薄い募集だと本気度が伝わらず、¥5,000なら本気シグナルになる。コピーに『広告費として』を添える案は、紙コンペの募集文でも試せそうです。",
+        subject: "¥5,000は本気シグナル。名前はまだ揺れる",
+        body: "1. 何の作品／サービスだと思いましたか？\n『払うから見て』を他人に頼みやすくする、少額広告の出口。\n\n2. どんな人向けだと思いましたか？\n知人にタダで頼むのが気まずい個人開発者。\n\n3. 興味を持ちましたか？理由も一言\n興味あり。無料帯より¥5,000の方が本気度が伝わる。\n\n4. 一番気になったところはどこですか？\nViscum／ヤドリギの名前が初見で一瞬揺れる。色（緑と実）は温かくて良いです。",
         hoursAgo: 5,
       },
       {
         id: "c4",
         author: "観察D",
-        subject: "色は温かい。紫テックにしない判断が良い",
-        body: "ヤドリギの緑と実の赤橙、紙クリームの組み合わせは浜の温度に合っています。初期からダークネオンや紫グラデにすると、思想の海岸線とズレます。サムネが色面仮置きでも、トンマナが通っていると『同じ場の祭り』に見えます。",
+        subject: "温かい場。紫テックにしない判断が効いている",
+        body: "1. 何の作品／サービスだと思いましたか？\n個人制作の祭り／速報の場。\n\n2. どんな人向けだと思いましたか？\nテックっぽい副業アプリより、浜の温度で作品を出したい人。\n\n3. 興味を持ちましたか？理由も一言\n興味あり。緑と実の赤橙、紙クリームが思想と揃っている。\n\n4. 一番気になったところはどこですか？\nサムネが色面仮置きでもトンマナが通っている点は良い。ダークネオンに寄せないでほしい。",
         hoursAgo: 8,
       },
     ],
@@ -149,15 +150,14 @@ export const DUMMY_WORKS: Work[] = [
     hoursAgo: 4,
     closesInHours: 20,
     description: "起床後3行だけ書くメモ。通知とウィジェットの初見を見てほしい。",
-    prompts: ["オンボーディング", "通知のうざさ"],
     externalUrl: "https://example.com/memo",
     thumbTone: "moss",
     comments: [
       {
         id: "c1",
         author: "早起きE",
-        subject: "最初の画面が空白すぎる",
-        body: "起動直後が真っ白で、何をするアプリか3秒迷いました。『今朝の3行』というプレースホルダか、昨日の続きが一瞬見えると安心します。通知の文言も『書け』より『今日の一行目』の方が優しそうです。",
+        subject: "メモアプリに見える。最初の空白が気になる",
+        body: "1. 何の作品／サービスだと思いましたか？\n朝起きてすぐ三行書くメモアプリ。\n\n2. どんな人向けだと思いましたか？\n日記は重いが、短い一行なら続けたい人。\n\n3. 興味を持ちましたか？理由も一言\n興味あり。『書け』より『今日の一行目』の方が優しそう。\n\n4. 一番気になったところはどこですか？\n起動直後が真っ白で、何をするか3秒迷いました。プレースホルダか昨日の続きが見えると安心します。",
         hoursAgo: 2,
       },
     ],
@@ -173,11 +173,18 @@ export const DUMMY_WORKS: Work[] = [
     prizeYen: 5000,
     hoursAgo: 6,
     closesInHours: 8,
-    description: "YouTube Shorts用。見る範囲は冒頭15秒だけでOK。",
-    prompts: ["冒頭の伝わり方", "音なしでも分かるか"],
+    description: "YouTube Shorts用。見る範囲は冒頭15秒だけでOK。聞くこと（足場）に沿って短く。",
     externalUrl: "https://example.com/video",
     thumbTone: "berry",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "動画見F",
+        subject: "宅配ボックス。音なしだと一瞬迷う",
+        body: "1. 何の作品／サービスだと思いましたか？\n宅配ボックス（IoT）の15秒プロモ。\n\n2. どんな人向けだと思いましたか？\n共働きで荷物の受け取りに困っている人。\n\n3. 興味を持ちましたか？理由も一言\n興味あり。荷物がボックスに落ちるカットは分かりやすい。\n\n4. 一番気になったところはどこですか？\n音なしだと冒頭1秒で製品名が弱く、テロップを半拍早く出したいです。",
+        hoursAgo: 1,
+      },
+    ],
   },
   {
     id: "novel-open",
@@ -190,16 +197,15 @@ export const DUMMY_WORKS: Work[] = [
     prizeYen: 10000,
     hoursAgo: 9,
     closesInHours: 72,
-    description: "全文ではなく冒頭のみ。続きが読みたくなるかだけ見てほしい。",
-    prompts: ["続きが欲しいか", "一人目の印象"],
+    description: "全文ではなく冒頭のみ。改善提案の聞くこと（足場）に沿って。",
     externalUrl: "https://example.com/novel",
     thumbTone: "bark",
     comments: [
       {
         id: "c1",
         author: "読者F",
-        subject: "屋上の匂いで残った。タイトル案あり",
-        body: "冒頭の『コンクリートが昼の熱を吐いている』あたりで続きが欲しくなりました。一人目の声がもう半歩早く入ると、誰の物語か掴みやすいです。タイトル案として『屋上の鍵』『団地の風向き』も候補になりそうです。あらすじは短めでちょうどよい負荷でした。",
+        subject: "屋上の匂いは残る。一人目をもう半歩早く",
+        body: "1. 良かったところは？\n『コンクリートが昼の熱を吐いている』あたりで続きが欲しくなりました。あらすじの長さもちょうどよい負荷です。\n\n2. 違和感があったところは？（理由つき）\n一人目の声が入るのが遅い。誰の物語か掴むまで半拍迷います。\n\n3. 分かりにくかったところは？\n屋上に上がる動機がまだ薄い。鍵／風向きのモチーフがあると入口が締まります。\n\n4. 自分ならどう直しますか？（代案）\n冒頭2段落目までに一人目の短い独白を入れる。タイトル案は『屋上の鍵』『団地の風向き』。",
         hoursAgo: 4,
         adopted: true,
       },
@@ -217,7 +223,6 @@ export const DUMMY_WORKS: Work[] = [
     hoursAgo: 12,
     closesInHours: 30,
     description: "決済UIはまだ準備中。コメントは歓迎、チップ確定は後から。",
-    prompts: ["ターゲットの伝わり方"],
     externalUrl: "https://example.com/lp",
     thumbTone: "trunk",
     comments: [],
@@ -256,7 +261,6 @@ export const DUMMY_WORKS: Work[] = [
     hoursAgo: 18,
     closesInHours: 54,
     description: "Chrome拡張。インストール〜最初のグループ作成まで。",
-    prompts: ["権限説明の怖さ", "命名UI"],
     externalUrl: "https://example.com/ext",
     thumbTone: "leaf",
     comments: [],
@@ -273,7 +277,6 @@ export const DUMMY_WORKS: Work[] = [
     hoursAgo: 22,
     closesInHours: 12,
     description: "真面目な添削よりタイトル・一言ツッコミ歓迎。",
-    prompts: ["タイトル案", "サムネの印象"],
     externalUrl: "https://example.com/pod",
     thumbTone: "berry",
     comments: [],
@@ -328,7 +331,6 @@ export const DUMMY_WORKS: Work[] = [
     featured: true,
     description:
       "決済準備中の先＝採用時支払いの直前。コメントは採用済みだが、まだ Checkout していない状態のデモです。",
-    prompts: ["採用して支払うの文言", "金額の再確認"],
     externalUrl: "https://example.com/pay-after",
     thumbTone: "berry",
     comments: [
@@ -354,7 +356,6 @@ export const DUMMY_WORKS: Work[] = [
     hoursAgo: 3,
     closesInHours: 36,
     description: "Figmaプロト。見る範囲は最初の3タップまで。",
-    prompts: ["親指で届くか", "戻る位置"],
     externalUrl: "https://example.com/figma",
     thumbTone: "bark",
     comments: [],
@@ -371,7 +372,6 @@ export const DUMMY_WORKS: Work[] = [
     hoursAgo: 7,
     closesInHours: 96,
     description: "リポジトリのREADMEとgifだけ。実際のinstallは不要。",
-    prompts: ["何をするツールか", "怖そうなコマンドはないか"],
     externalUrl: "https://example.com/cli",
     thumbTone: "leaf",
     comments: [],
@@ -402,7 +402,6 @@ export const DUMMY_WORKS: Work[] = [
     hoursAgo: 1,
     closesInHours: 18,
     description: "PDF1枚。初見の視線と誤解ポイントをください。",
-    prompts: ["何のサービスか分かる", "次に何してほしいか"],
     externalUrl: "https://example.com/pitch",
     thumbTone: "berry",
     comments: [],
@@ -437,11 +436,6 @@ export const DUMMY_WORKS: Work[] = [
     featured: true,
     description:
       "公開ブースト見本。外に書いてから報告。褒賞はシーダーが選ぶ（¥30,000予算）。",
-    prompts: [
-      "指定の公開場所へ正直な反応を残す",
-      "実利用したうえで書く",
-      "記入後に投稿URLを報告",
-    ],
     externalUrl: "https://example.com/ext",
     thumbTone: "leaf",
     sukiCount: 28,
@@ -450,8 +444,8 @@ export const DUMMY_WORKS: Work[] = [
       {
         id: "c1",
         author: "メンターK",
-        subject: "ストアに短評を残して報告します",
-        body: "スクショ3枚を見てからインストールし、権限説明は許容範囲でした。ストアに『タブが束ねられて視界が楽』と短評を投稿済みです。報告URLはデモなので仮置きです → https://example.com/review-demo",
+        subject: "ストア短評を投稿して報告（実利用済み）",
+        body: "1. 指定した公開場所へ正直な反応・投稿を残す\nChromeウェブストアに『タブが束ねられて視界が楽』と短評を投稿しました。\n\n2. 実利用したうえで書く\nスクショ3枚を見てからインストールし、実際にタブを束ねて使いました。触っていない評価ではありません。\n\n3. シーダー指定の観点に触れる\n権限ダイアログは許容範囲。何が片付く拡張かはアイコンと一文でだいたい伝わります。\n\n4. やらせ・星の売買保証は不可／開示\n星の指定はしていません。個人利用の正直な短評です。\n\n5. 記入後に投稿URL等を報告\n報告URL（デモ仮置き）→ https://example.com/review-demo",
         hoursAgo: 2,
       },
     ],
@@ -467,10 +461,18 @@ export const DUMMY_WORKS: Work[] = [
     prizeYen: 10000,
     hoursAgo: 14,
     closesInHours: 60,
-    description: "2000字。結末の一言だけ見てほしい。",
+    description: "2000字。結末の一言だけ見てほしい。改善提案の聞くことに沿って。",
     externalUrl: "https://example.com/story2",
     thumbTone: "moss",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "読者L",
+        subject: "最後の一文は残る。タイトルとの対応をもう一歩",
+        body: "1. 良かったところは？\n結末の一文で余韻が切れず、読み直したくなりました。長さの負荷もちょうどよいです。\n\n2. 違和感があったところは？（理由つき）\nタイトル『バス停の傘』と結末のモチーフがまだ薄い。傘が出るのが遅い。\n\n3. 分かりにくかったところは？\n中盤の会話が誰視点か一瞬迷いました。\n\n4. 自分ならどう直しますか？（代案）\n冒頭か中盤で傘を一度見せ、結末で回収する。件名にネタバレ可なら『傘を置いていく』案も候補。",
+        hoursAgo: 6,
+      },
+    ],
   },
   {
     id: "landing-ab",
@@ -483,11 +485,18 @@ export const DUMMY_WORKS: Work[] = [
     prizeYen: 10000,
     hoursAgo: 2,
     closesInHours: 14,
-    description: "2案のスクショ。選んだ理由を件名に。",
-    prompts: ["どちらを選ぶか", "理由一言"],
+    description: "2案のスクショ。改善提案の聞くことに沿って、どちらを選ぶかも本文で。",
     externalUrl: "https://example.com/lp",
     thumbTone: "bark",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "コピーM",
+        subject: "Bを選ぶ。煽りが薄くて払う気が残る",
+        body: "1. 良かったところは？\nB案は『払うから見て』が穏やかで、個人プロダクトの温度に合う。\n\n2. 違和感があったところは？（理由つき）\nA案の『今すぐ』が企業LPっぽく、本気シグナルより催促に見える。\n\n3. 分かりにくかったところは？\nA/Bの差分がヒーロー文だけで、CTAボタン色まで揃っていると迷う。\n\n4. 自分ならどう直しますか？（代案）\nBをベースに、金額を副文で明示。件名に『B・払う気』と書く運用も良いです。",
+        hoursAgo: 1,
+      },
+    ],
   },
   {
     id: "icon-set",
@@ -504,6 +513,14 @@ export const DUMMY_WORKS: Work[] = [
     comments: [],
   },
 ];
+
+/** コース定義の「聞くこと／募集の目安」をデモ作品の prompts に揃える */
+export const DUMMY_WORKS: Work[] = DUMMY_WORKS_RAW.map((w) => {
+  if (!w.plan) return w;
+  const scaffold = scaffoldForPlan(w.plan);
+  if (!scaffold) return { ...w, prompts: undefined };
+  return { ...w, prompts: scaffold.lines };
+});
 
 export function getWork(id: string): Work | undefined {
   return DUMMY_WORKS.find((w) => w.id === id);

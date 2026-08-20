@@ -1,4 +1,6 @@
 /** ブラウザ端末内のシード控え（Neon未接続時のB段階フォールバック） */
+import { courseById, PUBLIC_BOOST } from "@/data/seed-courses";
+
 export type LocalSeed = {
   id: string;
   seederHandle: string;
@@ -88,7 +90,7 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       title:
         "宅配ボックスIoTの15秒プロモ。冒頭1秒で何の製品か分かるかだけ見てほしい（初見レビュー）",
       description: "表示デモ用。初見レビュー ¥5,000。",
-      focusNote: "冒頭1秒\n音なしでも伝わるか",
+      focusNote: courseById("first_impression").questions.join("\n"),
       externalUrl: "https://example.com/promo",
       tags: ["動画"],
       status: "open",
@@ -107,7 +109,7 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       title:
         "短編『団地の屋上』冒頭の改善提案。続きが読みたくなるか、一人目の印象は残るか",
       description: "表示デモ用。改善提案 ¥10,000。",
-      focusNote: "続きが欲しいか\n一人目の印象",
+      focusNote: courseById("brush_up").questions.join("\n"),
       externalUrl: "https://example.com/novel",
       tags: ["小説"],
       status: "open",
@@ -142,6 +144,7 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       title:
         "タブ整理Chrome拡張の公開ブースト。ストア／SNSへ正直な反応→報告（予算¥30,000）",
       description: "表示デモ用。公開ブースト。記入後報告→選んで褒賞。",
+      focusNote: PUBLIC_BOOST.criteria.join("\n"),
       externalUrl: "https://example.com/ext",
       tags: ["アプリ"],
       status: "open",

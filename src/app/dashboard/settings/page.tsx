@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
+import { clearAccountLocalData } from "@/lib/clear-account-local";
 import {
   readNotifyPrefs,
   writeNotifyPrefs,
@@ -18,10 +19,41 @@ export default function SettingsPage() {
     seederAlerts: true,
     mentorParticipateAlerts: false,
   });
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmText, setConfirmText] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const handle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
 
   useEffect(() => {
     setPrefs(readNotifyPrefs());
   }, []);
+
+  async function deleteAccount() {
+    if (!handle || confirmText.trim().toLowerCase() !== handle.toLowerCase()) {
+      setDeleteError("英語IDを正確に入力してください。");
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/account", { method: "DELETE" });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+      };
+      if (!res.ok) {
+        setDeleteError(data.error || `削除に失敗しました（${res.status}）`);
+        setDeleting(false);
+        return;
+      }
+      clearAccountLocalData(handle);
+      await signOut({ callbackUrl: "/" });
+    } catch {
+      setDeleteError("ネットワークエラーです。もう一度お試しください。");
+      setDeleting(false);
+    }
+  }
 
   if (status === "loading") {
     return (
@@ -130,6 +162,77 @@ export default function SettingsPage() {
           >
             通知一覧へ
           </Link>
+        </section>
+
+        <section className="rounded-lg border border-viscum-berry/35 bg-viscum-berry/5 px-3 py-3 space-y-3">
+          <div>
+            <p className="text-[13px] font-semibold text-viscum-berry-deep">
+              アカウント削除
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
+              プロフィール・ログイン連携・あなたが並べたシードを消します。元に戻せません。
+            </p>
+          </div>
+
+          {!confirmOpen ? (
+            <button
+              type="button"
+              onClick={() => {
+                setConfirmOpen(true);
+                setConfirmText("");
+                setDeleteError(null);
+              }}
+              className="flex w-full items-center justify-center rounded-md border border-viscum-berry-deep px-3 py-2.5 text-sm font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
+            >
+              アカウントを削除
+            </button>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-[12px] leading-relaxed text-viscum-ink">
+                確認のため、英語ID{" "}
+                <span className="font-mono font-medium">@{handle || "—"}</span>{" "}
+                を入力してください。
+              </p>
+              <input
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                value={confirmText}
+                onChange={(e) => setConfirmText(e.target.value)}
+                placeholder={handle || "英語ID"}
+                className="w-full rounded-md border border-viscum-line bg-white px-3 py-2 text-sm text-viscum-ink outline-none focus:border-viscum-berry"
+              />
+              {deleteError ? (
+                <p className="text-[12px] text-viscum-berry-deep">{deleteError}</p>
+              ) : null}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  disabled={deleting}
+                  onClick={() => {
+                    setConfirmOpen(false);
+                    setConfirmText("");
+                    setDeleteError(null);
+                  }}
+                  className="flex-1 rounded-md border border-viscum-line px-3 py-2.5 text-sm text-viscum-ink hover:bg-white/80 disabled:opacity-50"
+                >
+                  やめる
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    deleting ||
+                    !handle ||
+                    confirmText.trim().toLowerCase() !== handle.toLowerCase()
+                  }
+                  onClick={() => void deleteAccount()}
+                  className="flex-1 rounded-md bg-viscum-berry-deep px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry disabled:opacity-45"
+                >
+                  {deleting ? "削除中…" : "完全に削除する"}
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </main>
     </BrowseChrome>
