@@ -40,7 +40,15 @@ type Draft = {
 };
 
 function draftKey(workId: string, fromHandle: string) {
-  return `viscum_request_draft_v1:${workId}:${fromHandle.toLowerCase() || "anon"}`;
+  return `viscum_request_draft_v2:${workId}:${fromHandle.toLowerCase() || "anon"}`;
+}
+
+/** 旧テンプレ下書き（作品タイトル断片＋定型文）は復元しない */
+function isStaleTemplatePitch(text: string) {
+  return (
+    text.includes("あなただけに見てほしいです") ||
+    text.includes("見る範囲は説明どおりで大丈夫です")
+  );
 }
 
 function optionFromHandle(
@@ -130,16 +138,26 @@ export function DirectRequestForm({ work }: { work: Work }) {
     };
   }, []);
 
-  // 下書き復元
+  // 下書き復元（v2のみ。旧テンプレは捨てる）
   useEffect(() => {
     try {
+      const legacy = `viscum_request_draft_v1:${work.id}:${fromHandle.toLowerCase() || "anon"}`;
+      localStorage.removeItem(legacy);
       const raw = localStorage.getItem(draftKey(work.id, fromHandle));
       if (!raw) return;
       const d = JSON.parse(raw) as Draft;
       if (d.mentor) setMentor(d.mentor);
-      if (typeof d.message === "string" && d.message.trim()) setMessage(d.message);
+      if (typeof d.message === "string" && d.message.trim()) {
+        if (isStaleTemplatePitch(d.message)) {
+          setMessage("");
+        } else {
+          setMessage(d.message);
+          setDraftNote(
+            `下書きあり（${new Date(d.updatedAt).toLocaleString("ja-JP")}）`,
+          );
+        }
+      }
       if (typeof d.closed === "boolean") setClosed(d.closed);
-      setDraftNote(`下書きあり（${new Date(d.updatedAt).toLocaleString("ja-JP")}）`);
     } catch {
       /* ignore */
     }
