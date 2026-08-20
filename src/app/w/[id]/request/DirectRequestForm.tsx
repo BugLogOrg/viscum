@@ -1,76 +1,108 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Work } from "@/data/dummy-works";
 import { createRequestDm } from "@/lib/local-request-dms";
-import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
+import {
+  displayAccountName,
+  fetchRemoteProfile,
+  listLocalProfiles,
+  readLocalProfile,
+} from "@/lib/local-profile";
 import {
   FOLLOWS_UPDATED,
   isFollowing,
   listFollowing,
 } from "@/lib/local-follows";
-import { accountLabelForHandle } from "@/data/suggested-seeders";
+import {
+  accountLabelForHandle,
+  getSuggestedSeeders,
+  searchDemoUsers,
+} from "@/data/suggested-seeders";
 
 type MentorOption = {
   handle: string;
   label: string;
-  specialty: string;
-  accepting: boolean;
-  blurb: string;
+  hint: string;
   mutual?: boolean;
-  sample?: boolean;
+  following?: boolean;
 };
 
-/** 受付OFFの見本だけ残す（実候補ではない） */
-const SAMPLE_OFF: MentorOption = {
-  handle: "kansatsuI",
-  label: "観察I",
-  specialty: "デザイン",
-  accepting: false,
-  blurb: "受付OFF（送れない見本）",
-  sample: true,
+type Draft = {
+  mentor: string;
+  message: string;
+  closed: boolean;
+  updatedAt: string;
 };
 
-function mentorFromHandle(
+function draftKey(workId: string, fromHandle: string) {
+  return `viscum_request_draft_v1:${workId}:${fromHandle.toLowerCase() || "anon"}`;
+}
+
+function optionFromHandle(
   handle: string,
-  opts: { mutual?: boolean },
+  me: string,
 ): MentorOption {
-  const profile = readLocalProfile(handle);
-  const label = displayAccountName(handle, profile);
-  const demo = accountLabelForHandle(handle);
+  const key = handle.replace(/^@/, "").trim().toLowerCase();
+  const profile = readLocalProfile(key);
+  const label = displayAccountName(key, profile);
+  const demo = accountLabelForHandle(key);
+  const following = Boolean(me) && isFollowing(me, key);
+  const mutual = following && isFollowing(key, me);
+  let hint = "ハンドル指名";
+  if (mutual) hint = "相互フォロー";
+  else if (following) hint = "フォロー中";
+  else if (profile?.bio?.trim()) hint = profile.bio.trim().slice(0, 40);
+  else if (demo.accountName !== key) hint = "候補";
   return {
-    handle,
-    label: label !== handle ? label : demo.accountName,
-    specialty: opts.mutual ? "相互フォロー" : "フォロー中",
-    accepting: true,
-    blurb: opts.mutual
-      ? "相互フォロー。サイト内メンター候補"
-      : "あなたがフォロー中（相互でなくても依頼可）",
-    mutual: opts.mutual,
+    handle: key,
+    label: label !== key ? label : demo.accountName,
+    hint,
+    mutual,
+    following,
   };
 }
 
-function buildMentorOptions(me: string): MentorOption[] {
-  const self = me.replace(/^@/, "").trim().toLowerCase();
-  if (!self) return [SAMPLE_OFF];
+function collectCandidates(me: string, query: string): MentorOption[] {
+  const needle = query.trim().toLowerCase().replace(/^@/, "");
+  const hit = new Map<string, MentorOption>();
+  const put = (h: string) => {
+    const key = h.replace(/^@/, "").trim().toLowerCase();
+    if (!key || (me && key === me.toLowerCase())) return;
+    const row = optionFromHandle(key, me);
+    if (needle) {
+      const label = row.label.toLowerCase();
+      if (!key.includes(needle) && !label.includes(needle)) return;
+    }
+    if (!hit.has(key)) hit.set(key, row);
+  };
 
-  const following = listFollowing(self).filter((h) => h !== self);
-  const mutual: MentorOption[] = [];
-  const oneWay: MentorOption[] = [];
-
-  for (const h of following) {
-    const isMutual = isFollowing(h, self);
-    const row = mentorFromHandle(h, { mutual: isMutual });
-    if (isMutual) mutual.push(row);
-    else oneWay.push(row);
+  if (me) {
+    for (const h of listFollowing(me)) put(h);
+  }
+  for (const p of listLocalProfiles()) put(p.handle);
+  for (const s of searchDemoUsers(needle || "a", 12)) {
+    // needle empty: skip demo flood; only when searching
+    if (needle) put(s.handle);
+  }
+  if (!needle && me) {
+    // 未検索時はフォロー＋サジェスト数人
+    for (const s of getSuggestedSeeders(5)) put(s.handle);
+  }
+  if (needle && needle.length >= 2) {
+    put(needle); // 入力中のハンドルを候補に含める
   }
 
-  // 相互を上に
-  const live = [...mutual, ...oneWay];
-  return [...live, SAMPLE_OFF];
+  const rows = [...hit.values()];
+  rows.sort((a, b) => {
+    const score = (m: MentorOption) =>
+      (m.mutual ? 4 : 0) + (m.following ? 2 : 0);
+    return score(b) - score(a) || a.handle.localeCompare(b.handle);
+  });
+  return rows.slice(0, 20);
 }
 
 export function DirectRequestForm({ work }: { work: Work }) {
@@ -78,11 +110,14 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const { data: session } = useSession();
   const fromHandle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
   const [tick, setTick] = useState(0);
+  const [query, setQuery] = useState("");
   const [mentor, setMentor] = useState("");
   const [message, setMessage] = useState(
     `${work.title.slice(0, 40)}… を、あなただけに見てほしいです。見る範囲は説明どおりで大丈夫です。`,
   );
   const [closed, setClosed] = useState(false);
+  const [draftNote, setDraftNote] = useState<string | null>(null);
+  const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
 
   useEffect(() => {
     const sync = () => setTick((n) => n + 1);
@@ -94,69 +129,95 @@ export function DirectRequestForm({ work }: { work: Work }) {
     };
   }, []);
 
-  const mentors = useMemo(
-    () => buildMentorOptions(fromHandle),
-    // tick: フォロー変更で再計算
+  // 下書き復元
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(draftKey(work.id, fromHandle));
+      if (!raw) return;
+      const d = JSON.parse(raw) as Draft;
+      if (d.mentor) setMentor(d.mentor);
+      if (typeof d.message === "string" && d.message.trim()) setMessage(d.message);
+      if (typeof d.closed === "boolean") setClosed(d.closed);
+      setDraftNote(`下書きあり（${new Date(d.updatedAt).toLocaleString("ja-JP")}）`);
+    } catch {
+      /* ignore */
+    }
+  }, [work.id, fromHandle]);
+
+  // 検索語で Neon プロフィールを拾う
+  useEffect(() => {
+    const needle = query.trim().toLowerCase().replace(/^@/, "");
+    if (needle.length < 2) {
+      setRemoteHint(null);
+      return;
+    }
+    let cancelled = false;
+    void fetchRemoteProfile(needle).then((remote) => {
+      if (cancelled || !remote?.handle) {
+        if (!cancelled) setRemoteHint(null);
+        return;
+      }
+      const key = remote.handle.toLowerCase();
+      if (fromHandle && key === fromHandle.toLowerCase()) {
+        setRemoteHint(null);
+        return;
+      }
+      setRemoteHint({
+        handle: key,
+        label: remote.accountName?.trim() || key,
+        hint: remote.bio?.trim()?.slice(0, 40) || "登録ユーザー",
+        following: fromHandle ? isFollowing(fromHandle, key) : false,
+        mutual:
+          fromHandle && isFollowing(fromHandle, key)
+            ? isFollowing(key, fromHandle)
+            : false,
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [query, fromHandle]);
+
+  const candidates = useMemo(() => {
+    const base = collectCandidates(fromHandle, query);
+    if (remoteHint && !base.some((c) => c.handle === remoteHint.handle)) {
+      return [remoteHint, ...base].slice(0, 20);
+    }
+    if (remoteHint) {
+      return base.map((c) =>
+        c.handle === remoteHint.handle ? { ...c, ...remoteHint } : c,
+      );
+    }
+    return base;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [fromHandle, tick],
+  }, [fromHandle, query, tick, remoteHint]);
+
+  const selected =
+    candidates.find((m) => m.handle === mentor) ||
+    (mentor ? optionFromHandle(mentor, fromHandle) : null);
+
+  const canSend = Boolean(
+    fromHandle && selected?.handle && message.trim().length > 0,
   );
 
-  const liveMentors = mentors.filter((m) => m.accepting);
-  const defaultHandle = liveMentors[0]?.handle ?? "";
-
-  useEffect(() => {
-    if (!mentor && defaultHandle) setMentor(defaultHandle);
-    if (mentor && !mentors.some((m) => m.handle === mentor && m.accepting)) {
-      setMentor(defaultHandle);
-    }
-  }, [mentor, defaultHandle, mentors]);
-
-  const selected = mentors.find((m) => m.handle === mentor);
-  const canSend = Boolean(selected?.accepting && message.trim().length > 0);
+  const saveDraft = useCallback(() => {
+    const d: Draft = {
+      mentor,
+      message,
+      closed,
+      updatedAt: new Date().toISOString(),
+    };
+    localStorage.setItem(draftKey(work.id, fromHandle), JSON.stringify(d));
+    setDraftNote(`一時保存しました（${new Date().toLocaleTimeString("ja-JP")}）`);
+  }, [mentor, message, closed, work.id, fromHandle]);
 
   return (
     <div className="space-y-5">
-      <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-3 text-[13px] text-viscum-ink">
-        <p className="font-medium">内部向け（登録済みメンター）</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-          候補は<strong className="font-medium text-viscum-ink">フォロー中</strong>
-          （相互は上）。本番では
-          <strong className="font-medium text-viscum-ink">登録メールが本命</strong>
-          。あわせて
-          <strong className="font-medium text-viscum-ink">この依頼だけの薄いDM</strong>
-          が開き、ベルは補助。フォロー必須にはしない（後段でハンドル指名も可）。
+      <div>
+        <p className="text-[13px] text-viscum-muted">作品</p>
+        <p className="mt-0.5 text-[14px] font-medium text-viscum-ink line-clamp-2">
+          {work.title}
         </p>
-      </div>
-
-      <div className="rounded-lg border border-viscum-berry/25 bg-viscum-berry/5 px-3 py-3 text-[13px] text-viscum-ink">
-        <p className="font-medium">外部向け（VISCUM未登録）</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-          DMやXに貼る着地はこちら。短いVISCUM紹介＋個人宛てのお願い。宣伝にもなる。
-        </p>
-        <p className="mt-2 break-all rounded border border-viscum-line bg-white/70 px-2 py-1.5 font-mono text-[11px] text-viscum-trunk">
-          /dm/{work.id}?to=（相手の名前）
-        </p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          <Link
-            href={`/dm/${work.id}?to=${encodeURIComponent("太郎")}`}
-            className="text-[12px] font-medium text-viscum-brand underline"
-          >
-            DM用ページをプレビュー
-          </Link>
-          <button
-            type="button"
-            className="text-[12px] font-medium text-viscum-brand underline"
-            onClick={() => {
-              const url = `${window.location.origin}/dm/${work.id}?to=${encodeURIComponent("太郎")}`;
-              void navigator.clipboard?.writeText(url);
-              window.alert(
-                `【デモ】コピーしました（例: to=太郎）\n${url}\n\n相手の名前は ?to= で差し替え。`,
-              );
-            }}
-          >
-            URLをコピー（デモ）
-          </button>
-        </div>
       </div>
 
       <form
@@ -176,36 +237,24 @@ export function DirectRequestForm({ work }: { work: Work }) {
             amountYen: 5000,
             pitch: message.trim(),
           });
+          try {
+            localStorage.removeItem(draftKey(work.id, fromHandle));
+          } catch {
+            /* ignore */
+          }
           router.push(`/dashboard/messages/${encodeURIComponent(row.id)}`);
         }}
       >
-        <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-3 text-[13px] text-viscum-ink">
-          <p className="font-medium">直依頼は「あなたに頼みたい」専用です</p>
-          <p className="mt-1 text-viscum-muted leading-relaxed">
-            公開コンペ（開催中・賞金）とは別の行為です。依頼文に「コンペもあります」は載せません——相手を予備に見せるからです。両方やるなら、コンペは別タイミング・別メッセージで。
-          </p>
-        </div>
-
-        <div>
-          <p className="text-[13px] text-viscum-muted">作品</p>
-          <p className="mt-0.5 text-[14px] font-medium text-viscum-ink line-clamp-2">
-            {work.title}
-          </p>
-          <Link
-            href={`/w/${work.id}`}
-            className="mt-1 inline-block text-[12px] text-viscum-brand underline"
-          >
-            作品ページを見る
-          </Link>
-        </div>
-
         <fieldset>
           <legend className="text-[13px] font-medium text-viscum-ink">
-            指名するメンター
+            誰に頼むか
           </legend>
+          <p className="mt-1 text-[12px] text-viscum-muted">
+            フォローの有無は問いません。英語IDや名前で検索できます。
+          </p>
           {!fromHandle && (
             <p className="mt-2 text-[12px] text-viscum-muted">
-              ログインすると、フォロー中の人がここに出ます。{" "}
+              送るにはログインが必要です。{" "}
               <Link
                 href={`/login?callbackUrl=${encodeURIComponent(`/w/${work.id}/request`)}`}
                 className="text-viscum-brand underline"
@@ -214,27 +263,34 @@ export function DirectRequestForm({ work }: { work: Work }) {
               </Link>
             </p>
           )}
-          {fromHandle && liveMentors.length === 0 && (
-            <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[12px] text-viscum-muted">
-              フォロー中の人がまだいません。先にプロフィールからフォローするか、外部向けURLで頼んでください。
-            </p>
-          )}
-          <ul className="mt-2 space-y-2">
-            {mentors.map((m) => (
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="例: mdb / wanado / ワナド"
+            className="mt-2 w-full rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
+            autoComplete="off"
+          />
+          <ul className="mt-2 max-h-56 space-y-2 overflow-y-auto">
+            {candidates.length === 0 && (
+              <li className="rounded-md border border-dashed border-viscum-line px-3 py-2 text-[12px] text-viscum-muted">
+                候補がありません。英語IDを入力して検索してください。
+              </li>
+            )}
+            {candidates.map((m) => (
               <li key={m.handle}>
                 <label
                   className={`flex cursor-pointer gap-3 rounded-lg border px-3 py-2.5 ${
                     mentor === m.handle
                       ? "border-viscum-brand bg-viscum-leaf-soft/40"
                       : "border-viscum-line bg-white/40"
-                  } ${!m.accepting ? "opacity-60" : ""}`}
+                  }`}
                 >
                   <input
                     type="radio"
                     name="mentor"
                     className="mt-1"
                     checked={mentor === m.handle}
-                    disabled={!m.accepting}
                     onChange={() => setMentor(m.handle)}
                   />
                   <span className="min-w-0 flex-1">
@@ -243,21 +299,21 @@ export function DirectRequestForm({ work }: { work: Work }) {
                         {m.label}
                       </span>
                       <span className="text-[11px] text-viscum-muted">
-                        @{m.handle} · {m.specialty}
+                        @{m.handle}
                       </span>
                       {m.mutual && (
                         <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
                           相互
                         </span>
                       )}
-                      {!m.accepting && (
-                        <span className="rounded bg-viscum-line/80 px-1.5 py-0.5 text-[10px] text-viscum-muted">
-                          受付OFF
+                      {m.following && !m.mutual && (
+                        <span className="rounded bg-viscum-paper-2 px-1.5 py-0.5 text-[10px] text-viscum-muted">
+                          フォロー中
                         </span>
                       )}
                     </span>
                     <span className="mt-0.5 block text-[12px] text-viscum-muted">
-                      {m.blurb}
+                      {m.hint}
                     </span>
                   </span>
                 </label>
@@ -271,7 +327,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
             htmlFor="request-message"
             className="text-[13px] font-medium text-viscum-ink"
           >
-            一文（お願い）
+            お願い一文
           </label>
           <textarea
             id="request-message"
@@ -281,33 +337,65 @@ export function DirectRequestForm({ work }: { work: Work }) {
             className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
             placeholder="見る範囲・なぜあなたに頼むかを短く"
           />
-          <p className="mt-1 text-[11px] text-viscum-muted">
-            コンペ・賞金・「他の人も募集中」は書かない（デモの礼儀ガイド）。
-          </p>
         </div>
 
-        <label className="flex items-start gap-2 text-[13px] text-viscum-ink">
-          <input
-            type="checkbox"
-            className="mt-0.5"
-            checked={closed}
-            onChange={(e) => setClosed(e.target.checked)}
-          />
-          <span>
-            <span className="font-medium">クローズド（指名者のみ閲覧）</span>
-            <span className="mt-0.5 block text-[12px] text-viscum-muted">
-              創作の盗用不安など。非公開＝直依頼そのものではありません。依頼は常に個人宛てです。
-            </span>
-          </span>
-        </label>
+        <details className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-3 py-2">
+          <summary className="cursor-pointer text-[13px] font-medium text-viscum-ink">
+            オプション（クローズド／外部URL）
+          </summary>
+          <div className="mt-3 space-y-3 border-t border-viscum-line/80 pt-3">
+            <label className="flex items-start gap-2 text-[13px] text-viscum-ink">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={closed}
+                onChange={(e) => setClosed(e.target.checked)}
+              />
+              <span>
+                <span className="font-medium">クローズド（指名者のみ閲覧）</span>
+                <span className="mt-0.5 block text-[12px] text-viscum-muted">
+                  依頼は常に個人宛て。非公開設定は別物です。
+                </span>
+              </span>
+            </label>
+            <div className="text-[12px] text-viscum-muted">
+              <p className="font-medium text-viscum-ink">未登録の人へはURL</p>
+              <p className="mt-1 break-all font-mono text-[11px] text-viscum-trunk">
+                {typeof window !== "undefined"
+                  ? `${window.location.origin}/dm/${work.id}?to=`
+                  : `/dm/${work.id}?to=`}
+                （名前）
+              </p>
+              <Link
+                href={`/dm/${work.id}?to=${encodeURIComponent("太郎")}`}
+                className="mt-1 inline-block text-viscum-brand underline"
+              >
+                外部向けページをプレビュー
+              </Link>
+            </div>
+          </div>
+        </details>
 
-        <button
-          type="submit"
-          disabled={!canSend}
-          className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50"
-        >
-          直依頼を送る（サイト内メンター向け）
-        </button>
+        {draftNote && (
+          <p className="text-[12px] text-viscum-muted">{draftNote}</p>
+        )}
+
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <button
+            type="button"
+            onClick={saveDraft}
+            className="rounded-md border border-viscum-line bg-viscum-paper px-3 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2 sm:flex-1"
+          >
+            一時保存
+          </button>
+          <button
+            type="submit"
+            disabled={!canSend}
+            className="rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50 sm:flex-[1.4]"
+          >
+            直依頼を送る
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -16,22 +16,22 @@ export default async function DirectRequestPage({ params }: Props) {
     <BrowseChrome>
       <SiteHeader backHref={`/w/${work.id}`} hideOnMd />
       <main className="max-w-lg px-4 py-6">
-        <p className="text-xs text-viscum-muted">S06 · 直依頼デモ</p>
+        <p className="text-xs text-viscum-muted">直依頼</p>
         <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
-          メンターに頼む
+          この人に頼む
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-          上段は外部DM用URL（未登録者向け・宣伝兼）。下段はサイト内のメンター指名。
+          公開コンペとは別の、個人宛てのお願いです。候補は検索できます（フォロー不要）。
         </p>
         <div className="mt-6">
           <DirectRequestForm work={work} />
         </div>
-        <p className="mt-8 text-center text-sm">
+        <p className="mt-8 text-center text-sm text-viscum-muted">
           <Link
             href={`/w/${work.id}`}
             className="text-viscum-brand hover:underline"
           >
-            作品に戻る
+            ← この作品のページへ戻る
           </Link>
         </p>
       </main>
