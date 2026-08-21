@@ -275,8 +275,19 @@ export default function RequestDmThreadPage() {
             </span>
           </h1>
           <p className="text-[13px] text-viscum-ink">
-            <span className="text-viscum-muted">金額 · </span>
+            <span className="text-viscum-muted">褒賞 · </span>
             {formatYen(row.amountYen)}
+            {isRecipient ? (
+              <>
+                <span className="text-viscum-muted"> · </span>
+                <Link
+                  href={`/u/${encodeURIComponent(row.fromHandle)}`}
+                  className="font-medium text-viscum-brand underline"
+                >
+                  支払実績
+                </Link>
+              </>
+            ) : null}
           </p>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-viscum-line bg-white/80">

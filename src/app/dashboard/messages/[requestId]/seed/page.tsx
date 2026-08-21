@@ -198,7 +198,7 @@ export default function RequestSeedDetailPage() {
             <p className="text-[12px] text-viscum-muted">
               ご依頼に紐づくシード詳細
               <span className="mx-1 text-viscum-line">·</span>
-              {formatYen(row.amountYen)}
+              褒賞 {formatYen(row.amountYen)}
             </p>
 
             <dl className="space-y-1 text-[14px] text-viscum-ink">
