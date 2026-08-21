@@ -174,7 +174,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
 
       <main className="mx-auto max-w-lg pb-8">
         <div className="space-y-5 px-4 pt-5">
-          <h1 className="text-xl font-semibold leading-snug text-viscum-ink">
+          <h1 className="text-[15px] font-semibold leading-snug text-viscum-ink">
             <span className="block">{displayName} から、</span>
             <span className="block">あなた宛てのお願いです</span>
           </h1>
@@ -321,6 +321,14 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
               className="mt-3 inline-block text-[13px] font-medium text-viscum-brand underline"
             >
               LPでもう少し見る
+            </Link>
+            <Link
+              href="/faq"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 block text-[13px] font-medium text-viscum-brand underline"
+            >
+              届く→返す→払うの流れ（FAQ）
             </Link>
           </section>
 
