@@ -14,13 +14,12 @@ const Body = z.object({
   status: z.enum(["none", "open", "pay_soon", "closed"]).optional(),
 });
 
-/** 設定の有無だけ返す（秘密は出さない） */
+/** 設定の有無だけ返す（秘密は出さない・診断用にログイン不要） */
 export async function GET() {
   const session = await auth();
-  if (!session?.user?.handle) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
-  }
   return NextResponse.json({
+    loggedIn: Boolean(session?.user),
+    handle: session?.user?.handle ?? null,
     configured: isXAnnounceConfigured(),
     announceEnabled: process.env.X_ANNOUNCE_ENABLED !== "0",
     hasApiKey: Boolean(process.env.X_API_KEY?.trim()),
