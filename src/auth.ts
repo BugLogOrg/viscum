@@ -224,7 +224,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user, trigger, session }) {
       if (trigger === "update") {
         const s = session as
-          | { handle?: string; onboardingDone?: boolean }
+          | { handle?: string; onboardingDone?: boolean; email?: string }
           | undefined;
         if (s?.handle) {
           token.handle = s.handle;
@@ -235,9 +235,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (s?.onboardingDone) {
           token.needsOnboarding = false;
         }
+        if (s?.email) {
+          token.email = s.email;
+        }
       }
       if (user?.id) {
         token.id = user.id;
+      }
+      if (user?.email) {
+        token.email = user.email;
       }
       const id = (token.id as string | undefined) || user?.id;
       if (id && hasDatabase() && trigger !== "update") {
@@ -284,6 +290,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         session.user.handle = (token.handle as string) || "";
         session.user.needsHandle = Boolean(token.needsHandle);
         session.user.needsOnboarding = Boolean(token.needsOnboarding);
+        if (typeof token.email === "string") {
+          session.user.email = token.email;
+        }
       }
       return session;
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -12,6 +12,25 @@ export default function OnboardingHandlePage() {
   const [handle, setHandle] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginEmail, setLoginEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (data?.user?.email) {
+      setLoginEmail(data.user.email);
+      return;
+    }
+    let cancelled = false;
+    void fetch("/api/account/email")
+      .then((r) => r.json())
+      .then((j: { email?: string | null }) => {
+        if (!cancelled && j.email) setLoginEmail(j.email);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [status, data?.user?.email]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -70,6 +89,16 @@ export default function OnboardingHandlePage() {
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
           URL・PFコメントのコテハンになります。あとからの変更はできません。ここで一度決めてください。公開の呼び名（アカウント名）はプロフィールでいつでも変えられます。
         </p>
+        {loginEmail ? (
+          <p className="mt-3 rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[13px] text-viscum-ink">
+            いまログイン中のメール：
+            <span className="ml-1 font-medium">{loginEmail}</span>
+          </p>
+        ) : (
+          <p className="mt-3 text-[12px] text-viscum-muted">
+            ログインメールを確認中…（あとから設定でも確認・変更できます）
+          </p>
+        )}
 
         <form onSubmit={submit} className="mt-8 space-y-4">
           <div>
@@ -80,7 +109,7 @@ export default function OnboardingHandlePage() {
               value={handle}
               onChange={(e) => setHandle(e.target.value)}
               className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] focus:border-viscum-brand focus:outline-none"
-              placeholder="tori"
+              placeholder="wanado"
               autoComplete="username"
               required
               minLength={2}

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -14,7 +15,25 @@ import {
 
 /** 設定のまとめページ（通知など）。公開プロフィール編集は別 */
 export default function SettingsPage() {
-  const { data: session, status } = useSession();
+  return (
+    <Suspense
+      fallback={
+        <BrowseChrome>
+          <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
+          <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
+            読み込み中…
+          </div>
+        </BrowseChrome>
+      }
+    >
+      <SettingsPageInner />
+    </Suspense>
+  );
+}
+
+function SettingsPageInner() {
+  const { data: session, status, update } = useSession();
+  const searchParams = useSearchParams();
   const [prefs, setPrefs] = useState<NotifyPrefs>({
     seederAlerts: true,
     mentorParticipateAlerts: false,
@@ -23,12 +42,95 @@ export default function SettingsPage() {
   const [confirmText, setConfirmText] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [emailDraft, setEmailDraft] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailMsg, setEmailMsg] = useState<string | null>(null);
+  const [emailErr, setEmailErr] = useState<string | null>(null);
+  const [isDemo, setIsDemo] = useState(false);
 
   const handle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
 
   useEffect(() => {
     setPrefs(readNotifyPrefs());
   }, []);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    void fetch("/api/account/email")
+      .then((r) => r.json())
+      .then((data: { email?: string | null; demo?: boolean }) => {
+        if (cancelled) return;
+        setEmail(data.email ?? session?.user?.email ?? null);
+        setEmailDraft(data.email ?? session?.user?.email ?? "");
+        setIsDemo(Boolean(data.demo));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setEmail(session?.user?.email ?? null);
+        setEmailDraft(session?.user?.email ?? "");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [status, session?.user?.email]);
+
+  useEffect(() => {
+    const flag = searchParams.get("email");
+    if (!flag) return;
+    if (flag === "ok") {
+      setEmailMsg(
+        "メールアドレスを更新しました。次回ログインから新しいアドレスを使えます。",
+      );
+      void fetch("/api/account/email")
+        .then((r) => r.json())
+        .then(async (data: { email?: string | null }) => {
+          if (data.email) {
+            setEmail(data.email);
+            setEmailDraft(data.email);
+            await update({ email: data.email });
+          }
+        });
+    } else if (flag === "expired") {
+      setEmailErr("確認リンクの期限が切れました。もう一度送ってください。");
+    } else if (flag === "taken") {
+      setEmailErr("そのメールは別アカウントで使われています。");
+    } else if (flag === "invalid") {
+      setEmailErr("確認リンクが無効です。");
+    } else if (flag === "error") {
+      setEmailErr("メール変更に失敗しました。");
+    }
+  }, [searchParams, update]);
+
+  async function requestEmailChange(e: React.FormEvent) {
+    e.preventDefault();
+    setEmailBusy(true);
+    setEmailMsg(null);
+    setEmailErr(null);
+    try {
+      const res = await fetch("/api/account/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: emailDraft }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        message?: string;
+        sentTo?: string;
+      };
+      if (!res.ok) {
+        setEmailErr(data.message || "変更リクエストに失敗しました");
+        setEmailBusy(false);
+        return;
+      }
+      setEmailMsg(
+        `確認メールを ${data.sentTo || emailDraft} に送りました。メール内のリンクを開いてください。`,
+      );
+    } catch {
+      setEmailErr("ネットワークエラーです");
+    }
+    setEmailBusy(false);
+  }
 
   async function deleteAccount() {
     if (!handle || confirmText.trim().toLowerCase() !== handle.toLowerCase()) {
@@ -110,7 +212,57 @@ export default function SettingsPage() {
           </Link>
         </section>
 
-        <section className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3 space-y-3">
+        <section className="space-y-3 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+          <div>
+            <p className="text-[13px] font-semibold text-viscum-ink">
+              ログインメール
+            </p>
+            <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
+              Magic Link の送り先です。変更すると新しいアドレスに確認メールが届きます。
+            </p>
+          </div>
+          <p className="text-[13px] text-viscum-ink">
+            いまのアドレス：
+            <span className="ml-1 font-medium">{email || "（未取得）"}</span>
+          </p>
+          {isDemo ? (
+            <p className="text-[12px] text-viscum-muted">
+              デモログイン中のためメール変更はできません。
+            </p>
+          ) : (
+            <form
+              onSubmit={(e) => void requestEmailChange(e)}
+              className="space-y-2"
+            >
+              <label className="block text-[12px] font-medium text-viscum-ink">
+                新しいメールアドレス
+              </label>
+              <input
+                type="email"
+                required
+                value={emailDraft}
+                onChange={(e) => setEmailDraft(e.target.value)}
+                className="w-full rounded-md border border-viscum-line bg-white px-3 py-2 text-sm text-viscum-ink outline-none focus:border-viscum-brand"
+                autoComplete="email"
+              />
+              {emailMsg ? (
+                <p className="text-[12px] text-viscum-brand">{emailMsg}</p>
+              ) : null}
+              {emailErr ? (
+                <p className="text-[12px] text-viscum-berry-deep">{emailErr}</p>
+              ) : null}
+              <button
+                type="submit"
+                disabled={emailBusy}
+                className="w-full rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft disabled:opacity-50"
+              >
+                {emailBusy ? "送信中…" : "確認メールを送る"}
+              </button>
+            </form>
+          )}
+        </section>
+
+        <section className="space-y-3 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
           <div>
             <p className="text-[13px] font-semibold text-viscum-ink">通知</p>
             <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
@@ -164,7 +316,7 @@ export default function SettingsPage() {
           </Link>
         </section>
 
-        <section className="rounded-lg border border-viscum-berry/35 bg-viscum-berry/5 px-3 py-3 space-y-3">
+        <section className="space-y-3 rounded-lg border border-viscum-berry/35 bg-viscum-berry/5 px-3 py-3">
           <div>
             <p className="text-[13px] font-semibold text-viscum-berry-deep">
               アカウント削除

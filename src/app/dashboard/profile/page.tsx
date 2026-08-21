@@ -214,6 +214,18 @@ export default function ProfileEditPage() {
             </Link>
             へ。
           </p>
+          {session?.user?.email ? (
+            <p className="mt-2 rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[12px] text-viscum-ink">
+              ログインメール：
+              <span className="ml-1 font-medium">{session.user.email}</span>
+              <Link
+                href="/dashboard/settings"
+                className="ml-2 text-viscum-brand underline"
+              >
+                変更は設定へ
+              </Link>
+            </p>
+          ) : null}
         </div>
 
         <form onSubmit={(e) => void save(e)} className="space-y-5">
