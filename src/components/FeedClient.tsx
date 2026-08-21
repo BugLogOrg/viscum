@@ -24,7 +24,7 @@ import {
   readLocalSeeds,
   workFromLocalSeed,
 } from "@/lib/local-seeds";
-import { buildWorkShareText } from "@/lib/work-share-text";
+import { buildWorkShareText, buildXIntentUrl } from "@/lib/work-share-text";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -285,6 +285,18 @@ export function FeedClient() {
               }}
             >
               {shareCopied ? "コピーしました" : "告知文をコピー"}
+            </button>
+            <button
+              type="button"
+              className="inline-flex rounded-md bg-viscum-ink px-3 py-1.5 text-[13px] font-medium text-white hover:opacity-90"
+              onClick={() => {
+                const w = shelf.find((x) => x.id === publishedId);
+                if (!w) return;
+                const t = buildWorkShareText(w, window.location.origin);
+                window.open(buildXIntentUrl(t), "_blank", "noopener,noreferrer");
+              }}
+            >
+              Xで開く
             </button>
             <button
               type="button"

@@ -11,7 +11,7 @@ import {
   publishLocalSeedToShelf,
   readLocalSeeds,
 } from "@/lib/local-seeds";
-import { buildWorkShareText } from "@/lib/work-share-text";
+import { buildWorkShareText, buildXIntentUrl } from "@/lib/work-share-text";
 import {
   announcePublishedSeedToX,
   announceResultMessage,
@@ -141,22 +141,38 @@ export function PostSaveNext({ work }: { work: Work }) {
           <p className="text-[12px] font-medium text-viscum-ink">
             SNS用の文（任意）
           </p>
+          <p className="text-[11px] leading-relaxed text-viscum-muted">
+            聞きたいこと（足場）は入れていません。詳しくはリンク先で。サムネは投稿にURLを付けるとOGPで出ます。
+          </p>
           <pre className="whitespace-pre-wrap break-all rounded-md border border-viscum-line bg-viscum-paper-2/80 px-3 py-2 text-[12px] text-viscum-trunk">
             {text || "…"}
           </pre>
-          <button
-            type="button"
-            className="w-full rounded-md border border-viscum-brand px-4 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-            onClick={() => {
-              if (!text) return;
-              void navigator.clipboard?.writeText(text).then(() => {
-                setCopied(true);
-                window.setTimeout(() => setCopied(false), 2000);
-              });
-            }}
-          >
-            {copied ? "コピーしました" : "告知文をコピー"}
-          </button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              className="flex-1 rounded-md border border-viscum-brand px-4 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+              onClick={() => {
+                if (!text) return;
+                void navigator.clipboard?.writeText(text).then(() => {
+                  setCopied(true);
+                  window.setTimeout(() => setCopied(false), 2000);
+                });
+              }}
+            >
+              {copied ? "コピーしました" : "告知文をコピー"}
+            </button>
+            <a
+              href={text ? buildXIntentUrl(text) : undefined}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-disabled={!text}
+              className={`flex-1 rounded-md bg-viscum-ink px-4 py-2.5 text-center text-sm font-medium text-white hover:opacity-90 ${
+                text ? "" : "pointer-events-none opacity-40"
+              }`}
+            >
+              Xで開く
+            </a>
+          </div>
         </div>
 
         <button

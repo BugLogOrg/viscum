@@ -1,7 +1,30 @@
 import { formatYen, planBadgeLabel, type Work } from "@/data/dummy-works";
 import { PUBLIC_BOOST } from "@/data/seed-courses";
 
-/** SNS貼り付け用の共有文（詳細ページ・シード直後バナーの正本） */
+const MENTOR_ASK_MAX = 100;
+
+/** 共有用にメンターへのお願いだけ短く（足場の聞くことは載せない） */
+function mentorAskSnippet(work: Work): string | null {
+  const plan = work.plan;
+  // コンペ／公開ブーストの prompts は足場＝聞きたいこと → 共有に出さない
+  if (
+    plan === "first_impression" ||
+    plan === "brush_up" ||
+    plan === "public_boost"
+  ) {
+    return null;
+  }
+  const raw = (work.prompts ?? [])
+    .map((p) => p.trim())
+    .filter(Boolean)
+    .join("\n")
+    .trim();
+  if (!raw) return null;
+  if (raw.length <= MENTOR_ASK_MAX) return raw;
+  return `${raw.slice(0, MENTOR_ASK_MAX)}…`;
+}
+
+/** SNS貼り付け用の共有文（詳細・公開直後の正本）。聞きたいこと（足場）は載せない */
 export function buildWorkShareText(work: Work, origin: string): string {
   const url = `${origin.replace(/\/$/, "")}/w/${work.id}`;
   const lines: string[] = [];
@@ -9,7 +32,7 @@ export function buildWorkShareText(work: Work, origin: string): string {
 
   if (work.plan === "public_boost") {
     lines.push(
-      `【VISCUM】公開ブースト · 褒賞 ${formatYen(work.prizeYen ?? PUBLIC_BOOST.yen)}（記入後報告→選んで褒賞）`,
+      `【VISCUM】公開ブースト · 褒賞 ${formatYen(work.prizeYen ?? PUBLIC_BOOST.yen)}`,
     );
   } else if (work.prizeYen != null && work.status !== "none") {
     lines.push(
@@ -19,19 +42,16 @@ export function buildWorkShareText(work: Work, origin: string): string {
     lines.push(`【VISCUM】コメント歓迎`);
   }
 
-  lines.push(work.title.trim() || "（タイトル）", url);
+  lines.push(work.title.trim() || "（タイトル）");
 
-  const prompts = (work.prompts ?? []).map((p) => p.trim()).filter(Boolean);
-  if (prompts.length > 0) {
-    lines.push("", ...prompts.map((p) => `・${p}`));
-  } else if (work.plan === "public_boost") {
-    lines.push(
-      "",
-      "ストア／拡張／SNSなど公開の場所への正直な反応・投稿を募集（記入後に報告。褒賞はシーダーが選ぶ／全員払いではない）。",
-    );
-  } else if (work.prizeYen != null && work.status !== "none") {
-    lines.push("", "見て書いてくれる人、募集しています。");
-  }
+  const ask = mentorAskSnippet(work);
+  if (ask) lines.push(ask);
 
+  lines.push(url);
   return lines.join("\n");
+}
+
+/** 作者本人のX投稿画面を開く（OAuth不要・API不要） */
+export function buildXIntentUrl(text: string): string {
+  return `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
 }
