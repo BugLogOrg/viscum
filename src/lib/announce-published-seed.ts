@@ -34,12 +34,19 @@ export async function announcePublishedSeedToX(
   }
 }
 
-/** 公開UI用：結果を短く表示 */
+/** 公開UI用：結果を短く表示（公開成功とX失敗を混ぜない） */
 export function announceResultMessage(r: AnnounceResult): string | null {
-  if (r.error) return `X告知に失敗しました。\n${r.error}`;
-  if (r.skipped) {
-    return "X告知はスキップ（環境変数 X_API_* が未設定か無効）。Vercel の Environment Variables を確認してください。";
+  if (r.error) {
+    const hint = /401|Unauthorized|authenticat/i.test(r.error)
+      ? "\n\nよくある原因: Access Token が Read only／別アプリのキー／OAuth2用トークンの取り違え。Vercel の X_API_* 4種を Developer Portal で再発行（Read and write）して入れ直してください。"
+      : "";
+    return `公開は完了しています。公式X（@viscum_org）への自動告知だけ失敗しました。\n${r.error}${hint}`;
   }
-  if (r.tweetId) return `Xに投稿しました（@viscum_org）。\nhttps://x.com/viscum_org/status/${r.tweetId}`;
+  if (r.skipped) {
+    return "公開は完了。X告知はスキップ（環境変数 X_API_* が未設定か無効）です。";
+  }
+  if (r.tweetId) {
+    return `Xに投稿しました（@viscum_org）。\nhttps://x.com/viscum_org/status/${r.tweetId}`;
+  }
   return null;
 }

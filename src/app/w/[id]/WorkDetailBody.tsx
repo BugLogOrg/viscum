@@ -1,8 +1,11 @@
+"use client";
+
 import Link from "next/link";
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SeederLink } from "@/components/SeederLink";
-import { SeededShareBanner } from "@/components/SeededShareBanner";
+import { PostSaveNext } from "@/components/PostSaveNext";
 import { LocalSeedVisibilityNote } from "@/components/LocalSeedVisibilityNote";
 import { OwnerSeedActions } from "@/components/OwnerSeedActions";
 import { WorkEngage } from "@/components/WorkEngage";
@@ -18,6 +21,7 @@ import {
   type Work,
 } from "@/data/dummy-works";
 import { scaffoldForPlan } from "@/data/seed-courses";
+import { isLocalSeedListed, readLocalSeeds } from "@/lib/local-seeds";
 
 const TONE: Record<Work["thumbTone"], string> = {
   leaf: "bg-viscum-leaf-deep",
@@ -27,8 +31,39 @@ const TONE: Record<Work["thumbTone"], string> = {
   trunk: "bg-viscum-trunk",
 };
 
-/** `/w/[id]` の本体。デモ作品も端末内シードも同じ見た目 */
+/** `/w/[id]` の本体。保存直後は次の一手専用、下書き詳細は参加・コメントを隠す */
 export function WorkDetailBody({ work }: { work: Work }) {
+  return (
+    <Suspense
+      fallback={
+        <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      }
+    >
+      <WorkDetailBodyInner work={work} />
+    </Suspense>
+  );
+}
+
+function WorkDetailBodyInner({ work }: { work: Work }) {
+  const search = useSearchParams();
+  const justSaved = search.get("seeded") === "1";
+  const [isDraft, setIsDraft] = useState(false);
+
+  useEffect(() => {
+    if (!work.id.startsWith("local_")) {
+      setIsDraft(false);
+      return;
+    }
+    const seed = readLocalSeeds().find((s) => s.id === work.id);
+    setIsDraft(Boolean(seed && !isLocalSeedListed(seed)));
+  }, [work.id]);
+
+  if (justSaved) {
+    return <PostSaveNext work={work} />;
+  }
+
   const postedAt = postedAtFromHoursAgo(work.hoursAgo);
   const postedLine = formatPostedLine(work.hoursAgo);
   const deadlineLine = formatDeadlineLine(work.closesInHours, work.status);
@@ -50,9 +85,6 @@ export function WorkDetailBody({ work }: { work: Work }) {
 
   return (
     <div className="max-w-lg">
-      <Suspense fallback={null}>
-        <SeededShareBanner work={work} />
-      </Suspense>
       <article>
         <div
           className={`relative w-full overflow-hidden ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
@@ -150,6 +182,11 @@ export function WorkDetailBody({ work }: { work: Work }) {
             <div className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
               <p className="text-[13px] font-medium text-viscum-ink">
                 {scaffoldLabel}
+                {isDraft ? (
+                  <span className="ml-1 text-[11px] font-normal text-viscum-muted">
+                    （公開後に相手へ見える足場）
+                  </span>
+                ) : null}
               </p>
               <p className="mt-0.5 text-[11px] text-viscum-muted">
                 {work.plan === "public_boost"
@@ -178,26 +215,33 @@ export function WorkDetailBody({ work }: { work: Work }) {
               </p>
             )}
 
-          <WorkReactionBar
-            workId={work.id}
-            title={work.title}
-            sukiBase={rx.suki}
-            bookmarkBase={rx.bookmark}
-          />
-
           <OwnerSeedActions workId={work.id} seederHandle={work.seeder} />
 
-          <WorkEngage
-            workId={work.id}
-            status={work.status}
-            prizeYen={work.prizeYen}
-            paymentsDone={work.paymentsDone}
-            deadlineLine={deadlineLine}
-            initialComments={work.comments}
-            hasAdoptedUntipped={hasAdoptedUntipped}
-            scaffoldLabel={scaffoldLabel ?? undefined}
-            scaffoldLines={scaffoldLines}
-          />
+          {isDraft ? (
+            <p className="rounded-md border border-dashed border-viscum-line px-3 py-3 text-[12px] leading-relaxed text-viscum-muted">
+              下書きのため、スキ・コメント・参加はまだ出していません。公開すると作品詳細として使えるようになります。
+            </p>
+          ) : (
+            <>
+              <WorkReactionBar
+                workId={work.id}
+                title={work.title}
+                sukiBase={rx.suki}
+                bookmarkBase={rx.bookmark}
+              />
+              <WorkEngage
+                workId={work.id}
+                status={work.status}
+                prizeYen={work.prizeYen}
+                paymentsDone={work.paymentsDone}
+                deadlineLine={deadlineLine}
+                initialComments={work.comments}
+                hasAdoptedUntipped={hasAdoptedUntipped}
+                scaffoldLabel={scaffoldLabel ?? undefined}
+                scaffoldLines={scaffoldLines}
+              />
+            </>
+          )}
         </div>
       </article>
 

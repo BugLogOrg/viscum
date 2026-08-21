@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { TwitterApi, ApiResponseError } from "twitter-api-v2";
 import { auth } from "@/auth";
 import { buildXAnnounceText } from "@/lib/x-announce-text";
 import { isXAnnounceConfigured, postTweetAsViscum } from "@/lib/x-post";
@@ -14,10 +15,19 @@ const Body = z.object({
   status: z.enum(["none", "open", "pay_soon", "closed"]).optional(),
 });
 
-/** 設定の有無だけ返す（秘密は出さない・診断用にログイン不要） */
-export async function GET() {
+function probeErrorMessage(e: unknown): string {
+  if (e instanceof ApiResponseError) {
+    return `X API ${e.code}: ${e.message}`;
+  }
+  if (e instanceof Error) return e.message;
+  return "probe failed";
+}
+
+/** 設定の有無＋任意で認証プローブ（秘密は出さない） */
+export async function GET(req: Request) {
   const session = await auth();
-  return NextResponse.json({
+  const probe = new URL(req.url).searchParams.get("probe") === "1";
+  const base = {
     loggedIn: Boolean(session?.user),
     handle: session?.user?.handle ?? null,
     configured: isXAnnounceConfigured(),
@@ -26,7 +36,41 @@ export async function GET() {
     hasApiSecret: Boolean(process.env.X_API_SECRET?.trim()),
     hasAccessToken: Boolean(process.env.X_ACCESS_TOKEN?.trim()),
     hasAccessSecret: Boolean(process.env.X_ACCESS_SECRET?.trim()),
-  });
+  };
+
+  if (!probe) {
+    return NextResponse.json(base);
+  }
+
+  if (!isXAnnounceConfigured()) {
+    return NextResponse.json({
+      ...base,
+      probeOk: false,
+      probeError: "not_configured",
+    });
+  }
+
+  try {
+    const client = new TwitterApi({
+      appKey: process.env.X_API_KEY!.trim(),
+      appSecret: process.env.X_API_SECRET!.trim(),
+      accessToken: process.env.X_ACCESS_TOKEN!.trim(),
+      accessSecret: process.env.X_ACCESS_SECRET!.trim(),
+    });
+    const me = await client.v2.me();
+    return NextResponse.json({
+      ...base,
+      probeOk: true,
+      username: me.data.username ?? null,
+      userId: me.data.id ?? null,
+    });
+  } catch (e) {
+    return NextResponse.json({
+      ...base,
+      probeOk: false,
+      probeError: probeErrorMessage(e),
+    });
+  }
 }
 
 /**

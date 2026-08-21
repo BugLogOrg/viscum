@@ -763,10 +763,10 @@ export function PostForm() {
         disabled={!canSave || saving}
         className="w-full rounded-md bg-viscum-berry px-4 py-3 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-45"
       >
-        {saving ? "シード中…" : "シードする（デモ）"}
+        {saving ? "保存中…" : "一旦保存する"}
       </button>
       <p className="text-center text-[11px] text-viscum-muted">
-        認証・保存はまだありません。見た目と流れの確認用です。
+        まだ公開しません。保存後に「全体告知」か「直依頼」を選べます。
       </p>
 
       {cropSrc && (
