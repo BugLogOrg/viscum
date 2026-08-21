@@ -17,8 +17,10 @@ import {
   deleteLocalSeed,
   unlistLocalSeed,
   publishLocalSeedToShelf,
+  workFromLocalSeed,
   type LocalSeed,
 } from "@/lib/local-seeds";
+import { announcePublishedSeedToX } from "@/lib/announce-published-seed";
 
 function SeedMetrics({ s }: { s: LocalSeed }) {
   return (
@@ -252,8 +254,10 @@ export default function DashboardPage() {
                           return;
                         }
                         const row = publishLocalSeedToShelf(s.id);
-                        if (row) refresh();
-                        else window.alert("公開に失敗しました");
+                        if (row) {
+                          void announcePublishedSeedToX(workFromLocalSeed(row));
+                          refresh();
+                        } else window.alert("公開に失敗しました");
                       }}
                     >
                       公開する

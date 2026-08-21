@@ -11,8 +11,10 @@ import {
   publishLocalSeedToShelf,
   readLocalSeeds,
   unlistLocalSeed,
+  workFromLocalSeed,
   type LocalSeed,
 } from "@/lib/local-seeds";
+import { announcePublishedSeedToX } from "@/lib/announce-published-seed";
 
 /**
  * シーダー本人だけ：棚から外す／削除。
@@ -111,6 +113,7 @@ export function OwnerSeedActions({
                 return;
               }
               setSeed(row);
+              void announcePublishedSeedToX(workFromLocalSeed(row));
               router.push(`/?published=${encodeURIComponent(workId)}`);
             }}
           >
