@@ -227,14 +227,25 @@ export function PostSaveNext({ work }: { work: Work }) {
 
       {preview}
 
-      <button
-        type="button"
-        disabled={busy}
-        onClick={() => void publishNow()}
-        className="w-full rounded-md bg-viscum-berry px-4 py-3 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-      >
-        {busy ? "公開中…" : "公開する（作品一覧に出す）"}
-      </button>
+      <div className="space-y-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void publishNow()}
+          className="w-full rounded-md bg-viscum-berry px-4 py-3 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+        >
+          {busy ? "公開中…" : "公開する（作品一覧に出す）"}
+        </button>
+        <Link
+          href={`/w/${work.id}/request`}
+          className="flex w-full items-center justify-center rounded-md border-2 border-viscum-brand bg-white px-4 py-3 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft/50"
+        >
+          公開せずDMで送る
+        </Link>
+        <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
+          一覧に出さず、指名した人だけに直依頼できます。
+        </p>
+      </div>
 
       <div className="space-y-2 text-center text-[13px]">
         <Link
@@ -248,21 +259,6 @@ export function PostSaveNext({ work }: { work: Work }) {
           className="block text-viscum-muted underline"
         >
           保存した内容を確認する
-        </Link>
-      </div>
-
-      <div className="rounded-lg border border-dashed border-viscum-line px-4 py-3">
-        <p className="text-[12px] font-medium text-viscum-ink">
-          特定の人だけに頼みたいとき
-        </p>
-        <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
-          公開しなくても、指名で直依頼できます。一覧に出したくないとき向けです。
-        </p>
-        <Link
-          href={`/w/${work.id}/request`}
-          className="mt-2 inline-block text-[13px] font-medium text-viscum-brand underline"
-        >
-          直依頼の画面へ
         </Link>
       </div>
     </div>
