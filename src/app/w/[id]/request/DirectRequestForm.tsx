@@ -134,7 +134,6 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
-  const [guestName, setGuestName] = useState("");
   const [copyNote, setCopyNote] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
 
@@ -478,45 +477,18 @@ export function DirectRequestForm({ work }: { work: Work }) {
                 未登録の人へ共有（アドレスをコピー）
               </p>
               <p className="text-[11px] leading-relaxed text-viscum-muted">
-                URLを知っている人は誰でも開けます（鍵ではありません）。呼び方は任意で、入れると「○○さんへ」と出るだけです。
+                URLを知っている人は誰でも開けます（共有リンク。鍵ではありません）。
               </p>
-              <label className="block text-[12px] text-viscum-ink">
-                相手の呼び方
-                <input
-                  type="text"
-                  value={guestName}
-                  onChange={(e) => {
-                    setGuestName(e.target.value);
-                    setCopyNote(null);
-                  }}
-                  placeholder="例: 太郎"
-                  className="mt-1 w-full rounded-md border border-viscum-line bg-white/80 px-2.5 py-1.5 text-[13px] text-viscum-ink"
-                />
-              </label>
               <p className="break-all rounded border border-viscum-line bg-white/70 px-2 py-1.5 font-mono text-[11px] text-viscum-trunk">
-                {origin
-                  ? guestName.trim()
-                    ? `${origin}/dm/${work.id}?to=${encodeURIComponent(guestName.trim())}`
-                    : `${origin}/dm/${work.id}`
-                  : guestName.trim()
-                    ? `/dm/${work.id}?to=…`
-                    : `/dm/${work.id}`}
+                {origin ? `${origin}/dm/${work.id}` : `/dm/${work.id}`}
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => {
-                    const name = guestName.trim();
-                    const url = name
-                      ? `${window.location.origin}/dm/${work.id}?to=${encodeURIComponent(name)}`
-                      : `${window.location.origin}/dm/${work.id}`;
+                    const url = `${window.location.origin}/dm/${work.id}`;
                     void navigator.clipboard?.writeText(url).then(
-                      () =>
-                        setCopyNote(
-                          name
-                            ? "コピーしました（宛名入り）"
-                            : "コピーしました（宛名なし。誰でも同じURLで開けます）",
-                        ),
+                      () => setCopyNote("コピーしました"),
                       () => setCopyNote("コピーに失敗しました"),
                     );
                   }}
@@ -525,11 +497,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
                   アドレスをコピー
                 </button>
                 <Link
-                  href={
-                    guestName.trim()
-                      ? `/dm/${work.id}?to=${encodeURIComponent(guestName.trim())}`
-                      : `/dm/${work.id}`
-                  }
+                  href={`/dm/${work.id}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand"

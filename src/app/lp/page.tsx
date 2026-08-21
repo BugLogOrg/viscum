@@ -161,7 +161,7 @@ export default function LandingPage() {
           </p>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
             <Link
-              href="/dm/promo-15s?to=%E5%A4%AA%E9%83%8E"
+              href="/dm/promo-15s"
               className="text-[13px] font-medium text-viscum-brand underline"
             >
               外部の人へのお願いページ

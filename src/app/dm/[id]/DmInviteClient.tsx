@@ -16,11 +16,9 @@ import { accountLabelForHandle } from "@/data/suggested-seeders";
 export function DmInviteClient({
   workId,
   initialWork,
-  to,
 }: {
   workId: string;
   initialWork: Work | null;
-  to: string | null;
 }) {
   const [work, setWork] = useState<Work | null>(initialWork);
 
@@ -63,10 +61,7 @@ export function DmInviteClient({
       </header>
 
       <main className="mx-auto max-w-lg px-4 py-6">
-        {to && (
-          <p className="text-[15px] font-medium text-viscum-ink">{to}さんへ</p>
-        )}
-        <h1 className="mt-1 text-xl font-semibold leading-snug text-viscum-ink">
+        <h1 className="text-xl font-semibold leading-snug text-viscum-ink">
           {seederLabel.line} から、あなた宛てのお願いです
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
