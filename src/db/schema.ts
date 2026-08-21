@@ -23,7 +23,7 @@ export const users = pgTable("users", {
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   /** アイコンURLまたは data URL（デモ可） */
   image: text("image"),
-  /** 公開一言 */
+  /** 公開プロフィール文（ポートフォリオ向け） */
   bio: text("bio"),
   /** 加入時の専門タグ（推奨セット） */
   specialties: jsonb("specialties").$type<string[]>().notNull().default([]),

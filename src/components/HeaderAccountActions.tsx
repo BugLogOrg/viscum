@@ -4,8 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import {
-  installDemoNotifies,
-  readLocalNotifies,
+  clearDemoNotifies,
   unreadNotifyCount,
 } from "@/lib/local-notifies";
 import {
@@ -36,7 +35,8 @@ export function HeaderAccountActions({
   const isLoggedIn = Boolean(session?.user?.id);
 
   useEffect(() => {
-    if (readLocalNotifies().length === 0) installDemoNotifies();
+    // 旧デモ通知が端末に残っていれば掃除（自動投入はしない）
+    clearDemoNotifies();
     setUnread(unreadNotifyCount());
     const onFocus = () => setUnread(unreadNotifyCount());
     window.addEventListener("focus", onFocus);

@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { users } from "@/db/schema";
 import { isReservedDemoHandle } from "@/data/suggested-seeders";
+import { normalizeAccountName } from "@/lib/local-profile";
 
 function normalizeHandle(raw: string) {
   return raw
@@ -108,6 +109,9 @@ export async function POST(req: Request) {
 
   const body = (await req.json().catch(() => null)) as {
     handle?: string;
+    accountName?: string;
+    bio?: string;
+    image?: string | null;
   } | null;
   const handle = normalizeHandle(body?.handle ?? "");
   if (handle.length < 2) {
@@ -126,6 +130,17 @@ export async function POST(req: Request) {
       { status: 409 },
     );
   }
+
+  const accountName =
+    normalizeAccountName(body?.accountName ?? "") || handle;
+  const bio = (body?.bio ?? "").trim().slice(0, 500);
+  const imageRaw = body?.image;
+  const image =
+    imageRaw === null
+      ? null
+      : typeof imageRaw === "string" && imageRaw.startsWith("data:image/")
+        ? imageRaw.slice(0, 900_000)
+        : undefined;
 
   const db = getDb();
   if (!db) {
@@ -177,12 +192,17 @@ export async function POST(req: Request) {
     );
   }
 
-  const name = handle;
+  const name = accountName;
 
   try {
     await db
       .update(users)
-      .set({ handle, name })
+      .set({
+        handle,
+        name,
+        bio,
+        ...(image !== undefined ? { image } : {}),
+      })
       .where(eq(users.id, me.id));
   } catch (err) {
     const text = err instanceof Error ? err.message : String(err);
@@ -206,5 +226,10 @@ export async function POST(req: Request) {
     );
   }
 
-  return NextResponse.json({ ok: true, handle, accountName: name });
+  return NextResponse.json({
+    ok: true,
+    handle,
+    accountName: name,
+    bio,
+  });
 }

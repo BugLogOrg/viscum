@@ -321,7 +321,7 @@ export default function ProfileEditPage() {
           </label>
 
           <label className="block space-y-1">
-            <span className="text-[12px] text-viscum-muted">一言（公開）</span>
+            <span className="text-[12px] text-viscum-muted">プロフィール（公開）</span>
             <textarea
               value={bio}
               onChange={(e) => {

@@ -104,7 +104,7 @@ export function markNotifyRead(id: string) {
   );
 }
 
-/** 見た目確認用のデモ通知（シーダー主＋メンター参加は1件・設定OFFなら見えない） */
+/** 開発用。本番UIからは呼ばない。見た目確認したいときだけ手動で */
 export function installDemoNotifies() {
   const now = Date.now();
   const demos: LocalNotify[] = [

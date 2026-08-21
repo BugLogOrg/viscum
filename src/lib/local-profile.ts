@@ -7,7 +7,7 @@ export type LocalProfile = {
    * 英語ID（handle）とは別。未設定時は表示フォールバックで handle を使う。
    */
   accountName?: string;
-  /** 一言（公開ポートフォリオ向け） */
+  /** 公開プロフィール文（ポートフォリオ向け） */
   bio: string;
   /** アイコン（data URL） */
   avatarDataUrl?: string;

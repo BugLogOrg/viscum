@@ -63,10 +63,11 @@ export default function LoginPage() {
     setError(null);
     const callbackUrl = readCallback();
     rememberPostOnboarding(callbackUrl);
+    // 着地は必ずウェルカム（英語ID）。済みの人は handle ページ側で飛ばす
     const res = await signIn("resend", {
       email: email.trim(),
       redirect: false,
-      callbackUrl,
+      callbackUrl: "/onboarding/handle",
     });
     setPending(false);
     if (res?.error) {
@@ -150,7 +151,7 @@ export default function LoginPage() {
             type="button"
             className="mt-4 w-full rounded-md border border-viscum-line px-4 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2"
             onClick={() =>
-              signIn("github", { callbackUrl: readCallback() })
+              signIn("github", { callbackUrl: "/onboarding/handle" })
             }
           >
             GitHubでログイン

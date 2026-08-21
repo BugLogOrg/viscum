@@ -8,10 +8,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import {
   clearDemoNotifies,
   formatNotifyStamp,
-  installDemoNotifies,
   markAllNotifiesRead,
   markNotifyRead,
-  readLocalNotifies,
   readNotifyPrefs,
   visibleNotifies,
   type LocalNotify,
@@ -26,9 +24,7 @@ export default function NotificationsPage() {
   }
 
   useEffect(() => {
-    if (readLocalNotifies().length === 0) {
-      installDemoNotifies();
-    }
+    clearDemoNotifies();
     refresh();
   }, []);
 
@@ -97,31 +93,11 @@ export default function NotificationsPage() {
           >
             通知の設定
           </Link>
-          <button
-            type="button"
-            onClick={() => {
-              if (rows.some((r) => r.id.startsWith("n_demo_"))) {
-                clearDemoNotifies();
-              } else {
-                installDemoNotifies();
-              }
-              refresh();
-            }}
-            className="text-[12px] text-viscum-muted underline"
-          >
-            {rows.some((r) => r.id.startsWith("n_demo_"))
-              ? "デモ通知を消す"
-              : "デモ通知を入れる"}
-          </button>
         </div>
 
         {rows.length === 0 ? (
           <p className="rounded-lg border border-dashed border-viscum-line px-4 py-8 text-center text-[13px] text-viscum-muted">
-            通知はありません。
-            <Link href="/dashboard/settings" className="text-viscum-brand underline">
-              設定
-            </Link>
-            を確認するか、デモ通知を入れてみてください。
+            通知はありません。コメントやフォローなどが付くとここに並びます。
           </p>
         ) : (
           <ul className="divide-y divide-viscum-line overflow-hidden rounded-lg border border-viscum-line bg-white/60">

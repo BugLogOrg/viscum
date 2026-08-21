@@ -202,7 +202,7 @@ function SettingsPageInner() {
         <section className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
           <p className="text-[13px] font-semibold text-viscum-ink">プロフィール</p>
           <p className="mt-1 text-[11px] text-viscum-muted">
-            アイコン・一言など、公開に出る情報
+            アイコン・プロフィールなど、公開に出る情報
           </p>
           <Link
             href="/dashboard/profile"

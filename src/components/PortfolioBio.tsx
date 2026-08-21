@@ -24,7 +24,7 @@ import {
 
 type GraphTab = "following" | "followers";
 
-/** 公開PF頭：アカウント名が主、@英語IDは副。一言はその下 */
+/** 公開PF頭：アカウント名が主、@英語IDは副。プロフィール文はその下 */
 export function PortfolioHeader({
   handle,
   action,
