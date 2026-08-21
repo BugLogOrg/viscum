@@ -20,7 +20,7 @@ import {
   workFromLocalSeed,
   type LocalSeed,
 } from "@/lib/local-seeds";
-import { announcePublishedSeedToX } from "@/lib/announce-published-seed";
+import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
 
 function SeedMetrics({ s }: { s: LocalSeed }) {
   return (
@@ -255,8 +255,13 @@ export default function DashboardPage() {
                         }
                         const row = publishLocalSeedToShelf(s.id);
                         if (row) {
-                          void announcePublishedSeedToX(workFromLocalSeed(row));
-                          refresh();
+                          void announcePublishedSeedToX(
+                            workFromLocalSeed(row),
+                          ).then((r) => {
+                            const msg = announceResultMessage(r);
+                            if (msg) window.alert(msg);
+                            refresh();
+                          });
                         } else window.alert("公開に失敗しました");
                       }}
                     >

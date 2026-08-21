@@ -14,6 +14,22 @@ const Body = z.object({
   status: z.enum(["none", "open", "pay_soon", "closed"]).optional(),
 });
 
+/** 設定の有無だけ返す（秘密は出さない） */
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.handle) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  return NextResponse.json({
+    configured: isXAnnounceConfigured(),
+    announceEnabled: process.env.X_ANNOUNCE_ENABLED !== "0",
+    hasApiKey: Boolean(process.env.X_API_KEY?.trim()),
+    hasApiSecret: Boolean(process.env.X_API_SECRET?.trim()),
+    hasAccessToken: Boolean(process.env.X_ACCESS_TOKEN?.trim()),
+    hasAccessSecret: Boolean(process.env.X_ACCESS_SECRET?.trim()),
+  });
+}
+
 /**
  * シード公開時に公式 @viscum_org へ告知。
  * X_* 環境変数が無い／X_ANNOUNCE_ENABLED=0 のときは skipped。
@@ -46,6 +62,7 @@ export async function POST(req: Request) {
   const text = buildXAnnounceText(parsed.data, origin);
   const posted = await postTweetAsViscum(text);
   if (!posted.ok) {
+    console.error("[x/announce]", posted.error);
     return NextResponse.json(
       { ok: false, error: posted.error },
       { status: 502 },

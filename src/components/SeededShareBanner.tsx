@@ -10,7 +10,7 @@ import {
   readLocalSeeds,
 } from "@/lib/local-seeds";
 import { buildWorkShareText } from "@/lib/work-share-text";
-import { announcePublishedSeedToX } from "@/lib/announce-published-seed";
+import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
 
 type Step = "choose" | "confirm-public";
 
@@ -84,8 +84,11 @@ export function SeededShareBanner({ work }: { work: Work }) {
             className="rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
             onClick={() => {
               publishLocalSeedToShelf(work.id);
-              void announcePublishedSeedToX(work);
-              router.push(`/?published=${encodeURIComponent(work.id)}`);
+              void announcePublishedSeedToX(work).then((r) => {
+                const msg = announceResultMessage(r);
+                if (msg) window.alert(msg);
+                router.push(`/?published=${encodeURIComponent(work.id)}`);
+              });
             }}
           >
             公開してトップへ

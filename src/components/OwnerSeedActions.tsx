@@ -14,7 +14,7 @@ import {
   workFromLocalSeed,
   type LocalSeed,
 } from "@/lib/local-seeds";
-import { announcePublishedSeedToX } from "@/lib/announce-published-seed";
+import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
 
 /**
  * シーダー本人だけ：棚から外す／削除。
@@ -113,8 +113,13 @@ export function OwnerSeedActions({
                 return;
               }
               setSeed(row);
-              void announcePublishedSeedToX(workFromLocalSeed(row));
-              router.push(`/?published=${encodeURIComponent(workId)}`);
+              void announcePublishedSeedToX(workFromLocalSeed(row)).then(
+                (r) => {
+                  const msg = announceResultMessage(r);
+                  if (msg) window.alert(msg);
+                  router.push(`/?published=${encodeURIComponent(workId)}`);
+                },
+              );
             }}
           >
             公開する（トップに出す）
