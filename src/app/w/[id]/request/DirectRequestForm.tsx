@@ -477,6 +477,9 @@ export function DirectRequestForm({ work }: { work: Work }) {
               <p className="font-medium text-viscum-ink">
                 未登録の人へ共有（アドレスをコピー）
               </p>
+              <p className="text-[11px] leading-relaxed text-viscum-muted">
+                URLを知っている人は誰でも開けます（鍵ではありません）。呼び方は任意で、入れると「○○さんへ」と出るだけです。
+              </p>
               <label className="block text-[12px] text-viscum-ink">
                 相手の呼び方
                 <input
@@ -492,21 +495,28 @@ export function DirectRequestForm({ work }: { work: Work }) {
               </label>
               <p className="break-all rounded border border-viscum-line bg-white/70 px-2 py-1.5 font-mono text-[11px] text-viscum-trunk">
                 {origin
-                  ? `${origin}/dm/${work.id}?to=${encodeURIComponent(guestName.trim() || "相手の名前")}`
-                  : `/dm/${work.id}?to=…`}
+                  ? guestName.trim()
+                    ? `${origin}/dm/${work.id}?to=${encodeURIComponent(guestName.trim())}`
+                    : `${origin}/dm/${work.id}`
+                  : guestName.trim()
+                    ? `/dm/${work.id}?to=…`
+                    : `/dm/${work.id}`}
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => {
                     const name = guestName.trim();
-                    if (!name) {
-                      setCopyNote("先に相手の呼び方を入れてください");
-                      return;
-                    }
-                    const url = `${window.location.origin}/dm/${work.id}?to=${encodeURIComponent(name)}`;
+                    const url = name
+                      ? `${window.location.origin}/dm/${work.id}?to=${encodeURIComponent(name)}`
+                      : `${window.location.origin}/dm/${work.id}`;
                     void navigator.clipboard?.writeText(url).then(
-                      () => setCopyNote("コピーしました。そのまま貼れます"),
+                      () =>
+                        setCopyNote(
+                          name
+                            ? "コピーしました（宛名入り）"
+                            : "コピーしました（宛名なし。誰でも同じURLで開けます）",
+                        ),
                       () => setCopyNote("コピーに失敗しました"),
                     );
                   }}
@@ -515,7 +525,11 @@ export function DirectRequestForm({ work }: { work: Work }) {
                   アドレスをコピー
                 </button>
                 <Link
-                  href={`/dm/${work.id}?to=${encodeURIComponent(guestName.trim() || "相手の名前")}`}
+                  href={
+                    guestName.trim()
+                      ? `/dm/${work.id}?to=${encodeURIComponent(guestName.trim())}`
+                      : `/dm/${work.id}`
+                  }
                   target="_blank"
                   rel="noopener noreferrer"
                   className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand"
