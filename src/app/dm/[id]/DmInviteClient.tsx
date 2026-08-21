@@ -16,7 +16,7 @@ import { accountLabelForHandle } from "@/data/suggested-seeders";
 
 /**
  * 外部DM用の着地。未登録者向け。
- * 流れ: 短い場の一言 → サムネ → 依頼本文 → CTA → 支払実績 → VISCUMって何？
+ * 流れ: VISCUMって何？ → サムネ → 依頼 → CTA → 支払実績
  */
 export function DmInviteClient({
   workId,
@@ -56,18 +56,32 @@ export function DmInviteClient({
 
   return (
     <div className="min-h-dvh bg-viscum-paper text-viscum-ink">
-      <header className="border-b border-viscum-line bg-viscum-leaf-deep px-4 py-4 text-white">
+      <header className="border-b border-viscum-line bg-viscum-leaf-deep px-4 py-3.5 text-white">
         <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em]">
           <ViscumMark className="h-5 w-5" />
           VISCUM
         </p>
-        <p className="mt-2 text-[13px] leading-relaxed text-white/90">
-          個人宛てで「目」を頼む場です。登録前でも中身は読めます。
-        </p>
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
-        {/* サムネ＝第一インパクト */}
+        {/* 場の説明は上。ヘッダー文言と二重にしない */}
+        <section className="border-b border-viscum-line bg-viscum-paper-2/60 px-4 py-4">
+          <p className="text-[13px] font-medium text-viscum-ink">
+            VISCUMって何？
+          </p>
+          <p className="mt-1.5 text-[12px] leading-relaxed text-viscum-muted">
+            シーダー（種を撒く人）が作品を出し、必要なときだけコメントをお願いする場。入場無料。稼ぐ副業アプリではなく、小さな広告費の出口です。
+          </p>
+          <Link
+            href="/lp"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block text-[12px] font-medium text-viscum-brand underline"
+          >
+            LPでもう少し見る
+          </Link>
+        </section>
+
         <div
           className="relative w-full overflow-hidden bg-viscum-leaf-deep"
           style={{ aspectRatio: "1280 / 670" }}
@@ -155,25 +169,7 @@ export function DmInviteClient({
             </a>
           </div>
 
-          {/* CTAの下 → 支払実績 → VISCUMって何？（一番下） */}
           <SeederCredibilityLink handle={work.seeder} className="mt-2" />
-
-          <section className="rounded-xl border border-viscum-line bg-viscum-paper-2/50 px-4 py-4">
-            <p className="text-[13px] font-medium text-viscum-ink">
-              VISCUMって何？
-            </p>
-            <p className="mt-1.5 text-[12px] leading-relaxed text-viscum-muted">
-              シーダー（種を撒く人）が作品を出し、必要なときだけコメントをお願いする場。入場無料。稼ぐ副業アプリではなく、小さな広告費の出口です。
-            </p>
-            <Link
-              href="/lp"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-block text-[13px] font-medium text-viscum-brand underline"
-            >
-              LPでもう少し見る
-            </Link>
-          </section>
 
           <SiteFooter />
         </div>
