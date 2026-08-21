@@ -281,7 +281,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
           const focus = (work.prompts ?? []).map((s) => s.trim()).filter(Boolean);
           const workSummary = (
             focus.length
-              ? `${desc}\n\n【聞くこと】\n${focus.join("\n")}`
+              ? `${desc}\n\n【聞きたいこと】\n${focus.join("\n")}`
               : desc
           )
             .trim()

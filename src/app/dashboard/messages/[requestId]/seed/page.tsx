@@ -19,13 +19,22 @@ import {
 import { fetchRequestDm } from "@/lib/remote-requests";
 import { SeederLink } from "@/components/SeederLink";
 
-/** 依頼時スナップショットから説明と聞くことを分ける */
+/** 依頼時スナップショットから説明と聞きたいことを分ける */
 function splitSeedBody(raw: string): { description: string; focus: string[] } {
   const text = raw.trim();
   if (!text) return { description: "", focus: [] };
-  const marker = "【聞くこと】";
-  const i = text.indexOf(marker);
-  if (i < 0) return { description: text, focus: [] };
+  // 新規は「聞きたいこと」。旧スナップショット互換で「聞くこと」も読む
+  const markers = ["【聞きたいこと】", "【聞くこと】"] as const;
+  let marker = "";
+  let i = -1;
+  for (const m of markers) {
+    const at = text.indexOf(m);
+    if (at >= 0 && (i < 0 || at < i)) {
+      i = at;
+      marker = m;
+    }
+  }
+  if (i < 0 || !marker) return { description: text, focus: [] };
   const description = text.slice(0, i).trim();
   const focus = text
     .slice(i + marker.length)
@@ -154,7 +163,7 @@ export default function RequestSeedDetailPage() {
       .map((s) => s.trim())
       .filter(Boolean);
     if (focus.length)
-      return `${desc}\n\n【聞くこと】\n${focus.join("\n")}`.trim();
+      return `${desc}\n\n【聞きたいこと】\n${focus.join("\n")}`.trim();
     return desc;
   })();
   const { description, focus } = splitSeedBody(
@@ -221,7 +230,7 @@ export default function RequestSeedDetailPage() {
             {focus.length > 0 ? (
               <div className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
                 <p className="text-[13px] font-medium text-viscum-ink">
-                  聞くこと
+                  聞きたいこと
                 </p>
                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-[14px] leading-relaxed text-viscum-ink">
                   {focus.map((line) => (

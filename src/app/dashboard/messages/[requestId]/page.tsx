@@ -168,7 +168,7 @@ export default function RequestDmThreadPage() {
     const focus = (liveWork.prompts ?? [])
       .map((s) => s.trim())
       .filter(Boolean);
-    if (focus.length) return `${desc}\n\n【聞くこと】\n${focus.join("\n")}`.trim();
+    if (focus.length) return `${desc}\n\n【聞きたいこと】\n${focus.join("\n")}`.trim();
     return desc;
   })();
   const seedBody = row.workSummary?.trim() || liveBody;
@@ -257,7 +257,7 @@ export default function RequestDmThreadPage() {
               </div>
               {seedBody ? (
                 <p className="line-clamp-3 whitespace-pre-wrap text-[12px] leading-relaxed text-viscum-muted">
-                  {seedBody}
+                  {seedBody.replace("【聞くこと】", "【聞きたいこと】")}
                 </p>
               ) : (
                 <p className="text-[12px] text-viscum-muted">
