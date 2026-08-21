@@ -159,14 +159,19 @@ export function DmInviteClient({
                 作品を見てコメントする
               </Link>
             )}
-            <a
-              href={work.externalUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-            >
-              外部の作品を開く
-            </a>
+            <div>
+              <p className="mb-1.5 text-[12px] text-viscum-muted">
+                お願いしたい作品
+              </p>
+              <a
+                href={work.externalUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+              >
+                作品URLを開く
+              </a>
+            </div>
           </div>
 
           <SeederCredibilityLink handle={work.seeder} className="mt-2" />
