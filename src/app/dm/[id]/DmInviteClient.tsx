@@ -18,7 +18,7 @@ import { accountLabelForHandle } from "@/data/suggested-seeders";
 
 /**
  * 外部DM用の着地。未登録者向け。
- * 流れ: VISCUMって何？ → サムネ → 依頼 → 作品URL → 支払実績 → 返事を書く
+ * 流れ: サムネ → 依頼 → 作品URL → 支払実績 → 返事 → VISCUMって何？
  */
 export function DmInviteClient({
   workId,
@@ -120,23 +120,6 @@ export function DmInviteClient({
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
-        <section className="border-b border-viscum-line bg-viscum-paper-2/60 px-4 py-4">
-          <p className="text-[13px] font-medium text-viscum-ink">
-            VISCUMって何？
-          </p>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-viscum-muted">
-            シーダー（種を撒く人）が作品を出し、必要なときだけコメントをお願いする場。入場無料。稼ぐ副業アプリではなく、小さな広告費の出口です。
-          </p>
-          <Link
-            href="/lp"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-block text-[12px] font-medium text-viscum-brand underline"
-          >
-            LPでもう少し見る
-          </Link>
-        </section>
-
         <div
           className="relative w-full overflow-hidden bg-viscum-leaf-deep"
           style={{ aspectRatio: "1280 / 670" }}
@@ -298,6 +281,23 @@ export function DmInviteClient({
                 )}
               </form>
             )}
+          </section>
+
+          <section className="rounded-xl border border-viscum-line bg-viscum-paper-2/50 px-4 py-4">
+            <p className="text-[13px] font-medium text-viscum-ink">
+              VISCUMって何？
+            </p>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-viscum-muted">
+              シーダー（種を撒く人）が作品を出し、必要なときだけコメントをお願いする場。入場無料。稼ぐ副業アプリではなく、小さな広告費の出口です。
+            </p>
+            <Link
+              href="/lp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-block text-[13px] font-medium text-viscum-brand underline"
+            >
+              LPでもう少し見る
+            </Link>
           </section>
 
           <SiteFooter />

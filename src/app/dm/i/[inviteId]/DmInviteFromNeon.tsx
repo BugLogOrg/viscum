@@ -157,23 +157,6 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
-        <section className="border-b border-viscum-line bg-viscum-paper-2/60 px-4 py-4">
-          <p className="text-[13px] font-medium text-viscum-ink">
-            VISCUMって何？
-          </p>
-          <p className="mt-1.5 text-[12px] leading-relaxed text-viscum-muted">
-            シーダー（種を撒く人）が作品を出し、必要なときだけコメントをお願いする場。入場無料。稼ぐ副業アプリではなく、小さな広告費の出口です。
-          </p>
-          <Link
-            href="/lp"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-block text-[12px] font-medium text-viscum-brand underline"
-          >
-            LPでもう少し見る
-          </Link>
-        </section>
-
         <div className="space-y-5 px-4 pt-5">
           <div>
             <p className="text-[12px] text-viscum-muted">
@@ -288,6 +271,23 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                 )}
               </form>
             )}
+          </section>
+
+          <section className="rounded-xl border border-viscum-line bg-viscum-paper-2/50 px-4 py-4">
+            <p className="text-[13px] font-medium text-viscum-ink">
+              VISCUMって何？
+            </p>
+            <p className="mt-1.5 text-[12px] leading-relaxed text-viscum-muted">
+              シーダー（種を撒く人）が作品を出し、必要なときだけコメントをお願いする場。入場無料。稼ぐ副業アプリではなく、小さな広告費の出口です。
+            </p>
+            <Link
+              href="/lp"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-block text-[13px] font-medium text-viscum-brand underline"
+            >
+              LPでもう少し見る
+            </Link>
           </section>
 
           <SiteFooter />
