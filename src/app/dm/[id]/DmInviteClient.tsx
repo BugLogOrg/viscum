@@ -7,12 +7,17 @@ import { ViscumMark } from "@/components/ViscumMark";
 import {
   formatDeadlineLine,
   formatPostedLine,
+  formatYen,
   type Work,
 } from "@/data/dummy-works";
 import { resolveWorkClient } from "@/lib/local-seeds";
 import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 
+/**
+ * 外部DM用の着地。未登録者向け。
+ * 流れ: 場の一言 → 作品サムネ（インパクト）→ 個人宛て依頼 → 行動。
+ */
 export function DmInviteClient({
   workId,
   initialWork,
@@ -46,73 +51,22 @@ export function DmInviteClient({
   const deadlineLine = formatDeadlineLine(work.closesInHours, work.status);
   const postedLine = formatPostedLine(work.hoursAgo);
   const seederLabel = accountLabelForHandle(work.seeder);
-  const askLine = `${work.title.slice(0, 48)}${work.title.length > 48 ? "…" : ""} を、あなただけに見てほしいです。見る範囲は下の説明どおりで大丈夫です。`;
+  const thumbUrl = work.thumbUrl?.trim() || "";
+  const prize = work.prizeYen ?? null;
 
   return (
     <div className="min-h-dvh bg-viscum-paper text-viscum-ink">
-      <header className="border-b border-viscum-line bg-viscum-leaf-deep px-4 py-5 text-white">
+      {/* ロゴのみ。場の説明は直下の「VISCUMって何？」に寄せる */}
+      <header className="border-b border-viscum-line bg-viscum-leaf-deep px-4 py-3.5 text-white">
         <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em]">
           <ViscumMark className="h-5 w-5" />
           VISCUM
         </p>
-        <p className="mt-2 text-[13px] leading-relaxed text-white/90">
-          個人が作ったものに、少額の広告費で「目」を頼める場です。登録前でも中身は読めます。
-        </p>
       </header>
 
-      <main className="mx-auto max-w-lg px-4 py-6">
-        <h1 className="text-xl font-semibold leading-snug text-viscum-ink">
-          {seederLabel.line} から、あなた宛てのお願いです
-        </h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-          公開コンペの募集ではありません。個人宛てです。
-        </p>
-
-        <SeederCredibilityLink handle={work.seeder} className="mt-5" />
-
-        <blockquote className="mt-5 rounded-lg border border-viscum-line bg-white/50 px-3 py-3 text-[14px] leading-relaxed text-viscum-ink">
-          {askLine}
-        </blockquote>
-
-        <section className="mt-6 space-y-2 border-t border-viscum-line pt-5">
-          <p className="text-[12px] text-viscum-muted">作品</p>
-          <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink">
-            {work.title}
-          </h2>
-          <p className="text-[14px] leading-relaxed text-viscum-ink">
-            {work.description}
-          </p>
-          <p className="text-[12px] text-viscum-muted">
-            投稿：{postedLine}
-            {deadlineLine ? ` · 締切：${deadlineLine}` : ""}
-          </p>
-          {work.tags.length > 0 && (
-            <p className="text-[12px] text-viscum-muted">
-              タグ：{work.tags.join(" / ")}
-            </p>
-          )}
-        </section>
-
-        <div className="mt-6 flex flex-col gap-2">
-          {!work.id.startsWith("local_") && (
-            <Link
-              href={`/w/${work.id}`}
-              className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
-            >
-              作品を見てコメントする（デモ）
-            </Link>
-          )}
-          <a
-            href={work.externalUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-          >
-            外部の作品を開く
-          </a>
-        </div>
-
-        <section className="mt-10 rounded-xl border border-viscum-line bg-viscum-paper-2/50 px-4 py-4">
+      <main className="mx-auto max-w-lg pb-8">
+        {/* TOP: 場の説明 */}
+        <section className="border-b border-viscum-line bg-viscum-paper-2/60 px-4 py-4">
           <p className="text-[13px] font-medium text-viscum-ink">
             VISCUMって何？
           </p>
@@ -121,13 +75,104 @@ export function DmInviteClient({
           </p>
           <Link
             href="/lp"
-            className="mt-3 inline-block text-[13px] font-medium text-viscum-brand underline"
+            className="mt-2 inline-block text-[12px] font-medium text-viscum-brand underline"
           >
             LPでもう少し見る
           </Link>
         </section>
 
-        <SiteFooter />
+        {/* サムネ＝第一インパクト */}
+        <div
+          className="relative w-full overflow-hidden bg-viscum-leaf-deep"
+          style={{ aspectRatio: "1280 / 670" }}
+        >
+          {thumbUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={thumbUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full flex-col items-center justify-center gap-1 px-6 text-center text-white/85">
+              <p className="text-[13px] font-medium">作品サムネ</p>
+              <p className="text-[11px] text-white/70">
+                （未添付のときはここに出ます）
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-5 px-4 pt-5">
+          <div>
+            <p className="text-[12px] text-viscum-muted">
+              個人宛て · 公開コンペではありません
+              {prize != null && prize > 0 ? (
+                <>
+                  <span className="mx-1 text-viscum-line">·</span>
+                  褒賞 {formatYen(prize)}
+                </>
+              ) : null}
+            </p>
+            <h1 className="mt-1.5 text-xl font-semibold leading-snug text-viscum-ink">
+              {work.title}
+            </h1>
+            <p className="mt-2 text-[14px] text-viscum-ink">
+              {seederLabel.line} から、あなた宛てのお願いです
+            </p>
+          </div>
+
+          <SeederCredibilityLink handle={work.seeder} />
+
+          <section className="space-y-2">
+            <p className="text-[12px] text-viscum-muted">お願いの内容</p>
+            <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
+              {work.description}
+            </p>
+            {(work.prompts?.length ?? 0) > 0 && (
+              <div className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3">
+                <p className="text-[11px] font-medium text-viscum-muted">
+                  聞きたいこと
+                </p>
+                <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[13px] leading-relaxed text-viscum-ink">
+                  {work.prompts!.map((p) => (
+                    <li key={p}>{p}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="text-[12px] text-viscum-muted">
+              投稿：{postedLine}
+              {deadlineLine ? ` · 締切：${deadlineLine}` : ""}
+            </p>
+            {work.tags.length > 0 && (
+              <p className="text-[12px] text-viscum-muted">
+                タグ：{work.tags.join(" / ")}
+              </p>
+            )}
+          </section>
+
+          <div className="flex flex-col gap-2 pt-1">
+            {!work.id.startsWith("local_") && (
+              <Link
+                href={`/w/${work.id}`}
+                className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+              >
+                作品を見てコメントする
+              </Link>
+            )}
+            <a
+              href={work.externalUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+            >
+              外部の作品を開く
+            </a>
+          </div>
+
+          <SiteFooter />
+        </div>
       </main>
     </div>
   );
