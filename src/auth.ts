@@ -62,13 +62,21 @@ async function loadUserFlags(userId: string): Promise<{
     .limit(1);
   const row = rows[0];
   let handle = row?.handle ?? null;
-  // デモ棚IDを実アカウントが掴んでいたら解放し、英語ID選び直しへ
-  if (handle && isReservedDemoHandle(handle) && !userId.startsWith("demo:")) {
-    await db
-      .update(users)
-      .set({ handle: null })
-      .where(eq(users.id, userId));
-    handle = null;
+  // デモ棚の予約IDは実アカウントもデモセッションも掴ませない
+  if (handle && isReservedDemoHandle(handle)) {
+    if (!userId.startsWith("demo:")) {
+      await db
+        .update(users)
+        .set({ handle: null })
+        .where(eq(users.id, userId));
+      handle = null;
+    } else {
+      await db
+        .update(users)
+        .set({ handle: "guest", name: "guest" })
+        .where(eq(users.id, userId));
+      handle = "guest";
+    }
   }
   return {
     handle,
@@ -176,6 +184,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             : "guest";
         const handle =
           raw.replace(/[^a-zA-Z0-9_]/g, "").slice(0, 24) || "guest";
+        // 棚デモ人物（tori 等）になりすまさない
+        if (isReservedDemoHandle(handle)) return null;
         const id = `demo:${handle}`;
         await upsertUser({
           id,
@@ -256,6 +266,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       ) {
         const flags = await loadUserFlags(id);
         token.needsOnboarding = Boolean(flags.handle) && !flags.onboardingDone;
+      }
+      // 棚デモIDのデモセッションは guest に落とす（ヘッダが tori になる事故防止）
+      const tid = String(token.id || "");
+      const th = String(token.handle || "");
+      if (tid.startsWith("demo:") && isReservedDemoHandle(th)) {
+        token.handle = "guest";
+        token.name = "guest";
+        token.needsHandle = false;
+        token.needsOnboarding = false;
       }
       return token;
     },

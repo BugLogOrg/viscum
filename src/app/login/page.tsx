@@ -22,6 +22,8 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [showDemo, setShowDemo] = useState(false);
   const githubEnabled = process.env.NEXT_PUBLIC_AUTH_GITHUB === "1";
+  const reservedDemoHint =
+    "tori / ayu など棚デモ用の英語IDは使えません。guest や自分用のIDにしてください。";
 
   function readCallback(): string {
     if (typeof window === "undefined") return "/";
@@ -73,7 +75,9 @@ export default function LoginPage() {
     });
     setPending(false);
     if (res?.error) {
-      setError("ログインに失敗しました。デモログインが無効かもしれません。");
+      setError(
+        `ログインに失敗しました。デモログインが無効か、${reservedDemoHint}`,
+      );
       return;
     }
     window.location.href = callbackUrl;
@@ -154,9 +158,12 @@ export default function LoginPage() {
                   value={handle}
                   onChange={(e) => setHandle(e.target.value)}
                   className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] focus:border-viscum-brand focus:outline-none"
-                  placeholder="tori"
+                  placeholder="guest"
                   autoComplete="username"
                 />
+                <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
+                  {reservedDemoHint}
+                </p>
               </div>
               <button
                 type="submit"

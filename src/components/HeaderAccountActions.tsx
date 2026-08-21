@@ -32,6 +32,7 @@ export function HeaderAccountActions({
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
   const handle = session?.user?.handle;
+  const isDemoSession = Boolean(session?.user?.id?.startsWith("demo:"));
 
   useEffect(() => {
     if (readLocalNotifies().length === 0) installDemoNotifies();
@@ -90,6 +91,8 @@ export function HeaderAccountActions({
     : "/";
   const avatarSrc = localAvatar ?? session?.user?.image ?? null;
   const faceName = accountName ?? handle;
+  const faceLabel =
+    faceName && isDemoSession ? `${faceName}（デモ）` : faceName;
   return (
     <div className={`flex items-center gap-0.5 ${className}`}>
       <Link
@@ -147,7 +150,7 @@ export function HeaderAccountActions({
         <div className="relative" ref={rootRef}>
           <button
             type="button"
-            title={`${faceName} (@${handle})`}
+            title={`${faceLabel} (@${handle})`}
             aria-label="アカウントメニュー"
             aria-expanded={open}
             aria-haspopup="menu"
@@ -156,8 +159,8 @@ export function HeaderAccountActions({
             className="flex items-center gap-1 rounded-md px-1.5 py-1 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
           >
             <Avatar handle={handle} image={avatarSrc} size="sm" />
-            <span className="hidden max-w-[5.5rem] truncate text-[11px] font-medium sm:inline">
-              {faceName}
+            <span className="hidden max-w-[7rem] truncate text-[11px] font-medium sm:inline">
+              {faceLabel}
             </span>
           </button>
 
@@ -172,10 +175,11 @@ export function HeaderAccountActions({
                 <Avatar handle={handle} image={avatarSrc} size="lg" />
                 <div className="min-w-0 flex-1 pt-0.5">
                   <p className="truncate text-[14px] font-semibold text-viscum-ink">
-                    {faceName}
+                    {faceLabel}
                   </p>
                   <p className="truncate text-[12px] text-viscum-muted">
                     @{handle}
+                    {isDemoSession ? " · デモログイン中" : ""}
                   </p>
                   <Link
                     href={portfolioHref}
