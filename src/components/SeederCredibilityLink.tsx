@@ -25,9 +25,11 @@ export function SeederCredibilityLink({
     <div
       className={`rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-3 ${className}`}
     >
-      <p className="text-[12px] font-medium text-viscum-ink">依頼主の支払実績</p>
+      <p className="text-[12px] font-medium text-viscum-ink">
+        依頼主の支払実績（確認用・任意）
+      </p>
       <p className="mt-0.5 text-[11px] leading-relaxed text-viscum-muted">
-        スコアではなく、支払い完了の事実です。受ける前に必ず確認してください。
+        スコアではありません。開くとプロフィールで支払い完了の件数が分かります。ここで何か送る必要はありません。
       </p>
       <p className="mt-2 text-[13px] text-viscum-ink">
         <span className="font-medium">{label.line}</span>
@@ -39,9 +41,11 @@ export function SeederCredibilityLink({
       </p>
       <Link
         href={`/u/${encodeURIComponent(h)}`}
+        target="_blank"
+        rel="noopener noreferrer"
         className="mt-2 inline-flex text-[13px] font-medium text-viscum-brand underline"
       >
-        支払実績を開く
+        プロフィールで支払実績を見る
       </Link>
     </div>
   );

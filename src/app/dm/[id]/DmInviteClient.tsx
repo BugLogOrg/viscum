@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
 import {
@@ -11,12 +12,13 @@ import {
   type Work,
 } from "@/data/dummy-works";
 import { resolveWorkClient } from "@/lib/local-seeds";
+import { postWorkComment } from "@/lib/remote-comments";
 import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 
 /**
  * 外部DM用の着地。未登録者向け。
- * 流れ: VISCUMって何？ → サムネ → 依頼 → CTA → 支払実績
+ * 流れ: VISCUMって何？ → サムネ → 依頼 → 作品URL → 支払実績 → 返事を書く
  */
 export function DmInviteClient({
   workId,
@@ -25,7 +27,15 @@ export function DmInviteClient({
   workId: string;
   initialWork: Work | null;
 }) {
+  const { data: session, status: authStatus } = useSession();
+  const handle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
+  const canWrite = Boolean(session?.user?.id && handle);
+
   const [work, setWork] = useState<Work | null>(initialWork);
+  const [body, setBody] = useState("");
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sentOk, setSentOk] = useState(false);
 
   useEffect(() => {
     if (initialWork) {
@@ -53,6 +63,39 @@ export function DmInviteClient({
   const seederLabel = accountLabelForHandle(work.seeder);
   const thumbUrl = work.thumbUrl?.trim() || "";
   const prize = work.prizeYen ?? null;
+  const isLocal = work.id.startsWith("local_");
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/dm/${work.id}`)}`;
+  const messagesHref = "/dashboard/messages";
+
+  async function sendReply(e: React.FormEvent) {
+    e.preventDefault();
+    const text = body.trim();
+    if (!text || sending) return;
+    if (isLocal) {
+      setSendError(
+        "この作品はまだ相手の端末内です。作品URLを見たうえで、ログインしてご依頼DMから返事してください。",
+      );
+      return;
+    }
+    if (!canWrite) return;
+    setSending(true);
+    setSendError(null);
+    try {
+      const res = await postWorkComment({
+        workId: work!.id,
+        subject: "直依頼への返事",
+        body: text,
+      });
+      if (res.ok) {
+        setBody("");
+        setSentOk(true);
+      } else {
+        setSendError(res.error || "送れませんでした");
+      }
+    } finally {
+      setSending(false);
+    }
+  }
 
   return (
     <div className="min-h-dvh bg-viscum-paper text-viscum-ink">
@@ -64,7 +107,6 @@ export function DmInviteClient({
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
-        {/* 場の説明は上。ヘッダー文言と二重にしない */}
         <section className="border-b border-viscum-line bg-viscum-paper-2/60 px-4 py-4">
           <p className="text-[13px] font-medium text-viscum-ink">
             VISCUMって何？
@@ -150,31 +192,100 @@ export function DmInviteClient({
             )}
           </section>
 
-          <div className="flex flex-col gap-2 pt-1">
-            {!work.id.startsWith("local_") && (
-              <Link
-                href={`/w/${work.id}`}
-                className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
-              >
-                作品を見てコメントする
-              </Link>
-            )}
-            <div>
-              <p className="mb-1.5 text-[12px] text-viscum-muted">
-                お願いしたい作品
-              </p>
-              <a
-                href={work.externalUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-              >
-                作品URLを開く
-              </a>
-            </div>
+          <div>
+            <p className="mb-1.5 text-[12px] text-viscum-muted">
+              お願いしたい作品
+            </p>
+            <a
+              href={work.externalUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+            >
+              作品URLを開く
+            </a>
           </div>
 
-          <SeederCredibilityLink handle={work.seeder} className="mt-2" />
+          <SeederCredibilityLink handle={work.seeder} />
+
+          {/* 次にやること＝返事 */}
+          <section className="rounded-xl border border-viscum-brand/30 bg-white/70 px-4 py-4">
+            <p className="text-[13px] font-medium text-viscum-ink">
+              返事・コメントを書く
+            </p>
+            <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
+              作品を見たあとに、ここに書いて送ってください。ログインが必要です（無料）。
+            </p>
+
+            {sentOk ? (
+              <p className="mt-3 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[13px] text-viscum-ink">
+                送りました。ありがとうございます。
+                {!isLocal ? (
+                  <>
+                    {" "}
+                    <Link
+                      href={`/w/${work.id}`}
+                      className="font-medium text-viscum-brand underline"
+                    >
+                      作品ページで確認
+                    </Link>
+                  </>
+                ) : null}
+              </p>
+            ) : (
+              <form onSubmit={sendReply} className="mt-3 space-y-3">
+                <textarea
+                  value={body}
+                  onChange={(e) => {
+                    setBody(e.target.value);
+                    setSendError(null);
+                  }}
+                  rows={5}
+                  placeholder="見た感想・気づいた点・質問など"
+                  className="w-full resize-y rounded-md border border-viscum-line bg-white px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
+                />
+                {sendError && (
+                  <p className="text-[12px] text-viscum-berry-deep">{sendError}</p>
+                )}
+
+                {authStatus === "loading" ? (
+                  <p className="text-[12px] text-viscum-muted">確認中…</p>
+                ) : canWrite && isLocal ? (
+                  <div className="space-y-2">
+                    <Link
+                      href={messagesHref}
+                      className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+                    >
+                      ご依頼DMで返事する
+                    </Link>
+                    <p className="text-[11px] leading-relaxed text-viscum-muted">
+                      この作品はまだ相手の端末内です。上に下書きしてから、ご依頼DMへ貼っても大丈夫です。
+                    </p>
+                  </div>
+                ) : canWrite ? (
+                  <button
+                    type="submit"
+                    disabled={sending || !body.trim()}
+                    className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                  >
+                    {sending ? "送信中…" : "返事を送る"}
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <Link
+                      href={loginHref}
+                      className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+                    >
+                      ログインして返事を送る
+                    </Link>
+                    <p className="text-[11px] leading-relaxed text-viscum-muted">
+                      アカウント作成も同じ画面からできます。英語IDがあればコメントを送れます。
+                    </p>
+                  </div>
+                )}
+              </form>
+            )}
+          </section>
 
           <SiteFooter />
         </div>
