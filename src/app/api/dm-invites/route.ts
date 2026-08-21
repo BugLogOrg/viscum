@@ -30,6 +30,7 @@ export async function POST(req: Request) {
     workSummary?: string;
     amountYen?: number;
     pitch?: string;
+    closesInHours?: number;
   } | null;
 
   const workId = body?.workId?.trim() ?? "";
@@ -37,6 +38,13 @@ export async function POST(req: Request) {
   if (!workId || !workTitle) {
     return NextResponse.json({ error: "workId / title required" }, { status: 400 });
   }
+
+  const closesAt =
+    typeof body?.closesInHours === "number" &&
+    Number.isFinite(body.closesInHours) &&
+    body.closesInHours > 0
+      ? new Date(Date.now() + body.closesInHours * 3600_000)
+      : null;
 
   const [row] = await db
     .insert(dmInvites)
@@ -51,6 +59,7 @@ export async function POST(req: Request) {
           ? Math.round(body.amountYen)
           : 5000,
       pitch: body?.pitch?.trim().slice(0, 4000) || null,
+      closesAt,
     })
     .returning();
 
@@ -86,6 +95,7 @@ export async function GET(req: Request) {
       workSummary: dmInvites.workSummary,
       amountYen: dmInvites.amountYen,
       pitch: dmInvites.pitch,
+      closesAt: dmInvites.closesAt,
       fromUserId: dmInvites.fromUserId,
       createdAt: dmInvites.createdAt,
     })
@@ -116,6 +126,7 @@ export async function GET(req: Request) {
       fromHandle: (from?.handle ?? "").replace(/^@/, "") || "unknown",
       fromAccountName: from?.name?.trim() || undefined,
       createdAt: row.createdAt.toISOString(),
+      closesAt: row.closesAt ? row.closesAt.toISOString() : undefined,
     },
     persisted: true,
   });

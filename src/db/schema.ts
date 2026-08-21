@@ -259,6 +259,8 @@ export const dmInvites = pgTable(
     workSummary: text("work_summary"),
     amountYen: integer("amount_yen").notNull().default(5000),
     pitch: text("pitch"),
+    /** 締切（任意。共有着地で目立たせる） */
+    closesAt: timestamp("closes_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

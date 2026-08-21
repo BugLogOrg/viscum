@@ -279,6 +279,10 @@ export function DirectRequestForm({ work }: { work: Work }) {
           amountYen:
             work.prizeYen && work.prizeYen >= 5000 ? work.prizeYen : 5000,
           pitch: message.trim() || undefined,
+          closesInHours:
+            typeof work.closesInHours === "number" && work.closesInHours > 0
+              ? work.closesInHours
+              : undefined,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {

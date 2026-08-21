@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
-import { formatYen } from "@/data/dummy-works";
+import { formatDateTime, formatYen } from "@/data/dummy-works";
 import { postWorkComment } from "@/lib/remote-comments";
 import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
@@ -20,6 +20,8 @@ export type PublicDmInvite = {
   pitch?: string;
   fromHandle: string;
   fromAccountName?: string;
+  createdAt?: string;
+  closesAt?: string;
 };
 
 function splitSummary(raw: string): { description: string; prompts: string[] } {
@@ -123,6 +125,20 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
     invite.fromAccountName?.trim() || seederLabel.line;
   const externalUrl = invite.workExternalUrl?.trim() || "";
   const loginHref = `/login?callbackUrl=${encodeURIComponent(`/dm/i/${invite.id}`)}`;
+  const postedLine = invite.createdAt
+    ? formatDateTime(new Date(invite.createdAt))
+    : null;
+  const deadlineLine = (() => {
+    if (!invite.closesAt) return null;
+    const closes = new Date(invite.closesAt);
+    const ms = closes.getTime() - Date.now();
+    if (ms <= 0) return `${formatDateTime(closes)}（終了）`;
+    const days = Math.floor(ms / 86_400_000);
+    const hours = Math.floor((ms % 86_400_000) / 3_600_000);
+    const left =
+      days > 0 ? `あと${days}日` : hours > 0 ? `あと${hours}時間` : "まもなく";
+    return `${formatDateTime(closes)}（${left}）`;
+  })();
 
   async function sendReply(e: React.FormEvent) {
     e.preventDefault();
@@ -159,17 +175,48 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       <main className="mx-auto max-w-lg pb-8">
         <div className="space-y-5 px-4 pt-5">
           <div>
-            <p className="text-[12px] text-viscum-muted">
-              個人宛て · 公開コンペではありません
-              <span className="mx-1 text-viscum-line">·</span>
-              褒賞 {formatYen(invite.amountYen)}
-            </p>
-            <h1 className="mt-1.5 text-xl font-semibold leading-snug text-viscum-ink">
-              {invite.workTitle}
-            </h1>
-            <p className="mt-2 text-[14px] text-viscum-ink">
+            <p className="text-[12px] text-viscum-muted">個人宛て</p>
+            <h1 className="mt-1 text-xl font-semibold leading-snug text-viscum-ink">
               {displayName} から、あなた宛てのお願いです
-            </p>
+            </h1>
+          </div>
+
+          <div className="rounded-xl border-2 border-viscum-berry/40 bg-viscum-berry/5 px-4 py-4">
+            <dl className="space-y-1 text-[13px] text-viscum-ink">
+              {postedLine ? (
+                <div>
+                  <dt className="inline text-viscum-muted">投稿：</dt>
+                  <dd className="inline">{postedLine}</dd>
+                </div>
+              ) : null}
+              {deadlineLine ? (
+                <div>
+                  <dt className="inline text-viscum-muted">締切：</dt>
+                  <dd className="inline font-medium">{deadlineLine}</dd>
+                </div>
+              ) : null}
+            </dl>
+            <div
+              className={
+                postedLine || deadlineLine
+                  ? "mt-3 border-t border-viscum-berry/25 pt-3"
+                  : ""
+              }
+            >
+              <p className="text-[11px] font-medium tracking-wide text-viscum-muted">
+                褒賞
+              </p>
+              <p className="mt-0.5 text-3xl font-semibold tabular-nums text-viscum-berry-deep">
+                {formatYen(invite.amountYen)}
+              </p>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[12px] text-viscum-muted">作品</p>
+            <h2 className="mt-1 text-lg font-semibold leading-snug text-viscum-ink">
+              {invite.workTitle}
+            </h2>
           </div>
 
           <section className="space-y-2">

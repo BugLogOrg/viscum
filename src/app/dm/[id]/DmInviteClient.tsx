@@ -120,44 +120,56 @@ export function DmInviteClient({
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
-        <div
-          className="relative w-full overflow-hidden bg-viscum-leaf-deep"
-          style={{ aspectRatio: "1280 / 670" }}
-        >
-          {thumbUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={thumbUrl}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-1 px-6 text-center text-white/85">
-              <p className="text-[13px] font-medium">作品サムネ</p>
-              <p className="text-[11px] text-white/70">
-                （未添付のときはここに出ます）
-              </p>
-            </div>
-          )}
-        </div>
-
         <div className="space-y-5 px-4 pt-5">
           <div>
-            <p className="text-[12px] text-viscum-muted">
-              個人宛て · 公開コンペではありません
-              {prize != null && prize > 0 ? (
-                <>
-                  <span className="mx-1 text-viscum-line">·</span>
-                  褒賞 {formatYen(prize)}
-                </>
-              ) : null}
-            </p>
-            <h1 className="mt-1.5 text-xl font-semibold leading-snug text-viscum-ink">
-              {work.title}
-            </h1>
-            <p className="mt-2 text-[14px] text-viscum-ink">
+            <p className="text-[12px] text-viscum-muted">個人宛て</p>
+            <h1 className="mt-1 text-xl font-semibold leading-snug text-viscum-ink">
               {seederLabel.line} から、あなた宛てのお願いです
-            </p>
+            </h1>
+          </div>
+
+          <div className="rounded-xl border-2 border-viscum-berry/40 bg-viscum-berry/5 px-4 py-4">
+            <dl className="space-y-1 text-[13px] text-viscum-ink">
+              <div>
+                <dt className="inline text-viscum-muted">投稿：</dt>
+                <dd className="inline">{postedLine}</dd>
+              </div>
+              {deadlineLine ? (
+                <div>
+                  <dt className="inline text-viscum-muted">締切：</dt>
+                  <dd className="inline font-medium">{deadlineLine}</dd>
+                </div>
+              ) : null}
+            </dl>
+            <div className="mt-3 border-t border-viscum-berry/25 pt-3">
+              <p className="text-[11px] font-medium tracking-wide text-viscum-muted">
+                褒賞
+              </p>
+              <p className="mt-0.5 text-3xl font-semibold tabular-nums text-viscum-berry-deep">
+                {prize != null && prize > 0 ? formatYen(prize) : "—"}
+              </p>
+            </div>
+          </div>
+
+          {thumbUrl ? (
+            <div
+              className="relative w-full overflow-hidden rounded-lg bg-viscum-leaf-deep"
+              style={{ aspectRatio: "1280 / 670" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={thumbUrl}
+                alt=""
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </div>
+          ) : null}
+
+          <div>
+            <p className="text-[12px] text-viscum-muted">作品</p>
+            <h2 className="mt-1 text-lg font-semibold leading-snug text-viscum-ink">
+              {work.title}
+            </h2>
           </div>
 
           <section className="space-y-2">
@@ -177,10 +189,6 @@ export function DmInviteClient({
                 </ul>
               </div>
             )}
-            <p className="text-[12px] text-viscum-muted">
-              投稿：{postedLine}
-              {deadlineLine ? ` · 締切：${deadlineLine}` : ""}
-            </p>
             {work.tags.length > 0 && (
               <p className="text-[12px] text-viscum-muted">
                 タグ：{work.tags.join(" / ")}

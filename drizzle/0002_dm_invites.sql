@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS "dm_invites" (
   "work_summary" text,
   "amount_yen" integer DEFAULT 5000 NOT NULL,
   "pitch" text,
+  "closes_at" timestamp with time zone,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 CREATE INDEX IF NOT EXISTS "dm_invites_from_idx" ON "dm_invites" ("from_user_id");
