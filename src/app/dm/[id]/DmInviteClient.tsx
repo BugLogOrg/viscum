@@ -120,16 +120,31 @@ export function DmInviteClient({
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
-        <div className="space-y-5 px-4 pt-5">
-          <div>
-            <p className="text-[12px] text-viscum-muted">個人宛て</p>
-            <h1 className="mt-1 text-xl font-semibold leading-snug text-viscum-ink">
-              {seederLabel.line} から、あなた宛てのお願いです
-            </h1>
+        {thumbUrl ? (
+          <div
+            className="relative w-full overflow-hidden bg-viscum-leaf-deep"
+            style={{ aspectRatio: "1280 / 670" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
           </div>
+        ) : null}
 
-          <div className="rounded-xl border-2 border-viscum-berry/40 bg-viscum-berry/5 px-4 py-4">
-            <dl className="space-y-1 text-[13px] text-viscum-ink">
+        <div className="space-y-5 px-4 pt-5">
+          <h1 className="text-xl font-semibold leading-snug text-viscum-ink">
+            <span className="block">{seederLabel.line} から、</span>
+            <span className="block">あなた宛てのお願いです</span>
+          </h1>
+
+          <div className="rounded-xl border-2 border-viscum-berry/50 bg-viscum-berry/10 px-4 py-3.5">
+            <p className="text-[18px] font-semibold tabular-nums text-viscum-berry-deep">
+              褒賞：{prize != null && prize > 0 ? formatYen(prize) : "—"}
+            </p>
+            <dl className="mt-2 space-y-1 text-[13px] text-viscum-ink">
               <div>
                 <dt className="inline text-viscum-muted">投稿：</dt>
                 <dd className="inline">{postedLine}</dd>
@@ -141,29 +156,7 @@ export function DmInviteClient({
                 </div>
               ) : null}
             </dl>
-            <div className="mt-3 border-t border-viscum-berry/25 pt-3">
-              <p className="text-[11px] font-medium tracking-wide text-viscum-muted">
-                褒賞
-              </p>
-              <p className="mt-0.5 text-3xl font-semibold tabular-nums text-viscum-berry-deep">
-                {prize != null && prize > 0 ? formatYen(prize) : "—"}
-              </p>
-            </div>
           </div>
-
-          {thumbUrl ? (
-            <div
-              className="relative w-full overflow-hidden rounded-lg bg-viscum-leaf-deep"
-              style={{ aspectRatio: "1280 / 670" }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={thumbUrl}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            </div>
-          ) : null}
 
           <div>
             <p className="text-[12px] text-viscum-muted">作品</p>
