@@ -158,20 +158,22 @@ export default function RequestDmThreadPage() {
   const workTitle = displayRequestWorkTitle(row.workId, row.workTitle);
   const isLocal = row.workId.startsWith("local_");
   const liveWork = resolveWorkClient(row.workId);
-  const liveExternal = liveWork?.externalUrl?.trim();
-  const externalUrl =
-    row.workExternalUrl?.trim() ||
-    (liveExternal && liveExternal !== "https://" ? liveExternal : "") ||
-    "";
   const thumbUrl =
     row.workThumbUrl?.trim() ||
     liveWork?.thumbUrl?.trim() ||
     "";
-  const summary =
-    row.workSummary?.trim() ||
-    liveWork?.description?.trim().slice(0, 800) ||
-    "";
-  /** タイトル＝場内シード詳細 `/w/...`（相手端末に無い local_* は注意） */
+  const liveBody = (() => {
+    if (!liveWork) return "";
+    const desc = liveWork.description?.trim() ?? "";
+    const focus = (liveWork.prompts ?? [])
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (focus.length) return `${desc}\n\n【聞くこと】\n${focus.join("\n")}`.trim();
+    return desc;
+  })();
+  /** 依頼時に埋め込んだシード本文（受け手の確認用。外部URLではない） */
+  const seedBody = row.workSummary?.trim() || liveBody;
+  /** 場内シード詳細 `/w/...`（相手端末に無い local_* は開けない） */
   const titleHref = `/w/${encodeURIComponent(row.workId)}`;
   const detailReachable = Boolean(liveWork) || !isLocal;
   const isSeeder = row.fromHandle.toLowerCase() === me;
@@ -231,37 +233,31 @@ export default function RequestDmThreadPage() {
               </div>
             )}
             <div className="space-y-2 px-3 py-3">
-              <p className="text-[14px] font-semibold leading-snug text-viscum-ink">
-                {workTitle}
-              </p>
-              {summary ? (
-                <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-viscum-muted line-clamp-6">
-                  {summary}
+              {detailReachable ? (
+                <Link
+                  href={titleHref}
+                  className="block text-[14px] font-semibold leading-snug text-viscum-brand underline"
+                >
+                  {workTitle}
+                </Link>
+              ) : (
+                <p className="text-[14px] font-semibold leading-snug text-viscum-ink">
+                  {workTitle}
                 </p>
-              ) : null}
+              )}
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
                 {detailReachable ? (
                   <Link
                     href={titleHref}
                     className="font-medium text-viscum-brand underline"
                   >
-                    場内の詳細を開く
+                    シード詳細を開く
                   </Link>
                 ) : (
                   <span className="text-viscum-muted">
-                    場内詳細はこの端末に無いことがあります（端末内シード）
+                    この端末にシード本体はないので、下に依頼時の全文を表示しています
                   </span>
                 )}
-                {externalUrl ? (
-                  <a
-                    href={externalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-medium text-viscum-brand underline"
-                  >
-                    外部の作品を開く
-                  </a>
-                ) : null}
                 {statsHref && isSeeder ? (
                   <Link
                     href={statsHref}
@@ -271,11 +267,20 @@ export default function RequestDmThreadPage() {
                   </Link>
                 ) : null}
               </div>
-              {!externalUrl && isLocal ? (
-                <p className="text-[11px] leading-relaxed text-viscum-muted">
-                  相手が確実に見られるよう、シードに外部URL（プロダクト本体）を入れてから直依頼するのがおすすめです。
+              {seedBody ? (
+                <div className="rounded-md border border-viscum-line bg-viscum-paper-2/40 px-3 py-2">
+                  <p className="text-[11px] font-medium text-viscum-muted">
+                    シード内容（依頼時のコピー）
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-viscum-ink">
+                    {seedBody}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-[12px] text-viscum-muted">
+                  シード本文がありません。直依頼を送り直すと全文がここに残ります。
                 </p>
-              ) : null}
+              )}
             </div>
           </div>
 

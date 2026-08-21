@@ -277,6 +277,15 @@ export function DirectRequestForm({ work }: { work: Work }) {
           e.preventDefault();
           if (!canSend || !selected || !fromHandle || sending) return;
           const workTitle = work.title.trim().slice(0, 120) || work.id;
+          const desc = work.description?.trim() ?? "";
+          const focus = (work.prompts ?? []).map((s) => s.trim()).filter(Boolean);
+          const workSummary = (
+            focus.length
+              ? `${desc}\n\n【聞くこと】\n${focus.join("\n")}`
+              : desc
+          )
+            .trim()
+            .slice(0, 12_000);
           setSendError(null);
           setSending(true);
           void (async () => {
@@ -285,7 +294,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
               workTitle,
               workExternalUrl: work.externalUrl?.trim() || undefined,
               workThumbUrl: work.thumbUrl?.trim() || undefined,
-              workSummary: work.description?.trim().slice(0, 800) || undefined,
+              workSummary: workSummary || undefined,
               toHandle: selected.handle,
               amountYen: 5000,
               pitch: message.trim(),
@@ -307,7 +316,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
               workTitle,
               workExternalUrl: work.externalUrl?.trim() || undefined,
               workThumbUrl: work.thumbUrl?.trim() || undefined,
-              workSummary: work.description?.trim().slice(0, 800) || undefined,
+              workSummary: workSummary || undefined,
               fromHandle,
               fromAccountName: displayAccountName(
                 fromHandle,

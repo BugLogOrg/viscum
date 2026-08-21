@@ -200,7 +200,7 @@ export const requestDms = pgTable(
     workExternalUrl: text("work_external_url"),
     /** 依頼作成時のサムネ（受け手端末にシードが無くても見える） */
     workThumbUrl: text("work_thumb_url"),
-    /** 依頼作成時の作品要約（タイトル以外の本文スナップショット） */
+    /** 依頼作成時の作品本文スナップショット（説明＋聞くこと。受け手の確認用） */
     workSummary: text("work_summary"),
     fromUserId: text("from_user_id")
       .notNull()

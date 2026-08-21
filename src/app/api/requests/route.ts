@@ -135,7 +135,8 @@ export async function POST(req: Request) {
   // data URL は肥大化しやすいので上限（受け手表示用のスナップショット）
   const workThumbUrl =
     rawThumb && rawThumb.length <= 700_000 ? rawThumb : null;
-  const workSummary = body?.workSummary?.trim().slice(0, 800) || null;
+  // 受け手が /w を開けない場合の全文確認用（説明＋聞くこと）
+  const workSummary = body?.workSummary?.trim().slice(0, 12_000) || null;
   const toHandle = body?.toHandle?.replace(/^@/, "").trim().toLowerCase() ?? "";
   const pitch = body?.pitch?.trim().slice(0, 4000) ?? "";
   const amountYen =
