@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useEffect, useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 
@@ -16,6 +17,8 @@ const magicLinkUi =
 const POST_ONBOARDING_KEY = "viscum.postOnboarding";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const [email, setEmail] = useState("");
   const [handle, setHandle] = useState("guest");
   const [pending, setPending] = useState(false);
@@ -24,6 +27,20 @@ export default function LoginPage() {
   const githubEnabled = process.env.NEXT_PUBLIC_AUTH_GITHUB === "1";
   const reservedDemoHint =
     "tori / ayu など棚デモ用の英語IDは使えません。guest や自分用のIDにしてください。";
+
+  useEffect(() => {
+    if (status !== "authenticated" || !session?.user) return;
+    if (session.user.needsHandle || !session.user.handle?.trim()) {
+      router.replace("/onboarding/handle");
+      return;
+    }
+    if (session.user.needsOnboarding) {
+      router.replace("/onboarding/welcome");
+      return;
+    }
+    router.replace(readCallback());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, session?.user]);
 
   function readCallback(): string {
     if (typeof window === "undefined") return "/";

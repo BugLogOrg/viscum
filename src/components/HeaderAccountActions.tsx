@@ -31,8 +31,9 @@ export function HeaderAccountActions({
   const [accountName, setAccountName] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuId = useId();
-  const handle = session?.user?.handle;
+  const handle = session?.user?.handle?.trim() || "";
   const isDemoSession = Boolean(session?.user?.id?.startsWith("demo:"));
+  const isLoggedIn = Boolean(session?.user?.id);
 
   useEffect(() => {
     if (readLocalNotifies().length === 0) installDemoNotifies();
@@ -88,11 +89,15 @@ export function HeaderAccountActions({
   const close = () => setOpen(false);
   const portfolioHref = handle
     ? `/u/${encodeURIComponent(handle)}`
-    : "/";
+    : "/onboarding/handle";
   const avatarSrc = localAvatar ?? session?.user?.image ?? null;
-  const faceName = accountName ?? handle;
+  const faceName = accountName ?? (handle || session?.user?.email || "アカウント");
   const faceLabel =
-    faceName && isDemoSession ? `${faceName}（デモ）` : faceName;
+    isDemoSession && handle
+      ? `${faceName}（デモ）`
+      : !handle
+        ? "英語IDを設定"
+        : faceName;
   return (
     <div className={`flex items-center gap-0.5 ${className}`}>
       <Link
@@ -146,11 +151,15 @@ export function HeaderAccountActions({
 
       {status === "loading" ? (
         <span className="px-2 text-[11px] text-viscum-muted">…</span>
-      ) : session?.user && handle ? (
+      ) : isLoggedIn ? (
         <div className="relative" ref={rootRef}>
           <button
             type="button"
-            title={`${faceLabel} (@${handle})`}
+            title={
+              handle
+                ? `${faceLabel} (@${handle})`
+                : "英語ID未設定。設定へ進んでください"
+            }
             aria-label="アカウントメニュー"
             aria-expanded={open}
             aria-haspopup="menu"
@@ -158,7 +167,7 @@ export function HeaderAccountActions({
             onClick={() => setOpen((v) => !v)}
             className="flex items-center gap-1 rounded-md px-1.5 py-1 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
           >
-            <Avatar handle={handle} image={avatarSrc} size="sm" />
+            <Avatar handle={handle || "?"} image={avatarSrc} size="sm" />
             <span className="hidden max-w-[7rem] truncate text-[11px] font-medium sm:inline">
               {faceLabel}
             </span>
@@ -172,23 +181,35 @@ export function HeaderAccountActions({
             >
               {/* 頭：アバター＋名前＋公開ページ */}
               <div className="flex items-start gap-3 border-b border-viscum-line px-3.5 py-3">
-                <Avatar handle={handle} image={avatarSrc} size="lg" />
+                <Avatar handle={handle || "?"} image={avatarSrc} size="lg" />
                 <div className="min-w-0 flex-1 pt-0.5">
                   <p className="truncate text-[14px] font-semibold text-viscum-ink">
                     {faceLabel}
                   </p>
                   <p className="truncate text-[12px] text-viscum-muted">
-                    @{handle}
-                    {isDemoSession ? " · デモログイン中" : ""}
+                    {handle
+                      ? `@${handle}${isDemoSession ? " · デモログイン中" : ""}`
+                      : session?.user?.email || "英語ID未設定"}
                   </p>
-                  <Link
-                    href={portfolioHref}
-                    role="menuitem"
-                    onClick={close}
-                    className="mt-0.5 inline-block text-[12px] text-viscum-brand underline underline-offset-2"
-                  >
-                    プロフィール
-                  </Link>
+                  {!handle ? (
+                    <Link
+                      href="/onboarding/handle"
+                      role="menuitem"
+                      onClick={close}
+                      className="mt-0.5 inline-block text-[12px] font-medium text-viscum-berry-deep underline underline-offset-2"
+                    >
+                      英語IDを設定する
+                    </Link>
+                  ) : (
+                    <Link
+                      href={portfolioHref}
+                      role="menuitem"
+                      onClick={close}
+                      className="mt-0.5 inline-block text-[12px] text-viscum-brand underline underline-offset-2"
+                    >
+                      プロフィール
+                    </Link>
+                  )}
                 </div>
               </div>
 
