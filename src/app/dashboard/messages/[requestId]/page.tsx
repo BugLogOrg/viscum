@@ -218,16 +218,44 @@ export default function RequestDmThreadPage() {
   async function send(e: React.FormEvent) {
     e.preventDefault();
     const text = draft.trim();
-    if (!text || sending) return;
+    if (!text || sending || !row || !handle) return;
     setSending(true);
+    const optimisticId = `local_${Date.now().toString(36)}`;
+    const optimistic = {
+      id: optimisticId,
+      fromHandle: handle,
+      body: text,
+      createdAt: new Date().toISOString(),
+    };
+    setRow({
+      ...row,
+      messages: [...row.messages, optimistic],
+    });
+    setDraft("");
     try {
       const res = await patchRequestDm(requestId, { message: text });
       if (res.request) {
-        setRow(res.request);
-        setDraft("");
+        setRow((prev) =>
+          prev
+            ? {
+                ...res.request!,
+                // サーバーはサムネを返さないことがあるので既存を維持
+                workThumbUrl: prev.workThumbUrl || res.request!.workThumbUrl,
+                workSummary: res.request!.workSummary || prev.workSummary,
+              }
+            : res.request!,
+        );
       } else {
         await refresh();
-        // 失敗時は下書きを残す（連打で空にしない）
+        setDraft(text);
+        setRow((prev) =>
+          prev
+            ? {
+                ...prev,
+                messages: prev.messages.filter((m) => m.id !== optimisticId),
+              }
+            : prev,
+        );
       }
     } finally {
       setSending(false);

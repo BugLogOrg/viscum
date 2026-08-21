@@ -4,6 +4,10 @@ import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { requestDms, users } from "@/db/schema";
 import type { RequestDm } from "@/lib/local-request-dms";
+import {
+  requestDmToClient,
+  sanitizeWorkThumbUrl,
+} from "@/lib/request-dm-serialize";
 
 async function userByHandle(handle: string) {
   const db = getDb();
@@ -22,30 +26,7 @@ async function userByHandle(handle: string) {
   return rows[0] ?? null;
 }
 
-function toClient(
-  row: typeof requestDms.$inferSelect,
-  from: { handle: string | null; name: string | null },
-  to: { handle: string | null; name: string | null },
-): RequestDm {
-  return {
-    id: row.id,
-    workId: row.workId,
-    workTitle: row.workTitle,
-    workExternalUrl: row.workExternalUrl?.trim() || undefined,
-    workThumbUrl: row.workThumbUrl?.trim() || undefined,
-    workSummary: row.workSummary?.trim() || undefined,
-    fromHandle: (from.handle ?? "").replace(/^@/, "") || "unknown",
-    fromAccountName: from.name?.trim() || undefined,
-    toHandle: (to.handle ?? "").replace(/^@/, "") || "unknown",
-    amountYen: row.amountYen,
-    pitch: row.pitch,
-    status: row.status as RequestDm["status"],
-    createdAt: row.createdAt.toISOString(),
-    messages: Array.isArray(row.messages) ? row.messages : [],
-  };
-}
-
-/** 自分関連の直依頼一覧 */
+/** 自分関連の直依頼一覧（サムネは返さない＝高速化） */
 export async function GET() {
   const session = await auth();
   const userId = session?.user?.id;
@@ -60,14 +41,28 @@ export async function GET() {
     return NextResponse.json({ requests: [] as RequestDm[], persisted: false });
   }
 
+  // 一覧は messages / thumb 列を読まない（巨大JSONB・data URL がボトルネック）
   const rows = await db
-    .select()
+    .select({
+      id: requestDms.id,
+      workId: requestDms.workId,
+      workTitle: requestDms.workTitle,
+      workExternalUrl: requestDms.workExternalUrl,
+      workSummary: requestDms.workSummary,
+      fromUserId: requestDms.fromUserId,
+      toUserId: requestDms.toUserId,
+      amountYen: requestDms.amountYen,
+      pitch: requestDms.pitch,
+      status: requestDms.status,
+      createdAt: requestDms.createdAt,
+      updatedAt: requestDms.updatedAt,
+    })
     .from(requestDms)
     .where(
       or(eq(requestDms.fromUserId, userId), eq(requestDms.toUserId, userId)),
     )
     .orderBy(desc(requestDms.createdAt))
-    .limit(60);
+    .limit(40);
 
   const userIds = [
     ...new Set(rows.flatMap((r) => [r.fromUserId, r.toUserId])),
@@ -88,10 +83,16 @@ export async function GET() {
   const out = rows.map((r) => {
     const from = userMap.get(r.fromUserId);
     const to = userMap.get(r.toUserId);
-    return toClient(
-      r,
+    const slim = {
+      ...r,
+      workThumbUrl: null as string | null,
+      messages: [] as typeof requestDms.$inferSelect.messages,
+    };
+    return requestDmToClient(
+      slim as typeof requestDms.$inferSelect,
       { handle: from?.handle ?? null, name: from?.name ?? null },
       { handle: to?.handle ?? null, name: to?.name ?? null },
+      { lean: true },
     );
   });
 
@@ -131,11 +132,8 @@ export async function POST(req: Request) {
   const workId = body?.workId?.trim() ?? "";
   const workTitle = (body?.workTitle?.trim() || workId).slice(0, 120);
   const workExternalUrl = body?.workExternalUrl?.trim().slice(0, 2000) || null;
-  const rawThumb = body?.workThumbUrl?.trim() || "";
-  // data URL は肥大化しやすいので上限（受け手表示用のスナップショット）
-  const workThumbUrl =
-    rawThumb && rawThumb.length <= 700_000 ? rawThumb : null;
-  // 受け手が /w を開けない場合の全文確認用（説明＋聞くこと）
+  // data URL は保存しない（読み込みが極端に遅くなる）
+  const workThumbUrl = sanitizeWorkThumbUrl(body?.workThumbUrl) ?? null;
   const workSummary = body?.workSummary?.trim().slice(0, 12_000) || null;
   const toHandle = body?.toHandle?.replace(/^@/, "").trim().toLowerCase() ?? "";
   const pitch = body?.pitch?.trim().slice(0, 4000) || "よろしくお願いします。";
@@ -194,7 +192,7 @@ export async function POST(req: Request) {
     .returning();
 
   const fromName = session.user?.name?.trim() || null;
-  const request = toClient(
+  const request = requestDmToClient(
     inserted,
     { handle: fromHandle, name: fromName },
     { handle: toUser.handle, name: toUser.name },

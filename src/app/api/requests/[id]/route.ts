@@ -3,38 +3,31 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { requestDms, users } from "@/db/schema";
-import type { RequestDm, RequestDmStatus } from "@/lib/local-request-dms";
+import type { RequestDmStatus } from "@/lib/local-request-dms";
+import { requestDmToClient } from "@/lib/request-dm-serialize";
 
 type Ctx = { params: Promise<{ id: string }> };
-
-function toClient(
-  row: typeof requestDms.$inferSelect,
-  from: { handle: string | null; name: string | null },
-  to: { handle: string | null; name: string | null },
-): RequestDm {
-  return {
-    id: row.id,
-    workId: row.workId,
-    workTitle: row.workTitle,
-    workExternalUrl: row.workExternalUrl?.trim() || undefined,
-    workThumbUrl: row.workThumbUrl?.trim() || undefined,
-    workSummary: row.workSummary?.trim() || undefined,
-    fromHandle: (from.handle ?? "").replace(/^@/, "") || "unknown",
-    fromAccountName: from.name?.trim() || undefined,
-    toHandle: (to.handle ?? "").replace(/^@/, "") || "unknown",
-    amountYen: row.amountYen,
-    pitch: row.pitch,
-    status: row.status as RequestDmStatus,
-    createdAt: row.createdAt.toISOString(),
-    messages: Array.isArray(row.messages) ? row.messages : [],
-  };
-}
 
 async function loadParty(id: string, userId: string) {
   const db = getDb();
   if (!db) return null;
+  // work_thumb_url は data URL のとき数百KB〜で遅いので読まない
   const rows = await db
-    .select()
+    .select({
+      id: requestDms.id,
+      workId: requestDms.workId,
+      workTitle: requestDms.workTitle,
+      workExternalUrl: requestDms.workExternalUrl,
+      workSummary: requestDms.workSummary,
+      fromUserId: requestDms.fromUserId,
+      toUserId: requestDms.toUserId,
+      amountYen: requestDms.amountYen,
+      pitch: requestDms.pitch,
+      status: requestDms.status,
+      messages: requestDms.messages,
+      createdAt: requestDms.createdAt,
+      updatedAt: requestDms.updatedAt,
+    })
     .from(requestDms)
     .where(eq(requestDms.id, id))
     .limit(1);
@@ -43,6 +36,10 @@ async function loadParty(id: string, userId: string) {
   if (row.fromUserId !== userId && row.toUserId !== userId) {
     return { forbidden: true as const };
   }
+  const full = {
+    ...row,
+    workThumbUrl: null as string | null,
+  } as typeof requestDms.$inferSelect;
   const [from, to] = await Promise.all([
     db
       .select({ handle: users.handle, name: users.name })
@@ -56,11 +53,12 @@ async function loadParty(id: string, userId: string) {
       .limit(1),
   ]);
   return {
-    row,
-    request: toClient(row, from[0] ?? { handle: null, name: null }, to[0] ?? {
-      handle: null,
-      name: null,
-    }),
+    row: full,
+    request: requestDmToClient(
+      full,
+      from[0] ?? { handle: null, name: null },
+      to[0] ?? { handle: null, name: null },
+    ),
   };
 }
 
@@ -163,9 +161,24 @@ export async function PATCH(req: Request, ctx: Ctx) {
     .where(eq(requestDms.id, id))
     .returning();
 
-  const refreshed = await loadParty(updated.id, userId);
-  if (!refreshed || "forbidden" in refreshed) {
-    return NextResponse.json({ error: "update failed" }, { status: 500 });
-  }
-  return NextResponse.json({ request: refreshed.request, persisted: true });
+  // returning の row で足りる（再 SELECT しない＝速い）
+  const request = requestDmToClient(
+    { ...updated, workThumbUrl: null },
+    {
+      handle: loaded.request.fromHandle,
+      name: loaded.request.fromAccountName ?? null,
+    },
+    {
+      handle: loaded.request.toHandle,
+      name: null,
+    },
+  );
+  // メッセージだけ更新。巨大サムネはレスポンスに載せない
+  request.messages = Array.isArray(updated.messages) ? updated.messages : [];
+  request.status = updated.status as RequestDmStatus;
+  request.workSummary = loaded.request.workSummary;
+  request.workTitle = loaded.request.workTitle;
+  request.fromAccountName = loaded.request.fromAccountName;
+
+  return NextResponse.json({ request, persisted: true });
 }
