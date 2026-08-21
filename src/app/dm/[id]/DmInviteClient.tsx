@@ -167,6 +167,8 @@ export function DmInviteClient({
             </p>
             <Link
               href="/lp"
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-3 inline-block text-[13px] font-medium text-viscum-brand underline"
             >
               LPでもう少し見る
