@@ -35,7 +35,8 @@ export async function GET() {
  */
 export async function POST(req: Request) {
   const session = await auth();
-  if (!session?.user?.handle) {
+  // handle 未設定（オンボーディング途中）でもログイン済みなら告知可
+  if (!session?.user?.id) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
