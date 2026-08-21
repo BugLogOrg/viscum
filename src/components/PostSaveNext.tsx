@@ -105,6 +105,22 @@ export function PostSaveNext({ work }: { work: Work }) {
   if (step === "published") {
     return (
       <div className="mx-auto max-w-lg space-y-5 px-4 py-8">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => router.push("/")}
+            className="text-[13px] text-viscum-brand underline"
+          >
+            ← 戻る（作品一覧）
+          </button>
+          <Link
+            href="/dashboard"
+            className="text-[12px] text-viscum-muted underline"
+          >
+            ダッシュボード
+          </Link>
+        </div>
+
         <div className="space-y-2 rounded-lg border border-viscum-leaf/40 bg-viscum-leaf-soft/40 px-4 py-4">
           <p className="text-[15px] font-semibold text-viscum-leaf-deep">
             公開しました
@@ -113,7 +129,9 @@ export function PostSaveNext({ work }: { work: Work }) {
             作品一覧に載っています。ここから先のSNS投稿は任意です（コピーして自分のXなどに貼れます）。
           </p>
           {xNote ? (
-            <p className="text-[12px] text-viscum-muted">{xNote}</p>
+            <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-viscum-muted">
+              {xNote}
+            </p>
           ) : null}
         </div>
 
@@ -166,6 +184,22 @@ export function PostSaveNext({ work }: { work: Work }) {
 
   return (
     <div className="mx-auto max-w-lg space-y-5 px-4 py-8">
+      <div className="flex items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={() => router.push("/new")}
+          className="text-[13px] text-viscum-brand underline"
+        >
+          ← 戻る（投稿画面）
+        </button>
+        <Link
+          href="/dashboard#drafts"
+          className="text-[12px] text-viscum-muted underline"
+        >
+          下書き一覧
+        </Link>
+      </div>
+
       <div className="space-y-2 rounded-lg border border-viscum-berry/30 bg-viscum-berry/5 px-4 py-4">
         <p className="text-[15px] font-semibold text-viscum-berry-deep">
           一旦保存しました

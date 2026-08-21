@@ -157,13 +157,23 @@ export default function RequestDmThreadPage() {
 
   const workTitle = displayRequestWorkTitle(row.workId, row.workTitle);
   const isLocal = row.workId.startsWith("local_");
-  const liveExternal = resolveWorkClient(row.workId)?.externalUrl?.trim();
+  const liveWork = resolveWorkClient(row.workId);
+  const liveExternal = liveWork?.externalUrl?.trim();
   const externalUrl =
     row.workExternalUrl?.trim() ||
     (liveExternal && liveExternal !== "https://" ? liveExternal : "") ||
     "";
-  /** タイトル＝場内シード詳細 `/w/...`（外部URLではない） */
+  const thumbUrl =
+    row.workThumbUrl?.trim() ||
+    liveWork?.thumbUrl?.trim() ||
+    "";
+  const summary =
+    row.workSummary?.trim() ||
+    liveWork?.description?.trim().slice(0, 800) ||
+    "";
+  /** タイトル＝場内シード詳細 `/w/...`（相手端末に無い local_* は注意） */
   const titleHref = `/w/${encodeURIComponent(row.workId)}`;
+  const detailReachable = Boolean(liveWork) || !isLocal;
   const isSeeder = row.fromHandle.toLowerCase() === me;
   const statsHref = isLocal
     ? `/dashboard/${encodeURIComponent(row.workId)}`
@@ -206,57 +216,76 @@ export default function RequestDmThreadPage() {
             <span className="text-viscum-muted">金額 · </span>
             {formatYen(row.amountYen)}
           </p>
-          <p className="text-[13px] text-viscum-ink">
-            <span className="text-viscum-muted">作品 · </span>
-            <Link
-              href={titleHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="break-words text-viscum-brand underline"
-              title="場内のシード詳細"
-            >
-              {workTitle}
-            </Link>
-          </p>
-          <p className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
-            {externalUrl ? (
-              <a
-                href={externalUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-viscum-brand underline"
-              >
-                外部の作品を開く
-              </a>
-            ) : null}
-            {statsHref && isSeeder ? (
-              <Link
-                href={statsHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-viscum-muted underline"
-              >
-                成績を見る
-              </Link>
-            ) : null}
-            {!externalUrl && !statsHref && (
-              <span className="text-viscum-muted">
-                タイトル＝場内のシード詳細（/w/…）
-              </span>
+
+          <div className="mt-3 overflow-hidden rounded-lg border border-viscum-line bg-white/80">
+            {thumbUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={thumbUrl}
+                alt=""
+                className="aspect-[1280/670] w-full object-cover"
+              />
+            ) : (
+              <div className="flex aspect-[1280/670] w-full items-center justify-center bg-viscum-paper-2 text-[12px] text-viscum-muted">
+                サムネ未添付（新しい依頼から送れます）
+              </div>
             )}
-          </p>
-          {isLocal && !externalUrl && (
-            <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
-              タイトルは `/w/…` のシード詳細へ。プロダクト本体のURLは「外部の作品」。
-            </p>
-          )}
+            <div className="space-y-2 px-3 py-3">
+              <p className="text-[14px] font-semibold leading-snug text-viscum-ink">
+                {workTitle}
+              </p>
+              {summary ? (
+                <p className="whitespace-pre-wrap text-[12px] leading-relaxed text-viscum-muted line-clamp-6">
+                  {summary}
+                </p>
+              ) : null}
+              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
+                {detailReachable ? (
+                  <Link
+                    href={titleHref}
+                    className="font-medium text-viscum-brand underline"
+                  >
+                    場内の詳細を開く
+                  </Link>
+                ) : (
+                  <span className="text-viscum-muted">
+                    場内詳細はこの端末に無いことがあります（端末内シード）
+                  </span>
+                )}
+                {externalUrl ? (
+                  <a
+                    href={externalUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-viscum-brand underline"
+                  >
+                    外部の作品を開く
+                  </a>
+                ) : null}
+                {statsHref && isSeeder ? (
+                  <Link
+                    href={statsHref}
+                    className="font-medium text-viscum-muted underline"
+                  >
+                    成績を見る
+                  </Link>
+                ) : null}
+              </div>
+              {!externalUrl && isLocal ? (
+                <p className="text-[11px] leading-relaxed text-viscum-muted">
+                  相手が確実に見られるよう、シードに外部URL（プロダクト本体）を入れてから直依頼するのがおすすめです。
+                </p>
+              ) : null}
+            </div>
+          </div>
+
           {isDemoSeed(row.workId) && (
             <p className="mt-2 rounded-md border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-2 text-[12px] leading-relaxed text-viscum-ink">
               このご依頼は<strong>見本作品</strong>（{row.workId}
               ）に紐づいています。さっきシードした作品ではありません。完了画面の「サイト内のメンターに頼む」から送り直すと、自分の作品名で残ります。
             </p>
           )}
-          <p className="text-[12px] text-viscum-muted">
+          <p className="mt-2 text-[12px] text-viscum-muted">
             状態: {statusLabel(row.status)}
           </p>
           {isRecipient ? (

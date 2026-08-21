@@ -16,6 +16,10 @@ export type RequestDm = {
   workTitle: string;
   /** 作品の外部URL（あれば） */
   workExternalUrl?: string;
+  /** 依頼作成時のサムネ（受け手でも見えるスナップショット） */
+  workThumbUrl?: string;
+  /** 依頼作成時の作品要約 */
+  workSummary?: string;
   /** 依頼する側 */
   fromHandle: string;
   fromAccountName?: string;
@@ -73,6 +77,8 @@ export function createRequestDm(input: {
   workId: string;
   workTitle: string;
   workExternalUrl?: string;
+  workThumbUrl?: string;
+  workSummary?: string;
   fromHandle: string;
   fromAccountName?: string;
   toHandle: string;
@@ -86,6 +92,8 @@ export function createRequestDm(input: {
     workId: input.workId,
     workTitle: input.workTitle,
     workExternalUrl: input.workExternalUrl?.trim() || undefined,
+    workThumbUrl: input.workThumbUrl?.trim() || undefined,
+    workSummary: input.workSummary?.trim() || undefined,
     fromHandle: input.fromHandle,
     fromAccountName: input.fromAccountName,
     toHandle: input.toHandle,

@@ -1,7 +1,8 @@
 import { TwitterApi, ApiResponseError } from "twitter-api-v2";
 
 export function isXAnnounceConfigured(): boolean {
-  if (process.env.X_ANNOUNCE_ENABLED === "0") return false;
+  // 明示ONのみ。URL付き投稿は従量で高いので既定オフ（ホットまとめ告知は別途検討）
+  if (process.env.X_ANNOUNCE_ENABLED !== "1") return false;
   return Boolean(
     process.env.X_API_KEY?.trim() &&
       process.env.X_API_SECRET?.trim() &&

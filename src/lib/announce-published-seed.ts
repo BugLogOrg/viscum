@@ -37,13 +37,21 @@ export async function announcePublishedSeedToX(
 /** 公開UI用：結果を短く表示（公開成功とX失敗を混ぜない） */
 export function announceResultMessage(r: AnnounceResult): string | null {
   if (r.error) {
-    const hint = /401|Unauthorized|authenticat/i.test(r.error)
-      ? "\n\nよくある原因: Access Token が Read only／別アプリのキー／OAuth2用トークンの取り違え。Vercel の X_API_* 4種を Developer Portal で再発行（Read and write）して入れ直してください。"
-      : "";
+    let hint = "";
+    if (/401|Unauthorized|authenticat/i.test(r.error)) {
+      hint =
+        "\n\nよくある原因: Access Token が Read only／別アプリのキー／OAuth2用トークンの取り違え。Vercel の X_API_* を再発行（Read and write）してください。";
+    } else if (/402|Payment Required|credits|subscription|paid/i.test(r.error)) {
+      hint =
+        "\n\n402 は認証OKでも投稿APIに課金が必要な状態です。X Developer の Free 枠では投稿できないことが多く、Basic 以上への加入が必要な場合があります。公開自体は完了しています。SNS文は下からコピーして自分のXに貼れます。";
+    }
     return `公開は完了しています。公式X（@viscum_org）への自動告知だけ失敗しました。\n${r.error}${hint}`;
   }
   if (r.skipped) {
-    return "公開は完了。X告知はスキップ（環境変数 X_API_* が未設定か無効）です。";
+    if (r.reason === "not_configured") {
+      return "公開は完了。公式Xの自動告知はいまオフです（告知文は下からコピーできます）。";
+    }
+    return "公開は完了。X告知はスキップされました。";
   }
   if (r.tweetId) {
     return `Xに投稿しました（@viscum_org）。\nhttps://x.com/viscum_org/status/${r.tweetId}`;

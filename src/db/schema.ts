@@ -198,6 +198,10 @@ export const requestDms = pgTable(
     workTitle: text("work_title").notNull(),
     /** 作品の外部URL（local_* で公開ページ未接続でも辿り着ける） */
     workExternalUrl: text("work_external_url"),
+    /** 依頼作成時のサムネ（受け手端末にシードが無くても見える） */
+    workThumbUrl: text("work_thumb_url"),
+    /** 依頼作成時の作品要約（タイトル以外の本文スナップショット） */
+    workSummary: text("work_summary"),
     fromUserId: text("from_user_id")
       .notNull()
       .references(() => users.id),

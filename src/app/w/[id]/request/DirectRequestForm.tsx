@@ -284,6 +284,8 @@ export function DirectRequestForm({ work }: { work: Work }) {
               workId: work.id,
               workTitle,
               workExternalUrl: work.externalUrl?.trim() || undefined,
+              workThumbUrl: work.thumbUrl?.trim() || undefined,
+              workSummary: work.description?.trim().slice(0, 800) || undefined,
               toHandle: selected.handle,
               amountYen: 5000,
               pitch: message.trim(),
@@ -304,6 +306,8 @@ export function DirectRequestForm({ work }: { work: Work }) {
               workId: work.id,
               workTitle,
               workExternalUrl: work.externalUrl?.trim() || undefined,
+              workThumbUrl: work.thumbUrl?.trim() || undefined,
+              workSummary: work.description?.trim().slice(0, 800) || undefined,
               fromHandle,
               fromAccountName: displayAccountName(
                 fromHandle,

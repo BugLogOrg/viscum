@@ -32,6 +32,8 @@ function toClient(
     workId: row.workId,
     workTitle: row.workTitle,
     workExternalUrl: row.workExternalUrl?.trim() || undefined,
+    workThumbUrl: row.workThumbUrl?.trim() || undefined,
+    workSummary: row.workSummary?.trim() || undefined,
     fromHandle: (from.handle ?? "").replace(/^@/, "") || "unknown",
     fromAccountName: from.name?.trim() || undefined,
     toHandle: (to.handle ?? "").replace(/^@/, "") || "unknown",
@@ -119,6 +121,8 @@ export async function POST(req: Request) {
     workId?: string;
     workTitle?: string;
     workExternalUrl?: string;
+    workThumbUrl?: string;
+    workSummary?: string;
     toHandle?: string;
     amountYen?: number;
     pitch?: string;
@@ -127,6 +131,11 @@ export async function POST(req: Request) {
   const workId = body?.workId?.trim() ?? "";
   const workTitle = (body?.workTitle?.trim() || workId).slice(0, 120);
   const workExternalUrl = body?.workExternalUrl?.trim().slice(0, 2000) || null;
+  const rawThumb = body?.workThumbUrl?.trim() || "";
+  // data URL は肥大化しやすいので上限（受け手表示用のスナップショット）
+  const workThumbUrl =
+    rawThumb && rawThumb.length <= 700_000 ? rawThumb : null;
+  const workSummary = body?.workSummary?.trim().slice(0, 800) || null;
   const toHandle = body?.toHandle?.replace(/^@/, "").trim().toLowerCase() ?? "";
   const pitch = body?.pitch?.trim().slice(0, 4000) ?? "";
   const amountYen =
@@ -168,6 +177,8 @@ export async function POST(req: Request) {
       workId,
       workTitle,
       workExternalUrl,
+      workThumbUrl,
+      workSummary,
       fromUserId,
       toUserId: toUser.id,
       amountYen,

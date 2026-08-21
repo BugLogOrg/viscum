@@ -125,28 +125,44 @@ export default function MessagesIndexPage() {
                   href={`/dashboard/messages/${encodeURIComponent(r.id)}`}
                   className="block px-3 py-3 transition hover:bg-viscum-leaf-soft/30"
                 >
-                  <div className="flex items-baseline justify-between gap-2">
-                    <p className="truncate text-[14px] font-medium text-viscum-ink">
-                      {peerName}
-                      <span className="font-normal text-viscum-muted">
-                        {" "}
-                        (@{peer})
-                      </span>
-                    </p>
-                    <span
-                      className={`shrink-0 text-[11px] ${
-                        r.status === "pending"
-                          ? "font-medium text-viscum-berry-deep"
-                          : "text-viscum-muted"
-                      }`}
-                    >
-                      {statusLabel(r.status)}
-                    </span>
+                  <div className="flex gap-3">
+                    {r.workThumbUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={r.workThumbUrl}
+                        alt=""
+                        className="h-12 w-[4.6rem] shrink-0 rounded object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-[4.6rem] shrink-0 items-center justify-center rounded bg-viscum-paper-2 text-[10px] text-viscum-muted">
+                        無
+                      </div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <p className="truncate text-[14px] font-medium text-viscum-ink">
+                          {peerName}
+                          <span className="font-normal text-viscum-muted">
+                            {" "}
+                            (@{peer})
+                          </span>
+                        </p>
+                        <span
+                          className={`shrink-0 text-[11px] ${
+                            r.status === "pending"
+                              ? "font-medium text-viscum-berry-deep"
+                              : "text-viscum-muted"
+                          }`}
+                        >
+                          {statusLabel(r.status)}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
+                        {incoming ? "受信" : "送信"} · {formatYen(r.amountYen)} ·{" "}
+                        {displayRequestWorkTitle(r.workId, r.workTitle)}
+                      </p>
+                    </div>
                   </div>
-                  <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
-                    {incoming ? "受信" : "送信"} · {formatYen(r.amountYen)} ·{" "}
-                    {displayRequestWorkTitle(r.workId, r.workTitle)}
-                  </p>
                 </Link>
               </li>
             );
