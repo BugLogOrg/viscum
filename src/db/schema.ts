@@ -240,11 +240,38 @@ export const requestDms = pgTable(
   ],
 );
 
+/**
+ * 未登録者向けの共有着地（URLを知っている人向け・鍵ではない）。
+ * local_* でも Neon にスナップショットを残し、別端末で開ける。
+ */
+export const dmInvites = pgTable(
+  "dm_invites",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => users.id),
+    workId: text("work_id").notNull(),
+    workTitle: text("work_title").notNull(),
+    workExternalUrl: text("work_external_url"),
+    workSummary: text("work_summary"),
+    amountYen: integer("amount_yen").notNull().default(5000),
+    pitch: text("pitch"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [index("dm_invites_from_idx").on(t.fromUserId)],
+);
+
 export type User = typeof users.$inferSelect;
 export type WorkRow = typeof works.$inferSelect;
 export type CommentRow = typeof comments.$inferSelect;
 export type PaymentRow = typeof payments.$inferSelect;
 export type RequestDmRow = typeof requestDms.$inferSelect;
+export type DmInviteRow = typeof dmInvites.$inferSelect;
 
 export type WorkPlan =
   | "free_comment"

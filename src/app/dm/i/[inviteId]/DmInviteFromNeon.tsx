@@ -5,97 +5,134 @@ import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
-import {
-  formatDeadlineLine,
-  formatPostedLine,
-  formatYen,
-  type Work,
-} from "@/data/dummy-works";
-import { resolveWorkClient } from "@/lib/local-seeds";
+import { formatYen } from "@/data/dummy-works";
 import { postWorkComment } from "@/lib/remote-comments";
 import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 
-/**
- * 外部DM用の着地。未登録者向け。
- * 流れ: VISCUMって何？ → サムネ → 依頼 → 作品URL → 支払実績 → 返事を書く
- */
-export function DmInviteClient({
-  workId,
-  initialWork,
-}: {
+export type PublicDmInvite = {
+  id: string;
   workId: string;
-  initialWork: Work | null;
-}) {
+  workTitle: string;
+  workExternalUrl?: string;
+  workSummary?: string;
+  amountYen: number;
+  pitch?: string;
+  fromHandle: string;
+  fromAccountName?: string;
+};
+
+function splitSummary(raw: string): { description: string; prompts: string[] } {
+  const text = raw.trim();
+  if (!text) return { description: "", prompts: [] };
+  const markers = ["【聞きたいこと】", "【聞くこと】"] as const;
+  let marker = "";
+  let i = -1;
+  for (const m of markers) {
+    const at = text.indexOf(m);
+    if (at >= 0 && (i < 0 || at < i)) {
+      i = at;
+      marker = m;
+    }
+  }
+  if (i < 0 || !marker) return { description: text, prompts: [] };
+  return {
+    description: text.slice(0, i).trim(),
+    prompts: text
+      .slice(i + marker.length)
+      .split("\n")
+      .map((s) => s.trim())
+      .filter(Boolean),
+  };
+}
+
+/**
+ * Neon 招待スナップショット着地。local_* でも別端末で開ける。
+ */
+export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const { data: session, status: authStatus } = useSession();
   const handle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
   const canWrite = Boolean(session?.user?.id && handle);
 
-  const [work, setWork] = useState<Work | null>(initialWork);
+  const [invite, setInvite] = useState<PublicDmInvite | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sentOk, setSentOk] = useState(false);
 
   useEffect(() => {
-    if (initialWork) {
-      setWork(initialWork);
-      return;
-    }
-    setWork(resolveWorkClient(workId));
-  }, [workId, initialWork]);
+    let cancelled = false;
+    setLoading(true);
+    void fetch(`/api/dm-invites?id=${encodeURIComponent(inviteId)}`, {
+      cache: "no-store",
+    })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => ({}))) as {
+          invite?: PublicDmInvite;
+          error?: string;
+        };
+        if (cancelled) return;
+        if (!res.ok || !data.invite) {
+          setLoadError(data.error || "見つかりません");
+          setInvite(null);
+        } else {
+          setInvite(data.invite);
+          setLoadError(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoadError("ネットワークエラー");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [inviteId]);
 
-  if (!work) {
-    const isLocal = workId.startsWith("local_");
+  if (loading) {
     return (
-      <div className="min-h-dvh bg-viscum-paper px-4 py-10 text-viscum-ink">
-        <p className="text-[14px] leading-relaxed text-viscum-muted">
-          {isLocal
-            ? "このURLは端末内デモ用です。別のブラウザ／端末では作品データがありません。"
-            : "このお願いの作品が見つかりませんでした。"}
-        </p>
-        <p className="mt-3 text-[13px] leading-relaxed text-viscum-muted">
-          相手に渡すときは、直依頼画面の「未登録の人へ共有」から
-          <span className="font-medium text-viscum-ink"> サーバー保存の招待URL </span>
-          （/dm/i/…）をコピーしてください。別端末でも開けます。
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3 text-[13px]">
-          <Link href="/dm/promo-15s" className="text-viscum-brand underline">
-            デモの着地を見る
-          </Link>
-          <Link href="/" className="text-viscum-brand underline">
-            ホームへ
-          </Link>
-        </div>
+      <div className="min-h-dvh bg-viscum-paper px-4 py-10 text-viscum-muted">
+        読み込み中…
       </div>
     );
   }
 
-  const deadlineLine = formatDeadlineLine(work.closesInHours, work.status);
-  const postedLine = formatPostedLine(work.hoursAgo);
-  const seederLabel = accountLabelForHandle(work.seeder);
-  const thumbUrl = work.thumbUrl?.trim() || "";
-  const prize = work.prizeYen ?? null;
-  const isLocal = work.id.startsWith("local_");
-  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/dm/${work.id}`)}`;
-  const messagesHref = "/dashboard/messages";
+  if (!invite) {
+    return (
+      <div className="min-h-dvh bg-viscum-paper px-4 py-10 text-viscum-ink">
+        <p className="text-[14px] text-viscum-muted">
+          {loadError || "このお願いが見つかりませんでした。"}
+        </p>
+        <Link
+          href="/dm/promo-15s"
+          className="mt-4 inline-block text-viscum-brand underline"
+        >
+          デモの着地を見る
+        </Link>
+      </div>
+    );
+  }
+
+  const { description, prompts } = splitSummary(invite.workSummary ?? "");
+  const seederLabel = accountLabelForHandle(invite.fromHandle);
+  const displayName =
+    invite.fromAccountName?.trim() || seederLabel.line;
+  const externalUrl = invite.workExternalUrl?.trim() || "";
+  const loginHref = `/login?callbackUrl=${encodeURIComponent(`/dm/i/${invite.id}`)}`;
 
   async function sendReply(e: React.FormEvent) {
     e.preventDefault();
     const text = body.trim();
-    if (!text || sending) return;
-    if (isLocal) {
-      setSendError(
-        "この作品はまだ相手の端末内です。作品URLを見たうえで、ログインしてご依頼DMから返事してください。",
-      );
-      return;
-    }
-    if (!canWrite) return;
+    if (!text || sending || !canWrite) return;
     setSending(true);
     setSendError(null);
     try {
       const res = await postWorkComment({
-        workId: work!.id,
+        workId: invite!.workId,
         subject: "直依頼への返事",
         body: text,
       });
@@ -137,113 +174,79 @@ export function DmInviteClient({
           </Link>
         </section>
 
-        <div
-          className="relative w-full overflow-hidden bg-viscum-leaf-deep"
-          style={{ aspectRatio: "1280 / 670" }}
-        >
-          {thumbUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={thumbUrl}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : (
-            <div className="flex h-full flex-col items-center justify-center gap-1 px-6 text-center text-white/85">
-              <p className="text-[13px] font-medium">作品サムネ</p>
-              <p className="text-[11px] text-white/70">
-                （未添付のときはここに出ます）
-              </p>
-            </div>
-          )}
-        </div>
-
         <div className="space-y-5 px-4 pt-5">
           <div>
             <p className="text-[12px] text-viscum-muted">
               個人宛て · 公開コンペではありません
-              {prize != null && prize > 0 ? (
-                <>
-                  <span className="mx-1 text-viscum-line">·</span>
-                  褒賞 {formatYen(prize)}
-                </>
-              ) : null}
+              <span className="mx-1 text-viscum-line">·</span>
+              褒賞 {formatYen(invite.amountYen)}
             </p>
             <h1 className="mt-1.5 text-xl font-semibold leading-snug text-viscum-ink">
-              {work.title}
+              {invite.workTitle}
             </h1>
             <p className="mt-2 text-[14px] text-viscum-ink">
-              {seederLabel.line} から、あなた宛てのお願いです
+              {displayName} から、あなた宛てのお願いです
             </p>
           </div>
 
           <section className="space-y-2">
             <p className="text-[12px] text-viscum-muted">お願いの内容</p>
-            <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
-              {work.description}
-            </p>
-            {(work.prompts?.length ?? 0) > 0 && (
+            {description ? (
+              <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
+                {description}
+              </p>
+            ) : invite.pitch ? (
+              <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
+                {invite.pitch}
+              </p>
+            ) : (
+              <p className="text-[13px] text-viscum-muted">
+                （本文スナップショットなし）
+              </p>
+            )}
+            {prompts.length > 0 && (
               <div className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3">
                 <p className="text-[11px] font-medium text-viscum-muted">
                   聞きたいこと
                 </p>
                 <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[13px] leading-relaxed text-viscum-ink">
-                  {work.prompts!.map((p) => (
+                  {prompts.map((p) => (
                     <li key={p}>{p}</li>
                   ))}
                 </ul>
               </div>
             )}
-            <p className="text-[12px] text-viscum-muted">
-              投稿：{postedLine}
-              {deadlineLine ? ` · 締切：${deadlineLine}` : ""}
-            </p>
-            {work.tags.length > 0 && (
-              <p className="text-[12px] text-viscum-muted">
-                タグ：{work.tags.join(" / ")}
-              </p>
-            )}
           </section>
 
-          <div>
-            <p className="mb-1.5 text-[12px] text-viscum-muted">
-              お願いしたい作品
-            </p>
-            <a
-              href={work.externalUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-            >
-              作品URLを開く
-            </a>
-          </div>
+          {externalUrl ? (
+            <div>
+              <p className="mb-1.5 text-[12px] text-viscum-muted">
+                お願いしたい作品
+              </p>
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-full items-center justify-center rounded-md border border-viscum-brand px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+              >
+                作品URLを開く
+              </a>
+            </div>
+          ) : null}
 
-          <SeederCredibilityLink handle={work.seeder} />
+          <SeederCredibilityLink handle={invite.fromHandle} />
 
-          {/* 次にやること＝返事 */}
           <section className="rounded-xl border border-viscum-brand/30 bg-white/70 px-4 py-4">
             <p className="text-[13px] font-medium text-viscum-ink">
               返事・コメントを書く
             </p>
             <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-              作品を見たあとに、ここに書いて送ってください。ログインが必要です（無料）。
+              作品を見たあとに、ここに書いて送ってください。ログインが必要です（無料）。相手の作品ページ／端末にも届きます。
             </p>
 
             {sentOk ? (
               <p className="mt-3 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[13px] text-viscum-ink">
                 送りました。ありがとうございます。
-                {!isLocal ? (
-                  <>
-                    {" "}
-                    <Link
-                      href={`/w/${work.id}`}
-                      className="font-medium text-viscum-brand underline"
-                    >
-                      作品ページで確認
-                    </Link>
-                  </>
-                ) : null}
               </p>
             ) : (
               <form onSubmit={sendReply} className="mt-3 space-y-3">
@@ -260,21 +263,8 @@ export function DmInviteClient({
                 {sendError && (
                   <p className="text-[12px] text-viscum-berry-deep">{sendError}</p>
                 )}
-
                 {authStatus === "loading" ? (
                   <p className="text-[12px] text-viscum-muted">確認中…</p>
-                ) : canWrite && isLocal ? (
-                  <div className="space-y-2">
-                    <Link
-                      href={messagesHref}
-                      className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
-                    >
-                      ご依頼DMで返事する
-                    </Link>
-                    <p className="text-[11px] leading-relaxed text-viscum-muted">
-                      この作品はまだ相手の端末内です。上に下書きしてから、ご依頼DMへ貼っても大丈夫です。
-                    </p>
-                  </div>
                 ) : canWrite ? (
                   <button
                     type="submit"
@@ -292,7 +282,7 @@ export function DmInviteClient({
                       ログインして返事を送る
                     </Link>
                     <p className="text-[11px] leading-relaxed text-viscum-muted">
-                      アカウント作成も同じ画面からできます。英語IDがあればコメントを送れます。
+                      アカウント作成も同じ画面からできます。
                     </p>
                   </div>
                 )}

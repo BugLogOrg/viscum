@@ -136,6 +136,8 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const [sendError, setSendError] = useState<string | null>(null);
   const [copyNote, setCopyNote] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
+  const [invitePath, setInvitePath] = useState<string | null>(null);
+  const [inviteBusy, setInviteBusy] = useState(false);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -243,6 +245,61 @@ export function DirectRequestForm({ work }: { work: Work }) {
     (mentor ? optionFromHandle(mentor, fromHandle) : null);
 
   const canSend = Boolean(fromHandle && selected?.handle);
+
+  function buildWorkSummary() {
+    const desc = work.description?.trim() ?? "";
+    const focus = (work.prompts ?? []).map((s) => s.trim()).filter(Boolean);
+    return (
+      focus.length
+        ? `${desc}\n\n【聞きたいこと】\n${focus.join("\n")}`
+        : desc
+    )
+      .trim()
+      .slice(0, 12_000);
+  }
+
+  /** 別端末でも開ける Neon 招待URLを用意 */
+  async function ensureInvitePath(): Promise<string | null> {
+    if (invitePath) return invitePath;
+    if (!fromHandle) {
+      setCopyNote("先にログインしてください");
+      return null;
+    }
+    setInviteBusy(true);
+    setCopyNote(null);
+    try {
+      const res = await fetch("/api/dm-invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workId: work.id,
+          workTitle: work.title.trim().slice(0, 200) || work.id,
+          workExternalUrl: work.externalUrl?.trim() || undefined,
+          workSummary: buildWorkSummary() || undefined,
+          amountYen:
+            work.prizeYen && work.prizeYen >= 5000 ? work.prizeYen : 5000,
+          pitch: message.trim() || undefined,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        invite?: { id: string; path: string };
+        error?: string;
+      };
+      if (!res.ok || !data.invite?.path) {
+        setCopyNote(
+          data.error || "招待URLを作れませんでした（ログインが必要）",
+        );
+        return null;
+      }
+      setInvitePath(data.invite.path);
+      return data.invite.path;
+    } catch {
+      setCopyNote("ネットワークエラー");
+      return null;
+    } finally {
+      setInviteBusy(false);
+    }
+  }
 
   const saveDraft = useCallback(() => {
     const d: Draft = {
@@ -477,33 +534,48 @@ export function DirectRequestForm({ work }: { work: Work }) {
                 未登録の人へ共有（アドレスをコピー）
               </p>
               <p className="text-[11px] leading-relaxed text-viscum-muted">
-                URLを知っている人は誰でも開けます（共有リンク。鍵ではありません）。
+                サーバーにスナップショットを残すので、別端末でも開けます（URLを知っている人向け。鍵ではありません）。
               </p>
               <p className="break-all rounded border border-viscum-line bg-white/70 px-2 py-1.5 font-mono text-[11px] text-viscum-trunk">
-                {origin ? `${origin}/dm/${work.id}` : `/dm/${work.id}`}
+                {origin
+                  ? invitePath
+                    ? `${origin}${invitePath}`
+                    : `${origin}/dm/i/（コピー時に発行）`
+                  : invitePath ?? `/dm/i/…`}
               </p>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
+                  disabled={inviteBusy}
                   onClick={() => {
-                    const url = `${window.location.origin}/dm/${work.id}`;
-                    void navigator.clipboard?.writeText(url).then(
-                      () => setCopyNote("コピーしました"),
-                      () => setCopyNote("コピーに失敗しました"),
-                    );
+                    void (async () => {
+                      const path = await ensureInvitePath();
+                      if (!path) return;
+                      const url = `${window.location.origin}${path}`;
+                      void navigator.clipboard?.writeText(url).then(
+                        () => setCopyNote("コピーしました（別端末でも開けます）"),
+                        () => setCopyNote("コピーに失敗しました"),
+                      );
+                    })();
                   }}
-                  className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white"
+                  className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-50"
                 >
-                  アドレスをコピー
+                  {inviteBusy ? "発行中…" : "アドレスをコピー"}
                 </button>
-                <Link
-                  href={`/dm/${work.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand"
+                <button
+                  type="button"
+                  disabled={inviteBusy}
+                  onClick={() => {
+                    void (async () => {
+                      const path = await ensureInvitePath();
+                      if (!path) return;
+                      window.open(path, "_blank", "noopener,noreferrer");
+                    })();
+                  }}
+                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand disabled:opacity-50"
                 >
                   プレビュー（別タブ）
-                </Link>
+                </button>
               </div>
               {copyNote && (
                 <p className="text-[12px] text-viscum-brand">{copyNote}</p>
