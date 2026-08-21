@@ -138,7 +138,7 @@ export async function POST(req: Request) {
   // 受け手が /w を開けない場合の全文確認用（説明＋聞くこと）
   const workSummary = body?.workSummary?.trim().slice(0, 12_000) || null;
   const toHandle = body?.toHandle?.replace(/^@/, "").trim().toLowerCase() ?? "";
-  const pitch = body?.pitch?.trim().slice(0, 4000) ?? "";
+  const pitch = body?.pitch?.trim().slice(0, 4000) || "よろしくお願いします。";
   const amountYen =
     typeof body?.amountYen === "number" && body.amountYen >= 5000
       ? Math.round(body.amountYen)
@@ -149,9 +149,6 @@ export async function POST(req: Request) {
   }
   if (!toHandle) {
     return NextResponse.json({ error: "相手の英語IDが必要です" }, { status: 400 });
-  }
-  if (!pitch) {
-    return NextResponse.json({ error: "お願い文が必要です" }, { status: 400 });
   }
   if (toHandle === fromHandle.toLowerCase()) {
     return NextResponse.json(

@@ -171,7 +171,10 @@ export function DirectRequestForm({ work }: { work: Work }) {
       if (d.mentor) setMentor(d.mentor);
       if (typeof d.closed === "boolean") setClosed(d.closed);
       if (typeof d.message === "string" && d.message.trim()) {
-        if (isStaleTemplatePitch(d.message, work.title)) {
+        if (
+          isStaleTemplatePitch(d.message, work.title) ||
+          d.message.trim() === work.description?.trim()
+        ) {
           setMessage("");
           localStorage.removeItem(draftKey(work.id, fromHandle));
         } else {
@@ -186,7 +189,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
     } catch {
       setMessage("");
     }
-  }, [work.id, work.title, fromHandle]);
+  }, [work.id, work.title, work.description, fromHandle]);
 
   // 検索語で Neon プロフィールを拾う
   useEffect(() => {
@@ -240,9 +243,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
     candidates.find((m) => m.handle === mentor) ||
     (mentor ? optionFromHandle(mentor, fromHandle) : null);
 
-  const canSend = Boolean(
-    fromHandle && selected?.handle && message.trim().length > 0,
-  );
+  const canSend = Boolean(fromHandle && selected?.handle);
 
   const saveDraft = useCallback(() => {
     const d: Draft = {
@@ -286,6 +287,9 @@ export function DirectRequestForm({ work }: { work: Work }) {
           )
             .trim()
             .slice(0, 12_000);
+          // 作品説明はスナップショット側。pitchは任意一言（空なら定型）
+          const pitch =
+            message.trim() || "よろしくお願いします。";
           setSendError(null);
           setSending(true);
           void (async () => {
@@ -297,7 +301,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
               workSummary: workSummary || undefined,
               toHandle: selected.handle,
               amountYen: 5000,
-              pitch: message.trim(),
+              pitch,
             });
             if (remote.ok && remote.request) {
               try {
@@ -324,7 +328,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
               ),
               toHandle: selected.handle,
               amountYen: 5000,
-              pitch: message.trim(),
+              pitch,
             });
             setSendError(
               `${remote.error || "サーバー保存に失敗"}（この端末のみに保存しました）`,
@@ -435,28 +439,19 @@ export function DirectRequestForm({ work }: { work: Work }) {
             htmlFor="request-message"
             className="text-[13px] font-medium text-viscum-ink"
           >
-            お願い一文
+            一言（任意）
           </label>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            空欄から自分で書いてください。作品タイトルの自動文は入れません。相手にはあなたのプロフィール（支払い実績）へのリンクも付きます。
+            作品の説明はシード側に載ります。ここは「なぜあなたに頼むか」など短い一言だけで十分です。空でも送れます。
           </p>
           <textarea
             id="request-message"
-            rows={4}
+            rows={2}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
-            placeholder="見る範囲・なぜあなたに頼むかを短く"
+            placeholder="例: UIの初見だけ見てほしいです"
           />
-          {work.description?.trim() ? (
-            <button
-              type="button"
-              onClick={() => setMessage(work.description.trim())}
-              className="mt-1.5 text-[12px] font-medium text-viscum-brand underline"
-            >
-              作品の説明を入れる
-            </button>
-          ) : null}
         </div>
 
         <details className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-3 py-2">

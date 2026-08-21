@@ -174,6 +174,23 @@ export default function RequestDmThreadPage() {
   const seedBody = row.workSummary?.trim() || liveBody;
   /** 依頼に紐づくシード詳細（受け手でも開ける。local_* の /w 依存しない） */
   const seedHref = `/dashboard/messages/${encodeURIComponent(row.id)}/seed`;
+  /** pitch が説明のコピペ／定型だけのときは「最初のお願い」を出さない（シード内容と二重になる） */
+  const showPitch = (() => {
+    if (!pitchText) return false;
+    if (
+      pitchText === "よろしくお願いします。" ||
+      pitchText === "よろしくよろよろ"
+    ) {
+      return false;
+    }
+    const descOnly = seedBody.split(/【聞きたいこと】|【聞くこと】/)[0]?.trim() ?? "";
+    if (descOnly && pitchText === descOnly) return false;
+    if (descOnly.length > 40 && pitchText.includes(descOnly)) return false;
+    if (descOnly.length > 40 && descOnly.includes(pitchText) && pitchText.length > 80) {
+      return false;
+    }
+    return true;
+  })();
   const isSeeder = row.fromHandle.toLowerCase() === me;
   const statsHref = isLocal
     ? `/dashboard/${encodeURIComponent(row.workId)}`
@@ -279,7 +296,7 @@ export default function RequestDmThreadPage() {
           {isRecipient ? (
             <SeederCredibilityLink handle={row.fromHandle} className="mt-3" />
           ) : null}
-          {pitchText ? (
+          {showPitch ? (
             <div className="mt-3 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2">
               <p className="text-[11px] font-medium text-viscum-muted">
                 最初のお願い（依頼時）
