@@ -31,6 +31,8 @@ export default function RequestDmThreadPage() {
   const [draft, setDraft] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
+  const [responding, setResponding] = useState(false);
 
   useEffect(() => {
     clearLocalRequestDms();
@@ -202,19 +204,34 @@ export default function RequestDmThreadPage() {
   }
 
   async function respond(next: "accepted" | "declined") {
-    const res = await patchRequestDm(requestId, { status: next });
-    if (res.request) setRow(res.request);
-    else await refresh();
+    if (responding) return;
+    setResponding(true);
+    try {
+      const res = await patchRequestDm(requestId, { status: next });
+      if (res.request) setRow(res.request);
+      else await refresh();
+    } finally {
+      setResponding(false);
+    }
   }
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
     const text = draft.trim();
-    if (!text) return;
-    const res = await patchRequestDm(requestId, { message: text });
-    setDraft("");
-    if (res.request) setRow(res.request);
-    else await refresh();
+    if (!text || sending) return;
+    setSending(true);
+    try {
+      const res = await patchRequestDm(requestId, { message: text });
+      if (res.request) {
+        setRow(res.request);
+        setDraft("");
+      } else {
+        await refresh();
+        // 失敗時は下書きを残す（連打で空にしない）
+      }
+    } finally {
+      setSending(false);
+    }
   }
 
   return (
@@ -312,15 +329,17 @@ export default function RequestDmThreadPage() {
           <div className="mt-4 flex gap-2">
             <button
               type="button"
+              disabled={responding}
               onClick={() => void respond("accepted")}
-              className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep"
+              className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
             >
-              やる
+              {responding ? "送信中…" : "やる"}
             </button>
             <button
               type="button"
+              disabled={responding}
               onClick={() => void respond("declined")}
-              className="flex-1 rounded-md border border-viscum-line bg-white/70 px-3 py-2.5 text-[14px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
+              className="flex-1 rounded-md border border-viscum-line bg-white/70 px-3 py-2.5 text-[14px] font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:opacity-50"
             >
               いまは無理
             </button>
@@ -365,15 +384,16 @@ export default function RequestDmThreadPage() {
             onChange={(e) => setDraft(e.target.value)}
             rows={3}
             maxLength={2000}
+            disabled={sending}
             placeholder="続きのすり合わせ（このご依頼だけ）"
-            className="w-full resize-y rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand"
+            className="w-full resize-y rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand disabled:opacity-60"
           />
           <button
             type="submit"
-            disabled={!draft.trim()}
+            disabled={!draft.trim() || sending}
             className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
           >
-            送る
+            {sending ? "送信中…" : "送る"}
           </button>
         </form>
       </main>

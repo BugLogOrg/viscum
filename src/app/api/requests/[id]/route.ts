@@ -137,12 +137,20 @@ export async function PATCH(req: Request, ctx: Ctx) {
 
   const text = body?.message?.trim().slice(0, 2000);
   if (text) {
-    messages.push({
-      id: crypto.randomUUID(),
-      fromHandle: handle,
-      body: text,
-      createdAt: new Date().toISOString(),
-    });
+    const last = messages[messages.length - 1];
+    const sameRecent =
+      last &&
+      last.fromHandle.toLowerCase() === handle.toLowerCase() &&
+      last.body.trim() === text &&
+      Date.now() - new Date(last.createdAt).getTime() < 8_000;
+    if (!sameRecent) {
+      messages.push({
+        id: crypto.randomUUID(),
+        fromHandle: handle,
+        body: text,
+        createdAt: new Date().toISOString(),
+      });
+    }
   }
 
   const [updated] = await db
