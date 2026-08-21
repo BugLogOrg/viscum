@@ -171,11 +171,9 @@ export default function RequestDmThreadPage() {
     if (focus.length) return `${desc}\n\n【聞くこと】\n${focus.join("\n")}`.trim();
     return desc;
   })();
-  /** 依頼時に埋め込んだシード本文（受け手の確認用。外部URLではない） */
   const seedBody = row.workSummary?.trim() || liveBody;
-  /** 場内シード詳細 `/w/...`（相手端末に無い local_* は開けない） */
-  const titleHref = `/w/${encodeURIComponent(row.workId)}`;
-  const detailReachable = Boolean(liveWork) || !isLocal;
+  /** 依頼に紐づくシード詳細（受け手でも開ける。local_* の /w 依存しない） */
+  const seedHref = `/dashboard/messages/${encodeURIComponent(row.id)}/seed`;
   const isSeeder = row.fromHandle.toLowerCase() === me;
   const statsHref = isLocal
     ? `/dashboard/${encodeURIComponent(row.workId)}`
@@ -220,44 +218,34 @@ export default function RequestDmThreadPage() {
           </p>
 
           <div className="mt-3 overflow-hidden rounded-lg border border-viscum-line bg-white/80">
-            {thumbUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={thumbUrl}
-                alt=""
-                className="aspect-[1280/670] w-full object-cover"
-              />
-            ) : (
-              <div className="flex aspect-[1280/670] w-full items-center justify-center bg-viscum-paper-2 text-[12px] text-viscum-muted">
-                サムネ未添付（新しい依頼から送れます）
-              </div>
-            )}
-            <div className="space-y-2 px-3 py-3">
-              {detailReachable ? (
-                <Link
-                  href={titleHref}
-                  className="block text-[14px] font-semibold leading-snug text-viscum-brand underline"
-                >
-                  {workTitle}
-                </Link>
+            <Link href={seedHref} className="block">
+              {thumbUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={thumbUrl}
+                  alt=""
+                  className="aspect-[1280/670] w-full object-cover transition hover:opacity-95"
+                />
               ) : (
-                <p className="text-[14px] font-semibold leading-snug text-viscum-ink">
-                  {workTitle}
-                </p>
+                <div className="flex aspect-[1280/670] w-full items-center justify-center bg-viscum-paper-2 text-[12px] text-viscum-muted">
+                  サムネ未添付（新しい依頼から送れます）
+                </div>
               )}
+            </Link>
+            <div className="space-y-2 px-3 py-3">
+              <Link
+                href={seedHref}
+                className="block text-[14px] font-semibold leading-snug text-viscum-brand underline"
+              >
+                {workTitle}
+              </Link>
               <div className="flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
-                {detailReachable ? (
-                  <Link
-                    href={titleHref}
-                    className="font-medium text-viscum-brand underline"
-                  >
-                    シード詳細を開く
-                  </Link>
-                ) : (
-                  <span className="text-viscum-muted">
-                    この端末にシード本体はないので、下に依頼時の全文を表示しています
-                  </span>
-                )}
+                <Link
+                  href={seedHref}
+                  className="font-medium text-viscum-brand underline"
+                >
+                  シード詳細を開く
+                </Link>
                 {statsHref && isSeeder ? (
                   <Link
                     href={statsHref}
@@ -268,17 +256,12 @@ export default function RequestDmThreadPage() {
                 ) : null}
               </div>
               {seedBody ? (
-                <div className="rounded-md border border-viscum-line bg-viscum-paper-2/40 px-3 py-2">
-                  <p className="text-[11px] font-medium text-viscum-muted">
-                    シード内容（依頼時のコピー）
-                  </p>
-                  <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-viscum-ink">
-                    {seedBody}
-                  </p>
-                </div>
+                <p className="line-clamp-3 whitespace-pre-wrap text-[12px] leading-relaxed text-viscum-muted">
+                  {seedBody}
+                </p>
               ) : (
                 <p className="text-[12px] text-viscum-muted">
-                  シード本文がありません。直依頼を送り直すと全文がここに残ります。
+                  シード本文がありません。直依頼を送り直すと詳細に残ります。
                 </p>
               )}
             </div>
