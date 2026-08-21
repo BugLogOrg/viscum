@@ -12,7 +12,17 @@ export function isXAnnounceConfigured(): boolean {
 
 function twitterErrorMessage(e: unknown): string {
   if (e instanceof ApiResponseError) {
-    const codes = e.errors?.map((x) => x.message).filter(Boolean).join("; ");
+    const parts =
+      e.errors?.map((x) => {
+        if (typeof x === "object" && x && "message" in x) {
+          return String((x as { message?: string }).message ?? "");
+        }
+        if (typeof x === "object" && x && "title" in x) {
+          return String((x as { title?: string; detail?: string }).title ?? "");
+        }
+        return "";
+      }) ?? [];
+    const codes = parts.filter(Boolean).join("; ");
     return `X API ${e.code}: ${codes || e.message}`;
   }
   if (e instanceof Error) return e.message;
