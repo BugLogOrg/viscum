@@ -149,7 +149,9 @@ const FAQS: { q: string; body: ReactNode }[] = [
           </li>
           <li>
             <span className="font-medium">返す</span>
-            … ログインして返事・コメントを書く（入場・書くこと自体は無料）。やる／いまは無理、もご依頼DMで返せます。
+            … ログインして返事を書く。内容は依頼主の
+            <span className="font-medium">ご依頼DM</span>
+            に届きます（作品の公開コメント欄には残りません）。やる／いまは無理、も同じスレで返せます。
           </li>
           <li>
             <span className="font-medium">払う</span>

@@ -6,7 +6,6 @@ import { useSession } from "next-auth/react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
 import { formatDateTime, formatYen } from "@/data/dummy-works";
-import { postWorkComment } from "@/lib/remote-comments";
 import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 
@@ -63,6 +62,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [sentOk, setSentOk] = useState(false);
+  const [threadPath, setThreadPath] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -147,16 +147,22 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
     setSending(true);
     setSendError(null);
     try {
-      const res = await postWorkComment({
-        workId: invite!.workId,
-        subject: "直依頼への返事",
-        body: text,
+      const res = await fetch("/api/dm-invites/reply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ inviteId: invite!.id, message: text }),
       });
-      if (res.ok) {
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        path?: string;
+        error?: string;
+      };
+      if (res.ok && data.ok) {
         setBody("");
         setSentOk(true);
+        setThreadPath(data.path ?? "/dashboard/messages");
       } else {
-        setSendError(res.error || "送れませんでした");
+        setSendError(data.error || "送れませんでした");
       }
     } finally {
       setSending(false);
@@ -255,16 +261,25 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
 
           <section className="rounded-xl border border-viscum-brand/30 bg-white/70 px-4 py-4">
             <p className="text-[13px] font-medium text-viscum-ink">
-              返事・コメントを書く
+              依頼主へ返事する
             </p>
             <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-              作品を見たあとに、ここに書いて送ってください。ログインが必要です（無料）。相手の作品ページ／端末にも届きます。
+              ここに書いた内容は、依頼主の<strong>ご依頼DM</strong>
+              に届きます（作品の公開コメント欄には残りません）。ログインが必要です（無料）。
             </p>
 
             {sentOk ? (
-              <p className="mt-3 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[13px] text-viscum-ink">
-                送りました。ありがとうございます。
-              </p>
+              <div className="mt-3 space-y-2 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[13px] text-viscum-ink">
+                <p>ご依頼DMに送りました。依頼主にも同じスレが見えます。</p>
+                {threadPath ? (
+                  <Link
+                    href={threadPath}
+                    className="inline-flex font-medium text-viscum-brand underline"
+                  >
+                    やりとりを開く
+                  </Link>
+                ) : null}
+              </div>
             ) : (
               <form onSubmit={sendReply} className="mt-3 space-y-3">
                 <textarea
@@ -288,7 +303,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                     disabled={sending || !body.trim()}
                     className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
                   >
-                    {sending ? "送信中…" : "返事を送る"}
+                    {sending ? "送信中…" : "ご依頼DMに送る"}
                   </button>
                 ) : (
                   <div className="space-y-2">
