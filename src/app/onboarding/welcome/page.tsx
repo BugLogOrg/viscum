@@ -7,6 +7,11 @@ import { DEMO_SPECIALTIES } from "@/data/specialties";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SuggestFollows } from "@/components/SuggestFollows";
+import {
+  displayAccountName,
+  fetchRemoteProfile,
+  readLocalProfile,
+} from "@/lib/local-profile";
 
 const POST_KEY = "viscum.postOnboarding";
 
@@ -29,11 +34,38 @@ function WelcomeBody() {
   const [picked, setPicked] = useState<string[]>([]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [welcomeLine, setWelcomeLine] = useState("");
+
+  const handle = data?.user?.handle?.replace(/^@/, "").trim() || "";
 
   const canSkipGate = useMemo(
     () => status === "authenticated" && !data?.user?.needsHandle,
     [status, data?.user?.needsHandle],
   );
+
+  useEffect(() => {
+    if (!handle) {
+      setWelcomeLine("");
+      return;
+    }
+    const apply = (accountName: string) => {
+      const name = accountName.trim() || handle;
+      // 歓迎では常に「名前 @id」（同名でも両方）
+      setWelcomeLine(`${name} @${handle}`);
+    };
+    apply(displayAccountName(handle, readLocalProfile(handle)));
+    let cancelled = false;
+    void fetchRemoteProfile(handle).then((remote) => {
+      if (cancelled) return;
+      apply(
+        remote?.accountName?.trim() ||
+          displayAccountName(handle, readLocalProfile(handle)),
+      );
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [handle]);
 
   // リダイレクトは effect のみ。preview 中は絶対に飛ばさない（セッション確定で消えるのを防ぐ）
   useEffect(() => {
@@ -97,11 +129,6 @@ function WelcomeBody() {
     );
   }
 
-  // 英語IDが主。name に古い呼び名（メール由来など）が残っていても歓迎では使わない
-  const displayName = data?.user?.handle?.trim()
-    ? `@${data.user.handle.trim()}`
-    : "";
-
   // preview 以外で「もう完了」なら effect で飛ぶまでの待ち
   if (
     !preview &&
@@ -112,7 +139,7 @@ function WelcomeBody() {
   ) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-lg items-center justify-center bg-viscum-paper text-sm text-viscum-muted">
-        棚へ…
+        作品へ…
       </div>
     );
   }
@@ -139,11 +166,11 @@ function WelcomeBody() {
         </p>
         <h1 className="mt-3 text-4xl font-semibold leading-tight tracking-tight text-viscum-ink sm:text-5xl">
           ようこそ
-          {displayName ? (
+          {welcomeLine ? (
             <>
               <br />
               <span className="text-[0.55em] font-medium text-viscum-muted">
-                {displayName}
+                {welcomeLine}
               </span>
             </>
           ) : null}
@@ -152,7 +179,7 @@ function WelcomeBody() {
           気になる専門はありますか？
         </h2>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
-          選ばなくても棚は見られます。選ぶと、あとからの通知や見つけやすさの材料になります（準備中）。スキップ可。
+          選ばなくても作品は見られます。選ぶと、あとからの通知や見つけやすさの材料になります（準備中）。未選択のまま進んでも大丈夫です。
         </p>
 
         <ul className="mt-6 flex flex-wrap gap-2">
@@ -183,29 +210,23 @@ function WelcomeBody() {
           <p className="mt-4 text-[13px] text-viscum-berry-deep">{error}</p>
         )}
 
-        <div className="mt-8 space-y-2">
+        <div className="mt-8">
           <button
             type="button"
             disabled={pending}
-            onClick={() => void finish(picked, false)}
+            onClick={() => void finish(picked, picked.length === 0)}
             className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
           >
-            {pending ? "保存中…" : preview ? "棚へ戻る" : "棚を見にいく"}
+            {pending
+              ? "保存中…"
+              : preview
+                ? "作品へ戻る"
+                : "作品を見にいく"}
           </button>
-          {!preview && (
-            <button
-              type="button"
-              disabled={pending}
-              onClick={() => void finish([], true)}
-              className="w-full rounded-md border border-viscum-line bg-white/70 px-4 py-2.5 text-sm font-medium text-viscum-muted hover:bg-viscum-paper-2 disabled:opacity-50"
-            >
-              スキップして棚へ
-            </button>
-          )}
         </div>
 
         <p className="mt-6 text-[12px] leading-relaxed text-viscum-muted">
-          シーダー向けの成績ダッシュボードは、メニューの「ダッシュボード」からいつでも開けます。初回は棚からで大丈夫です。
+          シーダー向けの成績ダッシュボードは、メニューの「ダッシュボード」からいつでも開けます。初回は作品一覧からで大丈夫です。
         </p>
         <SiteFooter />
       </main>
