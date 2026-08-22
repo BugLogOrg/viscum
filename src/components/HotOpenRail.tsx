@@ -60,14 +60,11 @@ export function HotOpenRail({
   return (
     <aside
       className={`border-t border-viscum-line px-4 py-5 xl:sticky xl:top-14 xl:w-80 xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:py-4 ${className}`}
-      aria-label="いま温まっている開催中"
+      aria-label="開催中"
     >
       <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
-        いま温まっている開催中
+        開催中
       </h2>
-      <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
-        スキと反応の勢い（仮の減衰並び）。信用スコアではありません。
-      </p>
       <ul className="mt-3 divide-y divide-viscum-line">
         {items.map((w) => {
           const rx = getWorkReactionCounts(w);
