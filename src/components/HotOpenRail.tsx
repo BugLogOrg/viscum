@@ -4,7 +4,9 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { Work } from "@/data/dummy-works";
 import {
+  formatClosesIn,
   formatCount,
+  formatDeadlineLine,
   getWorkReactionCounts,
   planBadgeLabel,
 } from "@/data/dummy-works";
@@ -19,6 +21,7 @@ import {
  * 作品詳細の右カラム想定。開催中をスキ減衰スコアで並べる。
  * 順位バッジは出さない（はてな型の「温まっている」感だけ）。
  * コース＋金額は詳細と同じ StatusBadge（オレンジ下地）。
+ * バッジ横に締切。狭いときは（あと〜）のみ。
  */
 export function HotOpenRail({
   excludeWorkId,
@@ -59,7 +62,7 @@ export function HotOpenRail({
 
   return (
     <aside
-      className={`border-t border-viscum-line px-3 py-3 xl:sticky xl:top-12 xl:w-80 xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:px-3 xl:pt-2 xl:pb-3 ${className}`}
+      className={`@container border-t border-viscum-line px-3 py-3 xl:sticky xl:top-12 xl:w-80 xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:px-3 xl:pt-2 xl:pb-3 ${className}`}
       aria-label="開催中"
     >
       <h2 className="text-[13px] font-medium leading-none tracking-wide text-viscum-brand">
@@ -68,19 +71,45 @@ export function HotOpenRail({
       <ul className="mt-1.5 divide-y divide-viscum-line">
         {items.map((w) => {
           const rx = getWorkReactionCounts(w);
+          const countdown = formatClosesIn(w.closesInHours, w.status);
+          const deadlineFull = formatDeadlineLine(
+            w.closesInHours,
+            w.status,
+          );
+          const deadlineTitle =
+            deadlineFull != null ? `締切：${deadlineFull}` : undefined;
           return (
             <li key={w.id}>
               <Link
                 href={`/w/${w.id}`}
                 className="block py-1.5 transition hover:bg-viscum-paper-2/80"
               >
-                <StatusBadge
-                  status={w.status}
-                  prizeYen={w.prizeYen}
-                  paymentsDone={w.paymentsDone}
-                  planLabel={planBadgeLabel(w.plan)}
-                  dense
-                />
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <StatusBadge
+                    status={w.status}
+                    prizeYen={w.prizeYen}
+                    paymentsDone={w.paymentsDone}
+                    planLabel={planBadgeLabel(w.plan)}
+                    dense
+                    className="shrink-0"
+                  />
+                  {countdown ? (
+                    <>
+                      <span
+                        className="hidden min-w-0 truncate text-[10px] font-medium leading-tight text-viscum-berry-deep @[22rem]:inline"
+                        title={deadlineTitle}
+                      >
+                        締切：{deadlineFull}
+                      </span>
+                      <span
+                        className="shrink-0 text-[10px] font-medium leading-tight text-viscum-berry-deep @[22rem]:hidden"
+                        title={deadlineTitle}
+                      >
+                        （{countdown}）
+                      </span>
+                    </>
+                  ) : null}
+                </div>
                 <p className="mt-1 line-clamp-3 text-[13px] font-medium leading-snug text-viscum-ink">
                   {w.title}
                 </p>
