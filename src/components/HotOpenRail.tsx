@@ -59,20 +59,20 @@ export function HotOpenRail({
 
   return (
     <aside
-      className={`border-t border-viscum-line px-4 py-5 xl:sticky xl:top-14 xl:w-80 xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:py-4 ${className}`}
+      className={`border-t border-viscum-line px-3 py-3 xl:sticky xl:top-12 xl:w-80 xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:px-3 xl:pt-2 xl:pb-3 ${className}`}
       aria-label="開催中"
     >
-      <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
+      <h2 className="text-[13px] font-medium leading-none tracking-wide text-viscum-brand">
         開催中
       </h2>
-      <ul className="mt-3 divide-y divide-viscum-line">
+      <ul className="mt-1.5 divide-y divide-viscum-line">
         {items.map((w) => {
           const rx = getWorkReactionCounts(w);
           return (
             <li key={w.id}>
               <Link
                 href={`/w/${w.id}`}
-                className="block py-2.5 transition hover:bg-viscum-paper-2/80"
+                className="block py-1.5 transition hover:bg-viscum-paper-2/80"
               >
                 <StatusBadge
                   status={w.status}
@@ -81,10 +81,10 @@ export function HotOpenRail({
                   planLabel={planBadgeLabel(w.plan)}
                   dense
                 />
-                <p className="mt-1.5 line-clamp-4 text-[13px] font-medium leading-snug text-viscum-ink">
+                <p className="mt-1 line-clamp-3 text-[13px] font-medium leading-snug text-viscum-ink">
                   {w.title}
                 </p>
-                <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] text-viscum-muted">
+                <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] leading-tight text-viscum-muted">
                   <span>
                     <SeederNameText
                       handle={w.seeder}
@@ -98,7 +98,7 @@ export function HotOpenRail({
           );
         })}
       </ul>
-      <p className="mt-3 text-[12px]">
+      <p className="mt-2 text-[12px]">
         <Link
           href="/?feed=open"
           className="text-viscum-brand underline-offset-2 hover:underline"
