@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { formatCount } from "@/data/dummy-works";
 import { hasReaction, toggleReaction } from "@/lib/local-reactions";
@@ -7,7 +8,7 @@ import { bumpLocalSeedStat } from "@/lib/local-seeds";
 
 /**
  * 作品詳細の「気になる」のみ（ADR-036）。
- * 打刻は /dashboard/reactions で一覧できる。
+ * 履歴は右上メニュー → 「気になる」（/dashboard/reactions）。
  */
 export function WorkReactionBar({
   workId,
@@ -42,7 +43,14 @@ export function WorkReactionBar({
         {workId.startsWith("local_")
           ? "この端末の件数です。"
           : "数字は他の人も含めた件数です。"}
-        打刻はマイページの一覧で見られます。
+        履歴は右上メニューの
+        <Link
+          href="/dashboard/reactions"
+          className="font-medium text-viscum-brand underline-offset-2 hover:underline"
+        >
+          「気になる」
+        </Link>
+        で見られます。
       </p>
       <button
         type="button"
