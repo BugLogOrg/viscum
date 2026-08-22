@@ -254,7 +254,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
         </p>
       </div>
 
-      <HotOpenRail excludeWorkId={work.id} className="xl:pb-10" />
+      <HotOpenRail excludeWorkId={work.id} />
     </div>
   );
 }
