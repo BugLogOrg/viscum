@@ -19,11 +19,7 @@ import {
   type SuggestedSeeder,
 } from "@/data/suggested-seeders";
 import { fetchRemoteProfile } from "@/lib/local-profile";
-import {
-  isLocalSeedListed,
-  readLocalSeeds,
-  workFromLocalSeed,
-} from "@/lib/local-seeds";
+import { loadClientShelfWorks } from "@/lib/hot-open-ranking";
 import { buildWorkShareText, buildXIntentUrl } from "@/lib/work-share-text";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
@@ -57,16 +53,6 @@ function initialFilter(searchParams: URLSearchParams): Filter {
   return "all";
 }
 
-/** 公開済み端末内シード＋デモ。デモID重複はデモ側を正とする */
-function loadShelfWorks(): Work[] {
-  const locals = readLocalSeeds()
-    .filter((s) => s.id.startsWith("local_") && isLocalSeedListed(s))
-    .map(workFromLocalSeed);
-  const demoIds = new Set(DUMMY_WORKS.map((w) => w.id));
-  const onlyLocals = locals.filter((w) => !demoIds.has(w.id));
-  return [...onlyLocals, ...DUMMY_WORKS];
-}
-
 export function FeedClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -87,7 +73,7 @@ export function FeedClient() {
   const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
-    const refresh = () => setShelf(loadShelfWorks());
+    const refresh = () => setShelf(loadClientShelfWorks());
     refresh();
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);

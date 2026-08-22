@@ -315,6 +315,10 @@ export function workFromLocalSeed(seed: LocalSeed): Work {
       : seed.status === "none" || seed.prizeYen == null
         ? ("free_comment" as const)
         : ("first_impression" as const));
+  const createdMs = Date.parse(seed.createdAt);
+  const hoursAgo = Number.isFinite(createdMs)
+    ? Math.max(0, (Date.now() - createdMs) / 3_600_000)
+    : 0;
   return {
     id: seed.id,
     title: seed.title,
@@ -325,7 +329,7 @@ export function workFromLocalSeed(seed: LocalSeed): Work {
     status: seed.status,
     plan,
     prizeYen: seed.prizeYen,
-    hoursAgo: 0,
+    hoursAgo,
     closesInHours:
       seed.closesInDays != null ? seed.closesInDays * 24 : undefined,
     description: seed.description,
