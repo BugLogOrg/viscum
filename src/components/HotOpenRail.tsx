@@ -77,6 +77,11 @@ export function HotOpenRail({
                 className="block py-2.5 transition hover:bg-viscum-paper-2/80"
               >
                 <p className="line-clamp-2 text-[13px] font-medium leading-snug text-viscum-ink">
+                  {w.prizeYen != null && w.prizeYen > 0 ? (
+                    <span className="mr-1.5 font-semibold tabular-nums text-viscum-berry">
+                      褒賞：{w.prizeYen.toLocaleString("ja-JP")}円
+                    </span>
+                  ) : null}
                   {w.title}
                 </p>
                 <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] text-viscum-muted">
@@ -86,11 +91,6 @@ export function HotOpenRail({
                       preferredName={w.seederAccountName}
                     />
                   </span>
-                  {w.prizeYen != null ? (
-                    <span className="text-viscum-berry-deep">
-                      ¥{w.prizeYen.toLocaleString("ja-JP")}
-                    </span>
-                  ) : null}
                   {plan ? <span>{plan}</span> : null}
                   <span>スキ {formatCount(rx.suki)}</span>
                 </p>
