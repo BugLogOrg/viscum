@@ -84,25 +84,24 @@ export function HotOpenRail({
                 href={`/w/${w.id}`}
                 className="block py-1.5 transition hover:bg-viscum-paper-2/80"
               >
-                <div className="flex min-w-0 items-center gap-1.5">
+                <div className="flex flex-nowrap items-center gap-1.5 overflow-hidden whitespace-nowrap">
                   <StatusBadge
                     status={w.status}
                     prizeYen={w.prizeYen}
                     paymentsDone={w.paymentsDone}
                     planLabel={planBadgeLabel(w.plan)}
-                    dense
                     className="shrink-0"
                   />
                   {countdown ? (
                     <>
                       <span
-                        className="hidden min-w-0 truncate text-[10px] font-medium leading-tight text-viscum-berry-deep @[22rem]:inline"
+                        className="hidden min-w-0 truncate text-xs font-medium text-viscum-berry-deep @[22rem]:inline"
                         title={deadlineTitle}
                       >
                         締切：{deadlineFull}
                       </span>
                       <span
-                        className="shrink-0 text-[10px] font-medium leading-tight text-viscum-berry-deep @[22rem]:hidden"
+                        className="shrink-0 text-xs font-medium text-viscum-berry-deep @[22rem]:hidden"
                         title={deadlineTitle}
                       >
                         （{countdown}）
