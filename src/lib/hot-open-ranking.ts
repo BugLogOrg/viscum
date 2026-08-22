@@ -13,15 +13,13 @@ import {
  * 開催中ホット（仮式・はてな型）。
  * 信用スコア化しない。発見並び専用。
  *
- * score = (スキ + α·コメント + β·気になる) / (経過h + γ)^δ
+ * score = (コメント + β·気になる) / (経過h + γ)^δ
  *
- * 現状は作品単位の集計＋投稿からの経過のみ（スキ打刻の窓集計は後段）。
+ * スキは使わない（ADR-036）。現状は作品単位集計＋投稿経過。
  */
 export const HOT_OPEN_SCORE = {
-  /** コメントの重み */
-  alpha: 0.8,
-  /** 気になるの重み */
-  beta: 0.35,
+  /** 気になるの重み（コメント＝1） */
+  beta: 0.4,
   /** 減衰オフセット（時間） */
   gamma: 2,
   /** 減衰指数 */
@@ -30,12 +28,9 @@ export const HOT_OPEN_SCORE = {
 } as const;
 
 export function hotOpenScore(work: Work): number {
-  const { suki, bookmark } = getWorkReactionCounts(work);
+  const { bookmark } = getWorkReactionCounts(work);
   const comments = work.comments?.length ?? 0;
-  const heat =
-    suki +
-    HOT_OPEN_SCORE.alpha * comments +
-    HOT_OPEN_SCORE.beta * bookmark;
+  const heat = comments + HOT_OPEN_SCORE.beta * bookmark;
   const hours = Math.max(0, work.hoursAgo);
   return heat / (hours + HOT_OPEN_SCORE.gamma) ** HOT_OPEN_SCORE.delta;
 }

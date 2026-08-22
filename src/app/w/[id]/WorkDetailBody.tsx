@@ -221,14 +221,13 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
 
             {isDraft ? (
               <p className="rounded-md border border-dashed border-viscum-line px-3 py-3 text-[12px] leading-relaxed text-viscum-muted">
-                下書きのため、スキ・コメント・参加はまだ出していません。公開すると作品詳細として使えるようになります。
+                下書きのため、気になる・コメント・参加はまだ出していません。公開すると作品詳細として使えるようになります。
               </p>
             ) : (
               <>
                 <WorkReactionBar
                   workId={work.id}
                   title={work.title}
-                  sukiBase={rx.suki}
                   bookmarkBase={rx.bookmark}
                 />
                 <WorkEngage

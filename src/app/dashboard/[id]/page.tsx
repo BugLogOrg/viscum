@@ -35,6 +35,10 @@ export default function SeedStatsPage() {
   const [metric, setMetric] = useState<AnalyticsMetric>("views");
 
   useEffect(() => {
+    if (metric === "emo") setMetric("bookmark");
+  }, [metric]);
+
+  useEffect(() => {
     if (!id) {
       setSeed(null);
       return;
@@ -132,7 +136,6 @@ export default function SeedStatsPage() {
       period: totals?.views ?? 0,
       day: today?.views ?? 0,
     },
-    { key: "emo", period: totals?.emo ?? 0, day: today?.emo ?? 0 },
     {
       key: "bookmark",
       period: totals?.bookmark ?? 0,
@@ -273,7 +276,6 @@ export default function SeedStatsPage() {
                   {(
                     [
                       ["views", "閲覧"],
-                      ["emo", "スキ"],
                       ["bookmark", "気になる"],
                       ["comment", "コメント"],
                     ] as const
@@ -281,7 +283,7 @@ export default function SeedStatsPage() {
                     <th
                       key={key}
                       className={`py-2 text-right font-medium tabular-nums ${
-                        i === 3 ? "px-2" : "px-1"
+                        i === 2 ? "px-2" : "px-1"
                       } ${
                         metric === key
                           ? "bg-viscum-leaf-soft/50 text-viscum-brand"
@@ -312,7 +314,6 @@ export default function SeedStatsPage() {
                       {(
                         [
                           "views",
-                          "emo",
                           "bookmark",
                           "comment",
                         ] as const
@@ -320,7 +321,7 @@ export default function SeedStatsPage() {
                         <td
                           key={key}
                           className={`py-2 text-right tabular-nums text-viscum-ink ${
-                            i === 3 ? "px-2" : "px-1"
+                            i === 2 ? "px-2" : "px-1"
                           } ${
                             key === "views" ? "font-medium" : ""
                           } ${
@@ -345,7 +346,6 @@ export default function SeedStatsPage() {
                     {(
                       [
                         "views",
-                        "emo",
                         "bookmark",
                         "comment",
                       ] as const
@@ -353,7 +353,7 @@ export default function SeedStatsPage() {
                       <td
                         key={key}
                         className={`py-2 text-right text-[12px] font-semibold tabular-nums ${
-                          i === 3 ? "px-2" : "px-1"
+                          i === 2 ? "px-2" : "px-1"
                         } ${
                           metric === key ? "bg-viscum-leaf-soft/50" : ""
                         }`}

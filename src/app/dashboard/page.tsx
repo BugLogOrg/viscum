@@ -24,14 +24,10 @@ import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-
 
 function SeedMetrics({ s }: { s: LocalSeed }) {
   return (
-    <dl className="mt-3 grid grid-cols-4 gap-2 border-t border-viscum-line pt-3 text-center">
+    <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-viscum-line pt-3 text-center">
       <div>
         <dt className="text-[10px] text-viscum-muted">閲覧</dt>
         <dd className="text-[15px] font-semibold text-viscum-ink">{s.viewCount}</dd>
-      </div>
-      <div>
-        <dt className="text-[10px] text-viscum-muted">スキ</dt>
-        <dd className="text-[15px] font-semibold text-viscum-ink">{s.emoCount}</dd>
       </div>
       <div>
         <dt className="text-[10px] text-viscum-muted">気になる</dt>

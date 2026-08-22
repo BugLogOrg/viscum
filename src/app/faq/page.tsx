@@ -41,7 +41,7 @@ const FAQS: { q: string; body: ReactNode }[] = [
           です。
         </p>
         <ul className="list-disc space-y-2 pl-5">
-          <li>見る・読む・スキ／気になる → 無料</li>
+          <li>見る・読む・気になる → 無料</li>
           <li>無料コメント歓迎だけ置く → お金は動かない</li>
           <li>
             場内コンペ（初見レビュー ¥5,000／改善提案 ¥10,000）や公開ブースト（¥30,000）

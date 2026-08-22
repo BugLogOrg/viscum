@@ -59,7 +59,6 @@ export function WorkFeedRow({
         <FeedThumbReactions
           workId={work.id}
           title={work.title}
-          sukiBase={rx.suki}
           bookmarkBase={rx.bookmark}
         />
       </div>

@@ -14,7 +14,7 @@ import {
 } from "@/lib/local-profile";
 import { fetchMyRequests } from "@/lib/remote-requests";
 
-/** ベル＝通知。アカウントメニュー＝ダッシュ／設定／スキ・気になる */
+/** ベル＝通知。アカウントメニュー＝ダッシュ／設定／気になる */
 export function HeaderAccountActions({
   className = "",
 }: {
@@ -218,7 +218,7 @@ export function HeaderAccountActions({
                   ダッシュボード
                 </MenuRow>
                 <MenuRow href="/dashboard/reactions" onNavigate={close}>
-                  スキ・気になる
+                  気になる
                 </MenuRow>
               </div>
 

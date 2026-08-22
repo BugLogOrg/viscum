@@ -80,18 +80,10 @@ export function formatReactionStamp(iso: string): string {
 
 const DEMO_RX = "demo_rx_";
 
-/** 一覧の見た目確認用（打刻つき） */
+/** 一覧の見た目確認用（打刻つき）。気になるのみ（ADR-036） */
 export function installDemoReactions(): LocalReaction[] {
   const now = Date.now();
   const demos: LocalReaction[] = [
-    {
-      id: `${DEMO_RX}suki1`,
-      workId: "promo-15s",
-      kind: "suki",
-      title:
-        "宅配ボックスIoTの15秒プロモ（YouTube Shorts想定）。冒頭1秒で何の製品か分かるか…",
-      createdAt: new Date(now - 2 * 3600000).toISOString(),
-    },
     {
       id: `${DEMO_RX}bm1`,
       workId: "note-clip",
@@ -100,14 +92,14 @@ export function installDemoReactions(): LocalReaction[] {
       createdAt: new Date(now - 26 * 3600000).toISOString(),
     },
     {
-      id: `${DEMO_RX}suki2`,
+      id: `${DEMO_RX}bm2`,
       workId: "viscum-self",
-      kind: "suki",
+      kind: "bookmark",
       title: "Viscum（ヤドリギ候補）自体の初見レビュー募集…",
       createdAt: new Date(now - 3 * 86400000).toISOString(),
     },
     {
-      id: `${DEMO_RX}bm2`,
+      id: `${DEMO_RX}bm3`,
       workId: "cli-tool",
       kind: "bookmark",
       title: "READMEとgifだけ見てもらうCLIツールのドキュメント初見…",

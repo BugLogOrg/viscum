@@ -18,10 +18,10 @@ import {
 } from "@/lib/hot-open-ranking";
 
 /**
- * 作品詳細の右カラム想定。開催中をスキ減衰スコアで並べる。
+ * 作品詳細の右カラム想定。開催中をコメント＋気になる減衰で並べる。
  * 順位バッジは出さない（はてな型の「温まっている」感だけ）。
  * コース＋金額は詳細と同じ StatusBadge（オレンジ下地）。
- * バッジ横に締切。狭いときは（あと〜）のみ。
+ * メタは気になる＋コメント（ADR-036）。
  */
 export function HotOpenRail({
   excludeWorkId,
@@ -119,7 +119,8 @@ export function HotOpenRail({
                       preferredName={w.seederAccountName}
                     />
                   </span>
-                  <span>スキ {formatCount(rx.suki)}</span>
+                  <span>気になる {formatCount(rx.bookmark)}</span>
+                  <span>コメント {formatCount(w.comments?.length ?? 0)}</span>
                 </p>
               </Link>
             </li>
