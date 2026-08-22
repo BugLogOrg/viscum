@@ -9,6 +9,7 @@ import {
   planBadgeLabel,
 } from "@/data/dummy-works";
 import { SeederNameText } from "@/components/SeederNameText";
+import { StatusBadge } from "@/components/StatusBadge";
 import {
   loadClientShelfWorks,
   rankHotOpenWorks,
@@ -17,6 +18,7 @@ import {
 /**
  * 作品詳細の右カラム想定。開催中をスキ減衰スコアで並べる。
  * 順位バッジは出さない（はてな型の「温まっている」感だけ）。
+ * コース＋金額は詳細と同じ StatusBadge（オレンジ下地）。
  */
 export function HotOpenRail({
   excludeWorkId,
@@ -69,19 +71,20 @@ export function HotOpenRail({
       <ul className="mt-3 divide-y divide-viscum-line">
         {items.map((w) => {
           const rx = getWorkReactionCounts(w);
-          const plan = planBadgeLabel(w.plan);
           return (
             <li key={w.id}>
               <Link
                 href={`/w/${w.id}`}
                 className="block py-2.5 transition hover:bg-viscum-paper-2/80"
               >
-                <p className="line-clamp-4 text-[13px] font-medium leading-snug text-viscum-ink">
-                  {w.prizeYen != null && w.prizeYen > 0 ? (
-                    <span className="mr-1.5 font-semibold tabular-nums text-viscum-berry">
-                      褒賞：{w.prizeYen.toLocaleString("ja-JP")}円
-                    </span>
-                  ) : null}
+                <StatusBadge
+                  status={w.status}
+                  prizeYen={w.prizeYen}
+                  paymentsDone={w.paymentsDone}
+                  planLabel={planBadgeLabel(w.plan)}
+                  dense
+                />
+                <p className="mt-1.5 line-clamp-4 text-[13px] font-medium leading-snug text-viscum-ink">
                   {w.title}
                 </p>
                 <p className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] text-viscum-muted">
@@ -91,7 +94,6 @@ export function HotOpenRail({
                       preferredName={w.seederAccountName}
                     />
                   </span>
-                  {plan ? <span>{plan}</span> : null}
                   <span>スキ {formatCount(rx.suki)}</span>
                 </p>
               </Link>
