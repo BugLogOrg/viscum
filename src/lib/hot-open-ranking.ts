@@ -26,7 +26,7 @@ export const HOT_OPEN_SCORE = {
   gamma: 2,
   /** 減衰指数 */
   delta: 1.35,
-  defaultLimit: 8,
+  defaultLimit: 6,
 } as const;
 
 export function hotOpenScore(work: Work): number {

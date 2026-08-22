@@ -57,7 +57,7 @@ export function HotOpenRail({
 
   return (
     <aside
-      className={`border-t border-viscum-line px-4 py-5 xl:sticky xl:top-14 xl:w-72 xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:py-4 ${className}`}
+      className={`border-t border-viscum-line px-4 py-5 xl:sticky xl:top-14 xl:w-80 xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:py-4 ${className}`}
       aria-label="いま温まっている開催中"
     >
       <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
@@ -76,7 +76,7 @@ export function HotOpenRail({
                 href={`/w/${w.id}`}
                 className="block py-2.5 transition hover:bg-viscum-paper-2/80"
               >
-                <p className="line-clamp-2 text-[13px] font-medium leading-snug text-viscum-ink">
+                <p className="line-clamp-4 text-[13px] font-medium leading-snug text-viscum-ink">
                   {w.prizeYen != null && w.prizeYen > 0 ? (
                     <span className="mr-1.5 font-semibold tabular-nums text-viscum-berry">
                       褒賞：{w.prizeYen.toLocaleString("ja-JP")}円
