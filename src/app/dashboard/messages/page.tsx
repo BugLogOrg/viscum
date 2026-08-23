@@ -1,78 +1,21 @@
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
+import { auth } from "@/auth";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
+import { MessagesLocalCleanup } from "@/components/MessagesLocalCleanup";
 import {
   formatYen,
-  clearLocalRequestDms,
   statusLabel,
-  type RequestDm,
 } from "@/lib/local-request-dms";
+import { listMyRequestDms } from "@/lib/list-my-request-dms";
 import { displayRequestWorkTitle } from "@/lib/local-seeds";
-import { fetchMyRequests } from "@/lib/remote-requests";
 
-export default function MessagesIndexPage() {
-  const { data: session, status } = useSession();
-  const [rows, setRows] = useState<RequestDm[]>([]);
-  const [persisted, setPersisted] = useState(false);
-  const [loading, setLoading] = useState(true);
+export default async function MessagesIndexPage() {
+  const session = await auth();
   const handle = session?.user?.handle?.replace(/^@/, "").trim();
+  const userId = session?.user?.id;
 
-  useEffect(() => {
-    clearLocalRequestDms();
-  }, []);
-
-  useEffect(() => {
-    if (!handle) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    void fetchMyRequests().then((res) => {
-      if (cancelled) return;
-      setRows(res.requests);
-      setPersisted(res.persisted);
-      setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [handle]);
-
-  const mine = useMemo(() => {
-    if (!handle) return [];
-    const me = handle.toLowerCase();
-    return rows
-      .filter(
-        (r) =>
-          r.toHandle.toLowerCase() === me ||
-          r.fromHandle.toLowerCase() === me,
-      )
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  }, [rows, handle]);
-
-  const pending = mine.filter(
-    (r) =>
-      r.status === "pending" &&
-      r.toHandle.toLowerCase() === (handle ?? "").toLowerCase(),
-  );
-
-  if (status === "loading" || (handle && loading)) {
-    return (
-      <BrowseChrome>
-        <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
-        <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
-          読み込み中…
-        </div>
-      </BrowseChrome>
-    );
-  }
-
-  if (!session?.user || !handle) {
+  if (!session?.user || !handle || !userId) {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/" hideOnMd hidePostCta />
@@ -92,8 +35,21 @@ export default function MessagesIndexPage() {
     );
   }
 
+  const { requests, persisted } = await listMyRequestDms(userId);
+  const me = handle.toLowerCase();
+  const mine = requests
+    .filter(
+      (r) =>
+        r.toHandle.toLowerCase() === me || r.fromHandle.toLowerCase() === me,
+    )
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const pending = mine.filter(
+    (r) => r.status === "pending" && r.toHandle.toLowerCase() === me,
+  );
+
   return (
     <BrowseChrome>
+      <MessagesLocalCleanup />
       <SiteHeader backHref="/dashboard" hideOnMd hidePostCta />
       <main className="max-w-lg space-y-5 px-4 py-6">
         <div>

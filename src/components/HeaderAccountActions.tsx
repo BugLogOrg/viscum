@@ -50,9 +50,11 @@ export function HeaderAccountActions({
       setPendingDm(0);
       return;
     }
-    const sync = () => {
+    const syncProfile = () => {
       setLocalAvatar(readAvatarDataUrl(handle));
       setAccountName(displayAccountName(handle, readLocalProfile(handle)));
+    };
+    const syncPendingDm = () => {
       void fetchMyRequests().then((res) => {
         const me = handle.toLowerCase();
         const n = res.requests.filter(
@@ -62,12 +64,12 @@ export function HeaderAccountActions({
         setPendingDm(n);
       });
     };
-    sync();
-    window.addEventListener("viscum-profile-updated", sync);
-    window.addEventListener("focus", sync);
+    syncProfile();
+    syncPendingDm();
+    window.addEventListener("viscum-profile-updated", syncProfile);
+    // focus のたびに /api/requests を叩かない（TTLキャッシュ＋一覧と二重取得を避ける）
     return () => {
-      window.removeEventListener("viscum-profile-updated", sync);
-      window.removeEventListener("focus", sync);
+      window.removeEventListener("viscum-profile-updated", syncProfile);
     };
   }, [handle]);
   useEffect(() => {

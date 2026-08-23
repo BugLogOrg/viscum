@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { desc, eq, inArray, or, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { requestDms, users } from "@/db/schema";
-import type { RequestDm } from "@/lib/local-request-dms";
+import { listMyRequestDms } from "@/lib/list-my-request-dms";
 import {
   requestDmToClient,
   sanitizeWorkThumbUrl,
@@ -33,70 +33,8 @@ export async function GET() {
   if (!userId) {
     return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
   }
-  if (!hasDatabase()) {
-    return NextResponse.json({ requests: [] as RequestDm[], persisted: false });
-  }
-  const db = getDb();
-  if (!db) {
-    return NextResponse.json({ requests: [] as RequestDm[], persisted: false });
-  }
-
-  // 一覧は messages / thumb 列を読まない（巨大JSONB・data URL がボトルネック）
-  const rows = await db
-    .select({
-      id: requestDms.id,
-      workId: requestDms.workId,
-      workTitle: requestDms.workTitle,
-      workExternalUrl: requestDms.workExternalUrl,
-      workSummary: requestDms.workSummary,
-      fromUserId: requestDms.fromUserId,
-      toUserId: requestDms.toUserId,
-      amountYen: requestDms.amountYen,
-      pitch: requestDms.pitch,
-      status: requestDms.status,
-      createdAt: requestDms.createdAt,
-      updatedAt: requestDms.updatedAt,
-    })
-    .from(requestDms)
-    .where(
-      or(eq(requestDms.fromUserId, userId), eq(requestDms.toUserId, userId)),
-    )
-    .orderBy(desc(requestDms.createdAt))
-    .limit(40);
-
-  const userIds = [
-    ...new Set(rows.flatMap((r) => [r.fromUserId, r.toUserId])),
-  ];
-  const userRows =
-    userIds.length === 0
-      ? []
-      : await db
-          .select({
-            id: users.id,
-            handle: users.handle,
-            name: users.name,
-          })
-          .from(users)
-          .where(inArray(users.id, userIds));
-  const userMap = new Map(userRows.map((u) => [u.id, u]));
-
-  const out = rows.map((r) => {
-    const from = userMap.get(r.fromUserId);
-    const to = userMap.get(r.toUserId);
-    const slim = {
-      ...r,
-      workThumbUrl: null as string | null,
-      messages: [] as typeof requestDms.$inferSelect.messages,
-    };
-    return requestDmToClient(
-      slim as typeof requestDms.$inferSelect,
-      { handle: from?.handle ?? null, name: from?.name ?? null },
-      { handle: to?.handle ?? null, name: to?.name ?? null },
-      { lean: true },
-    );
-  });
-
-  return NextResponse.json({ requests: out, persisted: true });
+  const { requests, persisted } = await listMyRequestDms(userId);
+  return NextResponse.json({ requests, persisted });
 }
 
 /** 直依頼を送る */

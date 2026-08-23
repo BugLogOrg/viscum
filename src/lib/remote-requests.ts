@@ -1,23 +1,61 @@
 import type { RequestDm, RequestDmStatus } from "@/lib/local-request-dms";
 
-export async function fetchMyRequests(): Promise<{
+type MyRequestsResult = {
   requests: RequestDm[];
   persisted: boolean;
-}> {
-  try {
-    const res = await fetch("/api/requests", { cache: "no-store" });
-    if (!res.ok) return { requests: [], persisted: false };
-    const data = (await res.json()) as {
-      requests?: RequestDm[];
-      persisted?: boolean;
-    };
-    return {
-      requests: Array.isArray(data.requests) ? data.requests : [],
-      persisted: Boolean(data.persisted),
-    };
-  } catch {
-    return { requests: [], persisted: false };
+};
+
+const EMPTY: MyRequestsResult = { requests: [], persisted: false };
+let myRequestsCache: { at: number; data: MyRequestsResult } | null = null;
+let myRequestsInflight: Promise<MyRequestsResult> | null = null;
+const MY_REQUESTS_TTL_MS = 20_000;
+
+export function invalidateMyRequestsCache() {
+  myRequestsCache = null;
+}
+
+/** ヘッダー未読などと一覧で二重取得しないよう短時間キャッシュ＋inflight共有 */
+export async function fetchMyRequests(opts?: {
+  force?: boolean;
+}): Promise<MyRequestsResult> {
+  const now = Date.now();
+  if (
+    !opts?.force &&
+    myRequestsCache &&
+    now - myRequestsCache.at < MY_REQUESTS_TTL_MS
+  ) {
+    return myRequestsCache.data;
   }
+  if (!opts?.force && myRequestsInflight) {
+    return myRequestsInflight;
+  }
+
+  myRequestsInflight = (async () => {
+    try {
+      const res = await fetch("/api/requests", { cache: "no-store" });
+      if (!res.ok) {
+        myRequestsCache = { at: Date.now(), data: EMPTY };
+        return EMPTY;
+      }
+      const data = (await res.json()) as {
+        requests?: RequestDm[];
+        persisted?: boolean;
+      };
+      const result: MyRequestsResult = {
+        requests: Array.isArray(data.requests) ? data.requests : [],
+        persisted: Boolean(data.persisted),
+      };
+      myRequestsCache = { at: Date.now(), data: result };
+      return result;
+    } catch {
+      myRequestsCache = { at: Date.now(), data: EMPTY };
+      return EMPTY;
+    } finally {
+      myRequestsInflight = null;
+    }
+  })();
+
+  return myRequestsInflight;
 }
 
 export async function fetchRequestDm(
@@ -64,6 +102,7 @@ export async function postRequestDm(input: {
     if (!res.ok) {
       return { ok: false, error: data.error || `送信失敗（${res.status}）` };
     }
+    invalidateMyRequestsCache();
     return { ok: true, request: data.request };
   } catch {
     return { ok: false, error: "ネットワークエラー" };
@@ -87,6 +126,7 @@ export async function patchRequestDm(
     if (!res.ok) {
       return { ok: false, error: data.error || `更新失敗（${res.status}）` };
     }
+    invalidateMyRequestsCache();
     return { ok: true, request: data.request };
   } catch {
     return { ok: false, error: "ネットワークエラー" };
