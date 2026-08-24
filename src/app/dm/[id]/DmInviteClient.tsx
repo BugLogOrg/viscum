@@ -70,10 +70,13 @@ export function DmInviteClient({
   return (
     <div className="min-h-dvh bg-viscum-paper text-viscum-ink">
       <header className="border-b border-viscum-line bg-viscum-leaf-deep px-4 py-3.5 text-white">
-        <p className="flex items-center gap-2 text-xs font-semibold tracking-[0.16em]">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-xs font-semibold tracking-[0.16em] text-white hover:opacity-90"
+        >
           <ViscumMark className="h-5 w-5" />
           VISCUM
-        </p>
+        </Link>
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
