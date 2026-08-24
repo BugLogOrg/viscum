@@ -66,6 +66,7 @@ export async function POST(req: Request) {
     toHandle?: string;
     amountYen?: number;
     pitch?: string;
+    closesInHours?: number;
   } | null;
 
   const workId = body?.workId?.trim() ?? "";
@@ -77,6 +78,12 @@ export async function POST(req: Request) {
   const toHandle = body?.toHandle?.replace(/^@/, "").trim().toLowerCase() ?? "";
   const pitch = body?.pitch?.trim().slice(0, 4000) || "よろしくお願いします。";
   const amountYen = coerceDirectRequestAmountYen(body?.amountYen, 5000);
+  const closesAt =
+    typeof body?.closesInHours === "number" &&
+    Number.isFinite(body.closesInHours) &&
+    body.closesInHours > 0
+      ? new Date(Date.now() + body.closesInHours * 3600_000)
+      : null;
 
   if (!workId) {
     return NextResponse.json({ error: "workId required" }, { status: 400 });
@@ -116,6 +123,7 @@ export async function POST(req: Request) {
       amountYen,
       pitch,
       status: "pending",
+      closesAt,
       messages: [
         {
           id: crypto.randomUUID(),

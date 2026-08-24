@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Work } from "@/data/dummy-works";
-import { createRequestDm, formatRequestAmountLabel, coerceDirectRequestAmountYen, DIRECT_REQUEST_AMOUNT_PRESETS, estimateSeederPaysYen } from "@/lib/local-request-dms";
+import { createRequestDm, formatRequestAmountLabel, coerceDirectRequestAmountYen, DIRECT_REQUEST_AMOUNT_PRESETS, DIRECT_REQUEST_DEADLINE_PRESETS, estimateSeederPaysYen } from "@/lib/local-request-dms";
 import { postRequestDm } from "@/lib/remote-requests";
 import {
   displayAccountName,
@@ -291,6 +291,7 @@ export function DirectRequestForm({
   const [amountYen, setAmountYen] = useState(() =>
     coerceDirectRequestAmountYen(work.prizeYen ?? 5000, 5000),
   );
+  const [deadlineDays, setDeadlineDays] = useState(14);
   const [customAmount, setCustomAmount] = useState("");
   const [amountMode, setAmountMode] = useState<"preset" | "custom">(() => {
     const n = coerceDirectRequestAmountYen(work.prizeYen ?? 5000, 5000);
@@ -527,10 +528,7 @@ export function DirectRequestForm({
           workSummary: buildWorkSummary(w) || undefined,
           amountYen,
           pitch: message.trim() || undefined,
-          closesInHours:
-            typeof w.closesInHours === "number" && w.closesInHours > 0
-              ? w.closesInHours
-              : undefined,
+          closesInHours: Math.max(24, deadlineDays * 24),
         }),
       });
       const data = (await res.json().catch(() => ({}))) as {
@@ -732,6 +730,7 @@ export function DirectRequestForm({
               toHandle: selected.handle,
               amountYen,
               pitch,
+              closesInHours: Math.max(24, deadlineDays * 24),
             });
             if (remote.ok && remote.request) {
               try {
@@ -856,6 +855,38 @@ export function DirectRequestForm({
               無料のため決済手数料はかかりません。
             </p>
           )}
+        </div>
+
+        <div>
+          <p className="text-[13px] font-medium text-viscum-ink">
+            希望日（返信・提出）{" "}
+            <span className="text-viscum-berry">必須</span>
+          </p>
+          <p className="mt-0.5 text-[12px] text-viscum-muted">
+            カウントダウンは出しません。目安の希望日です。あとからご依頼DMで延ばせます。過ぎても即失効しません。
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {DIRECT_REQUEST_DEADLINE_PRESETS.map((p) => {
+              const on = deadlineDays === p.days;
+              return (
+                <button
+                  key={p.days}
+                  type="button"
+                  onClick={() => setDeadlineDays(p.days)}
+                  className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
+                    on
+                      ? "bg-viscum-brand text-white"
+                      : "border border-viscum-line bg-white/70 text-viscum-ink"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1.5 text-[12px] text-viscum-muted">
+            いまの希望: 発行からおよそ{deadlineDays}日後
+          </p>
         </div>
 
         <div>

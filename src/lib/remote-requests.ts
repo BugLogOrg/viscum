@@ -88,6 +88,7 @@ export async function postRequestDm(input: {
   toHandle: string;
   amountYen: number;
   pitch: string;
+  closesInHours?: number;
 }): Promise<{ ok: boolean; request?: RequestDm; error?: string }> {
   try {
     const res = await fetch("/api/requests", {
@@ -111,7 +112,11 @@ export async function postRequestDm(input: {
 
 export async function patchRequestDm(
   id: string,
-  body: { status?: RequestDmStatus; message?: string },
+  body: {
+    status?: RequestDmStatus;
+    message?: string;
+    extendDays?: number;
+  },
 ): Promise<{ ok: boolean; request?: RequestDm; error?: string }> {
   try {
     const res = await fetch(`/api/requests/${encodeURIComponent(id)}`, {

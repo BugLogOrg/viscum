@@ -214,8 +214,13 @@ export const requestDms = pgTable(
     inviteId: text("invite_id"),
     amountYen: integer("amount_yen").notNull(),
     pitch: text("pitch").notNull(),
-    /** pending | accepted | declined */
+    /**
+     * pending | accepted | declined | pay_waiting | paid | closed
+     * （提出＝pay_waiting へ直進。ADR-026 層Aの簡易版）
+     */
     status: text("status").notNull().default("pending"),
+    /** 返信・提出の希望日（ソフト締切。超過＝即失効ではない） */
+    closesAt: timestamp("closes_at", { withTimezone: true }),
     /**
      * { id, fromHandle, body, createdAt }[]
      * 薄いスレなので jsonb で十分（MVP）

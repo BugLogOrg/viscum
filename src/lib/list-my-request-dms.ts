@@ -30,6 +30,7 @@ export async function listMyRequestDms(userId: string): Promise<{
       amountYen: requestDms.amountYen,
       pitch: requestDms.pitch,
       status: requestDms.status,
+      closesAt: requestDms.closesAt,
       createdAt: requestDms.createdAt,
       updatedAt: requestDms.updatedAt,
     })

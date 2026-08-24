@@ -13,6 +13,7 @@ import {
   formatRequestAmountLabel,
   formatRequestDmStamp,
   isLegacyLocalRequestId,
+  isRequestDeadlinePassed,
   statusLabel,
   type RequestDm,
 } from "@/lib/local-request-dms";
@@ -281,6 +282,36 @@ export default function RequestDmThreadPage() {
     }
   }
 
+  async function runStatus(
+    next: "pay_waiting" | "paid" | "closed",
+    extendDays?: number,
+  ) {
+    if (responding) return;
+    setResponding(true);
+    try {
+      const res = await patchRequestDm(requestId, {
+        status: next,
+        ...(extendDays ? { extendDays } : {}),
+      });
+      if (res.request) setRow(res.request);
+      else await refresh();
+    } finally {
+      setResponding(false);
+    }
+  }
+
+  async function extendDeadline(days: number) {
+    if (responding) return;
+    setResponding(true);
+    try {
+      const res = await patchRequestDm(requestId, { extendDays: days });
+      if (res.request) setRow(res.request);
+      else await refresh();
+    } finally {
+      setResponding(false);
+    }
+  }
+
   async function send(e: React.FormEvent) {
     e.preventDefault();
     const text = draft.trim();
@@ -398,6 +429,7 @@ export default function RequestDmThreadPage() {
             pitch: pitchText || undefined,
             amountYen: row.amountYen,
             createdAt: row.createdAt,
+            closesAt: row.closesAt,
           }}
           headline={
             isSeeder ? (
@@ -426,6 +458,15 @@ export default function RequestDmThreadPage() {
         />
 
         <div className="px-4">
+        {isRequestDeadlinePassed(row.closesAt) &&
+        row.status !== "paid" &&
+        row.status !== "declined" &&
+        row.status !== "closed" ? (
+          <p className="mt-4 rounded-md border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-2 text-[12px] leading-relaxed text-viscum-ink">
+            希望日を過ぎています（即失効ではありません）。依頼主は延長するか、打ち切れます。
+          </p>
+        ) : null}
+
         {isRecipient && row.status === "pending" && (
           <div className="mt-4 flex gap-2">
             <button
@@ -446,6 +487,87 @@ export default function RequestDmThreadPage() {
             </button>
           </div>
         )}
+
+        {isRecipient && row.status === "accepted" ? (
+          <div className="mt-4 space-y-2">
+            <p className="text-[12px] text-viscum-muted">
+              書き終えたら提出してください。依頼主の完了承認で支払待ちになります（督促ではありません）。
+            </p>
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => void runStatus("pay_waiting")}
+              className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+            >
+              {responding ? "送信中…" : "提出する"}
+            </button>
+          </div>
+        ) : null}
+
+        {isRecipient && row.status === "pay_waiting" ? (
+          <p className="mt-4 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] text-viscum-muted">
+            提出済みです。依頼主の完了承認・お支払いを待っています。
+          </p>
+        ) : null}
+
+        {isSeeder && row.status === "pay_waiting" ? (
+          <div className="mt-4 space-y-2">
+            <p className="text-[12px] text-viscum-muted">
+              メンターが提出しました。内容を確認して完了すると支払済になります（いまはステータス記録。Stripe本番はこのあと）。
+            </p>
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => void runStatus("paid")}
+              className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+            >
+              {responding ? "送信中…" : "完了を承認（支払済にする）"}
+            </button>
+          </div>
+        ) : null}
+
+        {isSeeder &&
+        (row.status === "pending" ||
+          row.status === "accepted" ||
+          row.status === "pay_waiting") ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => void extendDeadline(7)}
+              className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
+            >
+              希望日を7日延ばす
+            </button>
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => void extendDeadline(14)}
+              className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
+            >
+              希望日を14日延ばす
+            </button>
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => void runStatus("closed")}
+              className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep disabled:opacity-50"
+            >
+              打ち切る
+            </button>
+          </div>
+        ) : null}
+
+        {row.status === "paid" ? (
+          <p className="mt-4 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[12px] text-viscum-ink">
+            支払済です。
+          </p>
+        ) : null}
+        {row.status === "closed" ? (
+          <p className="mt-4 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] text-viscum-muted">
+            このお願いは打ち切られています。
+          </p>
+        ) : null}
 
         <ul className="mt-5 space-y-3">
           {threadMessages.map((m) => {

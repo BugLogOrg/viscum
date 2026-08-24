@@ -61,6 +61,7 @@ export function requestDmToClient(
     amountYen: row.amountYen,
     pitch: row.pitch,
     status: row.status as RequestDmStatus,
+    closesAt: row.closesAt ? row.closesAt.toISOString() : undefined,
     createdAt: row.createdAt.toISOString(),
     updatedAt: (row.updatedAt ?? row.createdAt).toISOString(),
     messages: lean

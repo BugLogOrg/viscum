@@ -161,6 +161,7 @@ export async function POST(req: Request) {
         amountYen: invite.amountYen,
         pitch,
         status: "pending",
+        closesAt: invite.closesAt,
         messages: [
           {
             id: crypto.randomUUID(),

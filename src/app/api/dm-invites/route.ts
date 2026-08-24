@@ -87,6 +87,7 @@ export async function POST(req: Request) {
       amountYen,
       pitch,
       status: "pending",
+      closesAt,
       messages: [
         {
           id: crypto.randomUUID(),

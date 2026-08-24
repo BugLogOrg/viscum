@@ -1,6 +1,18 @@
 /** 直依頼単位の薄いDM（端末内デモ。全開受信箱ではない・ADR-028） */
 
-export type RequestDmStatus = "pending" | "accepted" | "declined";
+/**
+ * pending → accepted | declined
+ * accepted → pay_waiting（メンターが提出）
+ * pay_waiting → paid（シーダーが完了承認）| closed
+ * いずれの進行中も closed へ（シーダー打ち切り）
+ */
+export type RequestDmStatus =
+  | "pending"
+  | "accepted"
+  | "declined"
+  | "pay_waiting"
+  | "paid"
+  | "closed";
 
 export type RequestDmMessage = {
   id: string;
@@ -32,11 +44,33 @@ export type RequestDm = {
   amountYen: number;
   pitch: string;
   status: RequestDmStatus;
+  /** 返信・提出の希望日（ソフト締切） */
+  closesAt?: string;
   createdAt: string;
   /** 最終更新（返事・ステータス変更）。一覧の並び正本 */
   updatedAt?: string;
   messages: RequestDmMessage[];
 };
+
+/** 希望締切プリセット（日数） */
+export const DIRECT_REQUEST_DEADLINE_PRESETS = [
+  { days: 7, label: "1週間" },
+  { days: 14, label: "2週間" },
+  { days: 30, label: "1ヵ月" },
+] as const;
+
+export function closesAtFromDeadlineDays(days: number, from = new Date()): Date {
+  const d = new Date(from.getTime());
+  d.setDate(d.getDate() + Math.max(1, Math.round(days)));
+  return d;
+}
+
+export function isRequestDeadlinePassed(closesAt?: string | null): boolean {
+  if (!closesAt) return false;
+  const t = Date.parse(closesAt);
+  if (!Number.isFinite(t)) return false;
+  return t < Date.now();
+}
 
 const KEY = "viscum_local_request_dms_v1";
 
@@ -171,8 +205,11 @@ export function formatYen(amount: number): string {
 }
 
 export function statusLabel(status: RequestDmStatus): string {
-  if (status === "accepted") return "やる";
+  if (status === "accepted") return "引き受け済み";
   if (status === "declined") return "いまは無理";
+  if (status === "pay_waiting") return "支払待ち";
+  if (status === "paid") return "支払済";
+  if (status === "closed") return "打ち切り";
   return "未返信";
 }
 

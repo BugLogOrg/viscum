@@ -3,7 +3,10 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { requestDms, users } from "@/db/schema";
-import type { RequestDmStatus } from "@/lib/local-request-dms";
+import {
+  closesAtFromDeadlineDays,
+  type RequestDmStatus,
+} from "@/lib/local-request-dms";
 import { requestDmToClient, sanitizeWorkThumbUrl } from "@/lib/request-dm-serialize";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -11,7 +14,6 @@ type Ctx = { params: Promise<{ id: string }> };
 async function loadParty(id: string, userId: string) {
   const db = getDb();
   if (!db) return null;
-  // https サムネのみ返す（data URL は巨大なので除外）
   const rows = await db
     .select({
       id: requestDms.id,
@@ -26,6 +28,7 @@ async function loadParty(id: string, userId: string) {
       amountYen: requestDms.amountYen,
       pitch: requestDms.pitch,
       status: requestDms.status,
+      closesAt: requestDms.closesAt,
       messages: requestDms.messages,
       createdAt: requestDms.createdAt,
       updatedAt: requestDms.updatedAt,
@@ -86,7 +89,7 @@ export async function GET(_req: Request, ctx: Ctx) {
   return NextResponse.json({ request: loaded.request, persisted: true });
 }
 
-/** status 更新 or メッセージ追記 */
+/** status 更新・希望日延長・メッセージ追記 */
 export async function PATCH(req: Request, ctx: Ctx) {
   const session = await auth();
   const userId = session?.user?.id;
@@ -114,27 +117,117 @@ export async function PATCH(req: Request, ctx: Ctx) {
   const body = (await req.json().catch(() => null)) as {
     status?: RequestDmStatus;
     message?: string;
+    /** 希望日をN日延長（シーダーのみ） */
+    extendDays?: number;
   } | null;
 
+  const isSeeder = loaded.row.fromUserId === userId;
+  const isMentor = loaded.row.toUserId === userId;
   let messages = [...(loaded.row.messages ?? [])];
-  let status = loaded.row.status;
+  let status = loaded.row.status as RequestDmStatus;
+  let closesAt = loaded.row.closesAt ?? null;
+
+  function pushNote(text: string) {
+    messages.push({
+      id: crypto.randomUUID(),
+      fromHandle: handle!,
+      body: text,
+      createdAt: new Date().toISOString(),
+    });
+  }
 
   if (body?.status === "accepted" || body?.status === "declined") {
-    if (loaded.row.toUserId !== userId) {
+    if (!isMentor) {
       return NextResponse.json(
         { error: "受取側だけが返信できます" },
         { status: 403 },
       );
     }
+    if (status !== "pending") {
+      return NextResponse.json(
+        { error: "未返信のときだけ引き受け／辞退できます" },
+        { status: 400 },
+      );
+    }
     status = body.status;
-    const note =
-      body.status === "accepted" ? "やる、と返しました。" : "いまは無理、と返しました。";
-    messages.push({
-      id: crypto.randomUUID(),
-      fromHandle: handle,
-      body: note,
-      createdAt: new Date().toISOString(),
-    });
+    pushNote(
+      body.status === "accepted"
+        ? "やる、と返しました。"
+        : "いまは無理、と返しました。",
+    );
+  } else if (body?.status === "pay_waiting") {
+    if (!isMentor) {
+      return NextResponse.json(
+        { error: "受取側だけが提出できます" },
+        { status: 403 },
+      );
+    }
+    if (status !== "accepted" && status !== "pay_waiting") {
+      return NextResponse.json(
+        { error: "引き受け後に提出できます" },
+        { status: 400 },
+      );
+    }
+    if (status !== "pay_waiting") {
+      status = "pay_waiting";
+      pushNote("提出しました。依頼主の完了承認・お支払い待ちです。");
+    }
+  } else if (body?.status === "paid") {
+    if (!isSeeder) {
+      return NextResponse.json(
+        { error: "依頼主だけが完了・支払いできます" },
+        { status: 403 },
+      );
+    }
+    if (status !== "pay_waiting") {
+      return NextResponse.json(
+        { error: "支払待ちのときだけ完了できます" },
+        { status: 400 },
+      );
+    }
+    status = "paid";
+    pushNote(
+      "完了を承認しました（支払済）。※Stripe本番決済の配線はこのあと。いまはステータス記録です。",
+    );
+  } else if (body?.status === "closed") {
+    if (!isSeeder) {
+      return NextResponse.json(
+        { error: "依頼主だけが打ち切れます" },
+        { status: 403 },
+      );
+    }
+    if (status === "paid" || status === "declined") {
+      return NextResponse.json(
+        { error: "この状態では打ち切れません" },
+        { status: 400 },
+      );
+    }
+    status = "closed";
+    pushNote("依頼主がこのお願いを打ち切りました。");
+  }
+
+  if (
+    typeof body?.extendDays === "number" &&
+    Number.isFinite(body.extendDays) &&
+    body.extendDays > 0
+  ) {
+    if (!isSeeder) {
+      return NextResponse.json(
+        { error: "依頼主だけが希望日を延ばせます" },
+        { status: 403 },
+      );
+    }
+    if (status === "paid" || status === "declined" || status === "closed") {
+      return NextResponse.json(
+        { error: "終了した依頼は延ばせません" },
+        { status: 400 },
+      );
+    }
+    const days = Math.min(90, Math.round(body.extendDays));
+    const base =
+      closesAt && closesAt.getTime() > Date.now() ? closesAt : new Date();
+    closesAt = closesAtFromDeadlineDays(days, base);
+    pushNote(`希望日を${days}日延ばしました（新しい希望日まで）。`);
   }
 
   const text = body?.message?.trim().slice(0, 2000);
@@ -159,13 +252,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
     .update(requestDms)
     .set({
       status,
+      closesAt,
       messages,
       updatedAt: new Date(),
     })
     .where(eq(requestDms.id, id))
     .returning();
 
-  // returning の row で足りる（再 SELECT しない＝速い）
   const request = requestDmToClient(
     { ...updated, workThumbUrl: null },
     {
@@ -179,9 +272,11 @@ export async function PATCH(req: Request, ctx: Ctx) {
           name: null,
         },
   );
-  // メッセージだけ更新。巨大サムネはレスポンスに載せない
   request.messages = Array.isArray(updated.messages) ? updated.messages : [];
   request.status = updated.status as RequestDmStatus;
+  request.closesAt = updated.closesAt
+    ? updated.closesAt.toISOString()
+    : undefined;
   request.workSummary = loaded.request.workSummary;
   request.workTitle = loaded.request.workTitle;
   request.fromAccountName = loaded.request.fromAccountName;

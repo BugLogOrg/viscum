@@ -82,7 +82,7 @@ export function DirectRequestOfferCard({
             ) : null}
             {deadlineLine ? (
               <div>
-                <dt className="inline text-viscum-muted">締切：</dt>
+                <dt className="inline text-viscum-muted">希望日：</dt>
                 <dd className="inline font-medium">{deadlineLine}</dd>
               </div>
             ) : null}
