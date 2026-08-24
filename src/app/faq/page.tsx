@@ -77,7 +77,7 @@ const FAQS: { q: string; body: ReactNode }[] = [
           </li>
           <li>
             <span className="font-medium">直依頼</span>
-            … この人の目が欲しいとき、有償で声をかけられる
+            … この人の反応が欲しいとき、有償で声をかけられる
           </li>
           <li>
             <span className="font-medium">相互の循環（後から厚くなる）</span>
@@ -109,7 +109,7 @@ const FAQS: { q: string; body: ReactNode }[] = [
         <p>
           ミソは
           <span className="font-medium">コンペであること</span>
-          です。全員払いだと薄い量産になりやすい。稀少褒賞＋作者が選ぶ、で張り合いと予算の両方を守ります。「プロだけが書ける審査会」ではなく、軽い評価が取れる場が先です。本気の目が欲しいときは金額と直依頼で寄せます。
+          です。全員払いだと薄い量産になりやすい。稀少褒賞＋作者が選ぶ、で張り合いと予算の両方を守ります。「プロだけが書ける審査会」ではなく、軽い評価が取れる場が先です。本気の反応が欲しいときは金額と直依頼で寄せます。
         </p>
       </>
     ),
@@ -174,13 +174,13 @@ const FAQS: { q: string; body: ReactNode }[] = [
           ことです。クラウドソーシングや業務委託は、だいたい
           <span className="font-medium">特定の人の労働時間・納品</span>
           を買います。VISCUMの本丸は
-          <span className="font-medium">作品への反応・目・言葉</span>
+          <span className="font-medium">作品への反応・言葉</span>
           （小さな広告費の出口）です。バナー枠を売る広告屋でも、ワーカーを抱える外注サイトでもありません。
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <span className="font-medium">場内コンペ／公開ブースト</span>
-            … 広く募って、シーダーが選ぶ稀少褒賞。全員に払う外注ではありません。書けば必ずもらえるわけではないので、メンター側は「ただ働きになりうる」一方、シーダーは少額で複数の目を集められます。これは意図した非対称です。
+            … 広く募って、シーダーが選ぶ稀少褒賞。全員に払う外注ではありません。書けば必ずもらえるわけではないので、メンター側は「ただ働きになりうる」一方、シーダーは少額で複数の反応を集められます。これは意図した非対称です。
           </li>
           <li>
             <span className="font-medium">直依頼</span>
