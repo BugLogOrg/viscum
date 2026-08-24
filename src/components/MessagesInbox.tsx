@@ -187,7 +187,7 @@ export function MessagesInbox({
                       {invitePath ? " · 招待あり" : ""}
                     </p>
                     <p
-                      className={`mt-1.5 rounded-sm px-1.5 py-1 text-[11px] tabular-nums ${
+                      className={`mt-1.5 rounded-sm px-1.5 py-1 text-right text-[11px] tabular-nums ${
                         outbound
                           ? "bg-white/50 text-viscum-muted"
                           : incoming
