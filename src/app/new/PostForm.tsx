@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
@@ -720,17 +719,6 @@ export function PostForm() {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="rounded-lg border border-dashed border-viscum-line px-4 py-3">
-        <p className="text-[13px] font-medium text-viscum-ink">直依頼について</p>
-        <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-          指名して頼む場合は、この棚レーンではなく{" "}
-          <Link href="/new/request" className="text-viscum-brand underline">
-            直依頼レーン
-          </Link>
-          から別IDで作成します（ADR-038）。
-        </p>
       </div>
 
       <div className="rounded-md border border-viscum-berry/25 bg-white/60 px-3 py-3">
