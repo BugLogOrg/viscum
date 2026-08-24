@@ -74,8 +74,8 @@ export function MessagesInbox({
 
   const tabs: { id: Tab; label: string; count: number }[] = [
     { id: "all", label: "すべて", count: counts.all },
-    { id: "inbox", label: "受信", count: counts.inbox },
-    { id: "sent", label: "送信", count: counts.sent },
+    { id: "inbox", label: "依頼された", count: counts.inbox },
+    { id: "sent", label: "依頼した", count: counts.sent },
   ];
 
   return (
@@ -88,7 +88,7 @@ export function MessagesInbox({
       <div
         className="flex rounded-lg border border-viscum-line bg-white/60 p-0.5"
         role="tablist"
-        aria-label="受信・送信"
+        aria-label="依頼した・依頼された"
       >
         {tabs.map((t) => {
           const on = tab === t.id;
@@ -208,9 +208,9 @@ export function MessagesInbox({
         {filtered.length === 0 && (
           <li className="px-3 py-8 text-center text-[13px] text-viscum-muted">
             {tab === "inbox"
-              ? "受信したご依頼はまだありません"
+              ? "まだ依頼されていません"
               : tab === "sent"
-                ? "送ったご依頼はまだありません"
+                ? "まだ依頼していません"
                 : emptyHint}
           </li>
         )}
