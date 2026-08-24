@@ -156,8 +156,9 @@ export function DirectRequestForm({
       ? "preset"
       : "custom";
   });
-  const [shareTone, setShareTone] = useState<ShareTone>("external");
   const [delivery, setDelivery] = useState<DeliveryMode>("outbound");
+  const shareTone: ShareTone =
+    delivery === "in_app" ? "internal" : "external";
   const [draftNote, setDraftNote] = useState<string | null>(null);
   const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
   const [sending, setSending] = useState(false);
@@ -652,7 +653,6 @@ export function DirectRequestForm({
               type="button"
               onClick={() => {
                 setDelivery("in_app");
-                setShareTone("internal");
               }}
               className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
                 delivery === "in_app"
@@ -666,7 +666,6 @@ export function DirectRequestForm({
               type="button"
               onClick={() => {
                 setDelivery("outbound");
-                setShareTone("external");
                 setMentor("");
               }}
               className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
@@ -823,37 +822,8 @@ export function DirectRequestForm({
           </p>
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
             {delivery === "outbound"
-              ? "外連絡の本線です。コピーして相手のDMやメールに貼ってください。"
-              : "場内送信のあと、念押し用に短文を送れます（任意）。"}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setShareTone("internal")}
-              className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
-                shareTone === "internal"
-                  ? "bg-viscum-brand text-white"
-                  : "border border-viscum-line bg-white/70 text-viscum-ink"
-              }`}
-            >
-              内部用（短い）
-            </button>
-            <button
-              type="button"
-              onClick={() => setShareTone("external")}
-              className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
-                shareTone === "external"
-                  ? "bg-viscum-brand text-white"
-                  : "border border-viscum-line bg-white/70 text-viscum-ink"
-              }`}
-            >
-              外部用（丁寧）
-            </button>
-          </div>
-          <p className="mt-2 text-[11px] leading-relaxed text-viscum-muted">
-            {shareTone === "internal"
-              ? "登録済み・仲のよい相手向け。ログインしてメッセージを開く案内です。"
-              : "未登録・コールド向け。依頼内容のリンク付き。返信・受取にはログインが必要と案内します（リンク自体は知っている人向けです）。"}
+              ? "届け方に合わせて外部用（丁寧）の文面です。コピーして相手のDMやメールに貼ってください。"
+              : "届け方に合わせて内部用（短い）の文面です。場内送信のあと、念押し用に送れます（任意）。"}
           </p>
           <textarea
             readOnly
