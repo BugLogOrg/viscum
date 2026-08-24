@@ -21,6 +21,7 @@ async function loadParty(id: string, userId: string) {
       workSummary: requestDms.workSummary,
       fromUserId: requestDms.fromUserId,
       toUserId: requestDms.toUserId,
+      inviteId: requestDms.inviteId,
       amountYen: requestDms.amountYen,
       pitch: requestDms.pitch,
       status: requestDms.status,
@@ -46,18 +47,20 @@ async function loadParty(id: string, userId: string) {
       .from(users)
       .where(eq(users.id, row.fromUserId))
       .limit(1),
-    db
-      .select({ handle: users.handle, name: users.name })
-      .from(users)
-      .where(eq(users.id, row.toUserId))
-      .limit(1),
+    row.toUserId
+      ? db
+          .select({ handle: users.handle, name: users.name })
+          .from(users)
+          .where(eq(users.id, row.toUserId))
+          .limit(1)
+      : Promise.resolve([] as { handle: string | null; name: string | null }[]),
   ]);
   return {
     row: full,
     request: requestDmToClient(
       full,
       from[0] ?? { handle: null, name: null },
-      to[0] ?? { handle: null, name: null },
+      row.toUserId ? to[0] ?? { handle: null, name: null } : null,
     ),
   };
 }
@@ -168,10 +171,12 @@ export async function PATCH(req: Request, ctx: Ctx) {
       handle: loaded.request.fromHandle,
       name: loaded.request.fromAccountName ?? null,
     },
-    {
-      handle: loaded.request.toHandle,
-      name: null,
-    },
+    loaded.request.outboundUnassigned
+      ? null
+      : {
+          handle: loaded.request.toHandle || null,
+          name: null,
+        },
   );
   // メッセージだけ更新。巨大サムネはレスポンスに載せない
   request.messages = Array.isArray(updated.messages) ? updated.messages : [];

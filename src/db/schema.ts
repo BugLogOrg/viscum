@@ -205,9 +205,13 @@ export const requestDms = pgTable(
     fromUserId: text("from_user_id")
       .notNull()
       .references(() => users.id),
-    toUserId: text("to_user_id")
-      .notNull()
-      .references(() => users.id),
+    /**
+     * 受け手。外リンク発行直後は未割当（null）。
+     * 相手が招待に返事したとき初めて入る。
+     */
+    toUserId: text("to_user_id").references(() => users.id),
+    /** 外向け招待と1:1（コピー時にスレ先出し） */
+    inviteId: text("invite_id"),
     amountYen: integer("amount_yen").notNull(),
     pitch: text("pitch").notNull(),
     /** pending | accepted | declined */
@@ -237,6 +241,7 @@ export const requestDms = pgTable(
   (t) => [
     index("request_dms_from_idx").on(t.fromUserId),
     index("request_dms_to_idx").on(t.toUserId),
+    index("request_dms_invite_idx").on(t.inviteId),
   ],
 );
 

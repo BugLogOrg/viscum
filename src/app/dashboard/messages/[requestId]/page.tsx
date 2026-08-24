@@ -138,10 +138,16 @@ export default function RequestDmThreadPage() {
     );
   }
 
-  const peerHandle = isRecipient ? row.fromHandle : row.toHandle;
+  const peerHandle = isRecipient
+    ? row.fromHandle
+    : row.outboundUnassigned
+      ? ""
+      : row.toHandle;
   const peerLabel = isRecipient
     ? row.fromAccountName || row.fromHandle
-    : row.toHandle;
+    : row.outboundUnassigned
+      ? "外リンク（返事待ち）"
+      : row.toHandle;
 
   /** pitch は作成時に messages[0] にも入るので、スレでは重複表示しない */
   const pitchText = row.pitch?.trim() ?? "";
@@ -270,10 +276,23 @@ export default function RequestDmThreadPage() {
           <p className="text-[12px] text-viscum-muted">ご依頼DM</p>
           <h1 className="text-lg font-semibold text-viscum-ink">
             {peerLabel}
-            <span className="ml-1 text-[13px] font-normal text-viscum-muted">
-              @{peerHandle}
-            </span>
+            {peerHandle ? (
+              <span className="ml-1 text-[13px] font-normal text-viscum-muted">
+                @{peerHandle}
+              </span>
+            ) : null}
           </h1>
+          {row.outboundUnassigned && row.inviteId ? (
+            <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
+              相手はまだ決まっていません。案内リンクを渡して返事を待っています。{" "}
+              <Link
+                href={`/dm/i/${encodeURIComponent(row.inviteId)}`}
+                className="font-medium text-viscum-brand underline"
+              >
+                招待ページを開く
+              </Link>
+            </p>
+          ) : null}
           <p className="text-[13px] text-viscum-ink">
             <span className="text-viscum-muted">褒賞 · </span>
             {formatYen(row.amountYen)}

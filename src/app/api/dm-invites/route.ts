@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
-import { dmInvites, users } from "@/db/schema";
+import { dmInvites, requestDms, users } from "@/db/schema";
 import { coerceDirectRequestAmountYen } from "@/lib/local-request-dms";
 
-/** 共有用招待を作成（ログイン必須） */
+/** 共有用招待＋未割当のやりとりスレを同時作成（ログイン必須） */
 export async function POST(req: Request) {
   const session = await auth();
   const fromUserId = session?.user?.id;
@@ -47,24 +47,60 @@ export async function POST(req: Request) {
       ? new Date(Date.now() + body.closesInHours * 3600_000)
       : null;
 
-  const [row] = await db
+  const amountYen = coerceDirectRequestAmountYen(body?.amountYen, 5000);
+  const pitch =
+    body?.pitch?.trim().slice(0, 4000) ||
+    "共有リンクから直依頼しました。よろしくお願いします。";
+  const workExternalUrl = body?.workExternalUrl?.trim().slice(0, 2000) || null;
+  const workSummary = body?.workSummary?.trim().slice(0, 12_000) || null;
+
+  const [invite] = await db
     .insert(dmInvites)
     .values({
       fromUserId,
       workId,
       workTitle,
-      workExternalUrl: body?.workExternalUrl?.trim().slice(0, 2000) || null,
-      workSummary: body?.workSummary?.trim().slice(0, 12_000) || null,
-      amountYen: coerceDirectRequestAmountYen(body?.amountYen, 5000),
-      pitch: body?.pitch?.trim().slice(0, 4000) || null,
+      workExternalUrl,
+      workSummary,
+      amountYen,
+      pitch,
       closesAt,
+    })
+    .returning();
+
+  const nowIso = new Date().toISOString();
+  const [request] = await db
+    .insert(requestDms)
+    .values({
+      workId,
+      workTitle,
+      workExternalUrl,
+      workSummary,
+      fromUserId,
+      toUserId: null,
+      inviteId: invite.id,
+      amountYen,
+      pitch,
+      status: "pending",
+      messages: [
+        {
+          id: crypto.randomUUID(),
+          fromHandle,
+          body: pitch,
+          createdAt: nowIso,
+        },
+      ],
     })
     .returning();
 
   return NextResponse.json({
     invite: {
-      id: row.id,
-      path: `/dm/i/${row.id}`,
+      id: invite.id,
+      path: `/dm/i/${invite.id}`,
+    },
+    request: {
+      id: request.id,
+      path: `/dashboard/messages/${request.id}`,
     },
     persisted: true,
   });
@@ -112,6 +148,12 @@ export async function GET(req: Request) {
     .limit(1);
   const from = fromRows[0];
 
+  const requestRows = await db
+    .select({ id: requestDms.id })
+    .from(requestDms)
+    .where(eq(requestDms.inviteId, id))
+    .limit(1);
+
   return NextResponse.json({
     invite: {
       id: row.id,
@@ -125,6 +167,7 @@ export async function GET(req: Request) {
       fromAccountName: from?.name?.trim() || undefined,
       createdAt: row.createdAt.toISOString(),
       closesAt: row.closesAt ? row.closesAt.toISOString() : undefined,
+      requestId: requestRows[0]?.id,
     },
     persisted: true,
   });

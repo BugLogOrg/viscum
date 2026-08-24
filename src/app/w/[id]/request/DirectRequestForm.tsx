@@ -165,6 +165,7 @@ export function DirectRequestForm({
   const [copyNote, setCopyNote] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
   const [invitePath, setInvitePath] = useState<string | null>(null);
+  const [requestPath, setRequestPath] = useState<string | null>(null);
   const [inviteBusy, setInviteBusy] = useState(false);
   const [activeWork, setActiveWork] = useState(work);
 
@@ -316,9 +317,14 @@ export function DirectRequestForm({
       .slice(0, 12_000);
   }
 
-  /** 別端末でも開ける Neon 招待URLを用意 */
-  async function ensureInvitePath(): Promise<string | null> {
-    if (invitePath) return invitePath;
+  /** 別端末でも開ける Neon 招待URLを用意（同時にやりとりスレも先出し） */
+  async function ensureInvitePath(): Promise<{
+    invitePath: string;
+    requestPath?: string;
+  } | null> {
+    if (invitePath) {
+      return { invitePath, requestPath: requestPath ?? undefined };
+    }
     if (!fromHandle) {
       setCopyNote("先にログインしてください");
       return null;
@@ -353,6 +359,7 @@ export function DirectRequestForm({
       });
       const data = (await res.json().catch(() => ({}))) as {
         invite?: { id: string; path: string };
+        request?: { id: string; path: string };
         error?: string;
       };
       if (!res.ok || !data.invite?.path) {
@@ -362,7 +369,11 @@ export function DirectRequestForm({
         return null;
       }
       setInvitePath(data.invite.path);
-      return data.invite.path;
+      if (data.request?.path) setRequestPath(data.request.path);
+      return {
+        invitePath: data.invite.path,
+        requestPath: data.request?.path,
+      };
     } catch {
       setCopyNote("ネットワークエラー");
       return null;
@@ -450,23 +461,26 @@ export function DirectRequestForm({
       return;
     }
     let text = buildInternalShareText();
+    let nextRequestPath = requestPath;
     if (shareTone === "external") {
-      const path = await ensureInvitePath();
-      if (!path) return;
-      const url = `${window.location.origin}${path}`;
+      const ensured = await ensureInvitePath();
+      if (!ensured) return;
+      const url = `${window.location.origin}${ensured.invitePath}`;
       text = buildExternalShareText(url);
+      nextRequestPath = ensured.requestPath ?? nextRequestPath;
     }
     try {
       await navigator.clipboard?.writeText(text);
       setCopyNote(
         shareTone === "external"
-          ? "外部用の案内文をコピーしました（招待リンク付き）。ご依頼DMの「外に出したリンク」に発行済みとして残ります。"
+          ? "外部用の案内文をコピーしました。やりとりに返事待ちスレを発行済みです。"
           : "内部用の案内文をコピーしました",
       );
       if (delivery === "outbound" && shareTone === "external") {
+        const dest = nextRequestPath ?? "/dashboard/messages";
         window.setTimeout(() => {
-          router.push("/dashboard/messages");
-        }, 600);
+          router.push(dest);
+        }, 500);
       }
     } catch {
       setCopyNote("コピーに失敗しました");
@@ -771,11 +785,11 @@ export function DirectRequestForm({
             <p className="font-medium text-viscum-ink">外への届け方</p>
             <p className="mt-1">
               相手をViscum上で選ぶ必要はありません。下の案内文をコピーして、X・LINE・メールなどに貼ってください。
-              <strong className="font-medium text-viscum-ink">コピー時に招待がサーバー発行</strong>
-              され、ご依頼DMの「外に出したリンク」に残ります。相手がリンクを開いて返事すると「やりとり」スレになります。
+              <strong className="font-medium text-viscum-ink">コピー時に招待＋やりとりスレを発行</strong>
+              します。ご依頼DMに「外リンク（返事待ち）」としてすぐ載ります。相手の返事で相手アカウントがスレに入ります。
             </p>
             <p className="mt-1">
-              謝礼額は招待に固定されます（この時点ではカード不要。完了時払い）。メール欄からの直送はまだありません。
+              謝礼額はスレに固定されます（この時点ではカード不要。完了時払い）。メール欄からの直送はまだありません。
             </p>
           </div>
         )}
@@ -866,9 +880,13 @@ export function DirectRequestForm({
                 disabled={inviteBusy || !canCopyOutbound}
                 onClick={() => {
                   void (async () => {
-                    const path = await ensureInvitePath();
-                    if (!path) return;
-                    window.open(path, "_blank", "noopener,noreferrer");
+                    const ensured = await ensureInvitePath();
+                    if (!ensured) return;
+                    window.open(
+                      ensured.invitePath,
+                      "_blank",
+                      "noopener,noreferrer",
+                    );
                   })();
                 }}
                 className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand disabled:opacity-50"

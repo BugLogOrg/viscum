@@ -5,8 +5,8 @@ import { getDb, hasDatabase } from "@/db";
 import { dmInvites, requestDms, users } from "@/db/schema";
 
 /**
- * 共有着地からの返事 → ご依頼DMスレに残す（作品コメントには載せない）。
- * シーダーは /dashboard/messages で受け取れる。
+ * 共有着地からの返事 → 既存の未割当スレに紐づける（なければ新規）。
+ * シーダーは /dashboard/messages で返事前からスレを見られる。
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -64,6 +64,48 @@ export async function POST(req: Request) {
     createdAt: now.toISOString(),
   };
 
+  /** 1) 招待に紐づく先出しスレを優先 */
+  const byInvite = await db
+    .select()
+    .from(requestDms)
+    .where(eq(requestDms.inviteId, inviteId))
+    .orderBy(desc(requestDms.createdAt))
+    .limit(1);
+
+  if (byInvite[0]) {
+    const row = byInvite[0];
+    if (row.toUserId && row.toUserId !== mentorUserId) {
+      return NextResponse.json(
+        { error: "この招待は別の相手がすでに返事しています" },
+        { status: 409 },
+      );
+    }
+    const last = row.messages?.[row.messages.length - 1];
+    const sameRecent =
+      last &&
+      last.fromHandle.toLowerCase() === mentorHandle.toLowerCase() &&
+      last.body.trim() === text &&
+      Date.now() - new Date(last.createdAt).getTime() < 8_000;
+    const messages = sameRecent
+      ? [...(row.messages ?? [])]
+      : [...(row.messages ?? []), msg];
+    await db
+      .update(requestDms)
+      .set({
+        toUserId: mentorUserId,
+        messages,
+        updatedAt: now,
+      })
+      .where(eq(requestDms.id, row.id));
+    return NextResponse.json({
+      ok: true,
+      requestId: row.id,
+      path: `/dashboard/messages/${row.id}`,
+      persisted: true,
+    });
+  }
+
+  /** 2) 旧データ: 同じ work の当事者スレ */
   const existing = await db
     .select()
     .from(requestDms)
@@ -92,7 +134,7 @@ export async function POST(req: Request) {
       : [...(row.messages ?? []), msg];
     await db
       .update(requestDms)
-      .set({ messages, updatedAt: now })
+      .set({ messages, updatedAt: now, inviteId: inviteId })
       .where(eq(requestDms.id, row.id));
     requestId = row.id;
   } else {
@@ -115,6 +157,7 @@ export async function POST(req: Request) {
         workSummary: invite.workSummary,
         fromUserId: invite.fromUserId,
         toUserId: mentorUserId,
+        inviteId,
         amountYen: invite.amountYen,
         pitch,
         status: "pending",

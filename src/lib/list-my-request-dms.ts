@@ -26,6 +26,7 @@ export async function listMyRequestDms(userId: string): Promise<{
       workSummary: requestDms.workSummary,
       fromUserId: requestDms.fromUserId,
       toUserId: requestDms.toUserId,
+      inviteId: requestDms.inviteId,
       amountYen: requestDms.amountYen,
       pitch: requestDms.pitch,
       status: requestDms.status,
@@ -40,7 +41,11 @@ export async function listMyRequestDms(userId: string): Promise<{
     .limit(40);
 
   const userIds = [
-    ...new Set(rows.flatMap((r) => [r.fromUserId, r.toUserId])),
+    ...new Set(
+      rows.flatMap((r) =>
+        [r.fromUserId, r.toUserId].filter((id): id is string => Boolean(id)),
+      ),
+    ),
   ];
   const userRows =
     userIds.length === 0
@@ -57,7 +62,7 @@ export async function listMyRequestDms(userId: string): Promise<{
 
   const requests = rows.map((r) => {
     const from = userMap.get(r.fromUserId);
-    const to = userMap.get(r.toUserId);
+    const to = r.toUserId ? userMap.get(r.toUserId) : null;
     const slim = {
       ...r,
       workThumbUrl: null as string | null,
@@ -66,7 +71,9 @@ export async function listMyRequestDms(userId: string): Promise<{
     return requestDmToClient(
       slim as typeof requestDms.$inferSelect,
       { handle: from?.handle ?? null, name: from?.name ?? null },
-      { handle: to?.handle ?? null, name: to?.name ?? null },
+      to
+        ? { handle: to.handle ?? null, name: to.name ?? null }
+        : null,
       { lean: true },
     );
   });

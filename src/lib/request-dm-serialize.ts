@@ -17,11 +17,15 @@ export function sanitizeWorkThumbUrl(
 export function requestDmToClient(
   row: Row,
   from: { handle: string | null; name: string | null },
-  to: { handle: string | null; name: string | null },
+  to: { handle: string | null; name: string | null } | null,
   opts?: { lean?: boolean },
 ): RequestDm {
   const lean = Boolean(opts?.lean);
   const summary = row.workSummary?.trim() || undefined;
+  const outboundUnassigned = !row.toUserId;
+  const toHandle = outboundUnassigned
+    ? ""
+    : (to?.handle ?? "").replace(/^@/, "") || "unknown";
   return {
     id: row.id,
     workId: row.workId,
@@ -37,7 +41,9 @@ export function requestDmToClient(
       : summary,
     fromHandle: (from.handle ?? "").replace(/^@/, "") || "unknown",
     fromAccountName: from.name?.trim() || undefined,
-    toHandle: (to.handle ?? "").replace(/^@/, "") || "unknown",
+    toHandle,
+    inviteId: row.inviteId?.trim() || undefined,
+    outboundUnassigned,
     amountYen: row.amountYen,
     pitch: row.pitch,
     status: row.status as RequestDmStatus,

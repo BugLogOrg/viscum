@@ -46,15 +46,21 @@ export default async function MessagesIndexPage() {
   const mine = requests
     .filter(
       (r) =>
-        r.toHandle.toLowerCase() === me || r.fromHandle.toLowerCase() === me,
+        r.fromHandle.toLowerCase() === me ||
+        (r.toHandle && r.toHandle.toLowerCase() === me),
     )
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   const pending = mine.filter(
-    (r) => r.status === "pending" && r.toHandle.toLowerCase() === me,
+    (r) =>
+      r.status === "pending" &&
+      r.toHandle &&
+      r.toHandle.toLowerCase() === me,
   );
-  /** 同じ workId で既にスレがある招待は「スレあり」表示用 */
-  const workIdsWithThread = new Set(mine.map((r) => r.workId));
-
+  const inviteById = new Map(invites.map((i) => [i.id, i]));
+  /** スレに invite が紐づいている外発行は、招待一覧を重複表示しない */
+  const orphanInvites = invites.filter(
+    (inv) => !mine.some((r) => r.inviteId === inv.id),
+  );
   return (
     <BrowseChrome>
       <MessagesLocalCleanup />
@@ -76,18 +82,16 @@ export default async function MessagesIndexPage() {
           </p>
         )}
 
-        {invites.length > 0 && (
+        {orphanInvites.length > 0 && (
           <section className="space-y-2">
             <h2 className="text-[13px] font-semibold text-viscum-ink">
-              外に出したリンク（発行済み）
+              外に出したリンク（旧・スレ未紐づけ）
             </h2>
             <p className="text-[11px] leading-relaxed text-viscum-muted">
-              コピペ用に発行した招待です。相手が返事すると下の「やりとり」にスレができます。謝礼額はここに固定され、完了支払いまでカードは不要です。
+              新しい発行は「やりとり」に返事待ちスレとして先に出ます。ここは過去の招待の残りです。
             </p>
             <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
-              {invites.map((inv) => {
-                const claimed = workIdsWithThread.has(inv.workId);
-                return (
+              {orphanInvites.map((inv) => (
                   <li key={inv.id}>
                     <Link
                       href={inv.path}
@@ -97,14 +101,8 @@ export default async function MessagesIndexPage() {
                         <p className="truncate text-[14px] font-medium text-viscum-ink">
                           {displayRequestWorkTitle(inv.workId, inv.workTitle)}
                         </p>
-                        <span
-                          className={`shrink-0 text-[11px] ${
-                            claimed
-                              ? "text-viscum-muted"
-                              : "font-medium text-viscum-berry-deep"
-                          }`}
-                        >
-                          {claimed ? "スレあり" : "返事待ち"}
+                        <span className="shrink-0 text-[11px] font-medium text-viscum-berry-deep">
+                          返事待ち
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
@@ -117,8 +115,7 @@ export default async function MessagesIndexPage() {
                       </p>
                     </Link>
                   </li>
-                );
-              })}
+              ))}
             </ul>
           </section>
         )}
@@ -127,12 +124,23 @@ export default async function MessagesIndexPage() {
           <h2 className="text-[13px] font-semibold text-viscum-ink">やりとり</h2>
           <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
             {mine.map((r) => {
+              const outbound = Boolean(r.outboundUnassigned);
               const incoming =
+                !outbound &&
                 r.toHandle.toLowerCase() === handle.toLowerCase();
-              const peer = incoming ? r.fromHandle : r.toHandle;
-              const peerName = incoming
-                ? r.fromAccountName || r.fromHandle
-                : r.toHandle;
+              const peer = outbound
+                ? ""
+                : incoming
+                  ? r.fromHandle
+                  : r.toHandle;
+              const peerName = outbound
+                ? "外リンク（返事待ち）"
+                : incoming
+                  ? r.fromAccountName || r.fromHandle
+                  : r.toHandle;
+              const invitePath = r.inviteId
+                ? inviteById.get(r.inviteId)?.path ?? `/dm/i/${r.inviteId}`
+                : null;
               return (
                 <li key={r.id}>
                   <Link
@@ -156,28 +164,40 @@ export default async function MessagesIndexPage() {
                         <div className="flex items-baseline justify-between gap-2">
                           <p className="truncate text-[14px] font-medium text-viscum-ink">
                             {peerName}
-                            <span className="font-normal text-viscum-muted">
-                              {" "}
-                              (@{peer})
-                            </span>
+                            {peer ? (
+                              <span className="font-normal text-viscum-muted">
+                                {" "}
+                                (@{peer})
+                              </span>
+                            ) : null}
                           </p>
                           <span
                             className={`shrink-0 text-[11px] ${
-                              r.status === "pending"
+                              outbound || r.status === "pending"
                                 ? "font-medium text-viscum-berry-deep"
                                 : "text-viscum-muted"
                             }`}
                           >
-                            {statusLabel(r.status)}
+                            {outbound ? "返事待ち" : statusLabel(r.status)}
                           </span>
                         </div>
                         <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
-                          {incoming ? "受信" : "送信"} · {formatYen(r.amountYen)}{" "}
-                          · {displayRequestWorkTitle(r.workId, r.workTitle)}
+                          {outbound
+                            ? "外リンク"
+                            : incoming
+                              ? "受信"
+                              : "送信"}{" "}
+                          · {formatYen(r.amountYen)} ·{" "}
+                          {displayRequestWorkTitle(r.workId, r.workTitle)}
+                          {invitePath ? " · 招待あり" : ""}
                         </p>
                         <p className="mt-0.5 text-[11px] tabular-nums text-viscum-muted">
                           <time dateTime={r.createdAt}>
-                            {incoming ? "届いた" : "送った"}{" "}
+                            {outbound
+                              ? "発行"
+                              : incoming
+                                ? "届いた"
+                                : "送った"}{" "}
                             {formatRequestDmStamp(r.createdAt)}
                           </time>
                         </p>
@@ -189,8 +209,8 @@ export default async function MessagesIndexPage() {
             })}
             {mine.length === 0 && (
               <li className="px-3 py-8 text-center text-[13px] text-viscum-muted">
-                {invites.length > 0
-                  ? "まだ相手とのやりとりスレはありません。返事が来るとここに出ます。"
+                {orphanInvites.length > 0
+                  ? "新しい発行はここに返事待ちスレとして出ます。"
                   : "まだご依頼DMはありません"}
               </li>
             )}

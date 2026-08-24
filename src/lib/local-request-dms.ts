@@ -23,8 +23,12 @@ export type RequestDm = {
   /** 依頼する側 */
   fromHandle: string;
   fromAccountName?: string;
-  /** 依頼される側 */
+  /** 依頼される側。外リンク未割当は空文字 */
   toHandle: string;
+  /** 外リンク招待ID（あれば） */
+  inviteId?: string;
+  /** まだ相手アカウント未確定 */
+  outboundUnassigned?: boolean;
   amountYen: number;
   pitch: string;
   status: RequestDmStatus;
