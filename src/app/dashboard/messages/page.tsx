@@ -4,6 +4,7 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MessagesLocalCleanup } from "@/components/MessagesLocalCleanup";
 import {
+  formatRequestDmStamp,
   formatYen,
   statusLabel,
 } from "@/lib/local-request-dms";
@@ -116,6 +117,12 @@ export default async function MessagesIndexPage() {
                       <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
                         {incoming ? "受信" : "送信"} · {formatYen(r.amountYen)} ·{" "}
                         {displayRequestWorkTitle(r.workId, r.workTitle)}
+                      </p>
+                      <p className="mt-0.5 text-[11px] tabular-nums text-viscum-muted">
+                        <time dateTime={r.createdAt}>
+                          {incoming ? "届いた" : "送った"}{" "}
+                          {formatRequestDmStamp(r.createdAt)}
+                        </time>
                       </p>
                     </div>
                   </div>

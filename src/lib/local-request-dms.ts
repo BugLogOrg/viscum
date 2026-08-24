@@ -164,3 +164,15 @@ export function statusLabel(status: RequestDmStatus): string {
   if (status === "declined") return "いまは無理";
   return "未返信";
 }
+
+/** ご依頼DM一覧・スレ用の日時（例: 2026/08/24 20:10） */
+export function formatRequestDmStamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${y}/${m}/${day} ${hh}:${mm}`;
+}
