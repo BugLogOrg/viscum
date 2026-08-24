@@ -28,8 +28,8 @@ const TONE: Record<Work["thumbTone"], string> = {
 };
 
 /**
- * 一旦保存直後（?seeded=1）。
- * 公開が先。告知文コピーは公開後の任意ステップ。
+ * 棚レーン保存直後（?seeded=1）。
+ * 公開が本線。直依頼は別入口（ADR-038）。
  */
 export function PostSaveNext({ work }: { work: Work }) {
   const search = useSearchParams();
@@ -43,11 +43,15 @@ export function PostSaveNext({ work }: { work: Work }) {
 
   useEffect(() => {
     if (!show) return;
+    const seed = readLocalSeeds().find((s) => s.id === work.id);
+    if (seed?.lane === "direct_request" || work.id.startsWith("drq_")) {
+      router.replace(`/w/${encodeURIComponent(work.id)}/request`);
+      return;
+    }
     setOrigin(window.location.origin);
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
-    const seed = readLocalSeeds().find((s) => s.id === work.id);
     if (seed && isLocalSeedListed(seed)) setStep("published");
-  }, [show, work.id]);
+  }, [show, work.id, router]);
 
   const text = useMemo(
     () => (origin ? buildWorkShareText(work, origin) : ""),
@@ -186,13 +190,11 @@ export function PostSaveNext({ work }: { work: Work }) {
         </button>
 
         <p className="text-center text-[12px] text-viscum-muted">
-          公開したまま、特定の人にも頼みたいときは{" "}
-          <Link
-            href={`/w/${work.id}/request`}
-            className="text-viscum-brand underline"
-          >
-            直依頼へ
+          指名して頼みたいときは、この公開シードとは別に{" "}
+          <Link href="/new/request" className="text-viscum-brand underline">
+            直依頼レーン
           </Link>
+          から作成します。
         </p>
       </div>
     );
@@ -203,7 +205,7 @@ export function PostSaveNext({ work }: { work: Work }) {
       <div className="flex items-center justify-between gap-3">
         <button
           type="button"
-          onClick={() => router.push("/new")}
+          onClick={() => router.push("/new/shelf")}
           className="text-[13px] text-viscum-brand underline"
         >
           ← 戻る（投稿画面）
@@ -236,14 +238,11 @@ export function PostSaveNext({ work }: { work: Work }) {
         >
           {busy ? "公開中…" : "公開する（作品一覧に出す）"}
         </button>
-        <Link
-          href={`/w/${work.id}/request`}
-          className="flex w-full items-center justify-center rounded-md border-2 border-viscum-brand bg-white px-4 py-3 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft/50"
-        >
-          公開せずDMで送る
-        </Link>
         <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
-          一覧に出さず、指名した人だけに直依頼できます。
+          指名依頼は棚公開とは別IDです。{" "}
+          <Link href="/new/request" className="text-viscum-brand underline">
+            直依頼レーンへ
+          </Link>
         </p>
       </div>
 

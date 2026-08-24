@@ -49,7 +49,7 @@ function compareHotOpen(a: Work, b: Work): number {
 export function loadClientShelfWorks(): Work[] {
   if (typeof window === "undefined") return [...DUMMY_WORKS];
   const locals = readLocalSeeds()
-    .filter((s) => s.id.startsWith("local_") && isLocalSeedListed(s))
+    .filter((s) => isLocalSeedListed(s))
     .map(workFromLocalSeed);
   const demoIds = new Set(DUMMY_WORKS.map((w) => w.id));
   const onlyLocals = locals.filter((w) => !demoIds.has(w.id));

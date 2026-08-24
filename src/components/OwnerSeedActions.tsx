@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import {
   deleteLocalSeed,
+  isClientSeedId,
+  isDirectRequestLane,
   isLocalSeedListed,
   isLocalSeedOwner,
   publishLocalSeedToShelf,
@@ -50,18 +52,35 @@ export function OwnerSeedActions({
   };
 
   useEffect(() => {
-    if (!workId.startsWith("local_")) {
+    if (!isClientSeedId(workId)) {
       setSeed(null);
       return;
     }
     setSeed(readLocalSeeds().find((s) => s.id === workId) ?? null);
   }, [workId]);
 
-  if (!workId.startsWith("local_")) return null;
+  if (!isClientSeedId(workId)) return null;
   if (status === "loading") return null;
   if (!isLocalSeedOwner(seed ?? stub, handle)) return null;
 
   const listed = seed ? isLocalSeedListed(seed) : false;
+  const direct = seed ? isDirectRequestLane(seed) : workId.startsWith("drq_");
+
+  if (direct) {
+    return (
+      <div className="rounded-lg border border-viscum-line bg-white/60 px-3 py-3 space-y-2">
+        <p className="text-[12px] font-medium text-viscum-ink">
+          直依頼用メモ（棚には出ません）
+        </p>
+        <Link
+          href={`/w/${encodeURIComponent(workId)}/request`}
+          className="inline-flex rounded-md bg-viscum-berry px-3 py-1.5 text-[13px] font-medium text-white hover:bg-viscum-berry-deep"
+        >
+          直依頼を続ける
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-lg border border-viscum-line bg-white/60 px-3 py-3 space-y-2">

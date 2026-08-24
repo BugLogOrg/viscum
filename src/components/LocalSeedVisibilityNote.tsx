@@ -1,29 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
+  isClientSeedId,
+  isDirectRequestLane,
   isLocalSeedListed,
   readLocalSeeds,
 } from "@/lib/local-seeds";
 
-/** local_* の公開／未公開を詳細に明示 */
+/** 端末内シードの公開／未公開／直依頼レーンを詳細に明示 */
 export function LocalSeedVisibilityNote({ workId }: { workId: string }) {
-  const [listed, setListed] = useState<boolean | null>(null);
+  const [mode, setMode] = useState<"listed" | "draft" | "direct" | null>(null);
 
   useEffect(() => {
-    if (!workId.startsWith("local_")) {
-      setListed(null);
+    if (!isClientSeedId(workId)) {
+      setMode(null);
       return;
     }
     const seed = readLocalSeeds().find((s) => s.id === workId);
-    setListed(seed ? isLocalSeedListed(seed) : false);
+    if (!seed) {
+      setMode(null);
+      return;
+    }
+    if (isDirectRequestLane(seed)) setMode("direct");
+    else setMode(isLocalSeedListed(seed) ? "listed" : "draft");
   }, [workId]);
 
-  if (!workId.startsWith("local_") || listed == null) return null;
+  if (!isClientSeedId(workId) || mode == null) return null;
+
+  if (mode === "direct") {
+    return (
+      <p className="text-[11px] leading-relaxed text-viscum-muted">
+        <strong className="font-medium text-viscum-leaf-deep">直依頼用メモ</strong>
+        です（別ID・棚には出ません）。
+        <Link href={`/w/${encodeURIComponent(workId)}/request`} className="ml-1 underline">
+          直依頼へ
+        </Link>
+      </p>
+    );
+  }
 
   return (
     <p className="text-[11px] leading-relaxed text-viscum-muted">
-      {listed ? (
+      {mode === "listed" ? (
         <>
           トップの棚に<strong className="font-medium text-viscum-ink">公開中</strong>
           です（この端末のデモ保存）。他の端末では見えない場合があります。
@@ -31,7 +51,11 @@ export function LocalSeedVisibilityNote({ workId }: { workId: string }) {
       ) : (
         <>
           <strong className="font-medium text-viscum-berry-deep">未公開</strong>
-          です。トップの「すべて」には出ていません。「全体に告知する（公開）」で棚に出せます。直依頼は未公開のまま送れます。
+          です。トップの「すべて」には出ていません。「公開する」で棚に出せます。指名依頼は{" "}
+          <Link href="/new/request" className="underline">
+            直依頼レーン
+          </Link>
+          から別IDで。
         </>
       )}
     </p>

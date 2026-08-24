@@ -294,6 +294,7 @@ export function PostForm() {
             fromSession ||
             displayAccountName(seederHandle, readLocalProfile(seederHandle));
           const row = addLocalSeed({
+            lane: "shelf",
             seederHandle,
             seederAccountName:
               seederAccountName.toLowerCase() !== seederHandle.toLowerCase()
@@ -318,7 +319,7 @@ export function PostForm() {
                 : "無料コメント",
             thumbDataUrl,
           });
-          // 二枚目の完了画面は作らず、場内詳細へ（共有帯は ?seeded=1）
+          // 棚レーン: 保存後は公開ステップ（直依頼二択なし）
           router.push(`/w/${row.id}?seeded=1`);
           } finally {
             setSaving(false);
@@ -724,7 +725,11 @@ export function PostForm() {
       <div className="rounded-lg border border-dashed border-viscum-line px-4 py-3">
         <p className="text-[13px] font-medium text-viscum-ink">直依頼について</p>
         <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-          「あなたに頼みたい」は、シードしたあとにできます。公開の募集／コンペとは別のお願いです。シード完了画面から進めます。
+          指名して頼む場合は、この棚レーンではなく{" "}
+          <Link href="/new/request" className="text-viscum-brand underline">
+            直依頼レーン
+          </Link>
+          から別IDで作成します（ADR-038）。
         </p>
       </div>
 
@@ -766,7 +771,7 @@ export function PostForm() {
         {saving ? "保存中…" : "一旦保存する"}
       </button>
       <p className="text-center text-[11px] text-viscum-muted">
-        まだ公開しません。保存後に「全体告知」か「直依頼」を選べます。
+        まだ棚には出しません。次の画面で公開できます。
       </p>
 
       {cropSrc && (

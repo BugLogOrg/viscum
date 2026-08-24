@@ -30,6 +30,11 @@ export type LocalSeed = {
    * 未定義＝移行前データ扱いで公開済みとみなす。
    */
   listedOnShelf?: boolean;
+  /**
+   * ADR-038: 棚レーンと直依頼レーンは別物。
+   * direct_request は棚に出さない（ID も drq_ 接頭）。
+   */
+  lane?: "shelf" | "direct_request";
   viewCount: number;
   emoCount: number;
   bookmarkCount: number;
@@ -75,16 +80,26 @@ export function syncSeederAccountNameOnSeeds(
   return changed;
 }
 
+export function isDirectRequestLane(seed: Pick<LocalSeed, "id" | "lane">): boolean {
+  return seed.lane === "direct_request" || seed.id.startsWith("drq_");
+}
+
 export function addLocalSeed(
   seed: Omit<
     LocalSeed,
     "id" | "viewCount" | "emoCount" | "bookmarkCount" | "commentCount" | "createdAt"
   >,
 ): LocalSeed {
+  const lane = seed.lane ?? "shelf";
   const row: LocalSeed = {
     ...seed,
-    id: `local_${Date.now().toString(36)}`,
-    listedOnShelf: seed.listedOnShelf ?? false,
+    lane,
+    id:
+      lane === "direct_request"
+        ? `drq_${Date.now().toString(36)}`
+        : `local_${Date.now().toString(36)}`,
+    listedOnShelf:
+      lane === "direct_request" ? false : (seed.listedOnShelf ?? false),
     viewCount: 0,
     emoCount: 0,
     bookmarkCount: 0,
@@ -96,19 +111,26 @@ export function addLocalSeed(
   return row;
 }
 
-/** トップ棚に載せる＝公開 */
+/** トップ棚に載せる＝公開（直依頼レーンは不可） */
 export function publishLocalSeedToShelf(id: string): LocalSeed | null {
   const seeds = readLocalSeeds();
   const i = seeds.findIndex((s) => s.id === id);
   if (i < 0) return null;
-  seeds[i] = { ...seeds[i], listedOnShelf: true };
+  if (isDirectRequestLane(seeds[i])) return null;
+  seeds[i] = { ...seeds[i], listedOnShelf: true, lane: "shelf" };
   writeLocalSeeds(seeds);
   return seeds[i];
 }
 
-/** 棚に出す対象か（未定義は移行前＝公開扱い） */
+/** 棚に出す対象か（直依頼レーンは常に false。未定義 listed は移行前＝公開扱い） */
 export function isLocalSeedListed(seed: LocalSeed): boolean {
+  if (isDirectRequestLane(seed)) return false;
   return seed.listedOnShelf !== false;
+}
+
+/** 端末内のローカル作品IDか（棚 local_ ／直依頼 drq_） */
+export function isClientSeedId(id: string): boolean {
+  return id.startsWith("local_") || id.startsWith("drq_");
 }
 
 function normalizeHandle(h: string): string {
@@ -359,7 +381,7 @@ export function displayRequestWorkTitle(
   workId: string,
   storedTitle: string,
 ): string {
-  if (workId.startsWith("local_")) {
+  if (workId.startsWith("local_") || workId.startsWith("drq_")) {
     const live = resolveWorkClient(workId)?.title?.trim();
     if (live) return live;
   }

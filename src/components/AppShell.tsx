@@ -128,7 +128,7 @@ export function AppShell({
           >
             シードする
             <span className="mt-0.5 block text-[10px] font-normal text-white/85">
-              作品を棚に並べる
+              棚に出す／指名して頼む
             </span>
           </Link>
         </nav>

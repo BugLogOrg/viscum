@@ -248,7 +248,7 @@ export function FeedClient() {
             公開しました — トップの「すべて」に載っています
           </p>
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-            外への告知文は詳細からコピーできます。直依頼も詳細の導線から送れます。
+            外への告知文は詳細からコピーできます。指名して頼むときは入口の直依頼レーンから（別ID）。
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Link

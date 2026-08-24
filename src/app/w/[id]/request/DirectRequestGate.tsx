@@ -32,8 +32,8 @@ export function DirectRequestGate({
           シード直後なら、同じブラウザで開き直すか、もう一度シードしてください（デモは端末内に保存します）。
         </p>
         <p className="mt-4">
-          <Link href="/new" className="text-viscum-brand underline">
-            シード画面へ
+          <Link href="/new/request" className="text-viscum-brand underline">
+            直依頼レーンへ
           </Link>
         </p>
       </div>

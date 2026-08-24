@@ -22,7 +22,7 @@ import {
   type Work,
 } from "@/data/dummy-works";
 import { scaffoldForPlan } from "@/data/seed-courses";
-import { isLocalSeedListed, readLocalSeeds } from "@/lib/local-seeds";
+import { isClientSeedId, isLocalSeedListed, readLocalSeeds } from "@/lib/local-seeds";
 
 const TONE: Record<Work["thumbTone"], string> = {
   leaf: "bg-viscum-leaf-deep",
@@ -53,7 +53,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
   const [isDraft, setIsDraft] = useState(false);
 
   useEffect(() => {
-    if (!work.id.startsWith("local_")) {
+    if (!isClientSeedId(work.id)) {
       setIsDraft(false);
       return;
     }
@@ -82,7 +82,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
     ? work.prompts
     : (scaffold?.lines ?? []);
   const scaffoldLabel = scaffold?.label ?? null;
-  const localDemo = work.id.startsWith("local_");
+  const localDemo = isClientSeedId(work.id);
 
   return (
     <div className="xl:flex xl:items-start">

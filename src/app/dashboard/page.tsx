@@ -14,6 +14,8 @@ import {
   hasDemoSeeds,
   isDemoSeed,
   isLocalSeedListed,
+  isDirectRequestLane,
+  isClientSeedId,
   deleteLocalSeed,
   unlistLocalSeed,
   publishLocalSeedToShelf,
@@ -110,17 +112,24 @@ export default function DashboardPage() {
   const drafts = useMemo(
     () =>
       mine.filter(
-        (s) => s.id.startsWith("local_") && !isDemoSeed(s.id) && !isLocalSeedListed(s),
+        (s) =>
+          isClientSeedId(s.id) &&
+          !isDirectRequestLane(s) &&
+          !isDemoSeed(s.id) &&
+          !isLocalSeedListed(s),
       ),
+    [mine],
+  );
+  const requestPacks = useMemo(
+    () => mine.filter((s) => isDirectRequestLane(s)),
     [mine],
   );
   const published = useMemo(
     () =>
       mine.filter(
         (s) =>
-          isDemoSeed(s.id) ||
-          !s.id.startsWith("local_") ||
-          isLocalSeedListed(s),
+          !isDirectRequestLane(s) &&
+          (isDemoSeed(s.id) || isLocalSeedListed(s)),
       ),
     [mine],
   );
@@ -222,8 +231,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
-            シード直後はここに入ります（トップの棚には出ません）。「公開する」でみんなの作品へ。
-            ※直依頼フォームの「一時保存」とは別物です。
+            棚レーンの未公開です。「公開する」でみんなの作品へ。指名依頼は下の「直依頼メモ」から。
           </p>
           {drafts.length === 0 ? (
             <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">
@@ -267,7 +275,7 @@ export default function DashboardPage() {
                       href={`/w/${encodeURIComponent(s.id)}?seeded=1`}
                       className="rounded-md border border-viscum-brand px-3 py-1.5 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
                     >
-                      公開／直依頼を選ぶ
+                      公開画面へ
                     </Link>
                     <Link
                       href={`/w/${encodeURIComponent(s.id)}`}
@@ -286,6 +294,64 @@ export default function DashboardPage() {
                         ) {
                           return;
                         }
+                        const res = deleteLocalSeed(s.id, handle);
+                        if (res.ok) refresh();
+                        else window.alert(res.error);
+                      }}
+                    >
+                      削除
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section id="direct-requests" className="scroll-mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-[15px] font-semibold text-viscum-ink">
+              直依頼メモ
+              {requestPacks.length > 0 ? (
+                <span className="ml-1.5 text-[13px] font-normal text-viscum-muted">
+                  {requestPacks.length}件
+                </span>
+              ) : null}
+            </h2>
+            <Link
+              href="/new/request"
+              className="text-[13px] font-medium text-viscum-brand underline"
+            >
+              直依頼を作る
+            </Link>
+          </div>
+          <p className="text-[11px] leading-relaxed text-viscum-muted">
+            棚には出ない別ID（drq_）です。相手と金額の指定へ進めます。
+          </p>
+          {requestPacks.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">
+              <p className="text-[13px] text-viscum-muted">まだありません。</p>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {requestPacks.map((s) => (
+                <li
+                  key={s.id}
+                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
+                >
+                  <SeedCardChrome s={s} />
+                  <div className="mt-3 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                    <Link
+                      href={`/w/${encodeURIComponent(s.id)}/request`}
+                      className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white hover:bg-viscum-berry-deep"
+                    >
+                      直依頼を続ける
+                    </Link>
+                    <button
+                      type="button"
+                      className="px-1 py-1.5 text-[12px] text-viscum-berry-deep underline"
+                      onClick={() => {
+                        if (!window.confirm("このメモを削除しますか？")) return;
                         const res = deleteLocalSeed(s.id, handle);
                         if (res.ok) refresh();
                         else window.alert(res.error);

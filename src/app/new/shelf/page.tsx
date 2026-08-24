@@ -1,0 +1,30 @@
+import Link from "next/link";
+import { BrowseChrome } from "@/components/BrowseChrome";
+import { SiteHeader } from "@/components/SiteHeader";
+import { PostForm } from "../PostForm";
+
+/** 棚レーン（ADR-038） */
+export default function NewShelfPage() {
+  return (
+    <BrowseChrome>
+      <SiteHeader backHref="/new" hideOnMd hidePostCta />
+      <main className="max-w-lg px-4 py-6">
+        <p className="text-xs text-viscum-muted">棚に出す</p>
+        <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
+          シードする（棚）
+        </h1>
+        <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
+          コースは4つから一つ（無料コメント／初見レビュー／改善提案／公開ブースト）。保存後に公開すると作品一覧へ。指名依頼は入口の別レーンです。
+        </p>
+        <p className="mt-2 text-[12px]">
+          <Link href="/new" className="text-viscum-brand underline">
+            ← 入り口に戻る
+          </Link>
+        </p>
+        <div className="mt-6">
+          <PostForm />
+        </div>
+      </main>
+    </BrowseChrome>
+  );
+}
