@@ -777,7 +777,7 @@ export function DirectRequestForm({
             <span className="text-viscum-berry">必須</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            ここに入れた額が、そのままメンターに見える褒賞です。手数料はメンターから引きません。完了時のカード支払いでシーダー側に上乗せします（送った時点ではカード不要）。近い相手は無料も可。
+            ここに入れた額が、そのままメンターに見える褒賞です。手数料はメンターから引きません。完了時のカード支払いでシーダー側に約10%（決済込み）を上乗せします（送った時点ではカード不要）。近い相手は無料も可。
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIRECT_REQUEST_AMOUNT_PRESETS.map((yen) => {
@@ -850,13 +850,11 @@ export function DirectRequestForm({
             <p className="mt-0.5 text-[12px] text-viscum-muted">
               完了時のシーダー支払い目安: 約{" "}
               {formatRequestAmountLabel(seederPayHint.seederPaysYen)}
-              （うち決済手数料およそ{" "}
-              {formatRequestAmountLabel(seederPayHint.feeYen)}
-              ・上乗せ。場の％は別途・未確定）
+              （褒賞の約10%・決済込み）
             </p>
           ) : (
             <p className="mt-0.5 text-[12px] text-viscum-muted">
-              無料のため決済手数料はかかりません。
+              無料のため上乗せはありません。
             </p>
           )}
         </div>

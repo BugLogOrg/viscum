@@ -243,14 +243,18 @@ export function coerceDirectRequestAmountYen(
 }
 
 /**
- * 決済ガスの概算（Stripe JPカード目安）。
- * 褒賞（メンター向け額面）からは引かない。シーダー支払いに上乗せする。
- * ADR-021「決済ガスはシーダー負担」／PostForm文言と同方向。
+ * シーダー上乗せ（対外正本）: 褒賞額面の **約10%・決済込み**。
+ * Stripe実費と場の通行料の内訳はユーザーに分けない（ADR-039）。
+ * 褒賞（メンター向け額面）からは引かない。
  */
-export const SEEDER_CARD_FEE_RATE_ESTIMATE = 0.036;
+export const SEEDER_ALL_IN_SURCHARGE_RATE = 0.1;
+
+/** @deprecated ADR-039 — 対外は SEEDER_ALL_IN_SURCHARGE_RATE を使う */
+export const SEEDER_CARD_FEE_RATE_ESTIMATE = SEEDER_ALL_IN_SURCHARGE_RATE;
 
 export function estimateSeederPaysYen(mentorAmountYen: number): {
   mentorYen: number;
+  /** 上乗せ額（褒賞×約10%・決済込み） */
   feeYen: number;
   seederPaysYen: number;
 } {
@@ -258,7 +262,7 @@ export function estimateSeederPaysYen(mentorAmountYen: number): {
   if (mentorYen <= 0) {
     return { mentorYen: 0, feeYen: 0, seederPaysYen: 0 };
   }
-  const feeYen = Math.ceil(mentorYen * SEEDER_CARD_FEE_RATE_ESTIMATE);
+  const feeYen = Math.ceil(mentorYen * SEEDER_ALL_IN_SURCHARGE_RATE);
   return {
     mentorYen,
     feeYen,
