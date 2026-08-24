@@ -209,7 +209,7 @@ export function FeedClient() {
             : "まだ誰もフォローしていません"
           : "ログインするとフォロー中が表示されます"
       : filter === "open"
-        ? "コメントコンペ開催中 · 場内で反応を募集"
+        ? "コメントコンペ開催中 · VISCUM内で反応を募集"
         : "みんなの作品",
   ];
   if (specialty) contextCrumbs.push(specialty);
