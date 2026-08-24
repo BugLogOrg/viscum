@@ -36,6 +36,7 @@ type MentorOption = {
 type Draft = {
   mentor: string;
   message: string;
+  prompts?: string[];
   amountYen?: number;
   updatedAt: string;
 };
@@ -45,8 +46,108 @@ type ShareTone = "internal" | "external";
 /** 登録済みへ場内送信 vs 外DM・メールでリンク渡し */
 type DeliveryMode = "in_app" | "outbound";
 
+/** 直依頼の「聞きたいこと」最大件数（コンペ足場と同規模） */
+export const MAX_DR_CHECKLIST = 6;
+
 function draftKey(workId: string, fromHandle: string) {
   return `viscum_request_draft_v5:${workId}:${fromHandle.toLowerCase() || "anon"}`;
+}
+
+function normalizeChecklist(rows: string[] | undefined): string[] {
+  const cleaned = (rows ?? []).map((s) => s.trim()).filter(Boolean);
+  return cleaned.length ? cleaned.slice(0, MAX_DR_CHECKLIST) : [];
+}
+
+/** 一言＋聞きたいこと（compose親／フォーム内の両方で使う） */
+export function DirectRequestPitchFields({
+  message,
+  onMessageChange,
+  prompts,
+  onPromptsChange,
+}: {
+  message: string;
+  onMessageChange: (v: string) => void;
+  prompts: string[];
+  onPromptsChange: (v: string[]) => void;
+}) {
+  const rows = prompts.length > 0 ? prompts : [""];
+  return (
+    <div className="space-y-4">
+      <div>
+        <label
+          htmlFor="request-message"
+          className="text-[13px] font-medium text-viscum-ink"
+        >
+          お願いの一言{" "}
+          <span className="font-normal text-viscum-muted">任意</span>
+        </label>
+        <p className="mt-0.5 text-[12px] text-viscum-muted">
+          「なぜ頼むか」など短い一言。空でも進めます。案内文の補足にも使えます。
+        </p>
+        <textarea
+          id="request-message"
+          rows={2}
+          value={message}
+          onChange={(e) => onMessageChange(e.target.value)}
+          className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
+          placeholder="例: UIの初見だけ見てほしいです"
+        />
+      </div>
+      <div>
+        <p className="text-[13px] font-medium text-viscum-ink">
+          聞きたいこと{" "}
+          <span className="font-normal text-viscum-muted">任意・リスト</span>
+        </p>
+        <p className="mt-0.5 text-[12px] text-viscum-muted">
+          コンペの「聞くこと」と同じ足場です。案内文は箇条書き、リンク先にも載ります（概要の長文はコピペには入れません）。
+        </p>
+        <ul className="mt-2 space-y-2">
+          {rows.map((q, i) => (
+            <li key={i} className="flex gap-2">
+              <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
+                {i + 1}.
+              </span>
+              <input
+                type="text"
+                value={q}
+                onChange={(e) => {
+                  const next = [...rows];
+                  next[i] = e.target.value;
+                  onPromptsChange(next);
+                }}
+                className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
+                placeholder="例: 初見で迷う導線はあるか"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (rows.length <= 1) {
+                    onPromptsChange([""]);
+                    return;
+                  }
+                  onPromptsChange(rows.filter((_, j) => j !== i));
+                }}
+                disabled={rows.length <= 1 && !rows[0]?.trim()}
+                className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
+                aria-label={`項目${i + 1}を削除`}
+              >
+                削除
+              </button>
+            </li>
+          ))}
+        </ul>
+        {rows.length < MAX_DR_CHECKLIST ? (
+          <button
+            type="button"
+            onClick={() => onPromptsChange([...rows, ""])}
+            className="mt-2 text-[13px] font-medium text-viscum-brand underline"
+          >
+            ＋項目を追加
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
 }
 
 /** 作品タイトル由来の旧テンプレは復元しない */
@@ -131,6 +232,11 @@ export function DirectRequestForm({
   ensureWork,
   metaReady = true,
   showWorkCard = true,
+  pitchFieldsExternal = false,
+  message: messageProp,
+  onMessageChange,
+  prompts: promptsProp,
+  onPromptsChange,
 }: {
   work: Work;
   /** 未保存ドラフトのとき、送信／外部コピー前に永続化して返す */
@@ -138,6 +244,12 @@ export function DirectRequestForm({
   /** タイトル・URLなど必須が揃っているか（compose一枚用） */
   metaReady?: boolean;
   showWorkCard?: boolean;
+  /** true のとき一言・聞きたいことは親が描画（compose一枚） */
+  pitchFieldsExternal?: boolean;
+  message?: string;
+  onMessageChange?: (v: string) => void;
+  prompts?: string[];
+  onPromptsChange?: (v: string[]) => void;
 }) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -145,7 +257,31 @@ export function DirectRequestForm({
   const [tick, setTick] = useState(0);
   const [query, setQuery] = useState("");
   const [mentor, setMentor] = useState("");
-  const [message, setMessage] = useState("");
+  const [messageInternal, setMessageInternal] = useState("");
+  const [promptsInternal, setPromptsInternal] = useState<string[]>(() => {
+    const initial = normalizeChecklist(work.prompts);
+    return initial.length ? initial : [""];
+  });
+  const message =
+    pitchFieldsExternal && messageProp !== undefined
+      ? messageProp
+      : messageInternal;
+  const setMessage =
+    pitchFieldsExternal && onMessageChange
+      ? onMessageChange
+      : setMessageInternal;
+  const prompts =
+    pitchFieldsExternal && promptsProp !== undefined
+      ? promptsProp
+      : promptsInternal;
+  const setPrompts =
+    pitchFieldsExternal && onPromptsChange
+      ? onPromptsChange
+      : setPromptsInternal;
+  const promptList = useMemo(
+    () => normalizeChecklist(prompts),
+    [prompts],
+  );
   const [amountYen, setAmountYen] = useState(() =>
     coerceDirectRequestAmountYen(work.prizeYen ?? 5000, 5000),
   );
@@ -194,6 +330,7 @@ export function DirectRequestForm({
 
   // 下書き復元（v5）。タイトル由来テンプレは捨てる
   useEffect(() => {
+    if (pitchFieldsExternal) return;
     try {
       const base = `${work.id}:${fromHandle.toLowerCase() || "anon"}`;
       localStorage.removeItem(`viscum_request_draft_v1:${base}`);
@@ -202,7 +339,9 @@ export function DirectRequestForm({
       localStorage.removeItem(`viscum_request_draft_v4:${base}`);
       const raw = localStorage.getItem(draftKey(work.id, fromHandle));
       if (!raw) {
-        setMessage("");
+        setMessageInternal("");
+        const initial = normalizeChecklist(work.prompts);
+        setPromptsInternal(initial.length ? initial : [""]);
         return;
       }
       const d = JSON.parse(raw) as Draft;
@@ -218,26 +357,40 @@ export function DirectRequestForm({
           setCustomAmount(String(n));
         }
       }
+      if (Array.isArray(d.prompts) && d.prompts.length) {
+        const restored = normalizeChecklist(d.prompts);
+        setPromptsInternal(restored.length ? restored : [""]);
+      } else {
+        const initial = normalizeChecklist(work.prompts);
+        setPromptsInternal(initial.length ? initial : [""]);
+      }
       if (typeof d.message === "string" && d.message.trim()) {
         if (
           isStaleTemplatePitch(d.message, work.title) ||
           d.message.trim() === work.description?.trim()
         ) {
-          setMessage("");
+          setMessageInternal("");
           localStorage.removeItem(draftKey(work.id, fromHandle));
         } else {
-          setMessage(d.message);
+          setMessageInternal(d.message);
           setDraftNote(
             `下書きあり（${new Date(d.updatedAt).toLocaleString("ja-JP")}）`,
           );
         }
       } else {
-        setMessage("");
+        setMessageInternal("");
       }
     } catch {
-      setMessage("");
+      setMessageInternal("");
     }
-  }, [work.id, work.title, work.description, fromHandle]);
+  }, [
+    work.id,
+    work.title,
+    work.description,
+    work.prompts,
+    fromHandle,
+    pitchFieldsExternal,
+  ]);
 
   // 検索語で Neon プロフィールを拾う
   useEffect(() => {
@@ -308,7 +461,10 @@ export function DirectRequestForm({
 
   function buildWorkSummary(w: Work = activeWork) {
     const desc = w.description?.trim() ?? "";
-    const focus = (w.prompts ?? []).map((s) => s.trim()).filter(Boolean);
+    const focus =
+      promptList.length > 0
+        ? promptList
+        : (w.prompts ?? []).map((s) => s.trim()).filter(Boolean);
     return (
       focus.length
         ? `${desc}\n\n【聞きたいこと】\n${focus.join("\n")}`
@@ -388,7 +544,15 @@ export function DirectRequestForm({
     : "（ログイン後に名前が入ります）";
   const amountLabel = formatRequestAmountLabel(amountYen);
   const workUrl = activeWork.externalUrl?.trim() || "";
-  const pitchLine = message.trim() || "初見の感想を短くいただけると助かります。";
+  const pitchTrim = message.trim();
+  const askBullets =
+    promptList.length > 0
+      ? promptList
+      : pitchTrim
+        ? [pitchTrim]
+        : ["初見の感想を短くいただけると助かります。"];
+  const askBlockDash = askBullets.map((s) => `- ${s}`).join("\n");
+  const askBlockDot = askBullets.map((s) => `・${s}`).join("\n");
   const inviteUrlPreview =
     origin && invitePath
       ? `${origin}${invitePath}`
@@ -405,7 +569,8 @@ export function DirectRequestForm({
       `${to}` +
       `Viscumでレビューのお願いを送りました（またはこれから送ります）。\n` +
       `作品「${activeWork.title.trim() || "（タイトル）"}」／${amountLabel}\n` +
-      (pitchLine ? `一言: ${pitchLine}\n` : "") +
+      `${askBlockDot}\n` +
+      (pitchTrim && promptList.length > 0 ? `一言: ${pitchTrim}\n` : "") +
       `\n` +
       `メッセージを開くにはログインが必要です。\n` +
       `${loginUrl}`
@@ -422,12 +587,13 @@ export function DirectRequestForm({
       (workUrl ? `${workUrl}\n` : "") +
       `\n` +
       `■ お願いしたいこと\n` +
-      `${pitchLine}\n` +
+      `${askBlockDash}\n` +
+      (pitchTrim && promptList.length > 0 ? `\n（一言）${pitchTrim}\n` : "") +
       `\n` +
       `■ 謝礼\n` +
       `${amountLabel}\n` +
       `\n` +
-      `下記リンクから依頼内容をご確認いただけます（リンクを知っている方向けです）。\n` +
+      `詳細・概要は下記リンク先でご確認いただけます（リンクを知っている方向けです）。\n` +
       `ご返信・お受け取りにはViscumへのログイン（無料）が必要です。\n` +
       `ご都合が合わなければ、無視していただいて構いません。\n` +
       `\n` +
@@ -444,12 +610,13 @@ export function DirectRequestForm({
     const d: Draft = {
       mentor,
       message,
+      prompts,
       amountYen,
       updatedAt: new Date().toISOString(),
     };
     localStorage.setItem(draftKey(work.id, fromHandle), JSON.stringify(d));
     setDraftNote(`一時保存しました（${new Date().toLocaleTimeString("ja-JP")}）`);
-  }, [mentor, message, amountYen, work.id, fromHandle]);
+  }, [mentor, message, prompts, amountYen, work.id, fromHandle]);
 
   async function copyShareText() {
     setCopyNote(null);
@@ -506,6 +673,15 @@ export function DirectRequestForm({
         </div>
       ) : null}
 
+      {!pitchFieldsExternal ? (
+        <DirectRequestPitchFields
+          message={message}
+          onMessageChange={setMessage}
+          prompts={prompts}
+          onPromptsChange={setPrompts}
+        />
+      ) : null}
+
       <form
         className="space-y-5"
         onSubmit={(e) => {
@@ -520,14 +696,19 @@ export function DirectRequestForm({
               setSending(false);
               return;
             }
-            const workTitle = w.title.trim().slice(0, 120) || w.id;
-            const workSummary = buildWorkSummary(w);
+            const workWithPrompts: Work = {
+              ...w,
+              prompts: promptList.length ? promptList : w.prompts,
+            };
+            setActiveWork(workWithPrompts);
+            const workTitle = workWithPrompts.title.trim().slice(0, 120) || workWithPrompts.id;
+            const workSummary = buildWorkSummary(workWithPrompts);
             const pitch = message.trim() || "よろしくお願いします。";
             const remote = await postRequestDm({
-              workId: w.id,
+              workId: workWithPrompts.id,
               workTitle,
-              workExternalUrl: w.externalUrl?.trim() || undefined,
-              workThumbUrl: w.thumbUrl?.trim() || undefined,
+              workExternalUrl: workWithPrompts.externalUrl?.trim() || undefined,
+              workThumbUrl: workWithPrompts.thumbUrl?.trim() || undefined,
               workSummary: workSummary || undefined,
               toHandle: selected.handle,
               amountYen,
@@ -536,7 +717,7 @@ export function DirectRequestForm({
             if (remote.ok && remote.request) {
               try {
                 localStorage.removeItem(draftKey(work.id, fromHandle));
-                localStorage.removeItem(draftKey(w.id, fromHandle));
+                localStorage.removeItem(draftKey(workWithPrompts.id, fromHandle));
               } catch {
                 /* ignore */
               }
@@ -546,10 +727,10 @@ export function DirectRequestForm({
               return;
             }
             const row = createRequestDm({
-              workId: w.id,
+              workId: workWithPrompts.id,
               workTitle,
-              workExternalUrl: w.externalUrl?.trim() || undefined,
-              workThumbUrl: w.thumbUrl?.trim() || undefined,
+              workExternalUrl: workWithPrompts.externalUrl?.trim() || undefined,
+              workThumbUrl: workWithPrompts.thumbUrl?.trim() || undefined,
               workSummary: workSummary || undefined,
               fromHandle,
               fromAccountName: displayAccountName(
@@ -793,26 +974,6 @@ export function DirectRequestForm({
           </div>
         )}
 
-        <div>
-          <label
-            htmlFor="request-message"
-            className="text-[13px] font-medium text-viscum-ink"
-          >
-            一言（任意）
-          </label>
-          <p className="mt-0.5 text-[12px] text-viscum-muted">
-            作品の説明はシード側に載ります。ここは「なぜ頼むか」など短い一言だけで十分です。空でも進めます。案内文にも反映されます。
-          </p>
-          <textarea
-            id="request-message"
-            rows={2}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
-            placeholder="例: UIの初見だけ見てほしいです"
-          />
-        </div>
-
         <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-3 py-3">
           <p className="text-[13px] font-medium text-viscum-ink">
             連絡文テンプレ（コピペ）
@@ -822,7 +983,7 @@ export function DirectRequestForm({
           </p>
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
             {delivery === "outbound"
-              ? "届け方に合わせて外部用（丁寧）の文面です。コピーして相手のDMやメールに貼ってください。"
+              ? "届け方に合わせて外部用（丁寧）の文面です。お願いしたいことは箇条書き。概要の長文はリンク先のみです。"
               : "届け方に合わせて内部用（短い）の文面です。場内送信のあと、念押し用に送れます（任意）。"}
           </p>
           <textarea

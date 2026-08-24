@@ -8,15 +8,17 @@ import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { SiteHeader } from "@/components/SiteHeader";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import type { Work } from "@/data/dummy-works";
+import { DirectRequestForm, DirectRequestPitchFields } from "@/app/w/[id]/request/DirectRequestForm";
 import {
   addLocalSeed,
+  readLocalSeeds,
   workFromLocalSeed,
+  writeLocalSeeds,
 } from "@/lib/local-seeds";
 import {
   displayAccountName,
   readLocalProfile,
 } from "@/lib/local-profile";
-import { DirectRequestForm } from "@/app/w/[id]/request/DirectRequestForm";
 
 const DRAFT_WORK_ID = "__draft_drq__";
 
@@ -36,6 +38,8 @@ export default function NewDirectRequestPage() {
   const [cropOpen, setCropOpen] = useState(false);
   const [pendingName, setPendingName] = useState<string | null>(null);
   const [persistedId, setPersistedId] = useState<string | null>(null);
+  const [pitch, setPitch] = useState("");
+  const [checklist, setChecklist] = useState<string[]>([""]);
   const thumbInputRef = useRef<HTMLInputElement>(null);
   const persistLock = useRef<Promise<Work | null> | null>(null);
 
@@ -110,6 +114,11 @@ export default function NewDirectRequestPage() {
     })();
   }
 
+  const checklistClean = useMemo(
+    () => checklist.map((s) => s.trim()).filter(Boolean),
+    [checklist],
+  );
+
   const draftWork: Work = useMemo(
     () => ({
       id: persistedId ?? DRAFT_WORK_ID,
@@ -121,6 +130,7 @@ export default function NewDirectRequestPage() {
       plan: "free_comment",
       hoursAgo: 0,
       description: description.trim(),
+      prompts: checklistClean.length ? checklistClean : undefined,
       externalUrl: isUsableExternalUrl(externalUrl)
         ? externalUrl.trim()
         : "",
@@ -135,6 +145,7 @@ export default function NewDirectRequestPage() {
       title,
       handle,
       description,
+      checklistClean,
       externalUrl,
       thumbDataUrl,
       thumbUrl,
@@ -143,13 +154,29 @@ export default function NewDirectRequestPage() {
 
   const ensureWork = useCallback(async (): Promise<Work | null> => {
     if (!handle || !metaReady) return null;
+    const focusNote =
+      checklistClean.length > 0 ? checklistClean.join("\n") : undefined;
     if (persistedId) {
+      const seeds = readLocalSeeds();
+      const i = seeds.findIndex((s) => s.id === persistedId);
+      if (i >= 0) {
+        seeds[i] = {
+          ...seeds[i],
+          title: title.trim(),
+          description: description.trim(),
+          externalUrl: externalUrl.trim(),
+          focusNote,
+          thumbDataUrl: thumbDataUrl ?? seeds[i].thumbDataUrl,
+        };
+        writeLocalSeeds(seeds);
+      }
       return {
         ...draftWork,
         id: persistedId,
         title: title.trim(),
         description: description.trim(),
         externalUrl: externalUrl.trim(),
+        prompts: checklistClean.length ? checklistClean : undefined,
       };
     }
     if (persistLock.current) return persistLock.current;
@@ -175,6 +202,7 @@ export default function NewDirectRequestPage() {
           title: title.trim(),
           description: description.trim(),
           externalUrl: externalUrl.trim(),
+          focusNote,
           tags: [],
           status: "none",
           seedPlan: "free_comment",
@@ -198,6 +226,7 @@ export default function NewDirectRequestPage() {
     title,
     description,
     externalUrl,
+    checklistClean,
     session?.user?.name,
     thumbDataUrl,
   ]);
@@ -351,6 +380,13 @@ export default function NewDirectRequestPage() {
               className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
             />
           </div>
+
+          <DirectRequestPitchFields
+            message={pitch}
+            onMessageChange={setPitch}
+            prompts={checklist}
+            onPromptsChange={setChecklist}
+          />
         </section>
 
         <section className="space-y-3 border-t border-viscum-line pt-6">
@@ -362,6 +398,11 @@ export default function NewDirectRequestPage() {
             ensureWork={ensureWork}
             metaReady={metaReady}
             showWorkCard={false}
+            pitchFieldsExternal
+            message={pitch}
+            onMessageChange={setPitch}
+            prompts={checklist}
+            onPromptsChange={setChecklist}
           />
         </section>
 
