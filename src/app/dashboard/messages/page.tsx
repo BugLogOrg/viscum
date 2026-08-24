@@ -4,11 +4,13 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MessagesLocalCleanup } from "@/components/MessagesLocalCleanup";
 import {
+  formatRequestAmountLabel,
   formatRequestDmStamp,
   formatYen,
   statusLabel,
 } from "@/lib/local-request-dms";
 import { listMyRequestDms } from "@/lib/list-my-request-dms";
+import { listMyDmInvites } from "@/lib/list-my-dm-invites";
 import { displayRequestWorkTitle } from "@/lib/local-seeds";
 
 export default async function MessagesIndexPage() {
@@ -36,7 +38,10 @@ export default async function MessagesIndexPage() {
     );
   }
 
-  const { requests, persisted } = await listMyRequestDms(userId);
+  const [{ requests, persisted }, { invites }] = await Promise.all([
+    listMyRequestDms(userId),
+    listMyDmInvites(userId),
+  ]);
   const me = handle.toLowerCase();
   const mine = requests
     .filter(
@@ -47,6 +52,8 @@ export default async function MessagesIndexPage() {
   const pending = mine.filter(
     (r) => r.status === "pending" && r.toHandle.toLowerCase() === me,
   );
+  /** 同じ workId で既にスレがある招待は「スレあり」表示用 */
+  const workIdsWithThread = new Set(mine.map((r) => r.workId));
 
   return (
     <BrowseChrome>
@@ -69,73 +76,126 @@ export default async function MessagesIndexPage() {
           </p>
         )}
 
-        <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
-          {mine.map((r) => {
-            const incoming = r.toHandle.toLowerCase() === handle.toLowerCase();
-            const peer = incoming ? r.fromHandle : r.toHandle;
-            const peerName = incoming
-              ? r.fromAccountName || r.fromHandle
-              : r.toHandle;
-            return (
-              <li key={r.id}>
-                <Link
-                  href={`/dashboard/messages/${encodeURIComponent(r.id)}`}
-                  className="block px-3 py-3 transition hover:bg-viscum-leaf-soft/30"
-                >
-                  <div className="flex gap-3">
-                    {r.workThumbUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={r.workThumbUrl}
-                        alt=""
-                        className="h-12 w-[4.6rem] shrink-0 rounded object-cover"
-                      />
-                    ) : (
-                      <div className="flex h-12 w-[4.6rem] shrink-0 items-center justify-center rounded bg-viscum-paper-2 text-[10px] text-viscum-muted">
-                        無
-                      </div>
-                    )}
-                    <div className="min-w-0 flex-1">
+        {invites.length > 0 && (
+          <section className="space-y-2">
+            <h2 className="text-[13px] font-semibold text-viscum-ink">
+              外に出したリンク（発行済み）
+            </h2>
+            <p className="text-[11px] leading-relaxed text-viscum-muted">
+              コピペ用に発行した招待です。相手が返事すると下の「やりとり」にスレができます。謝礼額はここに固定され、完了支払いまでカードは不要です。
+            </p>
+            <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
+              {invites.map((inv) => {
+                const claimed = workIdsWithThread.has(inv.workId);
+                return (
+                  <li key={inv.id}>
+                    <Link
+                      href={inv.path}
+                      className="block px-3 py-3 transition hover:bg-viscum-leaf-soft/30"
+                    >
                       <div className="flex items-baseline justify-between gap-2">
                         <p className="truncate text-[14px] font-medium text-viscum-ink">
-                          {peerName}
-                          <span className="font-normal text-viscum-muted">
-                            {" "}
-                            (@{peer})
-                          </span>
+                          {displayRequestWorkTitle(inv.workId, inv.workTitle)}
                         </p>
                         <span
                           className={`shrink-0 text-[11px] ${
-                            r.status === "pending"
-                              ? "font-medium text-viscum-berry-deep"
-                              : "text-viscum-muted"
+                            claimed
+                              ? "text-viscum-muted"
+                              : "font-medium text-viscum-berry-deep"
                           }`}
                         >
-                          {statusLabel(r.status)}
+                          {claimed ? "スレあり" : "返事待ち"}
                         </span>
                       </div>
                       <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
-                        {incoming ? "受信" : "送信"} · {formatYen(r.amountYen)} ·{" "}
-                        {displayRequestWorkTitle(r.workId, r.workTitle)}
+                        外リンク · {formatRequestAmountLabel(inv.amountYen)}
                       </p>
                       <p className="mt-0.5 text-[11px] tabular-nums text-viscum-muted">
-                        <time dateTime={r.createdAt}>
-                          {incoming ? "届いた" : "送った"}{" "}
-                          {formatRequestDmStamp(r.createdAt)}
+                        <time dateTime={inv.createdAt}>
+                          発行 {formatRequestDmStamp(inv.createdAt)}
                         </time>
                       </p>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
+
+        <section className="space-y-2">
+          <h2 className="text-[13px] font-semibold text-viscum-ink">やりとり</h2>
+          <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
+            {mine.map((r) => {
+              const incoming =
+                r.toHandle.toLowerCase() === handle.toLowerCase();
+              const peer = incoming ? r.fromHandle : r.toHandle;
+              const peerName = incoming
+                ? r.fromAccountName || r.fromHandle
+                : r.toHandle;
+              return (
+                <li key={r.id}>
+                  <Link
+                    href={`/dashboard/messages/${encodeURIComponent(r.id)}`}
+                    className="block px-3 py-3 transition hover:bg-viscum-leaf-soft/30"
+                  >
+                    <div className="flex gap-3">
+                      {r.workThumbUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={r.workThumbUrl}
+                          alt=""
+                          className="h-12 w-[4.6rem] shrink-0 rounded object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-12 w-[4.6rem] shrink-0 items-center justify-center rounded bg-viscum-paper-2 text-[10px] text-viscum-muted">
+                          無
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <p className="truncate text-[14px] font-medium text-viscum-ink">
+                            {peerName}
+                            <span className="font-normal text-viscum-muted">
+                              {" "}
+                              (@{peer})
+                            </span>
+                          </p>
+                          <span
+                            className={`shrink-0 text-[11px] ${
+                              r.status === "pending"
+                                ? "font-medium text-viscum-berry-deep"
+                                : "text-viscum-muted"
+                            }`}
+                          >
+                            {statusLabel(r.status)}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
+                          {incoming ? "受信" : "送信"} · {formatYen(r.amountYen)}{" "}
+                          · {displayRequestWorkTitle(r.workId, r.workTitle)}
+                        </p>
+                        <p className="mt-0.5 text-[11px] tabular-nums text-viscum-muted">
+                          <time dateTime={r.createdAt}>
+                            {incoming ? "届いた" : "送った"}{" "}
+                            {formatRequestDmStamp(r.createdAt)}
+                          </time>
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                </Link>
+                  </Link>
+                </li>
+              );
+            })}
+            {mine.length === 0 && (
+              <li className="px-3 py-8 text-center text-[13px] text-viscum-muted">
+                {invites.length > 0
+                  ? "まだ相手とのやりとりスレはありません。返事が来るとここに出ます。"
+                  : "まだご依頼DMはありません"}
               </li>
-            );
-          })}
-          {mine.length === 0 && (
-            <li className="px-3 py-8 text-center text-[13px] text-viscum-muted">
-              まだご依頼DMはありません
-            </li>
-          )}
-        </ul>
+            )}
+          </ul>
+        </section>
       </main>
     </BrowseChrome>
   );

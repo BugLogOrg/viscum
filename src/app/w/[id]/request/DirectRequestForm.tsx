@@ -460,9 +460,14 @@ export function DirectRequestForm({
       await navigator.clipboard?.writeText(text);
       setCopyNote(
         shareTone === "external"
-          ? "外部用の案内文をコピーしました（招待リンク付き）"
+          ? "外部用の案内文をコピーしました（招待リンク付き）。ご依頼DMの「外に出したリンク」に発行済みとして残ります。"
           : "内部用の案内文をコピーしました",
       );
+      if (delivery === "outbound" && shareTone === "external") {
+        window.setTimeout(() => {
+          router.push("/dashboard/messages");
+        }, 600);
+      }
     } catch {
       setCopyNote("コピーに失敗しました");
     }
@@ -766,10 +771,11 @@ export function DirectRequestForm({
             <p className="font-medium text-viscum-ink">外への届け方</p>
             <p className="mt-1">
               相手をViscum上で選ぶ必要はありません。下の案内文をコピーして、X・LINE・メールなどに貼ってください。
-              相手がリンクを開き、返事や受取をするときにアカウントが紐づきます。
+              <strong className="font-medium text-viscum-ink">コピー時に招待がサーバー発行</strong>
+              され、ご依頼DMの「外に出したリンク」に残ります。相手がリンクを開いて返事すると「やりとり」スレになります。
             </p>
             <p className="mt-1">
-              いまはメールアドレス欄からの直接送信はまだありません（コピペ本線）。登録済みの人の登録メールへの自動通知は別途（内部送信時）。
+              謝礼額は招待に固定されます（この時点ではカード不要。完了時払い）。メール欄からの直送はまだありません。
             </p>
           </div>
         )}
