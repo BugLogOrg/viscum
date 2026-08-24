@@ -56,7 +56,7 @@ export function isFieldCourse(id: SeedPlanId): id is SeedCourseId {
 export const PUBLIC_BOOST = {
   name: "公開ブースト",
   yen: 30000 as const,
-  purpose: "外の公開場所へ正直な反応・投稿を募り、初動を押し上げる",
+  purpose: "ストアやSNSなど、自分の公開場所へ正直な反応・投稿を募り、初動を押し上げる",
   criteria: [
     "指定した公開場所（ストア／拡張／SNS等）へ正直な反応・投稿を残す",
     "実利用したうえで書く（触っていない評価は除外の目安）",
