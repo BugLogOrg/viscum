@@ -546,7 +546,7 @@ export function DirectRequestForm({
             謝礼 <span className="text-viscum-berry">必須</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            完了時に相手へ支払う金額です（送った時点ではカード不要）。近い相手は無料も可。表示額は謝礼そのもの（為替で変わりません）。
+            完了時に相手へ支払う金額です（送った時点ではカード不要）。近い相手は無料も可。
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIRECT_REQUEST_AMOUNT_PRESETS.map((yen) => {
