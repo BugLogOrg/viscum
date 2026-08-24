@@ -33,6 +33,8 @@ export type RequestDm = {
   pitch: string;
   status: RequestDmStatus;
   createdAt: string;
+  /** 最終更新（返事・ステータス変更）。一覧の並び正本 */
+  updatedAt?: string;
   messages: RequestDmMessage[];
 };
 
@@ -105,6 +107,7 @@ export function createRequestDm(input: {
     pitch: input.pitch,
     status: "pending",
     createdAt,
+    updatedAt: createdAt,
     messages: [
       {
         id: `${id}_m0`,
@@ -121,7 +124,7 @@ export function createRequestDm(input: {
 export function setRequestDmStatus(id: string, status: RequestDmStatus) {
   const row = getRequestDm(id);
   if (!row) return null;
-  const next = { ...row, status };
+  const next = { ...row, status, updatedAt: new Date().toISOString() };
   upsertRequestDm(next);
   return next;
 }
@@ -141,7 +144,11 @@ export function appendRequestDmMessage(
     body: text.slice(0, 2000),
     createdAt: new Date().toISOString(),
   };
-  const next = { ...row, messages: [...row.messages, msg] };
+  const next = {
+    ...row,
+    messages: [...row.messages, msg],
+    updatedAt: msg.createdAt,
+  };
   upsertRequestDm(next);
   return next;
 }

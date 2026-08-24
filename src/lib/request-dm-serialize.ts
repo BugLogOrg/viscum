@@ -48,6 +48,7 @@ export function requestDmToClient(
     pitch: row.pitch,
     status: row.status as RequestDmStatus,
     createdAt: row.createdAt.toISOString(),
+    updatedAt: (row.updatedAt ?? row.createdAt).toISOString(),
     messages: lean
       ? []
       : Array.isArray(row.messages)

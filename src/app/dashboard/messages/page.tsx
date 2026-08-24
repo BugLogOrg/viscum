@@ -3,11 +3,10 @@ import { auth } from "@/auth";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MessagesLocalCleanup } from "@/components/MessagesLocalCleanup";
+import { MessagesInbox } from "@/components/MessagesInbox";
 import {
   formatRequestAmountLabel,
   formatRequestDmStamp,
-  formatYen,
-  statusLabel,
 } from "@/lib/local-request-dms";
 import { listMyRequestDms } from "@/lib/list-my-request-dms";
 import { listMyDmInvites } from "@/lib/list-my-dm-invites";
@@ -43,24 +42,24 @@ export default async function MessagesIndexPage() {
     listMyDmInvites(userId),
   ]);
   const me = handle.toLowerCase();
-  const mine = requests
-    .filter(
-      (r) =>
-        r.fromHandle.toLowerCase() === me ||
-        (r.toHandle && r.toHandle.toLowerCase() === me),
-    )
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const mine = requests.filter(
+    (r) =>
+      r.fromHandle.toLowerCase() === me ||
+      (r.toHandle && r.toHandle.toLowerCase() === me),
+  );
   const pending = mine.filter(
     (r) =>
       r.status === "pending" &&
       r.toHandle &&
       r.toHandle.toLowerCase() === me,
   );
-  const inviteById = new Map(invites.map((i) => [i.id, i]));
-  /** スレに invite が紐づいている外発行は、招待一覧を重複表示しない */
   const orphanInvites = invites.filter(
     (inv) => !mine.some((r) => r.inviteId === inv.id),
   );
+  const invitePaths = Object.fromEntries(
+    invites.map((i) => [i.id, i.path] as const),
+  );
+
   return (
     <BrowseChrome>
       <MessagesLocalCleanup />
@@ -92,152 +91,44 @@ export default async function MessagesIndexPage() {
             </p>
             <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
               {orphanInvites.map((inv) => (
-                  <li key={inv.id}>
-                    <Link
-                      href={inv.path}
-                      className="block px-3 py-3 transition hover:bg-viscum-leaf-soft/30"
-                    >
-                      <div className="flex items-baseline justify-between gap-2">
-                        <p className="truncate text-[14px] font-medium text-viscum-ink">
-                          {displayRequestWorkTitle(inv.workId, inv.workTitle)}
-                        </p>
-                        <span className="shrink-0 text-[11px] font-medium text-viscum-berry-deep">
-                          返事待ち
-                        </span>
-                      </div>
-                      <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
-                        外リンク · {formatRequestAmountLabel(inv.amountYen)}
+                <li key={inv.id}>
+                  <Link
+                    href={inv.path}
+                    className="block px-3 py-3 transition hover:bg-viscum-leaf-soft/30"
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="truncate text-[14px] font-medium text-viscum-ink">
+                        {displayRequestWorkTitle(inv.workId, inv.workTitle)}
                       </p>
-                      <p className="mt-0.5 text-[11px] tabular-nums text-viscum-muted">
-                        <time dateTime={inv.createdAt}>
-                          発行 {formatRequestDmStamp(inv.createdAt)}
-                        </time>
-                      </p>
-                    </Link>
-                  </li>
+                      <span className="shrink-0 text-[11px] font-medium text-viscum-berry-deep">
+                        返事待ち
+                      </span>
+                    </div>
+                    <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
+                      外リンク · {formatRequestAmountLabel(inv.amountYen)}
+                    </p>
+                    <p className="mt-0.5 text-[11px] tabular-nums text-viscum-muted">
+                      <time dateTime={inv.createdAt}>
+                        発行 {formatRequestDmStamp(inv.createdAt)}
+                      </time>
+                    </p>
+                  </Link>
+                </li>
               ))}
             </ul>
           </section>
         )}
 
-        <section className="space-y-2">
-          <h2 className="text-[13px] font-semibold text-viscum-ink">やりとり</h2>
-          <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
-            {mine.map((r) => {
-              const outbound = Boolean(r.outboundUnassigned);
-              const incoming =
-                !outbound &&
-                r.toHandle.toLowerCase() === handle.toLowerCase();
-              const peer = outbound
-                ? ""
-                : incoming
-                  ? r.fromHandle
-                  : r.toHandle;
-              const peerName = outbound
-                ? "外リンク（返事待ち）"
-                : incoming
-                  ? r.fromAccountName || r.fromHandle
-                  : r.toHandle;
-              const invitePath = r.inviteId
-                ? inviteById.get(r.inviteId)?.path ?? `/dm/i/${r.inviteId}`
-                : null;
-              return (
-                <li key={r.id}>
-                  <Link
-                    href={`/dashboard/messages/${encodeURIComponent(r.id)}`}
-                    className={`block border-l-4 px-3 py-3 transition ${
-                      outbound
-                        ? "border-l-viscum-trunk/50 bg-viscum-paper-2/40 hover:bg-viscum-paper-2/70"
-                        : incoming
-                          ? "border-l-viscum-berry bg-viscum-berry/5 hover:bg-viscum-berry/10"
-                          : "border-l-viscum-leaf bg-viscum-leaf-soft/35 hover:bg-viscum-leaf-soft/55"
-                    }`}
-                  >
-                    <div className="flex gap-3">
-                      {r.workThumbUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={r.workThumbUrl}
-                          alt=""
-                          className="h-12 w-[4.6rem] shrink-0 rounded object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-12 w-[4.6rem] shrink-0 items-center justify-center rounded bg-viscum-paper-2 text-[10px] text-viscum-muted">
-                          無
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-baseline justify-between gap-2">
-                          <p className="truncate text-[14px] font-medium text-viscum-ink">
-                            {peerName}
-                            {peer ? (
-                              <span className="font-normal text-viscum-muted">
-                                {" "}
-                                (@{peer})
-                              </span>
-                            ) : null}
-                          </p>
-                          <span
-                            className={`shrink-0 text-[11px] ${
-                              outbound || r.status === "pending"
-                                ? "font-medium text-viscum-berry-deep"
-                                : "text-viscum-muted"
-                            }`}
-                          >
-                            {outbound ? "返事待ち" : statusLabel(r.status)}
-                          </span>
-                        </div>
-                        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] text-viscum-muted">
-                          <span
-                            className={`rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide ${
-                              outbound
-                                ? "bg-viscum-paper-2 text-viscum-trunk"
-                                : incoming
-                                  ? "bg-viscum-berry/15 text-viscum-berry-deep"
-                                  : "bg-viscum-leaf-soft text-viscum-leaf-deep"
-                            }`}
-                          >
-                            {outbound ? "外リンク" : incoming ? "受信" : "送信"}
-                          </span>
-                          <span>· {formatYen(r.amountYen)}</span>
-                          <span className="min-w-0 truncate">
-                            · {displayRequestWorkTitle(r.workId, r.workTitle)}
-                            {invitePath ? " · 招待あり" : ""}
-                          </span>
-                        </p>
-                        <p
-                          className={`mt-1.5 rounded-sm px-1.5 py-1 text-[11px] tabular-nums ${
-                            outbound
-                              ? "bg-white/50 text-viscum-muted"
-                              : incoming
-                                ? "bg-viscum-berry/10 font-medium text-viscum-berry-deep"
-                                : "bg-viscum-leaf-soft/80 font-medium text-viscum-leaf-deep"
-                          }`}
-                        >
-                          <time dateTime={r.createdAt}>
-                            {outbound
-                              ? "発行"
-                              : incoming
-                                ? "届いた"
-                                : "送った"}{" "}
-                            {formatRequestDmStamp(r.createdAt)}
-                          </time>
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              );
-            })}
-            {mine.length === 0 && (
-              <li className="px-3 py-8 text-center text-[13px] text-viscum-muted">
-                {orphanInvites.length > 0
-                  ? "新しい発行はここに返事待ちスレとして出ます。"
-                  : "まだご依頼DMはありません"}
-              </li>
-            )}
-          </ul>
-        </section>
+        <MessagesInbox
+          handle={handle}
+          requests={mine}
+          invitePaths={invitePaths}
+          emptyHint={
+            orphanInvites.length > 0
+              ? "新しい発行はここに返事待ちスレとして出ます。"
+              : "まだご依頼DMはありません"
+          }
+        />
       </main>
     </BrowseChrome>
   );

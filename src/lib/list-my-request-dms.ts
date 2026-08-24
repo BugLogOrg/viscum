@@ -37,7 +37,7 @@ export async function listMyRequestDms(userId: string): Promise<{
     .where(
       or(eq(requestDms.fromUserId, userId), eq(requestDms.toUserId, userId)),
     )
-    .orderBy(desc(requestDms.createdAt))
+    .orderBy(desc(requestDms.updatedAt))
     .limit(40);
 
   const userIds = [
