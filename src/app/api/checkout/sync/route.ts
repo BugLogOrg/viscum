@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { payments } from "@/db/schema";
 import { getStripe, hasStripe } from "@/lib/stripe";
+import { markPaymentPaid } from "@/lib/mark-payment-paid";
 
 /**
  * Checkout 成功戻り用の保険。
@@ -45,7 +46,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "forbidden" }, { status: 403 });
   }
   if (payment.checkoutStatus === "paid") {
-    return NextResponse.json({ ok: true, status: "paid" });
+    if (payment.kind === "direct_request" && payment.requestId) {
+      await markPaymentPaid({ paymentId });
+    }
+    return NextResponse.json({
+      ok: true,
+      status: "paid",
+      requestId: payment.requestId,
+    });
   }
   if (!payment.stripeCheckoutSessionId) {
     return NextResponse.json({ error: "session missing" }, { status: 400 });
@@ -67,16 +75,15 @@ export async function POST(req: Request) {
       ? checkout.payment_intent
       : checkout.payment_intent?.id ?? null;
 
-  await db
-    .update(payments)
-    .set({
-      checkoutStatus: "paid",
-      payoutStatus: "eligible",
-      paidAt: new Date(),
-      stripePaymentIntentId: pi,
-      updatedAt: new Date(),
-    })
-    .where(eq(payments.id, paymentId));
+  const marked = await markPaymentPaid({
+    paymentId,
+    stripeCheckoutSessionId: checkout.id,
+    stripePaymentIntentId: pi,
+  });
 
-  return NextResponse.json({ ok: true, status: "paid" });
+  return NextResponse.json({
+    ok: true,
+    status: "paid",
+    requestId: marked.requestId,
+  });
 }

@@ -10,6 +10,7 @@ import { DirectRequestOfferCard } from "@/components/DirectRequestOfferCard";
 import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 import {
   clearLocalRequestDms,
+  estimateSeederPaysYen,
   formatRequestAmountLabel,
   formatRequestDmStamp,
   isLegacyLocalRequestId,
@@ -43,6 +44,7 @@ export default function RequestDmThreadPage() {
   const [responding, setResponding] = useState(false);
   const [inviteThumb, setInviteThumb] = useState<string | null>(null);
   const [copyNote, setCopyNote] = useState<string | null>(null);
+  const [payNote, setPayNote] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
 
   useEffect(() => {
@@ -108,6 +110,49 @@ export default function RequestDmThreadPage() {
       cancelled = true;
     };
   }, [row?.inviteId, row?.workThumbUrl]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !handle) return;
+    const params = new URLSearchParams(window.location.search);
+    const checkout = params.get("checkout");
+    const paymentId = params.get("payment");
+    if (checkout !== "success" && checkout !== "cancel") return;
+
+    let cancelled = false;
+    void (async () => {
+      if (checkout === "success" && paymentId) {
+        setPayNote("決済を確認しています…");
+        try {
+          await fetch("/api/checkout/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ paymentId }),
+          });
+        } catch {
+          /* refresh anyway */
+        }
+        if (cancelled) return;
+        const res = await fetchRequestDm(requestId);
+        if (cancelled) return;
+        if (res.request) setRow(res.request);
+        setPayNote(
+          res.request?.status === "paid"
+            ? "お支払いが完了しました（支払済）。"
+            : "決済の反映を確認中です。数秒後に再読み込みしてください。",
+        );
+      } else if (checkout === "cancel") {
+        setPayNote("決済をキャンセルしました。支払待ちのままです。");
+      }
+      const url = new URL(window.location.href);
+      url.searchParams.delete("checkout");
+      url.searchParams.delete("payment");
+      window.history.replaceState({}, "", url.pathname + url.search);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [handle, requestId]);
 
   if (status === "loading" || (handle && loading)) {
     return (
@@ -237,7 +282,7 @@ export default function RequestDmThreadPage() {
   }
 
   async function copyOutboundAgain() {
-    if (!inviteHref || !origin) return;
+    if (!inviteHref || !origin || !row) return;
     const { prompts } = splitRequestSummary(seedBody);
     const pitch = pitchText;
     const askBullets =
@@ -293,6 +338,7 @@ export default function RequestDmThreadPage() {
   ) {
     if (responding) return;
     setResponding(true);
+    setPayNote(null);
     try {
       const res = await patchRequestDm(requestId, {
         status: next,
@@ -300,6 +346,33 @@ export default function RequestDmThreadPage() {
       });
       if (res.request) setRow(res.request);
       else await refresh();
+      if (!res.ok && res.error) setPayNote(res.error);
+    } finally {
+      setResponding(false);
+    }
+  }
+
+  async function startDirectRequestCheckout() {
+    if (responding || !row) return;
+    setResponding(true);
+    setPayNote(null);
+    try {
+      const res = await fetch("/api/checkout/direct-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        error?: string;
+      };
+      if (!res.ok || !data.url) {
+        setPayNote(data.error || `決済を開始できません（${res.status}）`);
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setPayNote("ネットワークエラー");
     } finally {
       setResponding(false);
     }
@@ -517,18 +590,52 @@ export default function RequestDmThreadPage() {
 
         {isSeeder && row.status === "pay_waiting" ? (
           <div className="mt-4 space-y-2">
-            <p className="text-[12px] text-viscum-muted">
-              メンターが提出しました。内容を確認して完了すると支払済になります（いまはステータス記録。Stripe本番はこのあと）。
-            </p>
-            <button
-              type="button"
-              disabled={responding}
-              onClick={() => void runStatus("paid")}
-              className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-            >
-              {responding ? "送信中…" : "完了を承認（支払済にする）"}
-            </button>
+            {row.amountYen > 0 ? (
+              <>
+                <p className="text-[12px] text-viscum-muted">
+                  メンターが提出しました。内容を確認し、Stripe
+                  Checkoutで完了払いします。褒賞{" "}
+                  {formatRequestAmountLabel(row.amountYen)}
+                  ／支払い目安 約{" "}
+                  {formatRequestAmountLabel(
+                    estimateSeederPaysYen(row.amountYen).seederPaysYen,
+                  )}
+                  （約10%・決済込み）。
+                </p>
+                <button
+                  type="button"
+                  disabled={responding}
+                  onClick={() => void startDirectRequestCheckout()}
+                  className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                >
+                  {responding
+                    ? "準備中…"
+                    : `完了を承認して支払う（約 ${formatRequestAmountLabel(estimateSeederPaysYen(row.amountYen).seederPaysYen)}）`}
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="text-[12px] text-viscum-muted">
+                  メンターが提出しました。無料のためカード決済は不要です。
+                </p>
+                <button
+                  type="button"
+                  disabled={responding}
+                  onClick={() => void runStatus("paid")}
+                  className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                >
+                  {responding ? "送信中…" : "完了を承認（無料・支払済にする）"}
+                </button>
+              </>
+            )}
+            {payNote ? (
+              <p className="text-[12px] text-viscum-muted">{payNote}</p>
+            ) : null}
           </div>
+        ) : null}
+
+        {payNote && !(isSeeder && row.status === "pay_waiting") ? (
+          <p className="mt-3 text-[12px] text-viscum-muted">{payNote}</p>
         ) : null}
 
         {isSeeder &&

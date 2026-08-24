@@ -1,6 +1,10 @@
 import { and, count, eq, sum } from "drizzle-orm";
 import { getDb } from "@/db";
-import { payments } from "@/db/schema";
+import { payments, users } from "@/db/schema";
+import {
+  getSeederPayFacts,
+  type SeederPayFacts,
+} from "@/data/dummy-works";
 
 /** 作品バッジ用: Checkout 完了件数（paymentsDone 相当） */
 export async function countPaidPaymentsForWork(
@@ -68,4 +72,34 @@ export async function mentorPayFactsFromDb(userId: string): Promise<{
     receivedCount: Number(rows[0]?.n ?? 0),
     receivedYenTotal: Number(rows[0]?.yen ?? 0),
   };
+}
+
+/**
+ * ハンドルから層B。DBに実決済があればそれを優先、なければデモ表。
+ */
+export async function seederPayFactsForHandle(
+  handle: string,
+): Promise<SeederPayFacts> {
+  const h = handle.replace(/^@/, "").trim();
+  const dummy = getSeederPayFacts(h);
+  const db = getDb();
+  if (!db || !h) return dummy;
+
+  const userRows = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.handle, h))
+    .limit(1);
+  const user = userRows[0];
+  if (!user) return dummy;
+
+  const facts = await seederPayFactsFromDb(user.id);
+  if (facts.paidCount > 0) {
+    return {
+      handle: h,
+      paymentsCount: facts.paidCount,
+      paidYenTotal: facts.paidYenTotal,
+    };
+  }
+  return dummy;
 }

@@ -4,12 +4,13 @@ import type Stripe from "stripe";
 import { getDb, hasDatabase } from "@/db";
 import { payments } from "@/db/schema";
 import { getStripe } from "@/lib/stripe";
+import { markPaymentPaid } from "@/lib/mark-payment-paid";
 
 export const runtime = "nodejs";
 
 /**
  * Stripe Webhook（段階C）。
- * checkout.session.completed → payments.checkout_status=paid / payout=eligible
+ * checkout.session.completed → payments paid ＋直依頼なら request_dms paid
  */
 export async function POST(req: Request) {
   const stripe = getStripe();
@@ -58,17 +59,11 @@ export async function POST(req: Request) {
         ? session.payment_intent
         : session.payment_intent?.id ?? null;
 
-    await db
-      .update(payments)
-      .set({
-        checkoutStatus: "paid",
-        payoutStatus: "eligible",
-        paidAt: new Date(),
-        stripeCheckoutSessionId: session.id,
-        stripePaymentIntentId: pi,
-        updatedAt: new Date(),
-      })
-      .where(eq(payments.id, paymentId));
+    await markPaymentPaid({
+      paymentId,
+      stripeCheckoutSessionId: session.id,
+      stripePaymentIntentId: pi,
+    });
   }
 
   if (event.type === "checkout.session.expired") {

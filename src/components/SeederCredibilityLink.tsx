@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatYen, getSeederPayFacts } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
@@ -16,9 +17,40 @@ export function SeederCredibilityLink({
   className?: string;
 }) {
   const h = handle.replace(/^@/, "").trim();
-  if (!h) return null;
   const label = accountLabelForHandle(h);
-  const pay = getSeederPayFacts(h);
+  const fallback = getSeederPayFacts(h);
+  const [pay, setPay] = useState(fallback);
+
+  useEffect(() => {
+    if (!h) return;
+    let cancelled = false;
+    void fetch(`/api/u/${encodeURIComponent(h)}/pay-facts`, {
+      cache: "no-store",
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          paymentsCount?: number;
+          paidYenTotal?: number;
+        };
+        if (cancelled) return;
+        if (typeof data.paymentsCount === "number") {
+          setPay({
+            handle: h,
+            paymentsCount: data.paymentsCount,
+            paidYenTotal: Number(data.paidYenTotal ?? 0),
+          });
+        }
+      })
+      .catch(() => {
+        /* keep fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [h]);
+
+  if (!h) return null;
   const hasPay = pay.paymentsCount > 0;
 
   return (

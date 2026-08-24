@@ -185,10 +185,19 @@ export async function PATCH(req: Request, ctx: Ctx) {
         { status: 400 },
       );
     }
+    const mentorYen = Math.max(0, Math.round(loaded.row.amountYen));
+    if (mentorYen > 0) {
+      return NextResponse.json(
+        {
+          error:
+            "有料の完了払いは Stripe Checkout から行ってください（/api/checkout/direct-request）",
+          useCheckout: true,
+        },
+        { status: 400 },
+      );
+    }
     status = "paid";
-    pushNote(
-      "完了を承認しました（支払済）。※Stripe本番決済の配線はこのあと。いまはステータス記録です。",
-    );
+    pushNote("完了を承認しました（無料・支払済）。");
   } else if (body?.status === "closed") {
     if (!isSeeder) {
       return NextResponse.json(

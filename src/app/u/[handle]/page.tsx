@@ -9,11 +9,11 @@ import { StatusBadge } from "@/components/StatusBadge";
 import {
   formatYen,
   getMentorFacts,
-  getSeederPayFacts,
   getWorksBySeeder,
   getWorksMentoredBy,
   planBadgeLabel,
 } from "@/data/dummy-works";
+import { seederPayFactsForHandle } from "@/db/payment-facts";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 
 type Props = { params: Promise<{ handle: string }> };
@@ -23,7 +23,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
   const handle = decodeURIComponent(raw);
   const works = getWorksBySeeder(handle);
   const display = works[0]?.seeder ?? handle;
-  const pay = getSeederPayFacts(display);
+  const pay = await seederPayFactsForHandle(display);
   const mentor = getMentorFacts(display);
   const mentored = getWorksMentoredBy(display);
   const hasPayHistory = pay.paymentsCount > 0;
