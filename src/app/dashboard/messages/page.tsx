@@ -145,7 +145,13 @@ export default async function MessagesIndexPage() {
                 <li key={r.id}>
                   <Link
                     href={`/dashboard/messages/${encodeURIComponent(r.id)}`}
-                    className="block px-3 py-3 transition hover:bg-viscum-leaf-soft/30"
+                    className={`block border-l-4 px-3 py-3 transition ${
+                      outbound
+                        ? "border-l-viscum-trunk/50 bg-viscum-paper-2/40 hover:bg-viscum-paper-2/70"
+                        : incoming
+                          ? "border-l-viscum-berry bg-viscum-berry/5 hover:bg-viscum-berry/10"
+                          : "border-l-viscum-leaf bg-viscum-leaf-soft/35 hover:bg-viscum-leaf-soft/55"
+                    }`}
                   >
                     <div className="flex gap-3">
                       {r.workThumbUrl ? (
@@ -181,17 +187,33 @@ export default async function MessagesIndexPage() {
                             {outbound ? "返事待ち" : statusLabel(r.status)}
                           </span>
                         </div>
-                        <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
-                          {outbound
-                            ? "外リンク"
-                            : incoming
-                              ? "受信"
-                              : "送信"}{" "}
-                          · {formatYen(r.amountYen)} ·{" "}
-                          {displayRequestWorkTitle(r.workId, r.workTitle)}
-                          {invitePath ? " · 招待あり" : ""}
+                        <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[12px] text-viscum-muted">
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide ${
+                              outbound
+                                ? "bg-viscum-paper-2 text-viscum-trunk"
+                                : incoming
+                                  ? "bg-viscum-berry/15 text-viscum-berry-deep"
+                                  : "bg-viscum-leaf-soft text-viscum-leaf-deep"
+                            }`}
+                          >
+                            {outbound ? "外リンク" : incoming ? "受信" : "送信"}
+                          </span>
+                          <span>· {formatYen(r.amountYen)}</span>
+                          <span className="min-w-0 truncate">
+                            · {displayRequestWorkTitle(r.workId, r.workTitle)}
+                            {invitePath ? " · 招待あり" : ""}
+                          </span>
                         </p>
-                        <p className="mt-0.5 text-[11px] tabular-nums text-viscum-muted">
+                        <p
+                          className={`mt-1.5 rounded-sm px-1.5 py-1 text-[11px] tabular-nums ${
+                            outbound
+                              ? "bg-white/50 text-viscum-muted"
+                              : incoming
+                                ? "bg-viscum-berry/10 font-medium text-viscum-berry-deep"
+                                : "bg-viscum-leaf-soft/80 font-medium text-viscum-leaf-deep"
+                          }`}
+                        >
                           <time dateTime={r.createdAt}>
                             {outbound
                               ? "発行"
