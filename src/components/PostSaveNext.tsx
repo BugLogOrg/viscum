@@ -189,12 +189,13 @@ export function PostSaveNext({ work }: { work: Work }) {
           作品を見にいく
         </button>
 
-        <p className="text-center text-[12px] text-viscum-muted">
-          指名して頼みたいときは、この公開シードとは別に{" "}
+        <p className="text-center text-[12px] leading-relaxed text-viscum-muted">
+          特定の人にも見てほしいときは、上の<strong>告知文をコピー</strong>してDMやXに貼るのが本線です（公開のまま）。
+          有償で指名したいときだけ、別途{" "}
           <Link href="/new/request" className="text-viscum-brand underline">
-            直依頼レーン
+            直依頼レーン（非公開・別ID）
           </Link>
-          から作成します。
+          から新規作成します。この公開シードには直依頼を足しません。
         </p>
       </div>
     );
@@ -239,10 +240,11 @@ export function PostSaveNext({ work }: { work: Work }) {
           {busy ? "公開中…" : "公開する（作品一覧に出す）"}
         </button>
         <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
-          指名依頼は棚公開とは別IDです。{" "}
+          公開後に特定の人へ届けるのは告知文コピーが本線。有償の指名は{" "}
           <Link href="/new/request" className="text-viscum-brand underline">
-            直依頼レーンへ
+            直依頼レーン（非公開）
           </Link>
+          で別ID作成。
         </p>
       </div>
 
