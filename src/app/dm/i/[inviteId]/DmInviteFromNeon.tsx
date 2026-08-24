@@ -205,6 +205,9 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
             <p className="text-[18px] font-semibold tabular-nums text-viscum-berry-deep">
               褒賞：{formatYen(invite.amountYen)}
             </p>
+            <p className="mt-1 text-[12px] leading-snug text-viscum-muted">
+              依頼主があなたに渡す額面です（手数料は依頼主負担。ここからは引きません）。
+            </p>
             <dl className="mt-2 space-y-1 text-[13px] text-viscum-ink">
               {postedLine ? (
                 <div>

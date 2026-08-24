@@ -205,6 +205,30 @@ export function coerceDirectRequestAmountYen(
   return Math.min(n, 100_000);
 }
 
+/**
+ * 決済ガスの概算（Stripe JPカード目安）。
+ * 褒賞（メンター向け額面）からは引かない。シーダー支払いに上乗せする。
+ * ADR-021「決済ガスはシーダー負担」／PostForm文言と同方向。
+ */
+export const SEEDER_CARD_FEE_RATE_ESTIMATE = 0.036;
+
+export function estimateSeederPaysYen(mentorAmountYen: number): {
+  mentorYen: number;
+  feeYen: number;
+  seederPaysYen: number;
+} {
+  const mentorYen = Math.max(0, Math.round(mentorAmountYen));
+  if (mentorYen <= 0) {
+    return { mentorYen: 0, feeYen: 0, seederPaysYen: 0 };
+  }
+  const feeYen = Math.ceil(mentorYen * SEEDER_CARD_FEE_RATE_ESTIMATE);
+  return {
+    mentorYen,
+    feeYen,
+    seederPaysYen: mentorYen + feeYen,
+  };
+}
+
 export function formatRequestAmountLabel(yen: number): string {
   if (yen <= 0) return "金額なし（無料）";
   return formatYen(yen);

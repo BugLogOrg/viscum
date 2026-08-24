@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Work } from "@/data/dummy-works";
-import { createRequestDm, formatRequestAmountLabel, coerceDirectRequestAmountYen, DIRECT_REQUEST_AMOUNT_PRESETS } from "@/lib/local-request-dms";
+import { createRequestDm, formatRequestAmountLabel, coerceDirectRequestAmountYen, DIRECT_REQUEST_AMOUNT_PRESETS, estimateSeederPaysYen } from "@/lib/local-request-dms";
 import { postRequestDm } from "@/lib/remote-requests";
 import {
   displayAccountName,
@@ -546,6 +546,8 @@ export function DirectRequestForm({
     ? displayAccountName(fromHandle, readLocalProfile(fromHandle))
     : "（ログイン後に名前が入ります）";
   const amountLabel = formatRequestAmountLabel(amountYen);
+  const seederPayHint =
+    amountYen > 0 ? estimateSeederPaysYen(amountYen) : null;
   const workUrl = activeWork.externalUrl?.trim() || "";
   const pitchTrim = message.trim();
   const askBullets =
@@ -758,10 +760,11 @@ export function DirectRequestForm({
       >
         <div>
           <p className="text-[13px] font-medium text-viscum-ink">
-            謝礼 <span className="text-viscum-berry">必須</span>
+            謝礼（相手に見える褒賞）{" "}
+            <span className="text-viscum-berry">必須</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            完了時に相手へ支払う金額です（送った時点ではカード不要）。近い相手は無料も可。
+            ここに入れた額が、そのままメンターに見える褒賞です。手数料はメンターから引きません。完了時のカード支払いでシーダー側に上乗せします（送った時点ではカード不要）。近い相手は無料も可。
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIRECT_REQUEST_AMOUNT_PRESETS.map((yen) => {
@@ -808,6 +811,7 @@ export function DirectRequestForm({
               <input
                 type="number"
                 min={5000}
+                max={100_000}
                 step={1000}
                 value={customAmount}
                 onChange={(e) => {
@@ -818,15 +822,30 @@ export function DirectRequestForm({
                     setAmountYen(coerceDirectRequestAmountYen(n, 5000));
                   }
                 }}
-                placeholder="5000"
+                placeholder="100000"
                 className="w-36 rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink"
               />
-              <span className="text-[11px] text-viscum-muted">下限 ¥5,000</span>
+              <span className="text-[11px] text-viscum-muted">
+                ¥5,000〜¥100,000
+              </span>
             </div>
           ) : null}
-          <p className="mt-1.5 text-[12px] text-viscum-muted">
-            いまの設定: {formatRequestAmountLabel(amountYen)}
+          <p className="mt-1.5 text-[12px] text-viscum-ink">
+            褒賞（メンター向け）: {formatRequestAmountLabel(amountYen)}
           </p>
+          {seederPayHint ? (
+            <p className="mt-0.5 text-[12px] text-viscum-muted">
+              完了時のシーダー支払い目安: 約{" "}
+              {formatRequestAmountLabel(seederPayHint.seederPaysYen)}
+              （うち決済手数料およそ{" "}
+              {formatRequestAmountLabel(seederPayHint.feeYen)}
+              ・上乗せ。場の％は別途・未確定）
+            </p>
+          ) : (
+            <p className="mt-0.5 text-[12px] text-viscum-muted">
+              無料のため決済手数料はかかりません。
+            </p>
+          )}
         </div>
 
         <div>
