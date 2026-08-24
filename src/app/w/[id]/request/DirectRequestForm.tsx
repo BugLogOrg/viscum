@@ -36,12 +36,21 @@ type MentorOption = {
 type Draft = {
   mentor: string;
   message: string;
-  closed: boolean;
   updatedAt: string;
 };
 
+type ShareTone = "internal" | "external";
+
 function draftKey(workId: string, fromHandle: string) {
-  return `viscum_request_draft_v3:${workId}:${fromHandle.toLowerCase() || "anon"}`;
+  return `viscum_request_draft_v4:${workId}:${fromHandle.toLowerCase() || "anon"}`;
+}
+
+function formatAmountYen(yen: number) {
+  return `¥${yen.toLocaleString("ja-JP")}`;
+}
+
+function requestAmountYen(work: Work) {
+  return work.prizeYen && work.prizeYen >= 5000 ? work.prizeYen : 5000;
 }
 
 /** 作品タイトル由来の旧テンプレは復元しない */
@@ -129,7 +138,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const [query, setQuery] = useState("");
   const [mentor, setMentor] = useState("");
   const [message, setMessage] = useState("");
-  const [closed, setClosed] = useState(false);
+  const [shareTone, setShareTone] = useState<ShareTone>("external");
   const [draftNote, setDraftNote] = useState<string | null>(null);
   const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
   const [sending, setSending] = useState(false);
@@ -157,12 +166,13 @@ export function DirectRequestForm({ work }: { work: Work }) {
     };
   }, []);
 
-  // 下書き復元（v3）。タイトル由来テンプレは捨てる
+  // 下書き復元（v4）。タイトル由来テンプレは捨てる
   useEffect(() => {
     try {
       const base = `${work.id}:${fromHandle.toLowerCase() || "anon"}`;
       localStorage.removeItem(`viscum_request_draft_v1:${base}`);
       localStorage.removeItem(`viscum_request_draft_v2:${base}`);
+      localStorage.removeItem(`viscum_request_draft_v3:${base}`);
       const raw = localStorage.getItem(draftKey(work.id, fromHandle));
       if (!raw) {
         setMessage("");
@@ -170,7 +180,6 @@ export function DirectRequestForm({ work }: { work: Work }) {
       }
       const d = JSON.parse(raw) as Draft;
       if (d.mentor) setMentor(d.mentor);
-      if (typeof d.closed === "boolean") setClosed(d.closed);
       if (typeof d.message === "string" && d.message.trim()) {
         if (
           isStaleTemplatePitch(d.message, work.title) ||
@@ -276,8 +285,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
           workTitle: work.title.trim().slice(0, 200) || work.id,
           workExternalUrl: work.externalUrl?.trim() || undefined,
           workSummary: buildWorkSummary() || undefined,
-          amountYen:
-            work.prizeYen && work.prizeYen >= 5000 ? work.prizeYen : 5000,
+          amountYen: requestAmountYen(work),
           pitch: message.trim() || undefined,
           closesInHours:
             typeof work.closesInHours === "number" && work.closesInHours > 0
@@ -305,16 +313,97 @@ export function DirectRequestForm({ work }: { work: Work }) {
     }
   }
 
+  const fromLabel = fromHandle
+    ? displayAccountName(fromHandle, readLocalProfile(fromHandle))
+    : "（ログイン後に名前が入ります）";
+  const amountLabel = formatAmountYen(requestAmountYen(work));
+  const workUrl = work.externalUrl?.trim() || "";
+  const pitchLine = message.trim() || "初見の感想を短くいただけると助かります。";
+  const inviteUrlPreview =
+    origin && invitePath
+      ? `${origin}${invitePath}`
+      : origin
+        ? `${origin}/dm/i/（コピー時に発行）`
+        : "/dm/i/（コピー時に発行）";
+  const loginUrl = origin
+    ? `${origin}/login?callbackUrl=${encodeURIComponent("/dashboard/messages")}`
+    : "/login";
+
+  function buildInternalShareText() {
+    const to = selected?.label ? `${selected.label}さん\n` : "";
+    return (
+      `${to}` +
+      `Viscumでレビューのお願いを送りました（またはこれから送ります）。\n` +
+      `作品「${work.title.trim()}」／${amountLabel}\n` +
+      (pitchLine ? `一言: ${pitchLine}\n` : "") +
+      `\n` +
+      `メッセージを開くにはログインが必要です。\n` +
+      `${loginUrl}`
+    ).trim();
+  }
+
+  function buildExternalShareText(inviteUrl: string) {
+    return (
+      `突然のご連絡失礼いたします。${fromLabel}と申します。\n` +
+      `Viscum（レビュー依頼のサービス）を通じて、作品のフィードバックをお願いしたくご連絡しました。\n` +
+      `\n` +
+      `■ 作品\n` +
+      `${work.title.trim()}\n` +
+      (workUrl ? `${workUrl}\n` : "") +
+      `\n` +
+      `■ お願いしたいこと\n` +
+      `${pitchLine}\n` +
+      `\n` +
+      `■ 謝礼の目安\n` +
+      `${amountLabel}\n` +
+      `\n` +
+      `下記リンクから依頼内容をご確認いただけます（リンクを知っている方向けです）。\n` +
+      `ご返信・お受け取りにはViscumへのログイン（無料）が必要です。\n` +
+      `ご都合が合わなければ、無視していただいて構いません。\n` +
+      `\n` +
+      `${inviteUrl}`
+    ).trim();
+  }
+
+  const sharePreview =
+    shareTone === "internal"
+      ? buildInternalShareText()
+      : buildExternalShareText(inviteUrlPreview);
+
   const saveDraft = useCallback(() => {
     const d: Draft = {
       mentor,
       message,
-      closed,
       updatedAt: new Date().toISOString(),
     };
     localStorage.setItem(draftKey(work.id, fromHandle), JSON.stringify(d));
     setDraftNote(`一時保存しました（${new Date().toLocaleTimeString("ja-JP")}）`);
-  }, [mentor, message, closed, work.id, fromHandle]);
+  }, [mentor, message, work.id, fromHandle]);
+
+  async function copyShareText() {
+    setCopyNote(null);
+    if (!fromHandle) {
+      setCopyNote("先にログインしてください");
+      return;
+    }
+    let text = buildInternalShareText();
+    if (shareTone === "external") {
+      const path = await ensureInvitePath();
+      if (!path) return;
+      const url = `${window.location.origin}${path}`;
+      text = buildExternalShareText(url);
+    }
+    try {
+      await navigator.clipboard?.writeText(text);
+      setCopyNote(
+        shareTone === "external"
+          ? "外部用の案内文をコピーしました（招待リンク付き）"
+          : "内部用の案内文をコピーしました",
+      );
+    } catch {
+      setCopyNote("コピーに失敗しました");
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -502,7 +591,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
             一言（任意）
           </label>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            作品の説明はシード側に載ります。ここは「なぜあなたに頼むか」など短い一言だけで十分です。空でも送れます。
+            作品の説明はシード側に載ります。ここは「なぜあなたに頼むか」など短い一言だけで十分です。空でも送れます。案内文テンプレにも反映されます。
           </p>
           <textarea
             id="request-message"
@@ -514,79 +603,82 @@ export function DirectRequestForm({ work }: { work: Work }) {
           />
         </div>
 
-        <details className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-3 py-2">
-          <summary className="cursor-pointer text-[13px] font-medium text-viscum-ink">
-            オプション（クローズド／外部URL）
-          </summary>
-          <div className="mt-3 space-y-3 border-t border-viscum-line/80 pt-3">
-            <label className="flex items-start gap-2 text-[13px] text-viscum-ink">
-              <input
-                type="checkbox"
-                className="mt-0.5"
-                checked={closed}
-                onChange={(e) => setClosed(e.target.checked)}
-              />
-              <span>
-                <span className="font-medium">クローズド（指名者のみ閲覧）</span>
-                <span className="mt-0.5 block text-[12px] text-viscum-muted">
-                  依頼は常に個人宛て。非公開設定は別物です。
-                </span>
-              </span>
-            </label>
-            <div className="space-y-2 text-[12px] text-viscum-muted">
-              <p className="font-medium text-viscum-ink">
-                未登録の人へ共有（アドレスをコピー）
-              </p>
-              <p className="text-[11px] leading-relaxed text-viscum-muted">
-                サーバーにスナップショットを残すので、別端末でも開けます（URLを知っている人向け。鍵ではありません）。
-              </p>
-              <p className="break-all rounded border border-viscum-line bg-white/70 px-2 py-1.5 font-mono text-[11px] text-viscum-trunk">
-                {origin
-                  ? invitePath
-                    ? `${origin}${invitePath}`
-                    : `${origin}/dm/i/（コピー時に発行）`
-                  : invitePath ?? `/dm/i/…`}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  disabled={inviteBusy}
-                  onClick={() => {
-                    void (async () => {
-                      const path = await ensureInvitePath();
-                      if (!path) return;
-                      const url = `${window.location.origin}${path}`;
-                      void navigator.clipboard?.writeText(url).then(
-                        () => setCopyNote("コピーしました（別端末でも開けます）"),
-                        () => setCopyNote("コピーに失敗しました"),
-                      );
-                    })();
-                  }}
-                  className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-50"
-                >
-                  {inviteBusy ? "発行中…" : "アドレスをコピー"}
-                </button>
-                <button
-                  type="button"
-                  disabled={inviteBusy}
-                  onClick={() => {
-                    void (async () => {
-                      const path = await ensureInvitePath();
-                      if (!path) return;
-                      window.open(path, "_blank", "noopener,noreferrer");
-                    })();
-                  }}
-                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand disabled:opacity-50"
-                >
-                  プレビュー（別タブ）
-                </button>
-              </div>
-              {copyNote && (
-                <p className="text-[12px] text-viscum-brand">{copyNote}</p>
-              )}
-            </div>
+        <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-3 py-3">
+          <p className="text-[13px] font-medium text-viscum-ink">
+            連絡文テンプレ（コピペ）
+          </p>
+          <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
+            直依頼は非公開です。場内の相手には下の「直依頼を送る」。LINEやメールで先に伝えるときは、内部用／外部用を選んでコピーしてください。
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setShareTone("internal")}
+              className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
+                shareTone === "internal"
+                  ? "bg-viscum-brand text-white"
+                  : "border border-viscum-line bg-white/70 text-viscum-ink"
+              }`}
+            >
+              内部用（短い）
+            </button>
+            <button
+              type="button"
+              onClick={() => setShareTone("external")}
+              className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
+                shareTone === "external"
+                  ? "bg-viscum-brand text-white"
+                  : "border border-viscum-line bg-white/70 text-viscum-ink"
+              }`}
+            >
+              外部用（丁寧）
+            </button>
           </div>
-        </details>
+          <p className="mt-2 text-[11px] leading-relaxed text-viscum-muted">
+            {shareTone === "internal"
+              ? "登録済み・仲のよい相手向け。ログインしてメッセージを開く案内です。"
+              : "未登録・コールド向け。依頼内容のリンク付き。返信・受取にはログインが必要と案内します（リンク自体は知っている人向けです）。"}
+          </p>
+          <textarea
+            readOnly
+            rows={shareTone === "external" ? 14 : 8}
+            value={sharePreview}
+            className="mt-2 w-full resize-y rounded-md border border-viscum-line bg-white/80 px-3 py-2 font-sans text-[12px] leading-relaxed text-viscum-ink"
+          />
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={inviteBusy}
+              onClick={() => {
+                void copyShareText();
+              }}
+              className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-50"
+            >
+              {inviteBusy && shareTone === "external"
+                ? "発行中…"
+                : "案内文をコピー"}
+            </button>
+            {shareTone === "external" && (
+              <button
+                type="button"
+                disabled={inviteBusy}
+                onClick={() => {
+                  void (async () => {
+                    const path = await ensureInvitePath();
+                    if (!path) return;
+                    window.open(path, "_blank", "noopener,noreferrer");
+                  })();
+                }}
+                className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand disabled:opacity-50"
+              >
+                リンクをプレビュー
+              </button>
+            )}
+          </div>
+          {copyNote && (
+            <p className="mt-2 text-[12px] text-viscum-brand">{copyNote}</p>
+          )}
+        </div>
 
         {sendError && (
           <p className="rounded-md border border-viscum-berry/40 bg-viscum-berry/10 px-3 py-2 text-[12px] text-viscum-berry-deep">

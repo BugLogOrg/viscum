@@ -45,9 +45,8 @@ export function DmInviteClient({
             : "このお願いの作品が見つかりませんでした。"}
         </p>
         <p className="mt-3 text-[13px] leading-relaxed text-viscum-muted">
-          相手に渡すときは、直依頼画面の「未登録の人へ共有」から
-          <span className="font-medium text-viscum-ink"> サーバー保存の招待URL </span>
-          （/dm/i/…）をコピーしてください。別端末でも開け、返事はご依頼DMに届きます。
+          相手に渡すときは、直依頼画面の<strong>外部用テンプレ</strong>から
+          案内文（招待リンク付き）をコピーしてください。別端末でも開け、返事はご依頼DMに届きます。
         </p>
         <div className="mt-6 flex flex-wrap gap-3 text-[13px]">
           <Link href="/dm/promo-15s" className="text-viscum-brand underline">
