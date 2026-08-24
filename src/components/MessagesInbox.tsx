@@ -186,20 +186,21 @@ export function MessagesInbox({
                       {displayRequestWorkTitle(r.workId, r.workTitle)}
                       {invitePath ? " · 招待あり" : ""}
                     </p>
-                    <p
-                      className={`mt-1.5 rounded-sm px-1.5 py-1 text-right text-[11px] tabular-nums ${
-                        outbound
-                          ? "bg-white/50 text-viscum-muted"
-                          : incoming
-                            ? "bg-viscum-berry/10 font-medium text-viscum-berry-deep"
-                            : "bg-viscum-leaf-soft/80 font-medium text-viscum-leaf-deep"
-                      }`}
-                    >
-                      <time dateTime={stamp}>
-                        最終更新 {formatRequestDmStamp(stamp)}
-                      </time>
-                    </p>
                   </div>
+                </div>
+                <div className="mt-2 flex justify-end">
+                  <time
+                    dateTime={stamp}
+                    className={`rounded-sm px-1.5 py-0.5 text-[11px] tabular-nums ${
+                      outbound
+                        ? "bg-white/60 text-viscum-muted"
+                        : incoming
+                          ? "bg-viscum-berry/10 font-medium text-viscum-berry-deep"
+                          : "bg-white/50 font-medium text-viscum-leaf-deep"
+                    }`}
+                  >
+                    最終更新 {formatRequestDmStamp(stamp)}
+                  </time>
                 </div>
               </Link>
             </li>
