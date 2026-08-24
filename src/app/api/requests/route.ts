@@ -8,6 +8,7 @@ import {
   requestDmToClient,
   sanitizeWorkThumbUrl,
 } from "@/lib/request-dm-serialize";
+import { coerceDirectRequestAmountYen } from "@/lib/local-request-dms";
 
 async function userByHandle(handle: string) {
   const db = getDb();
@@ -75,10 +76,7 @@ export async function POST(req: Request) {
   const workSummary = body?.workSummary?.trim().slice(0, 12_000) || null;
   const toHandle = body?.toHandle?.replace(/^@/, "").trim().toLowerCase() ?? "";
   const pitch = body?.pitch?.trim().slice(0, 4000) || "よろしくお願いします。";
-  const amountYen =
-    typeof body?.amountYen === "number" && body.amountYen >= 5000
-      ? Math.round(body.amountYen)
-      : 5000;
+  const amountYen = coerceDirectRequestAmountYen(body?.amountYen, 5000);
 
   if (!workId) {
     return NextResponse.json({ error: "workId required" }, { status: 400 });

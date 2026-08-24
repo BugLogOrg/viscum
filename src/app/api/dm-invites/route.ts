@@ -3,6 +3,7 @@ import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { dmInvites, users } from "@/db/schema";
+import { coerceDirectRequestAmountYen } from "@/lib/local-request-dms";
 
 /** 共有用招待を作成（ログイン必須） */
 export async function POST(req: Request) {
@@ -54,10 +55,7 @@ export async function POST(req: Request) {
       workTitle,
       workExternalUrl: body?.workExternalUrl?.trim().slice(0, 2000) || null,
       workSummary: body?.workSummary?.trim().slice(0, 12_000) || null,
-      amountYen:
-        typeof body?.amountYen === "number" && body.amountYen >= 5000
-          ? Math.round(body.amountYen)
-          : 5000,
+      amountYen: coerceDirectRequestAmountYen(body?.amountYen, 5000),
       pitch: body?.pitch?.trim().slice(0, 4000) || null,
       closesAt,
     })

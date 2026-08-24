@@ -176,3 +176,25 @@ export function formatRequestDmStamp(iso: string): string {
   const mm = String(d.getMinutes()).padStart(2, "0");
   return `${y}/${m}/${day} ${hh}:${mm}`;
 }
+
+/** 直依頼金額プリセット（ADR-034）。0＝近い相手向け無料 */
+export const DIRECT_REQUEST_AMOUNT_PRESETS = [
+  0, 5000, 10_000, 30_000, 50_000,
+] as const;
+
+/** 0 または ¥5,000〜¥100,000。未満は 5k に繰り上げ */
+export function coerceDirectRequestAmountYen(
+  raw: unknown,
+  fallback = 5000,
+): number {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return fallback;
+  const n = Math.round(raw);
+  if (n <= 0) return 0;
+  if (n < 5000) return 5000;
+  return Math.min(n, 100_000);
+}
+
+export function formatRequestAmountLabel(yen: number): string {
+  if (yen <= 0) return "金額なし（無料）";
+  return formatYen(yen);
+}

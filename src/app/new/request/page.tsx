@@ -1,36 +1,43 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
 import { SiteHeader } from "@/components/SiteHeader";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
-import { addLocalSeed } from "@/lib/local-seeds";
+import type { Work } from "@/data/dummy-works";
+import {
+  addLocalSeed,
+  workFromLocalSeed,
+} from "@/lib/local-seeds";
 import {
   displayAccountName,
   readLocalProfile,
 } from "@/lib/local-profile";
+import { DirectRequestForm } from "@/app/w/[id]/request/DirectRequestForm";
+
+const DRAFT_WORK_ID = "__draft_drq__";
 
 /**
- * 直依頼レーン（ADR-038）。
- * コース／公開ブーストは出さない。保存後は直依頼フォームへ（棚公開ステップなし）。
+ * 直依頼レーン（ADR-038）— 一枚フォーム。
+ * 作品メモ・金額・相手・案内文コピペまで同じ画面。棚公開ステップなし。
  */
 export default function NewDirectRequestPage() {
   const { data: session, status } = useSession();
-  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [externalUrl, setExternalUrl] = useState("https://");
-  const [saving, setSaving] = useState(false);
   const [thumbUrl, setThumbUrl] = useState<string | null>(null);
+  const [thumbDataUrl, setThumbDataUrl] = useState<string | undefined>();
   const [thumbSourceUrl, setThumbSourceUrl] = useState<string | null>(null);
   const [cropSrc, setCropSrc] = useState<string | null>(null);
   const [cropOpen, setCropOpen] = useState(false);
   const [pendingName, setPendingName] = useState<string | null>(null);
+  const [persistedId, setPersistedId] = useState<string | null>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
+  const persistLock = useRef<Promise<Work | null> | null>(null);
 
   function isUsableExternalUrl(raw: string): boolean {
     const t = raw.trim();
@@ -43,7 +50,7 @@ export default function NewDirectRequestPage() {
     }
   }
 
-  const canSave =
+  const metaReady =
     title.trim().length > 0 && isUsableExternalUrl(externalUrl);
   const handle = session?.user?.handle?.replace(/^@/, "").trim();
 
@@ -86,7 +93,114 @@ export default function NewDirectRequestPage() {
     }
     setPendingName(null);
     setCropOpen(false);
+    void (async () => {
+      try {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result));
+          fr.onerror = () => reject(fr.error);
+          fr.readAsDataURL(blob);
+        });
+        setThumbDataUrl(
+          dataUrl && dataUrl.length > 450_000 ? undefined : dataUrl,
+        );
+      } catch {
+        setThumbDataUrl(undefined);
+      }
+    })();
   }
+
+  const draftWork: Work = useMemo(
+    () => ({
+      id: persistedId ?? DRAFT_WORK_ID,
+      title: title.trim() || "（タイトル未入力）",
+      tagline: (title.trim() || "直依頼").slice(0, 48),
+      seeder: handle || "anon",
+      tags: [],
+      status: "none",
+      plan: "free_comment",
+      hoursAgo: 0,
+      description: description.trim(),
+      externalUrl: isUsableExternalUrl(externalUrl)
+        ? externalUrl.trim()
+        : "",
+      thumbTone: "leaf",
+      thumbUrl: thumbDataUrl || thumbUrl || undefined,
+      comments: [],
+      sukiCount: 0,
+      bookmarkCount: 0,
+    }),
+    [
+      persistedId,
+      title,
+      handle,
+      description,
+      externalUrl,
+      thumbDataUrl,
+      thumbUrl,
+    ],
+  );
+
+  const ensureWork = useCallback(async (): Promise<Work | null> => {
+    if (!handle || !metaReady) return null;
+    if (persistedId) {
+      return {
+        ...draftWork,
+        id: persistedId,
+        title: title.trim(),
+        description: description.trim(),
+        externalUrl: externalUrl.trim(),
+      };
+    }
+    if (persistLock.current) return persistLock.current;
+
+    persistLock.current = (async () => {
+      try {
+        const seederHandle = handle;
+        const fromSession =
+          session?.user?.name?.trim() &&
+          session.user.name.trim().toLowerCase() !== seederHandle.toLowerCase()
+            ? session.user.name.trim()
+            : undefined;
+        const seederAccountName =
+          fromSession ||
+          displayAccountName(seederHandle, readLocalProfile(seederHandle));
+        const row = addLocalSeed({
+          lane: "direct_request",
+          seederHandle,
+          seederAccountName:
+            seederAccountName.toLowerCase() !== seederHandle.toLowerCase()
+              ? seederAccountName
+              : undefined,
+          title: title.trim(),
+          description: description.trim(),
+          externalUrl: externalUrl.trim(),
+          tags: [],
+          status: "none",
+          seedPlan: "free_comment",
+          planLabel: "直依頼",
+          thumbDataUrl,
+          listedOnShelf: false,
+        });
+        setPersistedId(row.id);
+        return workFromLocalSeed(row);
+      } finally {
+        persistLock.current = null;
+      }
+    })();
+
+    return persistLock.current;
+  }, [
+    handle,
+    metaReady,
+    persistedId,
+    draftWork,
+    title,
+    description,
+    externalUrl,
+    session?.user?.name,
+    thumbDataUrl,
+  ]);
 
   if (status === "loading") {
     return (
@@ -122,83 +236,26 @@ export default function NewDirectRequestPage() {
   return (
     <BrowseChrome>
       <SiteHeader backHref="/new" hideOnMd hidePostCta />
-      <main className="max-w-lg px-4 py-6">
-        <p className="text-xs text-viscum-muted">指名して頼む</p>
-        <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
-          直依頼用の作品メモ
-        </h1>
-        <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-          棚には出ません（別ID）。相手に見せるタイトルと概要だけ先に残し、次の画面で相手と金額を決めます。
-        </p>
-        <p className="mt-2 text-[12px]">
-          <Link href="/new" className="text-viscum-brand underline">
-            ← 入り口に戻る
-          </Link>
-        </p>
+      <main className="max-w-lg space-y-8 px-4 py-6">
+        <div>
+          <p className="text-xs text-viscum-muted">指名して頼む</p>
+          <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
+            直依頼（一枚で設定）
+          </h1>
+          <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
+            棚には出ません（別ID）。見てほしいもの・金額・相手・連絡文までこの画面で揃えます。
+          </p>
+          <p className="mt-2 text-[12px]">
+            <Link href="/new" className="text-viscum-brand underline">
+              ← 入り口に戻る
+            </Link>
+          </p>
+        </div>
 
-        <form
-          className="mt-6 space-y-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (!canSave || saving) return;
-            setSaving(true);
-            void (async () => {
-              try {
-                let thumbDataUrl: string | undefined;
-                if (thumbUrl) {
-                  try {
-                    const blob = await fetch(thumbUrl).then((r) => r.blob());
-                    thumbDataUrl = await new Promise<string>((resolve, reject) => {
-                      const fr = new FileReader();
-                      fr.onload = () => resolve(String(fr.result));
-                      fr.onerror = () => reject(fr.error);
-                      fr.readAsDataURL(blob);
-                    });
-                    if (thumbDataUrl && thumbDataUrl.length > 450_000) {
-                      thumbDataUrl = undefined;
-                    }
-                  } catch {
-                    /* ignore */
-                  }
-                }
-                const seederHandle = handle;
-                const fromSession =
-                  session?.user?.name?.trim() &&
-                  session.user.name.trim().toLowerCase() !==
-                    seederHandle.toLowerCase()
-                    ? session.user.name.trim()
-                    : undefined;
-                const seederAccountName =
-                  fromSession ||
-                  displayAccountName(
-                    seederHandle,
-                    readLocalProfile(seederHandle),
-                  );
-                const row = addLocalSeed({
-                  lane: "direct_request",
-                  seederHandle,
-                  seederAccountName:
-                    seederAccountName.toLowerCase() !==
-                    seederHandle.toLowerCase()
-                      ? seederAccountName
-                      : undefined,
-                  title: title.trim(),
-                  description: description.trim(),
-                  externalUrl: externalUrl.trim(),
-                  tags: [],
-                  status: "none",
-                  seedPlan: "free_comment",
-                  planLabel: "直依頼",
-                  thumbDataUrl,
-                  listedOnShelf: false,
-                });
-                router.push(`/w/${row.id}/request`);
-              } finally {
-                setSaving(false);
-              }
-            })();
-          }}
-        >
+        <section className="space-y-5">
+          <h2 className="text-[14px] font-semibold text-viscum-ink">
+            1. 見てほしいもの
+          </h2>
           <div>
             <label className="block text-[13px] font-medium text-viscum-ink">
               タイトル <span className="text-viscum-berry">必須</span>
@@ -238,6 +295,7 @@ export default function NewDirectRequestPage() {
                   onClick={() => {
                     if (thumbUrl) URL.revokeObjectURL(thumbUrl);
                     setThumbUrl(null);
+                    setThumbDataUrl(undefined);
                   }}
                   className="text-[13px] text-viscum-muted underline"
                 >
@@ -258,6 +316,9 @@ export default function NewDirectRequestPage() {
                 />
               </div>
             ) : null}
+            {pendingName ? (
+              <p className="mt-1 text-[11px] text-viscum-muted">{pendingName}</p>
+            ) : null}
           </div>
 
           <div>
@@ -268,8 +329,8 @@ export default function NewDirectRequestPage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              rows={5}
-              placeholder="相手が読む短い説明。詳しいお願いは次の画面で。"
+              rows={4}
+              placeholder="相手が読む短い説明"
               className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
             />
           </div>
@@ -290,18 +351,23 @@ export default function NewDirectRequestPage() {
               className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
             />
           </div>
+        </section>
 
-          <button
-            type="submit"
-            disabled={!canSave || saving}
-            className="w-full rounded-md bg-viscum-berry px-4 py-3 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-45"
-          >
-            {saving ? "保存中…" : "次へ（相手と金額を決める）"}
-          </button>
-          <p className="text-center text-[11px] text-viscum-muted">
-            このメモは棚に公開されません。IDも棚シードとは別です。
-          </p>
-        </form>
+        <section className="space-y-3 border-t border-viscum-line pt-6">
+          <h2 className="text-[14px] font-semibold text-viscum-ink">
+            2. 金額・相手・連絡文
+          </h2>
+          <DirectRequestForm
+            work={draftWork}
+            ensureWork={ensureWork}
+            metaReady={metaReady}
+            showWorkCard={false}
+          />
+        </section>
+
+        <p className="text-center text-[11px] text-viscum-muted">
+          このメモは棚に公開されません。IDも棚シードとは別です。
+        </p>
 
         {cropSrc && (
           <ImageCropDialog

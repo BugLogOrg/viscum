@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Work } from "@/data/dummy-works";
-import { createRequestDm } from "@/lib/local-request-dms";
+import { createRequestDm, formatRequestAmountLabel, coerceDirectRequestAmountYen, DIRECT_REQUEST_AMOUNT_PRESETS } from "@/lib/local-request-dms";
 import { postRequestDm } from "@/lib/remote-requests";
 import {
   displayAccountName,
@@ -36,21 +36,14 @@ type MentorOption = {
 type Draft = {
   mentor: string;
   message: string;
+  amountYen?: number;
   updatedAt: string;
 };
 
 type ShareTone = "internal" | "external";
 
 function draftKey(workId: string, fromHandle: string) {
-  return `viscum_request_draft_v4:${workId}:${fromHandle.toLowerCase() || "anon"}`;
-}
-
-function formatAmountYen(yen: number) {
-  return `¥${yen.toLocaleString("ja-JP")}`;
-}
-
-function requestAmountYen(work: Work) {
-  return work.prizeYen && work.prizeYen >= 5000 ? work.prizeYen : 5000;
+  return `viscum_request_draft_v5:${workId}:${fromHandle.toLowerCase() || "anon"}`;
 }
 
 /** 作品タイトル由来の旧テンプレは復元しない */
@@ -130,7 +123,19 @@ function collectCandidates(me: string, query: string): MentorOption[] {
   return rows.slice(0, 20);
 }
 
-export function DirectRequestForm({ work }: { work: Work }) {
+export function DirectRequestForm({
+  work,
+  ensureWork,
+  metaReady = true,
+  showWorkCard = true,
+}: {
+  work: Work;
+  /** 未保存ドラフトのとき、送信／外部コピー前に永続化して返す */
+  ensureWork?: () => Promise<Work | null>;
+  /** タイトル・URLなど必須が揃っているか（compose一枚用） */
+  metaReady?: boolean;
+  showWorkCard?: boolean;
+}) {
   const router = useRouter();
   const { data: session } = useSession();
   const fromHandle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
@@ -138,6 +143,16 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const [query, setQuery] = useState("");
   const [mentor, setMentor] = useState("");
   const [message, setMessage] = useState("");
+  const [amountYen, setAmountYen] = useState(() =>
+    coerceDirectRequestAmountYen(work.prizeYen ?? 5000, 5000),
+  );
+  const [customAmount, setCustomAmount] = useState("");
+  const [amountMode, setAmountMode] = useState<"preset" | "custom">(() => {
+    const n = coerceDirectRequestAmountYen(work.prizeYen ?? 5000, 5000);
+    return (DIRECT_REQUEST_AMOUNT_PRESETS as readonly number[]).includes(n)
+      ? "preset"
+      : "custom";
+  });
   const [shareTone, setShareTone] = useState<ShareTone>("external");
   const [draftNote, setDraftNote] = useState<string | null>(null);
   const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
@@ -147,6 +162,11 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const [origin, setOrigin] = useState("");
   const [invitePath, setInvitePath] = useState<string | null>(null);
   const [inviteBusy, setInviteBusy] = useState(false);
+  const [activeWork, setActiveWork] = useState(work);
+
+  useEffect(() => {
+    setActiveWork(work);
+  }, [work]);
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -166,13 +186,14 @@ export function DirectRequestForm({ work }: { work: Work }) {
     };
   }, []);
 
-  // 下書き復元（v4）。タイトル由来テンプレは捨てる
+  // 下書き復元（v5）。タイトル由来テンプレは捨てる
   useEffect(() => {
     try {
       const base = `${work.id}:${fromHandle.toLowerCase() || "anon"}`;
       localStorage.removeItem(`viscum_request_draft_v1:${base}`);
       localStorage.removeItem(`viscum_request_draft_v2:${base}`);
       localStorage.removeItem(`viscum_request_draft_v3:${base}`);
+      localStorage.removeItem(`viscum_request_draft_v4:${base}`);
       const raw = localStorage.getItem(draftKey(work.id, fromHandle));
       if (!raw) {
         setMessage("");
@@ -180,6 +201,17 @@ export function DirectRequestForm({ work }: { work: Work }) {
       }
       const d = JSON.parse(raw) as Draft;
       if (d.mentor) setMentor(d.mentor);
+      if (typeof d.amountYen === "number") {
+        const n = coerceDirectRequestAmountYen(d.amountYen, 5000);
+        setAmountYen(n);
+        if ((DIRECT_REQUEST_AMOUNT_PRESETS as readonly number[]).includes(n)) {
+          setAmountMode("preset");
+          setCustomAmount("");
+        } else {
+          setAmountMode("custom");
+          setCustomAmount(String(n));
+        }
+      }
       if (typeof d.message === "string" && d.message.trim()) {
         if (
           isStaleTemplatePitch(d.message, work.title) ||
@@ -253,11 +285,21 @@ export function DirectRequestForm({ work }: { work: Work }) {
     candidates.find((m) => m.handle === mentor) ||
     (mentor ? optionFromHandle(mentor, fromHandle) : null);
 
-  const canSend = Boolean(fromHandle && selected?.handle);
+  const canSend = Boolean(fromHandle && selected?.handle && metaReady);
 
-  function buildWorkSummary() {
-    const desc = work.description?.trim() ?? "";
-    const focus = (work.prompts ?? []).map((s) => s.trim()).filter(Boolean);
+  async function resolveWorkForAction(): Promise<Work | null> {
+    if (ensureWork) {
+      const next = await ensureWork();
+      if (!next) return null;
+      setActiveWork(next);
+      return next;
+    }
+    return activeWork;
+  }
+
+  function buildWorkSummary(w: Work = activeWork) {
+    const desc = w.description?.trim() ?? "";
+    const focus = (w.prompts ?? []).map((s) => s.trim()).filter(Boolean);
     return (
       focus.length
         ? `${desc}\n\n【聞きたいこと】\n${focus.join("\n")}`
@@ -274,6 +316,15 @@ export function DirectRequestForm({ work }: { work: Work }) {
       setCopyNote("先にログインしてください");
       return null;
     }
+    if (!metaReady) {
+      setCopyNote("タイトルと見てほしいURLを先に入れてください");
+      return null;
+    }
+    const w = await resolveWorkForAction();
+    if (!w) {
+      setCopyNote("作品メモを保存できませんでした");
+      return null;
+    }
     setInviteBusy(true);
     setCopyNote(null);
     try {
@@ -281,15 +332,15 @@ export function DirectRequestForm({ work }: { work: Work }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          workId: work.id,
-          workTitle: work.title.trim().slice(0, 200) || work.id,
-          workExternalUrl: work.externalUrl?.trim() || undefined,
-          workSummary: buildWorkSummary() || undefined,
-          amountYen: requestAmountYen(work),
+          workId: w.id,
+          workTitle: w.title.trim().slice(0, 200) || w.id,
+          workExternalUrl: w.externalUrl?.trim() || undefined,
+          workSummary: buildWorkSummary(w) || undefined,
+          amountYen,
           pitch: message.trim() || undefined,
           closesInHours:
-            typeof work.closesInHours === "number" && work.closesInHours > 0
-              ? work.closesInHours
+            typeof w.closesInHours === "number" && w.closesInHours > 0
+              ? w.closesInHours
               : undefined,
         }),
       });
@@ -316,8 +367,8 @@ export function DirectRequestForm({ work }: { work: Work }) {
   const fromLabel = fromHandle
     ? displayAccountName(fromHandle, readLocalProfile(fromHandle))
     : "（ログイン後に名前が入ります）";
-  const amountLabel = formatAmountYen(requestAmountYen(work));
-  const workUrl = work.externalUrl?.trim() || "";
+  const amountLabel = formatRequestAmountLabel(amountYen);
+  const workUrl = activeWork.externalUrl?.trim() || "";
   const pitchLine = message.trim() || "初見の感想を短くいただけると助かります。";
   const inviteUrlPreview =
     origin && invitePath
@@ -334,7 +385,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
     return (
       `${to}` +
       `Viscumでレビューのお願いを送りました（またはこれから送ります）。\n` +
-      `作品「${work.title.trim()}」／${amountLabel}\n` +
+      `作品「${activeWork.title.trim() || "（タイトル）"}」／${amountLabel}\n` +
       (pitchLine ? `一言: ${pitchLine}\n` : "") +
       `\n` +
       `メッセージを開くにはログインが必要です。\n` +
@@ -348,7 +399,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
       `Viscum（レビュー依頼のサービス）を通じて、作品のフィードバックをお願いしたくご連絡しました。\n` +
       `\n` +
       `■ 作品\n` +
-      `${work.title.trim()}\n` +
+      `${activeWork.title.trim() || "（タイトル）"}\n` +
       (workUrl ? `${workUrl}\n` : "") +
       `\n` +
       `■ お願いしたいこと\n` +
@@ -374,16 +425,21 @@ export function DirectRequestForm({ work }: { work: Work }) {
     const d: Draft = {
       mentor,
       message,
+      amountYen,
       updatedAt: new Date().toISOString(),
     };
     localStorage.setItem(draftKey(work.id, fromHandle), JSON.stringify(d));
     setDraftNote(`一時保存しました（${new Date().toLocaleTimeString("ja-JP")}）`);
-  }, [mentor, message, work.id, fromHandle]);
+  }, [mentor, message, amountYen, work.id, fromHandle]);
 
   async function copyShareText() {
     setCopyNote(null);
     if (!fromHandle) {
       setCopyNote("先にログインしてください");
+      return;
+    }
+    if (!metaReady) {
+      setCopyNote("タイトルと見てほしいURLを先に入れてください");
       return;
     }
     let text = buildInternalShareText();
@@ -407,54 +463,53 @@ export function DirectRequestForm({ work }: { work: Work }) {
 
   return (
     <div className="space-y-5">
-      <div>
-        <p className="text-[13px] text-viscum-muted">作品</p>
-        <p className="mt-0.5 text-[14px] font-medium text-viscum-ink line-clamp-2">
-          {work.title}
-        </p>
-        {isDemoSeed(work.id) && (
-          <p className="mt-2 rounded-md border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-2 text-[12px] leading-relaxed text-viscum-ink">
-            いま開いているのは<strong>見本作品</strong>です。自分のシードに紐づけるには、シード完了画面の「サイト内のメンターに頼む」から開いてください（URLに{" "}
-            <code className="text-[11px]">promo-</code>{" "}
-            が入っていたら見本です）。
+      {showWorkCard ? (
+        <div>
+          <p className="text-[13px] text-viscum-muted">作品</p>
+          <p className="mt-0.5 text-[14px] font-medium text-viscum-ink line-clamp-2">
+            {activeWork.title}
           </p>
-        )}
-      </div>
+          {isDemoSeed(activeWork.id) && (
+            <p className="mt-2 rounded-md border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-2 text-[12px] leading-relaxed text-viscum-ink">
+              いま開いているのは<strong>見本作品</strong>です。自分のシードに紐づけるには、シード完了画面の「サイト内のメンターに頼む」から開いてください（URLに{" "}
+              <code className="text-[11px]">promo-</code>{" "}
+              が入っていたら見本です）。
+            </p>
+          )}
+        </div>
+      ) : null}
 
       <form
         className="space-y-5"
         onSubmit={(e) => {
           e.preventDefault();
           if (!canSend || !selected || !fromHandle || sending) return;
-          const workTitle = work.title.trim().slice(0, 120) || work.id;
-          const desc = work.description?.trim() ?? "";
-          const focus = (work.prompts ?? []).map((s) => s.trim()).filter(Boolean);
-          const workSummary = (
-            focus.length
-              ? `${desc}\n\n【聞きたいこと】\n${focus.join("\n")}`
-              : desc
-          )
-            .trim()
-            .slice(0, 12_000);
-          // 作品説明はスナップショット側。pitchは任意一言（空なら定型）
-          const pitch =
-            message.trim() || "よろしくお願いします。";
           setSendError(null);
           setSending(true);
           void (async () => {
+            const w = await resolveWorkForAction();
+            if (!w) {
+              setSendError("作品メモを保存できませんでした（タイトルとURLを確認）");
+              setSending(false);
+              return;
+            }
+            const workTitle = w.title.trim().slice(0, 120) || w.id;
+            const workSummary = buildWorkSummary(w);
+            const pitch = message.trim() || "よろしくお願いします。";
             const remote = await postRequestDm({
-              workId: work.id,
+              workId: w.id,
               workTitle,
-              workExternalUrl: work.externalUrl?.trim() || undefined,
-              workThumbUrl: work.thumbUrl?.trim() || undefined,
+              workExternalUrl: w.externalUrl?.trim() || undefined,
+              workThumbUrl: w.thumbUrl?.trim() || undefined,
               workSummary: workSummary || undefined,
               toHandle: selected.handle,
-              amountYen: 5000,
+              amountYen,
               pitch,
             });
             if (remote.ok && remote.request) {
               try {
                 localStorage.removeItem(draftKey(work.id, fromHandle));
+                localStorage.removeItem(draftKey(w.id, fromHandle));
               } catch {
                 /* ignore */
               }
@@ -463,12 +518,11 @@ export function DirectRequestForm({ work }: { work: Work }) {
               );
               return;
             }
-            // Neon失敗時のみ端末フォールバック（相手端末には届かない）
             const row = createRequestDm({
-              workId: work.id,
+              workId: w.id,
               workTitle,
-              workExternalUrl: work.externalUrl?.trim() || undefined,
-              workThumbUrl: work.thumbUrl?.trim() || undefined,
+              workExternalUrl: w.externalUrl?.trim() || undefined,
+              workThumbUrl: w.thumbUrl?.trim() || undefined,
               workSummary: workSummary || undefined,
               fromHandle,
               fromAccountName: displayAccountName(
@@ -476,7 +530,7 @@ export function DirectRequestForm({ work }: { work: Work }) {
                 readLocalProfile(fromHandle),
               ),
               toHandle: selected.handle,
-              amountYen: 5000,
+              amountYen,
               pitch,
             });
             setSendError(
@@ -487,18 +541,95 @@ export function DirectRequestForm({ work }: { work: Work }) {
           })();
         }}
       >
+        <div>
+          <p className="text-[13px] font-medium text-viscum-ink">
+            謝礼の目安 <span className="text-viscum-berry">必須</span>
+          </p>
+          <p className="mt-0.5 text-[12px] text-viscum-muted">
+            完了時に支払う想定の金額です（送った時点ではカード不要）。近い相手は無料も可。
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {DIRECT_REQUEST_AMOUNT_PRESETS.map((yen) => {
+              const selectedAmt = amountMode === "preset" && amountYen === yen;
+              return (
+                <button
+                  key={yen}
+                  type="button"
+                  onClick={() => {
+                    setAmountMode("preset");
+                    setAmountYen(yen);
+                    setCustomAmount("");
+                  }}
+                  className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
+                    selectedAmt
+                      ? "bg-viscum-brand text-white"
+                      : "border border-viscum-line bg-white/70 text-viscum-ink"
+                  }`}
+                >
+                  {yen <= 0 ? "無料" : formatRequestAmountLabel(yen)}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => {
+                setAmountMode("custom");
+                if (!customAmount && amountYen > 0) {
+                  setCustomAmount(String(amountYen));
+                }
+              }}
+              className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
+                amountMode === "custom"
+                  ? "bg-viscum-brand text-white"
+                  : "border border-viscum-line bg-white/70 text-viscum-ink"
+              }`}
+            >
+              自由入力
+            </button>
+          </div>
+          {amountMode === "custom" ? (
+            <div className="mt-2 flex items-center gap-2">
+              <span className="text-[13px] text-viscum-muted">¥</span>
+              <input
+                type="number"
+                min={5000}
+                step={1000}
+                value={customAmount}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  setCustomAmount(raw);
+                  const n = Number(raw);
+                  if (Number.isFinite(n)) {
+                    setAmountYen(coerceDirectRequestAmountYen(n, 5000));
+                  }
+                }}
+                placeholder="5000"
+                className="w-36 rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink"
+              />
+              <span className="text-[11px] text-viscum-muted">下限 ¥5,000</span>
+            </div>
+          ) : null}
+          <p className="mt-1.5 text-[12px] text-viscum-muted">
+            いまの設定: {formatRequestAmountLabel(amountYen)}
+          </p>
+        </div>
+
         <fieldset>
           <legend className="text-[13px] font-medium text-viscum-ink">
             誰に頼むか
           </legend>
           <p className="mt-1 text-[12px] text-viscum-muted">
-            最初はフォロー中だけ出ます。他の人は英語IDや名前で検索。もう一度タップで選択解除できます。
+            最初はフォロー中だけ出ます。他の人は英語IDや名前で検索。もう一度タップで選択解除できます。未登録の人は下の外部用テンプレで先に連絡できます。
           </p>
           {!fromHandle && (
             <p className="mt-2 text-[12px] text-viscum-muted">
               送るにはログインが必要です。{" "}
               <Link
-                href={`/login?callbackUrl=${encodeURIComponent(`/w/${work.id}/request`)}`}
+                href={`/login?callbackUrl=${encodeURIComponent(
+                  showWorkCard
+                    ? `/w/${activeWork.id}/request`
+                    : "/new/request",
+                )}`}
                 className="text-viscum-brand underline"
               >
                 ログイン
@@ -687,6 +818,11 @@ export function DirectRequestForm({ work }: { work: Work }) {
         )}
         {draftNote && (
           <p className="text-[12px] text-viscum-muted">{draftNote}</p>
+        )}
+        {!metaReady && (
+          <p className="text-[12px] text-viscum-muted">
+            上のタイトルと見てほしいURLを入れると、送信と案内文コピーが有効になります。
+          </p>
         )}
 
         <div className="flex flex-col gap-2 sm:flex-row">
