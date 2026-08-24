@@ -405,7 +405,7 @@ export function DirectRequestForm({
       `■ お願いしたいこと\n` +
       `${pitchLine}\n` +
       `\n` +
-      `■ 謝礼の目安\n` +
+      `■ 謝礼\n` +
       `${amountLabel}\n` +
       `\n` +
       `下記リンクから依頼内容をご確認いただけます（リンクを知っている方向けです）。\n` +
@@ -543,10 +543,10 @@ export function DirectRequestForm({
       >
         <div>
           <p className="text-[13px] font-medium text-viscum-ink">
-            謝礼の目安 <span className="text-viscum-berry">必須</span>
+            謝礼 <span className="text-viscum-berry">必須</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            完了時に支払う想定の金額です（送った時点ではカード不要）。近い相手は無料も可。
+            完了時に相手へ支払う金額です（送った時点ではカード不要）。近い相手は無料も可。表示額は謝礼そのもの（為替で変わりません）。
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIRECT_REQUEST_AMOUNT_PRESETS.map((yen) => {
