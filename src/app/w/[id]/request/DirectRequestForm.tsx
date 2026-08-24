@@ -42,6 +42,9 @@ type Draft = {
 
 type ShareTone = "internal" | "external";
 
+/** 登録済みへ場内送信 vs 外DM・メールでリンク渡し */
+type DeliveryMode = "in_app" | "outbound";
+
 function draftKey(workId: string, fromHandle: string) {
   return `viscum_request_draft_v5:${workId}:${fromHandle.toLowerCase() || "anon"}`;
 }
@@ -154,6 +157,7 @@ export function DirectRequestForm({
       : "custom";
   });
   const [shareTone, setShareTone] = useState<ShareTone>("external");
+  const [delivery, setDelivery] = useState<DeliveryMode>("outbound");
   const [draftNote, setDraftNote] = useState<string | null>(null);
   const [remoteHint, setRemoteHint] = useState<MentorOption | null>(null);
   const [sending, setSending] = useState(false);
@@ -285,7 +289,10 @@ export function DirectRequestForm({
     candidates.find((m) => m.handle === mentor) ||
     (mentor ? optionFromHandle(mentor, fromHandle) : null);
 
-  const canSend = Boolean(fromHandle && selected?.handle && metaReady);
+  const canSend = Boolean(
+    delivery === "in_app" && fromHandle && selected?.handle && metaReady,
+  );
+  const canCopyOutbound = Boolean(fromHandle && metaReady);
 
   async function resolveWorkForAction(): Promise<Work | null> {
     if (ensureWork) {
@@ -614,12 +621,53 @@ export function DirectRequestForm({
           </p>
         </div>
 
+        <div>
+          <p className="text-[13px] font-medium text-viscum-ink">
+            届け方 <span className="text-viscum-berry">必須</span>
+          </p>
+          <p className="mt-0.5 text-[12px] text-viscum-muted">
+            登録済みの人には場内送信。未登録や外のやりとりは、リンク付き案内をコピペ（X・LINE・メールなど）。
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setDelivery("in_app");
+                setShareTone("internal");
+              }}
+              className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
+                delivery === "in_app"
+                  ? "bg-viscum-brand text-white"
+                  : "border border-viscum-line bg-white/70 text-viscum-ink"
+              }`}
+            >
+              登録済みに送る
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setDelivery("outbound");
+                setShareTone("external");
+                setMentor("");
+              }}
+              className={`rounded-md px-3 py-1.5 text-[12px] font-medium ${
+                delivery === "outbound"
+                  ? "bg-viscum-brand text-white"
+                  : "border border-viscum-line bg-white/70 text-viscum-ink"
+              }`}
+            >
+              外に連絡（コピペ）
+            </button>
+          </div>
+        </div>
+
+        {delivery === "in_app" ? (
         <fieldset>
           <legend className="text-[13px] font-medium text-viscum-ink">
-            誰に頼むか
+            誰に頼むか <span className="text-viscum-berry">必須</span>
           </legend>
           <p className="mt-1 text-[12px] text-viscum-muted">
-            最初はフォロー中だけ出ます。他の人は英語IDや名前で検索。もう一度タップで選択解除できます。未登録の人は下の外部用テンプレで先に連絡できます。
+            Viscumに登録済みの相手です。フォロー中から選ぶか、英語IDで検索。
           </p>
           {!fromHandle && (
             <p className="mt-2 text-[12px] text-viscum-muted">
@@ -713,6 +761,18 @@ export function DirectRequestForm({
             </button>
           ) : null}
         </fieldset>
+        ) : (
+          <div className="rounded-lg border border-dashed border-viscum-line bg-white/40 px-3 py-3 text-[12px] leading-relaxed text-viscum-muted">
+            <p className="font-medium text-viscum-ink">外への届け方</p>
+            <p className="mt-1">
+              相手をViscum上で選ぶ必要はありません。下の案内文をコピーして、X・LINE・メールなどに貼ってください。
+              相手がリンクを開き、返事や受取をするときにアカウントが紐づきます。
+            </p>
+            <p className="mt-1">
+              いまはメールアドレス欄からの直接送信はまだありません（コピペ本線）。登録済みの人の登録メールへの自動通知は別途（内部送信時）。
+            </p>
+          </div>
+        )}
 
         <div>
           <label
@@ -722,7 +782,7 @@ export function DirectRequestForm({
             一言（任意）
           </label>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            作品の説明はシード側に載ります。ここは「なぜあなたに頼むか」など短い一言だけで十分です。空でも送れます。案内文テンプレにも反映されます。
+            作品の説明はシード側に載ります。ここは「なぜ頼むか」など短い一言だけで十分です。空でも進めます。案内文にも反映されます。
           </p>
           <textarea
             id="request-message"
@@ -737,9 +797,14 @@ export function DirectRequestForm({
         <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-3 py-3">
           <p className="text-[13px] font-medium text-viscum-ink">
             連絡文テンプレ（コピペ）
+            {delivery === "outbound" ? (
+              <span className="ml-1 text-viscum-berry">本線</span>
+            ) : null}
           </p>
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-            直依頼は非公開です。場内の相手には下の「直依頼を送る」。LINEやメールで先に伝えるときは、内部用／外部用を選んでコピーしてください。
+            {delivery === "outbound"
+              ? "外連絡の本線です。コピーして相手のDMやメールに貼ってください。"
+              : "場内送信のあと、念押し用に短文を送れます（任意）。"}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <button
@@ -779,7 +844,7 @@ export function DirectRequestForm({
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
-              disabled={inviteBusy}
+              disabled={inviteBusy || !canCopyOutbound}
               onClick={() => {
                 void copyShareText();
               }}
@@ -792,7 +857,7 @@ export function DirectRequestForm({
             {shareTone === "external" && (
               <button
                 type="button"
-                disabled={inviteBusy}
+                disabled={inviteBusy || !canCopyOutbound}
                 onClick={() => {
                   void (async () => {
                     const path = await ensureInvitePath();
@@ -824,6 +889,11 @@ export function DirectRequestForm({
             上のタイトルと見てほしいURLを入れると、送信と案内文コピーが有効になります。
           </p>
         )}
+        {delivery === "in_app" && metaReady && !selected?.handle && (
+          <p className="text-[12px] text-viscum-muted">
+            場内送信するには、上で相手を選んでください。
+          </p>
+        )}
 
         <div className="flex flex-col gap-2 sm:flex-row">
           <button
@@ -833,13 +903,26 @@ export function DirectRequestForm({
           >
             一時保存
           </button>
-          <button
-            type="submit"
-            disabled={!canSend || sending}
-            className="rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50 sm:flex-[1.4]"
-          >
-            {sending ? "送信中…" : "直依頼を送る"}
-          </button>
+          {delivery === "in_app" ? (
+            <button
+              type="submit"
+              disabled={!canSend || sending}
+              className="rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50 sm:flex-[1.4]"
+            >
+              {sending ? "送信中…" : "直依頼を送る"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled={inviteBusy || !canCopyOutbound}
+              onClick={() => {
+                void copyShareText();
+              }}
+              className="rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50 sm:flex-[1.4]"
+            >
+              {inviteBusy ? "発行中…" : "案内文をコピーして完了"}
+            </button>
+          )}
         </div>
       </form>
     </div>
