@@ -14,6 +14,7 @@ export type PublicDmInvite = {
   workId: string;
   workTitle: string;
   workExternalUrl?: string;
+  workThumbUrl?: string;
   workSummary?: string;
   amountYen: number;
   pitch?: string;
@@ -124,6 +125,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const displayName =
     invite.fromAccountName?.trim() || seederLabel.line;
   const externalUrl = invite.workExternalUrl?.trim() || "";
+  const thumbUrl = invite.workThumbUrl?.trim() || "";
   const loginHref = `/login?callbackUrl=${encodeURIComponent(`/dm/i/${invite.id}`)}`;
   const postedLine = invite.createdAt
     ? formatDateTime(new Date(invite.createdAt))
@@ -179,6 +181,20 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
+        {thumbUrl ? (
+          <div
+            className="relative w-full overflow-hidden bg-viscum-leaf-deep"
+            style={{ aspectRatio: "1280 / 670" }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={thumbUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          </div>
+        ) : null}
+
         <div className="space-y-5 px-4 pt-5">
           <h1 className="text-[15px] font-semibold leading-snug text-viscum-ink">
             <span className="block">{displayName} から、</span>

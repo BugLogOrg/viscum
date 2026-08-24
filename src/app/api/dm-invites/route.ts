@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { dmInvites, requestDms, users } from "@/db/schema";
 import { coerceDirectRequestAmountYen } from "@/lib/local-request-dms";
+import { sanitizeInviteThumbUrl } from "@/lib/request-dm-serialize";
 
 /** 共有用招待＋未割当のやりとりスレを同時作成（ログイン必須） */
 export async function POST(req: Request) {
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
     workId?: string;
     workTitle?: string;
     workExternalUrl?: string;
+    workThumbUrl?: string;
     workSummary?: string;
     amountYen?: number;
     pitch?: string;
@@ -52,6 +54,7 @@ export async function POST(req: Request) {
     body?.pitch?.trim().slice(0, 4000) ||
     "共有リンクから直依頼しました。よろしくお願いします。";
   const workExternalUrl = body?.workExternalUrl?.trim().slice(0, 2000) || null;
+  const workThumbUrl = sanitizeInviteThumbUrl(body?.workThumbUrl) ?? null;
   const workSummary = body?.workSummary?.trim().slice(0, 12_000) || null;
 
   const [invite] = await db
@@ -61,6 +64,7 @@ export async function POST(req: Request) {
       workId,
       workTitle,
       workExternalUrl,
+      workThumbUrl,
       workSummary,
       amountYen,
       pitch,
@@ -75,6 +79,7 @@ export async function POST(req: Request) {
       workId,
       workTitle,
       workExternalUrl,
+      workThumbUrl,
       workSummary,
       fromUserId,
       toUserId: null,
@@ -126,6 +131,7 @@ export async function GET(req: Request) {
       workId: dmInvites.workId,
       workTitle: dmInvites.workTitle,
       workExternalUrl: dmInvites.workExternalUrl,
+      workThumbUrl: dmInvites.workThumbUrl,
       workSummary: dmInvites.workSummary,
       amountYen: dmInvites.amountYen,
       pitch: dmInvites.pitch,
@@ -160,6 +166,7 @@ export async function GET(req: Request) {
       workId: row.workId,
       workTitle: row.workTitle,
       workExternalUrl: row.workExternalUrl?.trim() || undefined,
+      workThumbUrl: sanitizeInviteThumbUrl(row.workThumbUrl),
       workSummary: row.workSummary?.trim() || undefined,
       amountYen: row.amountYen,
       pitch: row.pitch?.trim() || undefined,

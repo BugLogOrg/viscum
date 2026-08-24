@@ -261,6 +261,8 @@ export const dmInvites = pgTable(
     workId: text("work_id").notNull(),
     workTitle: text("work_title").notNull(),
     workExternalUrl: text("work_external_url"),
+    /** 着地ヒーロー用。https または小さめ data URL */
+    workThumbUrl: text("work_thumb_url"),
     workSummary: text("work_summary"),
     amountYen: integer("amount_yen").notNull().default(5000),
     pitch: text("pitch"),

@@ -20,6 +20,7 @@ import {
   rememberViewer,
 } from "@/lib/local-follows";
 import { isDemoSeed } from "@/lib/local-seeds";
+import { resolveInviteThumbUrl } from "@/lib/resolve-invite-thumb";
 import {
   accountLabelForHandle,
   getDemoSeederProfile,
@@ -498,6 +499,7 @@ export function DirectRequestForm({
     setInviteBusy(true);
     setCopyNote(null);
     try {
+      const workThumbUrl = await resolveInviteThumbUrl(w.thumbUrl);
       const res = await fetch("/api/dm-invites", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -505,6 +507,7 @@ export function DirectRequestForm({
           workId: w.id,
           workTitle: w.title.trim().slice(0, 200) || w.id,
           workExternalUrl: w.externalUrl?.trim() || undefined,
+          workThumbUrl,
           workSummary: buildWorkSummary(w) || undefined,
           amountYen,
           pitch: message.trim() || undefined,

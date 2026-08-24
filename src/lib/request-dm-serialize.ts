@@ -14,6 +14,20 @@ export function sanitizeWorkThumbUrl(
   return t;
 }
 
+/**
+ * 招待着地用。別端末でサムネを見せるため、小さめ data URL も許可。
+ * （一覧APIには使わない）
+ */
+export function sanitizeInviteThumbUrl(
+  url: string | null | undefined,
+): string | undefined {
+  const t = url?.trim();
+  if (!t) return undefined;
+  if (/^https?:\/\//i.test(t) && t.length <= 2000) return t;
+  if (t.startsWith("data:image/") && t.length <= 500_000) return t;
+  return undefined;
+}
+
 export function requestDmToClient(
   row: Row,
   from: { handle: string | null; name: string | null },
