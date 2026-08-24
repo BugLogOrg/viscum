@@ -32,7 +32,19 @@ export default function NewDirectRequestPage() {
   const [pendingName, setPendingName] = useState<string | null>(null);
   const thumbInputRef = useRef<HTMLInputElement>(null);
 
-  const canSave = title.trim().length > 0;
+  function isUsableExternalUrl(raw: string): boolean {
+    const t = raw.trim();
+    if (t.length <= 8 || t === "https://" || t === "http://") return false;
+    try {
+      const u = new URL(t);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }
+
+  const canSave =
+    title.trim().length > 0 && isUsableExternalUrl(externalUrl);
   const handle = session?.user?.handle?.replace(/^@/, "").trim();
 
   useEffect(() => {
@@ -172,10 +184,7 @@ export default function NewDirectRequestPage() {
                       : undefined,
                   title: title.trim(),
                   description: description.trim(),
-                  externalUrl:
-                    externalUrl.trim() === "https://"
-                      ? ""
-                      : externalUrl.trim(),
+                  externalUrl: externalUrl.trim(),
                   tags: [],
                   status: "none",
                   seedPlan: "free_comment",
@@ -267,13 +276,17 @@ export default function NewDirectRequestPage() {
 
           <div>
             <label className="block text-[13px] font-medium text-viscum-ink">
-              外部URL{" "}
-              <span className="font-normal text-viscum-muted">任意</span>
+              見てほしいURL <span className="text-viscum-berry">必須</span>
             </label>
+            <p className="mt-0.5 text-[12px] text-viscum-muted">
+              相手に開いてほしいページ・作品・デモのURLです。
+            </p>
             <input
               type="url"
+              required
               value={externalUrl}
               onChange={(e) => setExternalUrl(e.target.value)}
+              placeholder="https://"
               className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
             />
           </div>
