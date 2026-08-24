@@ -24,7 +24,10 @@ import {
   resolveWorkClient,
 } from "@/lib/local-seeds";
 import { splitRequestSummary } from "@/lib/direct-request-offer";
-import { buildOutboundInviteShareText } from "@/lib/outbound-invite-share";
+import {
+  buildOutboundInviteShareText,
+  shareDeadlineLabelFromClosesAt,
+} from "@/lib/outbound-invite-share";
 import { fetchRequestDm, patchRequestDm } from "@/lib/remote-requests";
 
 export default function RequestDmThreadPage() {
@@ -250,6 +253,8 @@ export default function RequestDmThreadPage() {
       askBullets,
       pitchTrim: pitch || undefined,
       amountLabel: formatRequestAmountLabel(amountYen),
+      deadlineLabel:
+        shareDeadlineLabelFromClosesAt(row.closesAt) ?? undefined,
       inviteUrl: `${origin}${inviteHref}`,
     });
     try {

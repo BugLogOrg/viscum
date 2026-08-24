@@ -23,6 +23,7 @@ import { isDemoSeed } from "@/lib/local-seeds";
 import { resolveInviteThumbUrl } from "@/lib/resolve-invite-thumb";
 import {
   buildOutboundInviteShareText,
+  shareDeadlineLabelFromDays,
   readCachedOutboundInvite,
   writeCachedOutboundInvite,
 } from "@/lib/outbound-invite-share";
@@ -589,12 +590,14 @@ export function DirectRequestForm({
 
   function buildInternalShareText() {
     const to = selected?.label ? `${selected.label}さん\n` : "";
+    const deadlineLine = shareDeadlineLabelFromDays(deadlineDays);
     return (
       `${to}` +
       `Viscumでレビューのお願いを送りました（またはこれから送ります）。\n` +
       `作品「${activeWork.title.trim() || "（タイトル）"}」／${amountLabel}\n` +
       `${askBlockDot}\n` +
       (pitchTrim && promptList.length > 0 ? `一言: ${pitchTrim}\n` : "") +
+      `${deadlineLine}\n` +
       `\n` +
       `メッセージを開くにはログインが必要です。\n` +
       `${loginUrl}`
@@ -609,6 +612,7 @@ export function DirectRequestForm({
       askBullets,
       pitchTrim: pitchTrim || undefined,
       amountLabel,
+      deadlineLabel: shareDeadlineLabelFromDays(deadlineDays),
       inviteUrl,
     });
   }

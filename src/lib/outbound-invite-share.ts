@@ -1,5 +1,28 @@
 /** 外向け案内文（コピペ）。着地URLは確定後の本物のみ。 */
 
+import { DIRECT_REQUEST_DEADLINE_PRESETS } from "@/lib/local-request-dms";
+
+/** compose時（closesAt未確定）用 */
+export function shareDeadlineLabelFromDays(days: number): string {
+  const preset = DIRECT_REQUEST_DEADLINE_PRESETS.find((p) => p.days === days);
+  const span = preset?.label ?? `およそ${days}日`;
+  return `返信・提出の目安: 発行から${span}（過ぎても即失効しません）`;
+}
+
+/** 再コピー時（closesAt確定後）用 */
+export function shareDeadlineLabelFromClosesAt(
+  iso?: string | null,
+): string | null {
+  if (!iso) return null;
+  const closes = new Date(iso);
+  if (!Number.isFinite(closes.getTime())) return null;
+  const dateStr = `${closes.getFullYear()}/${closes.getMonth() + 1}/${closes.getDate()}`;
+  const passed = closes.getTime() < Date.now();
+  return passed
+    ? `返信・提出の目安: ${dateStr} 前後（過ぎていますが即失効ではありません）`
+    : `返信・提出の目安: ${dateStr} 前後（過ぎても即失効しません）`;
+}
+
 export function buildOutboundInviteShareText(input: {
   fromLabel: string;
   workTitle: string;
@@ -7,6 +30,8 @@ export function buildOutboundInviteShareText(input: {
   askBullets: string[];
   pitchTrim?: string;
   amountLabel: string;
+  /** 希望日の1行（例: 返信・提出の目安: …） */
+  deadlineLabel?: string;
   inviteUrl: string;
 }): string {
   const askBlockDash = input.askBullets.map((s) => `- ${s}`).join("\n");
@@ -14,6 +39,9 @@ export function buildOutboundInviteShareText(input: {
     input.pitchTrim && input.askBullets.length > 0 && !input.askBullets.includes(input.pitchTrim)
       ? `\n（一言）${input.pitchTrim}\n`
       : "";
+  const deadlineBlock = input.deadlineLabel
+    ? `\n■ 希望日\n${input.deadlineLabel}\n`
+    : "";
   return (
     `突然のご連絡失礼いたします。${input.fromLabel}と申します。\n` +
     `Viscum（レビュー依頼のサービス）を通じて、作品のフィードバックをお願いしたくご連絡しました。\n` +
@@ -25,6 +53,7 @@ export function buildOutboundInviteShareText(input: {
     `■ お願いしたいこと\n` +
     `${askBlockDash}\n` +
     pitchExtra +
+    deadlineBlock +
     `\n` +
     `■ 謝礼\n` +
     `${input.amountLabel}\n` +
