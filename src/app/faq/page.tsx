@@ -44,7 +44,7 @@ const FAQS: { q: string; body: ReactNode }[] = [
           <li>見る・読む・気になる → 無料</li>
           <li>無料コメント歓迎だけ置く → お金は動かない</li>
           <li>
-            場内コンペ（初見レビュー ¥5,000／改善提案 ¥10,000）や公開ブースト（¥30,000）
+            VISCUM内コンペ（初見レビュー ¥5,000／改善提案 ¥10,000）や公開ブースト（¥30,000）
             → シーダーが褒賞の財布を出す
           </li>
           <li>直依頼 → 指名した相手への有償オファー</li>
@@ -72,7 +72,7 @@ const FAQS: { q: string; body: ReactNode }[] = [
             … 共有文・URLを SNS／Discord／友人に貼る
           </li>
           <li>
-            <span className="font-medium">場内の開催中を覗く人</span>
+            <span className="font-medium">VISCUM内の開催中を覗く人</span>
             … 入場無料なので、「いま何が熱いか」を見に来る層
           </li>
           <li>
@@ -110,6 +110,41 @@ const FAQS: { q: string; body: ReactNode }[] = [
           ミソは
           <span className="font-medium">コンペであること</span>
           です。全員払いだと薄い量産になりやすい。稀少褒賞＋作者が選ぶ、で張り合いと予算の両方を守ります。「プロだけが書ける審査会」ではなく、軽い評価が取れる場が先です。本気の反応が欲しいときは金額と直依頼で寄せます。
+        </p>
+      </>
+    ),
+  },
+  {
+    q: "サクラややらせレビューと何が違うの？",
+    body: (
+      <>
+        <p>
+          いわゆるサクラは、
+          <span className="font-medium">評価の見た目（星・好意的レビューの件数）を買う</span>
+          ことです。VISCUMが売っているのは
+          <span className="font-medium">作品への反応・言葉</span>
+          で、人数保証や星の指定、やらせは約束しません。
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <span className="font-medium">褒賞は稀少</span>
+            … 書いた人全員に払うモデルではありません。薄い褒め量産になりにくい設計です。
+          </li>
+          <li>
+            <span className="font-medium">選ぶのはシーダー</span>
+            … 刺さった指摘・正直な反応を採れる。褒めだけが勝つ保証はありません。
+          </li>
+          <li>
+            <span className="font-medium">公開ブースト</span>
+            … 実利用したうえでの正直な反応を募る。星の売買・やらせは不可。必要な開示があれば付ける想定です。
+          </li>
+          <li>
+            <span className="font-medium">支払いの事実が残る</span>
+            … 「買った褒めを隠す」ための仕組みではなく、誰が何に払ったかが履歴として見えます。
+          </li>
+        </ul>
+        <p>
+          だから似て見えるのは「お金が動く」ところまで。目的が、見せ場の水増しではなく、初速の反応を集めることです。
         </p>
       </>
     ),
@@ -179,7 +214,7 @@ const FAQS: { q: string; body: ReactNode }[] = [
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            <span className="font-medium">場内コンペ／公開ブースト</span>
+            <span className="font-medium">VISCUM内コンペ／公開ブースト</span>
             … 広く募って、シーダーが選ぶ稀少褒賞。全員に払う外注ではありません。書けば必ずもらえるわけではないので、メンター側は「ただ働きになりうる」一方、シーダーは少額で複数の反応を集められます。これは意図した非対称です。
           </li>
           <li>
