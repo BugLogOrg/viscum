@@ -556,9 +556,8 @@ export function DirectRequestForm({
   const inviteUrlPreview =
     origin && invitePath
       ? `${origin}${invitePath}`
-      : origin
-        ? `${origin}/dm/i/（コピー時に発行）`
-        : "/dm/i/（コピー時に発行）";
+      : "（未確定 — 「リンクを確定」で発行されます）";
+  const inviteFixed = Boolean(invitePath);
   const loginUrl = origin
     ? `${origin}/login?callbackUrl=${encodeURIComponent("/dashboard/messages")}`
     : "/login";
@@ -618,6 +617,15 @@ export function DirectRequestForm({
     setDraftNote(`一時保存しました（${new Date().toLocaleTimeString("ja-JP")}）`);
   }, [mentor, message, prompts, amountYen, work.id, fromHandle]);
 
+  async function fixOutboundInvite() {
+    setCopyNote(null);
+    const ensured = await ensureInvitePath();
+    if (!ensured) return;
+    setCopyNote(
+      "リンクを確定しました。謝礼額はこの招待に固定されています。案内文をコピーして相手に送ってください（この画面は開きっぱなしで大丈夫です）。",
+    );
+  }
+
   async function copyShareText() {
     setCopyNote(null);
     if (!fromHandle) {
@@ -629,27 +637,23 @@ export function DirectRequestForm({
       return;
     }
     let text = buildInternalShareText();
-    let nextRequestPath = requestPath;
     if (shareTone === "external") {
-      const ensured = await ensureInvitePath();
-      if (!ensured) return;
-      const url = `${window.location.origin}${ensured.invitePath}`;
+      if (!invitePath) {
+        setCopyNote(
+          "先に「リンクを確定」してください。確定すると案内文に本物のURLが入ります。",
+        );
+        return;
+      }
+      const url = `${window.location.origin}${invitePath}`;
       text = buildExternalShareText(url);
-      nextRequestPath = ensured.requestPath ?? nextRequestPath;
     }
     try {
       await navigator.clipboard?.writeText(text);
       setCopyNote(
         shareTone === "external"
-          ? "外部用の案内文をコピーしました。やりとりに返事待ちスレを発行済みです。"
+          ? "案内文をコピーしました。この画面はそのままです。ご依頼DMは下のリンクからいつでも開けます。"
           : "内部用の案内文をコピーしました",
       );
-      if (delivery === "outbound" && shareTone === "external") {
-        const dest = nextRequestPath ?? "/dashboard/messages";
-        window.setTimeout(() => {
-          router.push(dest);
-        }, 500);
-      }
     } catch {
       setCopyNote("コピーに失敗しました");
     }
@@ -964,12 +968,12 @@ export function DirectRequestForm({
           <div className="rounded-lg border border-dashed border-viscum-line bg-white/40 px-3 py-3 text-[12px] leading-relaxed text-viscum-muted">
             <p className="font-medium text-viscum-ink">外への届け方</p>
             <p className="mt-1">
-              相手をViscum上で選ぶ必要はありません。下の案内文をコピーして、X・LINE・メールなどに貼ってください。
-              <strong className="font-medium text-viscum-ink">コピー時に招待＋やりとりスレを発行</strong>
-              します。ご依頼DMに「外リンク（返事待ち）」としてすぐ載ります。相手の返事で相手アカウントがスレに入ります。
+              相手をViscum上で選ぶ必要はありません。流れは{" "}
+              <strong className="font-medium text-viscum-ink">①リンクを確定 → ②案内文をコピー</strong>
+              。確定のときに招待URLとやりとりスレ（返事待ち）が発行されます。コピーだけでは画面は動きません。
             </p>
             <p className="mt-1">
-              謝礼額はスレに固定されます（この時点ではカード不要。完了時払い）。メール欄からの直送はまだありません。
+              謝礼額は確定時にスレへ固定（この時点ではカード不要。完了時払い）。メール欄からの直送はまだありません。
             </p>
           </div>
         )}
@@ -983,7 +987,9 @@ export function DirectRequestForm({
           </p>
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
             {delivery === "outbound"
-              ? "届け方に合わせて外部用（丁寧）の文面です。お願いしたいことは箇条書き。概要の長文はリンク先のみです。"
+              ? inviteFixed
+                ? "リンク確定済み。下のURLは本物です。案内文をコピーして相手に送ってください。"
+                : "まだ未確定です。「リンクを確定」すると案内文末尾に招待URLが入り、謝礼も固定されます。"
               : "届け方に合わせて内部用（短い）の文面です。場内送信のあと、念押し用に送れます（任意）。"}
           </p>
           <textarea
@@ -993,38 +999,59 @@ export function DirectRequestForm({
             className="mt-2 w-full resize-y rounded-md border border-viscum-line bg-white/80 px-3 py-2 font-sans text-[12px] leading-relaxed text-viscum-ink"
           />
           <div className="mt-2 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={inviteBusy || !canCopyOutbound}
-              onClick={() => {
-                void copyShareText();
-              }}
-              className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-50"
-            >
-              {inviteBusy && shareTone === "external"
-                ? "発行中…"
-                : "案内文をコピー"}
-            </button>
-            {shareTone === "external" && (
+            {shareTone === "external" && !inviteFixed ? (
               <button
                 type="button"
                 disabled={inviteBusy || !canCopyOutbound}
                 onClick={() => {
-                  void (async () => {
-                    const ensured = await ensureInvitePath();
-                    if (!ensured) return;
-                    window.open(
-                      ensured.invitePath,
-                      "_blank",
-                      "noopener,noreferrer",
-                    );
-                  })();
+                  void fixOutboundInvite();
                 }}
-                className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand disabled:opacity-50"
+                className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-50"
               >
-                リンクをプレビュー
+                {inviteBusy ? "確定中…" : "リンクを確定"}
               </button>
-            )}
+            ) : null}
+            <button
+              type="button"
+              disabled={
+                inviteBusy ||
+                !canCopyOutbound ||
+                (shareTone === "external" && !inviteFixed)
+              }
+              onClick={() => {
+                void copyShareText();
+              }}
+              className={`rounded-md px-3 py-1.5 text-[12px] font-medium disabled:opacity-50 ${
+                shareTone === "external" && inviteFixed
+                  ? "bg-viscum-berry text-white"
+                  : "border border-viscum-line bg-white text-viscum-ink"
+              }`}
+            >
+              案内文をコピー
+            </button>
+            {shareTone === "external" && inviteFixed ? (
+              <>
+                <button
+                  type="button"
+                  disabled={inviteBusy}
+                  onClick={() => {
+                    if (!invitePath) return;
+                    window.open(invitePath, "_blank", "noopener,noreferrer");
+                  }}
+                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand disabled:opacity-50"
+                >
+                  リンクをプレビュー
+                </button>
+                {requestPath ? (
+                  <Link
+                    href={requestPath}
+                    className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper"
+                  >
+                    ご依頼DMを開く
+                  </Link>
+                ) : null}
+              </>
+            ) : null}
           </div>
           {copyNote && (
             <p className="mt-2 text-[12px] text-viscum-brand">{copyNote}</p>
@@ -1071,11 +1098,19 @@ export function DirectRequestForm({
               type="button"
               disabled={inviteBusy || !canCopyOutbound}
               onClick={() => {
+                if (!inviteFixed) {
+                  void fixOutboundInvite();
+                  return;
+                }
                 void copyShareText();
               }}
               className="rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50 sm:flex-[1.4]"
             >
-              {inviteBusy ? "発行中…" : "案内文をコピーして完了"}
+              {inviteBusy
+                ? "確定中…"
+                : inviteFixed
+                  ? "案内文をコピー"
+                  : "リンクを確定"}
             </button>
           )}
         </div>
