@@ -196,7 +196,7 @@ export function MessagesInbox({
                       }`}
                     >
                       <time dateTime={stamp}>
-                        更新 {formatRequestDmStamp(stamp)}
+                        最終更新 {formatRequestDmStamp(stamp)}
                       </time>
                     </p>
                   </div>
