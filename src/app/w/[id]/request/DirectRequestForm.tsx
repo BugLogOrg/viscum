@@ -22,6 +22,11 @@ import {
 import { isDemoSeed } from "@/lib/local-seeds";
 import { resolveInviteThumbUrl } from "@/lib/resolve-invite-thumb";
 import {
+  buildOutboundInviteShareText,
+  readCachedOutboundInvite,
+  writeCachedOutboundInvite,
+} from "@/lib/outbound-invite-share";
+import {
   accountLabelForHandle,
   getDemoSeederProfile,
 } from "@/data/suggested-seeders";
@@ -315,6 +320,17 @@ export function DirectRequestForm({
     setOrigin(window.location.origin);
   }, []);
 
+  // 確定済み招待を端末に残し、再訪でも再コピーできるようにする
+  useEffect(() => {
+    if (!fromHandle || !activeWork.id || activeWork.id.startsWith("__draft")) {
+      return;
+    }
+    const cached = readCachedOutboundInvite(activeWork.id, fromHandle);
+    if (!cached?.invitePath) return;
+    setInvitePath(cached.invitePath);
+    if (cached.requestPath) setRequestPath(cached.requestPath);
+  }, [activeWork.id, fromHandle]);
+
   useEffect(() => {
     if (fromHandle) rememberViewer(fromHandle);
   }, [fromHandle]);
@@ -530,6 +546,13 @@ export function DirectRequestForm({
       }
       setInvitePath(data.invite.path);
       if (data.request?.path) setRequestPath(data.request.path);
+      writeCachedOutboundInvite(fromHandle, {
+        invitePath: data.invite.path,
+        requestPath: data.request?.path,
+        amountYen,
+        workId: w.id,
+        updatedAt: new Date().toISOString(),
+      });
       return {
         invitePath: data.invite.path,
         requestPath: data.request?.path,
@@ -556,7 +579,6 @@ export function DirectRequestForm({
       : pitchTrim
         ? [pitchTrim]
         : ["初見の感想を短くいただけると助かります。"];
-  const askBlockDash = askBullets.map((s) => `- ${s}`).join("\n");
   const askBlockDot = askBullets.map((s) => `・${s}`).join("\n");
   const inviteUrlPreview =
     origin && invitePath
@@ -582,27 +604,15 @@ export function DirectRequestForm({
   }
 
   function buildExternalShareText(inviteUrl: string) {
-    return (
-      `突然のご連絡失礼いたします。${fromLabel}と申します。\n` +
-      `Viscum（レビュー依頼のサービス）を通じて、作品のフィードバックをお願いしたくご連絡しました。\n` +
-      `\n` +
-      `■ 作品\n` +
-      `${activeWork.title.trim() || "（タイトル）"}\n` +
-      (workUrl ? `${workUrl}\n` : "") +
-      `\n` +
-      `■ お願いしたいこと\n` +
-      `${askBlockDash}\n` +
-      (pitchTrim && promptList.length > 0 ? `\n（一言）${pitchTrim}\n` : "") +
-      `\n` +
-      `■ 謝礼\n` +
-      `${amountLabel}\n` +
-      `\n` +
-      `詳細・概要は下記リンク先でご確認いただけます（リンクを知っている方向けです）。\n` +
-      `ご返信・お受け取りにはViscumへのログイン（無料）が必要です。\n` +
-      `ご都合が合わなければ、無視していただいて構いません。\n` +
-      `\n` +
-      `${inviteUrl}`
-    ).trim();
+    return buildOutboundInviteShareText({
+      fromLabel,
+      workTitle: activeWork.title.trim() || "（タイトル）",
+      workUrl: workUrl || undefined,
+      askBullets,
+      pitchTrim: pitchTrim || undefined,
+      amountLabel,
+      inviteUrl,
+    });
   }
 
   const sharePreview =
@@ -1010,7 +1020,7 @@ export function DirectRequestForm({
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
             {delivery === "outbound"
               ? inviteFixed
-                ? "リンク確定済み。下のURLは本物です。案内文をコピーして相手に送ってください。"
+                ? "リンク確定済み。案内文もURLも何度でも再コピーできます。相手が見るのは末尾リンク先（着地）と同じ内容です。"
                 : "まだ未確定です。「リンクを確定」すると案内文末尾に招待URLが入り、謝礼も固定されます。"
               : "届け方に合わせて内部用（短い）の文面です。場内送信のあと、念押し用に送れます（任意）。"}
           </p>
@@ -1049,10 +1059,30 @@ export function DirectRequestForm({
                   : "border border-viscum-line bg-white text-viscum-ink"
               }`}
             >
-              案内文をコピー
+              {inviteFixed ? "案内文を再コピー" : "案内文をコピー"}
             </button>
             {shareTone === "external" && inviteFixed ? (
               <>
+                <button
+                  type="button"
+                  disabled={inviteBusy || !invitePath}
+                  onClick={() => {
+                    void (async () => {
+                      if (!invitePath) return;
+                      try {
+                        await navigator.clipboard?.writeText(
+                          `${window.location.origin}${invitePath}`,
+                        );
+                        setCopyNote("招待URLだけコピーしました（何度でも可）");
+                      } catch {
+                        setCopyNote("コピーに失敗しました");
+                      }
+                    })();
+                  }}
+                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
+                >
+                  URLだけコピー
+                </button>
                 <button
                   type="button"
                   disabled={inviteBusy}
@@ -1062,7 +1092,7 @@ export function DirectRequestForm({
                   }}
                   className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand disabled:opacity-50"
                 >
-                  リンクをプレビュー
+                  送付用ページを開く
                 </button>
                 {requestPath ? (
                   <Link
@@ -1131,7 +1161,7 @@ export function DirectRequestForm({
               {inviteBusy
                 ? "確定中…"
                 : inviteFixed
-                  ? "案内文をコピー"
+                  ? "案内文を再コピー"
                   : "リンクを確定"}
             </button>
           )}

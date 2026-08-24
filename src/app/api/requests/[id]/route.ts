@@ -4,20 +4,21 @@ import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { requestDms, users } from "@/db/schema";
 import type { RequestDmStatus } from "@/lib/local-request-dms";
-import { requestDmToClient } from "@/lib/request-dm-serialize";
+import { requestDmToClient, sanitizeWorkThumbUrl } from "@/lib/request-dm-serialize";
 
 type Ctx = { params: Promise<{ id: string }> };
 
 async function loadParty(id: string, userId: string) {
   const db = getDb();
   if (!db) return null;
-  // work_thumb_url は data URL のとき数百KB〜で遅いので読まない
+  // https サムネのみ返す（data URL は巨大なので除外）
   const rows = await db
     .select({
       id: requestDms.id,
       workId: requestDms.workId,
       workTitle: requestDms.workTitle,
       workExternalUrl: requestDms.workExternalUrl,
+      workThumbUrl: requestDms.workThumbUrl,
       workSummary: requestDms.workSummary,
       fromUserId: requestDms.fromUserId,
       toUserId: requestDms.toUserId,
@@ -39,7 +40,7 @@ async function loadParty(id: string, userId: string) {
   }
   const full = {
     ...row,
-    workThumbUrl: null as string | null,
+    workThumbUrl: sanitizeWorkThumbUrl(row.workThumbUrl) ?? null,
   } as typeof requestDms.$inferSelect;
   const [from, to] = await Promise.all([
     db

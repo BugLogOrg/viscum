@@ -6,10 +6,12 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
+import { DirectRequestOfferCard } from "@/components/DirectRequestOfferCard";
+import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 import {
   clearLocalRequestDms,
+  formatRequestAmountLabel,
   formatRequestDmStamp,
-  formatYen,
   isLegacyLocalRequestId,
   statusLabel,
   type RequestDm,
@@ -20,8 +22,9 @@ import {
   isDemoSeed,
   resolveWorkClient,
 } from "@/lib/local-seeds";
+import { splitRequestSummary } from "@/lib/direct-request-offer";
+import { buildOutboundInviteShareText } from "@/lib/outbound-invite-share";
 import { fetchRequestDm, patchRequestDm } from "@/lib/remote-requests";
-import { SeederCredibilityLink } from "@/components/SeederCredibilityLink";
 
 export default function RequestDmThreadPage() {
   const params = useParams();
@@ -34,9 +37,16 @@ export default function RequestDmThreadPage() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [responding, setResponding] = useState(false);
+  const [inviteThumb, setInviteThumb] = useState<string | null>(null);
+  const [copyNote, setCopyNote] = useState<string | null>(null);
+  const [origin, setOrigin] = useState("");
 
   useEffect(() => {
     clearLocalRequestDms();
+  }, []);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
   }, []);
 
   useEffect(() => {
@@ -69,6 +79,31 @@ export default function RequestDmThreadPage() {
       cancelled = true;
     };
   }, [handle, requestId]);
+
+  useEffect(() => {
+    if (!row?.inviteId || row.workThumbUrl?.trim()) {
+      setInviteThumb(null);
+      return;
+    }
+    let cancelled = false;
+    void fetch(`/api/dm-invites?id=${encodeURIComponent(row.inviteId)}`, {
+      cache: "no-store",
+    })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => ({}))) as {
+          invite?: { workThumbUrl?: string };
+        };
+        if (cancelled) return;
+        const t = data.invite?.workThumbUrl?.trim();
+        setInviteThumb(t && /^https?:\/\//i.test(t) ? t : null);
+      })
+      .catch(() => {
+        if (!cancelled) setInviteThumb(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [row?.inviteId, row?.workThumbUrl]);
 
   if (status === "loading" || (handle && loading)) {
     return (
@@ -165,12 +200,7 @@ export default function RequestDmThreadPage() {
   })();
 
   const workTitle = displayRequestWorkTitle(row.workId, row.workTitle);
-  const isLocal = row.workId.startsWith("local_");
   const liveWork = resolveWorkClient(row.workId);
-  const thumbUrl =
-    row.workThumbUrl?.trim() ||
-    liveWork?.thumbUrl?.trim() ||
-    "";
   const liveBody = (() => {
     if (!liveWork) return "";
     const desc = liveWork.description?.trim() ?? "";
@@ -181,33 +211,62 @@ export default function RequestDmThreadPage() {
     return desc;
   })();
   const seedBody = row.workSummary?.trim() || liveBody;
-  /** 依頼に紐づくシード詳細（受け手でも開ける。local_* の /w 依存しない） */
-  const seedHref = `/dashboard/messages/${encodeURIComponent(row.id)}/seed`;
-  /** pitch が説明のコピペ／定型だけのときは「最初のお願い」を出さない（シード内容と二重になる） */
-  const showPitch = (() => {
-    if (!pitchText) return false;
-    if (
-      pitchText === "よろしくお願いします。" ||
-      pitchText === "よろしくよろよろ"
-    ) {
-      return false;
-    }
-    const descOnly = seedBody.split(/【聞きたいこと】|【聞くこと】/)[0]?.trim() ?? "";
-    if (descOnly && pitchText === descOnly) return false;
-    if (descOnly.length > 40 && pitchText.includes(descOnly)) return false;
-    if (descOnly.length > 40 && descOnly.includes(pitchText) && pitchText.length > 80) {
-      return false;
-    }
-    return true;
-  })();
+  const thumbUrl =
+    row.workThumbUrl?.trim() ||
+    inviteThumb?.trim() ||
+    liveWork?.thumbUrl?.trim() ||
+    "";
+  const fromDisplay =
+    row.fromAccountName?.trim() ||
+    displayAccountName(row.fromHandle, readLocalProfile(row.fromHandle));
   const isSeeder = row.fromHandle.toLowerCase() === me;
-  const statsHref = isLocal
-    ? `/dashboard/${encodeURIComponent(row.workId)}`
+  const inviteHref = row.inviteId
+    ? `/dm/i/${encodeURIComponent(row.inviteId)}`
     : null;
+  const amountYen = row.amountYen;
+  const workExternalUrl =
+    row.workExternalUrl?.trim() || liveWork?.externalUrl?.trim() || "";
 
   async function refresh() {
     const res = await fetchRequestDm(requestId);
     if (res.request) setRow(res.request);
+  }
+
+  async function copyOutboundAgain() {
+    if (!inviteHref || !origin) return;
+    const { prompts } = splitRequestSummary(seedBody);
+    const pitch = pitchText;
+    const askBullets =
+      prompts.length > 0
+        ? prompts
+        : pitch
+          ? [pitch]
+          : ["初見の感想を短くいただけると助かります。"];
+    const text = buildOutboundInviteShareText({
+      fromLabel: fromDisplay,
+      workTitle,
+      workUrl: workExternalUrl || undefined,
+      askBullets,
+      pitchTrim: pitch || undefined,
+      amountLabel: formatRequestAmountLabel(amountYen),
+      inviteUrl: `${origin}${inviteHref}`,
+    });
+    try {
+      await navigator.clipboard?.writeText(text);
+      setCopyNote("案内文をコピーしました（着地と同じ内容へのリンク付き）");
+    } catch {
+      setCopyNote("コピーに失敗しました");
+    }
+  }
+
+  async function copyInviteUrlOnly() {
+    if (!inviteHref || !origin) return;
+    try {
+      await navigator.clipboard?.writeText(`${origin}${inviteHref}`);
+      setCopyNote("招待URLをコピーしました");
+    } catch {
+      setCopyNote("コピーに失敗しました");
+    }
   }
 
   async function respond(next: "accepted" | "declined") {
@@ -246,7 +305,6 @@ export default function RequestDmThreadPage() {
           prev
             ? {
                 ...res.request!,
-                // サーバーはサムネを返さないことがあるので既存を維持
                 workThumbUrl: prev.workThumbUrl || res.request!.workThumbUrl,
                 workSummary: res.request!.workSummary || prev.workSummary,
               }
@@ -272,8 +330,8 @@ export default function RequestDmThreadPage() {
   return (
     <BrowseChrome>
       <SiteHeader backHref="/dashboard/messages" hideOnMd hidePostCta />
-      <main className="mx-auto flex max-w-lg flex-col px-4 pb-8 pt-4">
-        <div className="space-y-1 border-b border-viscum-line pb-4">
+      <main className="mx-auto flex max-w-lg flex-col pb-8">
+        <div className="space-y-1 border-b border-viscum-line px-4 pb-4 pt-4">
           <p className="text-[12px] text-viscum-muted">ご依頼DM</p>
           <h1 className="text-lg font-semibold text-viscum-ink">
             {peerLabel}
@@ -283,107 +341,91 @@ export default function RequestDmThreadPage() {
               </span>
             ) : null}
           </h1>
-          {row.outboundUnassigned && row.inviteId ? (
-            <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
-              相手はまだ決まっていません。案内リンクを渡して返事を待っています。{" "}
-              <Link
-                href={`/dm/i/${encodeURIComponent(row.inviteId)}`}
-                className="font-medium text-viscum-brand underline"
-              >
-                招待ページを開く
-              </Link>
-            </p>
-          ) : null}
-          <p className="text-[13px] text-viscum-ink">
-            <span className="text-viscum-muted">褒賞 · </span>
-            {formatYen(row.amountYen)}
-            {isRecipient ? (
+          <p className="text-[12px] text-viscum-muted">
+            状態: {statusLabel(row.status)}
+            {inviteHref ? (
               <>
-                <span className="text-viscum-muted"> · </span>
+                {" · "}
                 <Link
-                  href={`/u/${encodeURIComponent(row.fromHandle)}`}
+                  href={inviteHref}
                   className="font-medium text-viscum-brand underline"
                 >
-                  支払実績
+                  送付用ページ（正本）
                 </Link>
               </>
             ) : null}
           </p>
-
-          <div className="mt-3 overflow-hidden rounded-lg border border-viscum-line bg-white/80">
-            <Link href={seedHref} className="block">
-              {thumbUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={thumbUrl}
-                  alt=""
-                  className="aspect-[1280/670] w-full object-cover transition hover:opacity-95"
-                />
-              ) : (
-                <div className="flex aspect-[1280/670] w-full items-center justify-center bg-viscum-paper-2 text-[12px] text-viscum-muted">
-                  サムネ未添付（新しい依頼から送れます）
-                </div>
-              )}
-            </Link>
-            <div className="space-y-2 px-3 py-3">
-              <Link
-                href={seedHref}
-                className="block text-[14px] font-semibold leading-snug text-viscum-brand underline"
-              >
-                {workTitle}
-              </Link>
-              <div className="flex flex-wrap gap-x-3 gap-y-1 text-[12px]">
-                <Link
-                  href={seedHref}
-                  className="font-medium text-viscum-brand underline"
-                >
-                  シード詳細を開く
-                </Link>
-                {statsHref && isSeeder ? (
-                  <Link
-                    href={statsHref}
-                    className="font-medium text-viscum-muted underline"
-                  >
-                    成績を見る
-                  </Link>
-                ) : null}
-              </div>
-              {seedBody ? (
-                <p className="line-clamp-3 whitespace-pre-wrap text-[12px] leading-relaxed text-viscum-muted">
-                  {seedBody.replace("【聞くこと】", "【聞きたいこと】")}
-                </p>
-              ) : (
-                <p className="text-[12px] text-viscum-muted">
-                  シード本文がありません。直依頼を送り直すと詳細に残ります。
-                </p>
-              )}
-            </div>
-          </div>
-
-          {isDemoSeed(row.workId) && (
-            <p className="mt-2 rounded-md border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-2 text-[12px] leading-relaxed text-viscum-ink">
-              このご依頼は<strong>見本作品</strong>（{row.workId}
-              ）に紐づいています。さっきシードした作品ではありません。完了画面の「サイト内のメンターに頼む」から送り直すと、自分の作品名で残ります。
+          {row.outboundUnassigned ? (
+            <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
+              相手はまだ決まっていません。下のお願いカードは送付用リンクと同じ内容です。案内を渡して返事を待っています。
             </p>
-          )}
-          <p className="mt-2 text-[12px] text-viscum-muted">
-            状態: {statusLabel(row.status)}
-          </p>
-          {isRecipient ? (
-            <SeederCredibilityLink handle={row.fromHandle} className="mt-3" />
           ) : null}
-          {showPitch ? (
-            <div className="mt-3 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2">
-              <p className="text-[11px] font-medium text-viscum-muted">
-                最初のお願い（依頼時）
-              </p>
-              <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
-                {pitchText}
-              </p>
+          {isSeeder && inviteHref ? (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  void copyOutboundAgain();
+                }}
+                className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white"
+              >
+                案内文を再コピー
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void copyInviteUrlOnly();
+                }}
+                className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink"
+              >
+                URLだけコピー
+              </button>
             </div>
+          ) : null}
+          {copyNote ? (
+            <p className="mt-1 text-[12px] text-viscum-brand">{copyNote}</p>
           ) : null}
         </div>
 
+        <DirectRequestOfferCard
+          snapshot={{
+            fromDisplayName: fromDisplay,
+            fromHandle: row.fromHandle,
+            workTitle,
+            workExternalUrl: workExternalUrl || undefined,
+            workThumbUrl: thumbUrl || undefined,
+            workSummary: seedBody || undefined,
+            pitch: pitchText || undefined,
+            amountYen: row.amountYen,
+            createdAt: row.createdAt,
+          }}
+          headline={
+            isSeeder ? (
+              <>
+                <span className="block">あなたが送ったお願い</span>
+                <span className="mt-1 block text-[12px] font-normal text-viscum-muted">
+                  相手が見る送付用ページと同じ内容です
+                </span>
+              </>
+            ) : undefined
+          }
+          showFeeNote={!isSeeder}
+          afterBody={
+            <>
+              {isRecipient ? (
+                <SeederCredibilityLink handle={row.fromHandle} />
+              ) : null}
+              {isDemoSeed(row.workId) ? (
+                <p className="rounded-md border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-2 text-[12px] leading-relaxed text-viscum-ink">
+                  このご依頼は<strong>見本作品</strong>（{row.workId}
+                  ）に紐づいています。さっきシードした作品ではありません。完了画面の「サイト内のメンターに頼む」から送り直すと、自分の作品名で残ります。
+                </p>
+              ) : null}
+            </>
+          }
+        />
+
+        <div className="px-4">
         {isRecipient && row.status === "pending" && (
           <div className="mt-4 flex gap-2">
             <button
@@ -462,6 +504,7 @@ export default function RequestDmThreadPage() {
             {sending ? "送信中…" : "送る"}
           </button>
         </form>
+        </div>
       </main>
     </BrowseChrome>
   );

@@ -6,47 +6,22 @@ import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
+import { DirectRequestOfferCard } from "@/components/DirectRequestOfferCard";
 import {
   clearLocalRequestDms,
-  formatYen,
   isLegacyLocalRequestId,
   type RequestDm,
 } from "@/lib/local-request-dms";
+import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import {
   displayRequestWorkTitle,
   resolveWorkClient,
 } from "@/lib/local-seeds";
 import { fetchRequestDm } from "@/lib/remote-requests";
-import { SeederLink } from "@/components/SeederLink";
-
-/** 依頼時スナップショットから説明と聞きたいことを分ける */
-function splitSeedBody(raw: string): { description: string; focus: string[] } {
-  const text = raw.trim();
-  if (!text) return { description: "", focus: [] };
-  // 新規は「聞きたいこと」。旧スナップショット互換で「聞くこと」も読む
-  const markers = ["【聞きたいこと】", "【聞くこと】"] as const;
-  let marker = "";
-  let i = -1;
-  for (const m of markers) {
-    const at = text.indexOf(m);
-    if (at >= 0 && (i < 0 || at < i)) {
-      i = at;
-      marker = m;
-    }
-  }
-  if (i < 0 || !marker) return { description: text, focus: [] };
-  const description = text.slice(0, i).trim();
-  const focus = text
-    .slice(i + marker.length)
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return { description, focus };
-}
 
 /**
- * ご依頼DM用のシード詳細。
- * 端末内シード（local_*）は受け手の /w に無いので、依頼に埋め込んだスナップショットで詳細を出す。
+ * ご依頼DM用のお願い詳細。
+ * レイアウト正本は送付用 `/dm/i/…` と同じ DirectRequestOfferCard。
  */
 export default function RequestSeedDetailPage() {
   const params = useParams();
@@ -56,6 +31,7 @@ export default function RequestSeedDetailPage() {
   const [row, setRow] = useState<RequestDm | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [inviteThumb, setInviteThumb] = useState<string | null>(null);
 
   useEffect(() => {
     clearLocalRequestDms();
@@ -90,14 +66,37 @@ export default function RequestSeedDetailPage() {
     };
   }, [handle, requestId]);
 
+  useEffect(() => {
+    if (!row?.inviteId || row.workThumbUrl?.trim()) {
+      setInviteThumb(null);
+      return;
+    }
+    let cancelled = false;
+    void fetch(`/api/dm-invites?id=${encodeURIComponent(row.inviteId)}`, {
+      cache: "no-store",
+    })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => ({}))) as {
+          invite?: { workThumbUrl?: string };
+        };
+        if (cancelled) return;
+        const t = data.invite?.workThumbUrl?.trim();
+        setInviteThumb(t && /^https?:\/\//i.test(t) ? t : null);
+      })
+      .catch(() => {
+        if (!cancelled) setInviteThumb(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [row?.inviteId, row?.workThumbUrl]);
+
+  const threadHref = `/dashboard/messages/${encodeURIComponent(requestId)}`;
+
   if (status === "loading" || (handle && loading)) {
     return (
       <BrowseChrome>
-        <SiteHeader
-          backHref={`/dashboard/messages/${encodeURIComponent(requestId)}`}
-          hideOnMd
-          hidePostCta
-        />
+        <SiteHeader backHref={threadHref} hideOnMd hidePostCta />
         <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
           読み込み中…
         </div>
@@ -112,7 +111,7 @@ export default function RequestSeedDetailPage() {
         <main className="max-w-lg px-4 py-10">
           <p className="text-[14px] text-viscum-muted">ログインが必要です。</p>
           <Link
-            href={`/login?callbackUrl=${encodeURIComponent(`/dashboard/messages/${requestId}/seed`)}`}
+            href={`/login?callbackUrl=${encodeURIComponent(`${threadHref}/seed`)}`}
             className="mt-6 inline-flex rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white"
           >
             ログインへ
@@ -155,7 +154,10 @@ export default function RequestSeedDetailPage() {
   const liveWork = resolveWorkClient(row.workId);
   const workTitle = displayRequestWorkTitle(row.workId, row.workTitle);
   const thumbUrl =
-    row.workThumbUrl?.trim() || liveWork?.thumbUrl?.trim() || "";
+    row.workThumbUrl?.trim() ||
+    inviteThumb?.trim() ||
+    liveWork?.thumbUrl?.trim() ||
+    "";
   const liveBody = (() => {
     if (!liveWork) return "";
     const desc = liveWork.description?.trim() ?? "";
@@ -166,94 +168,51 @@ export default function RequestSeedDetailPage() {
       return `${desc}\n\n【聞きたいこと】\n${focus.join("\n")}`.trim();
     return desc;
   })();
-  const { description, focus } = splitSeedBody(
-    row.workSummary?.trim() || liveBody,
-  );
-  const threadHref = `/dashboard/messages/${encodeURIComponent(row.id)}`;
+  const fromDisplay =
+    row.fromAccountName?.trim() ||
+    displayAccountName(row.fromHandle, readLocalProfile(row.fromHandle));
+  const inviteHref = row.inviteId
+    ? `/dm/i/${encodeURIComponent(row.inviteId)}`
+    : null;
 
   return (
     <BrowseChrome>
       <SiteHeader backHref={threadHref} hideOnMd hidePostCta />
       <main className="mx-auto max-w-lg pb-10">
-        <article>
-          <div
-            className="relative w-full overflow-hidden bg-viscum-leaf-deep"
-            style={{ aspectRatio: "1280 / 670" }}
-          >
-            {thumbUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={thumbUrl}
-                alt=""
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            ) : (
-              <div className="flex h-full items-center justify-center text-[13px] text-white/80">
-                サムネなし
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-4 px-4 py-5">
-            <p className="text-[12px] text-viscum-muted">
-              ご依頼に紐づくシード詳細
-              <span className="mx-1 text-viscum-line">·</span>
-              褒賞 {formatYen(row.amountYen)}
-            </p>
-
-            <dl className="space-y-1 text-[14px] text-viscum-ink">
-              <div>
-                <dt className="inline text-viscum-muted">依頼主：</dt>
-                <dd className="inline">
-                  <SeederLink
-                    handle={row.fromHandle}
-                    preferredName={row.fromAccountName}
-                  />
-                </dd>
-              </div>
-            </dl>
-
-            <h1 className="text-2xl font-semibold leading-snug text-viscum-ink">
-              {workTitle}
-            </h1>
-
-            {description ? (
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
-                {description}
-              </p>
-            ) : (
-              <p className="text-[14px] text-viscum-muted">
-                本文スナップショットがありません。直依頼を送り直すとここに残ります。
-              </p>
-            )}
-
-            {focus.length > 0 ? (
-              <div className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
-                <p className="text-[13px] font-medium text-viscum-ink">
-                  聞きたいこと
-                </p>
-                <ol className="mt-2 list-decimal space-y-1 pl-5 text-[14px] leading-relaxed text-viscum-ink">
-                  {focus.map((line) => (
-                    <li key={line}>{line}</li>
-                  ))}
-                </ol>
-              </div>
-            ) : null}
-
-            <p className="rounded-md border border-dashed border-viscum-line px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
-              直依頼向けの詳細です（依頼時のコピー）。棚の公開シードとは別に、当事者だけがここから確認できます。
-            </p>
-
-            <p className="text-center text-sm">
+        <p className="px-4 pt-4 text-[12px] text-viscum-muted">
+          送付用ページと同じフォーマットです
+          {inviteHref ? (
+            <>
+              {" · "}
               <Link
-                href={threadHref}
-                className="text-viscum-brand hover:underline"
+                href={inviteHref}
+                className="font-medium text-viscum-brand underline"
               >
-                ← ご依頼DMに戻る
+                送付用URLを開く
               </Link>
-            </p>
-          </div>
-        </article>
+            </>
+          ) : null}
+        </p>
+        <DirectRequestOfferCard
+          snapshot={{
+            fromDisplayName: fromDisplay,
+            fromHandle: row.fromHandle,
+            workTitle,
+            workExternalUrl:
+              row.workExternalUrl?.trim() || liveWork?.externalUrl?.trim(),
+            workThumbUrl: thumbUrl || undefined,
+            workSummary:
+              row.workSummary?.trim() || liveBody || undefined,
+            pitch: row.pitch?.trim() || undefined,
+            amountYen: row.amountYen,
+            createdAt: row.createdAt,
+          }}
+        />
+        <p className="mt-6 px-4 text-center text-[13px]">
+          <Link href={threadHref} className="text-viscum-brand underline">
+            ← ご依頼DMに戻る
+          </Link>
+        </p>
       </main>
     </BrowseChrome>
   );
