@@ -8,6 +8,7 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import {
   clearLocalRequestDms,
+  formatRequestDmStamp,
   formatYen,
   isLegacyLocalRequestId,
   statusLabel,
@@ -427,6 +428,13 @@ export default function RequestDmThreadPage() {
                 <p className="mt-1 whitespace-pre-wrap text-viscum-ink">
                   {m.body}
                 </p>
+                {m.createdAt ? (
+                  <p className="mt-1.5 text-right text-[10px] tabular-nums text-viscum-muted">
+                    <time dateTime={m.createdAt}>
+                      {formatRequestDmStamp(m.createdAt)}
+                    </time>
+                  </p>
+                ) : null}
               </li>
             );
           })}
