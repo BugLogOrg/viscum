@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const metadata: Metadata = {
   title: "よくある質問 | VISCUM",
   description:
-    "VISCUMの社会的意義、誰が払うのか、手数料約10%、他サービスやサクラとの違い。",
+    "なぜこういう場が要るか、誰が払うのか、手数料約10%、他サービスやサクラとの違い。",
 };
 
 const FAQS: { q: string; body: ReactNode }[] = [
@@ -31,11 +31,11 @@ const FAQS: { q: string; body: ReactNode }[] = [
     ),
   },
   {
-    q: "AIで誰でも作れる時代に、なぜVISCUMが要るの？",
+    q: "なぜこういう場が要るの？",
     body: (
       <>
         <p>
-          作ることのハードルが下がるほど、足りなくなるのは「つくる力」ではなく
+          作ることのハードルが下がるほど（AIで誰でも出せるようになるほど特に）、足りなくなるのは「つくる力」ではなく
           <span className="font-medium">最初の反応を、誠実に集める回路</span>
           です。誰でも出せるのに、見た人・書いた人がいない——その空白が、これからの痛みになります。
         </p>
@@ -71,7 +71,7 @@ const FAQS: { q: string; body: ReactNode }[] = [
           </li>
         </ul>
         <p>
-          本丸は「メンターが稼ぐ副業アプリ」ではありません。AI時代に皆が作れるようになるからこそ、
+          本丸は「メンターが稼ぐ副業アプリ」ではありません。皆が作れるようになる時代だからこそ、
           <span className="font-medium">
             気後れせず反応を集め、誠実に払える浜
           </span>
@@ -392,7 +392,7 @@ export default function FaqPage() {
           よくある質問
         </h1>
         <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-viscum-muted">
-          AI時代になぜ要るか、お金の絡み方、手数料、他サービスとの違い、書いてくれる人の集まり方——最初に聞かれやすいところです。
+          なぜこういう場が要るか、お金の絡み方、手数料、他サービスとの違い、書いてくれる人の集まり方——最初に聞かれやすいところです。
         </p>
 
         <div className="mt-10 space-y-3">
