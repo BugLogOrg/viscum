@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const metadata: Metadata = {
   title: "よくある質問 | VISCUM",
   description:
-    "誰が払うのか、手数料約10%、他サービスとの違い、サクラとの違いについて。",
+    "VISCUMの社会的意義、誰が払うのか、手数料約10%、他サービスやサクラとの違い。",
 };
 
 const FAQS: { q: string; body: ReactNode }[] = [
@@ -26,6 +26,56 @@ const FAQS: { q: string; body: ReactNode }[] = [
         </p>
         <p>
           入場（見る・眺める）は無料。少額のコンペ＝小さな広告、という読みです。
+        </p>
+      </>
+    ),
+  },
+  {
+    q: "AIで誰でも作れる時代に、なぜVISCUMが要るの？",
+    body: (
+      <>
+        <p>
+          作ることのハードルが下がるほど、足りなくなるのは「つくる力」ではなく
+          <span className="font-medium">最初の反応を、誠実に集める回路</span>
+          です。誰でも出せるのに、見た人・書いた人がいない——その空白が、これからの痛みになります。
+        </p>
+        <p>いまの選択肢は、だいたい次に寄りがちです。</p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>知人にタダで見てもらう（気後れ・好意の借金）</li>
+          <li>
+            クラウドソーシング等で労働・納品を買う（欲しいのは「反応」なのに、別物を買う）
+          </li>
+          <li>サクラや星の水増しで、見せ場だけ整える</li>
+        </ul>
+        <p>
+          VISCUMはそのあいだに置く
+          <span className="font-medium">第三の道</span>
+          です。個人が作ったあと、少額でも「見てもらう・書いてもらう」にお金と手続きを乗せられる正規の出口。入場は無料で、払うのは出した側の任意。書く側にお金が回るのは、シーダーが採用・褒賞したあとです。
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <span className="font-medium">小さな広告費の正規化</span>
+            … バナー枠や影響力のレンタルではなく、反応そのものに値段が乗る
+          </li>
+          <li>
+            <span className="font-medium">投げ銭の受け手シフト</span>
+            … 配信者へではなく、反応をくれた人へ
+          </li>
+          <li>
+            <span className="font-medium">信用はスコアではなく支払いの事実</span>
+            … 「ちゃんと払う人か」が履歴として見える
+          </li>
+          <li>
+            <span className="font-medium">サクラではない反応の募り方</span>
+            … 人数保証・星の売買ではなく、稀少褒賞と作者の選択
+          </li>
+        </ul>
+        <p>
+          本丸は「メンターが稼ぐ副業アプリ」ではありません。AI時代に皆が作れるようになるからこそ、
+          <span className="font-medium">
+            気後れせず反応を集め、誠実に払える浜
+          </span>
+          が要る、という読みです。
         </p>
       </>
     ),
@@ -342,7 +392,7 @@ export default function FaqPage() {
           よくある質問
         </h1>
         <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-viscum-muted">
-          お金の絡み方、手数料、他サービスとの違い、書いてくれる人の集まり方、力量、フィードバックのズレ——最初に聞かれやすいところです。
+          AI時代になぜ要るか、お金の絡み方、手数料、他サービスとの違い、書いてくれる人の集まり方——最初に聞かれやすいところです。
         </p>
 
         <div className="mt-10 space-y-3">
