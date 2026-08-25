@@ -28,7 +28,7 @@ export default function SeedIntentPage() {
                 広く集める（棚に出す）
               </p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-ink">
-                無料コメント／VISCUM内コンペ／公開ブースト。作品一覧に載せて反応を募ります。公開ブーストは公式X紹介つき（リーチ非保証）。
+                無料コメント／VISCUM内コンペ／公開ブースト。作品一覧に載せて反応を募ります。人を集めるのは告知文のコピーが本線です（直依頼で参加を頼まない）。公開ブーストは公式X紹介つき（リーチ非保証）。
               </p>
               <p className="mt-2 text-[12px] font-medium text-viscum-brand">
                 棚レーンへ →
@@ -44,7 +44,7 @@ export default function SeedIntentPage() {
                 指名して頼む（直依頼）
               </p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-ink">
-                特定の人への有償オファー。棚には出ません。売りは支払い実績が見える取引の器です（公式Xブーストは付きません）。
+                特定の人への有償オファー。棚には出ません。売りは支払い実績が見える取引の器です（公式Xブーストは付きません）。コンペの代わりにはしません。
               </p>
               <p className="mt-2 text-[12px] font-medium text-viscum-brand">
                 直依頼レーンへ →
@@ -54,8 +54,11 @@ export default function SeedIntentPage() {
         </ul>
 
         <p className="text-center text-[12px] text-viscum-muted">
-          <Link href="/faq" className="underline hover:text-viscum-brand">
-            直依頼と公開ブーストのちがい（FAQ）
+          <Link
+            href="/faq#shelf-vs-request"
+            className="underline hover:text-viscum-brand"
+          >
+            棚コンペと直依頼のちがい（FAQ）
           </Link>
         </p>
       </main>

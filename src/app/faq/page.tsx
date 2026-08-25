@@ -7,10 +7,10 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const metadata: Metadata = {
   title: "よくある質問 | VISCUM",
   description:
-    "なぜこういう場が要るか、誰が払うのか、手数料約10%、他サービスやサクラとの違い。",
+    "なぜこういう場が要るか、棚と直依頼のちがい、プロフィール公開範囲、手数料約10%、他サービスやサクラとの違い。",
 };
 
-const FAQS: { q: string; body: ReactNode }[] = [
+const FAQS: { id?: string; q: string; body: ReactNode }[] = [
   {
     q: "VISCUMって何のサイト？",
     body: (
@@ -275,6 +275,69 @@ const FAQS: { q: string; body: ReactNode }[] = [
         <p>
           「返事した＝すぐ入金」ではありません。入るのは、シーダーが払ったあとです。不安なら、依頼主の支払実績（件数・累計）を先に見て判断して大丈夫です。希望日は目安で、過ぎてもすぐ失効する設計ではありません。提出→依頼主の完了承認で支払待ちになります。
         </p>
+        <p>
+          <span className="font-medium">いまは無理・未返信のまま</span>
+          でも、プロフィールに傷やペナルティは付きません。公開の看板は支払い完了の件数と合計だけです。一方的に届いた依頼を無視してよい、という意味でもあります（受け取りを止めたいときは受付OFFを後段で足す想定です）。
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "shelf-vs-request",
+    q: "棚コンペと直依頼のちがいは？人を集めるときは？",
+    body: (
+      <>
+        <p>
+          混ぜません。入り口もIDも別です。
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <span className="font-medium">棚（VISCUM内コンペ／公開ブースト）</span>
+            … 広く集める祭り。コメントと採用は公開が燃料です。
+          </li>
+          <li>
+            <span className="font-medium">直依頼</span>
+            … この人の反応が欲しいときの指名オファー。中身は棚に出ません。
+          </li>
+        </ul>
+        <p>
+          <span className="font-medium">直依頼でコンペにする</span>
+          のは向きません（指名の器に祭りを載せない）。
+          <span className="font-medium">コンペの参加者を増やしたい</span>
+          ときは直依頼ボタンではなく、
+          <span className="font-medium">告知文・URLのコピー</span>
+          を自分のSNSや友人に貼るのが本線です。「勝手に参加を呼びかけて」は、場が一斉DMするのではなく、シーダー自身の拡声です。
+        </p>
+      </>
+    ),
+  },
+  {
+    id: "profile-public",
+    q: "プロフィールには何が公開されるの？非公開コンペは？",
+    body: (
+      <>
+        <p>
+          シーダー実績の公開は
+          <span className="font-medium">支払い完了の件数と累計金額</span>
+          までです。直依頼の本文・相手一覧・やりとりはプロフィールに出しません（案件の当事者だけが見ます）。
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>
+            <span className="font-medium">コンペで選ばれたコメント</span>
+            … 既定で公開します。書く側の実績にもなります。
+          </li>
+          <li>
+            <span className="font-medium">非公開コンペや「高額だけ秘匿」</span>
+            … 置きません。企業案件っぽくなり、払った事実が外から検証できなくなるためです。
+          </li>
+          <li>
+            <span className="font-medium">中身を秘匿したい相談</span>
+            … 非公開コンペではなく、直依頼レーンを使います。
+          </li>
+        </ul>
+        <p>
+          スコアや順位はありません。完了した支払いと採用の事実だけが看板です。
+        </p>
       </>
     ),
   },
@@ -392,14 +455,15 @@ export default function FaqPage() {
           よくある質問
         </h1>
         <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-viscum-muted">
-          なぜこういう場が要るか、お金の絡み方、手数料、他サービスとの違い、書いてくれる人の集まり方——最初に聞かれやすいところです。
+          なぜこういう場が要るか、棚と直依頼のちがい、プロフィールに何が出るか、手数料、他サービスとの違い——最初に聞かれやすいところです。
         </p>
 
         <div className="mt-10 space-y-3">
           {FAQS.map((item) => (
             <details
               key={item.q}
-              className="group rounded-lg border border-viscum-line bg-white/50 open:bg-white/80"
+              id={item.id}
+              className="group scroll-mt-24 rounded-lg border border-viscum-line bg-white/50 open:bg-white/80"
             >
               <summary className="cursor-pointer list-none px-4 py-3.5 text-[15px] font-medium text-viscum-ink marker:content-none [&::-webkit-details-marker]:hidden">
                 <span className="flex items-start justify-between gap-3">

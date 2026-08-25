@@ -61,7 +61,7 @@ export function SeederCredibilityLink({
         依頼主の支払実績（確認用・任意）
       </p>
       <p className="mt-0.5 text-[11px] leading-relaxed text-viscum-muted">
-        スコアではありません。開くとプロフィールで支払い完了の件数が分かります。ここで何か送る必要はありません。
+        スコアではありません。開くとプロフィールで支払い完了の件数が分かります。直依頼の中身は公開されません。ここで何か送る必要はありません。
       </p>
       <p className="mt-2 text-[13px] text-viscum-ink">
         <span className="font-medium">{label.line}</span>
