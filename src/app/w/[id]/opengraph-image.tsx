@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { OgViscumMark } from "@/components/OgViscumMark";
 import {
+  OG_IMAGE_TITLE_MAX,
   resolveWorkForOg,
   siteOrigin,
   truncateForOg,
@@ -37,7 +38,10 @@ export default async function Image({
 
   const badge = work ? workOgBadge(work) : "VISCUM";
   const headline = work
-    ? truncateForOg(work.title?.trim() || work.tagline?.trim() || "", 100)
+    ? truncateForOg(
+        work.title?.trim() || work.tagline?.trim() || "",
+        OG_IMAGE_TITLE_MAX,
+      )
     : "作品が見つかりません";
   const rawThumb = work?.thumbUrl?.trim() || "";
   const thumb = rawThumb.startsWith("http")
