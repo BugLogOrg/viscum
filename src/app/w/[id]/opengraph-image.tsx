@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import {
   resolveWorkForOg,
   siteOrigin,
+  truncateForOg,
   workOgBadge,
 } from "@/lib/work-og";
 
@@ -32,6 +33,10 @@ export default async function Image({
   const fontData = await loadJpFont();
 
   const badge = work ? workOgBadge(work) : "VISCUM";
+  // 短い見出し優先（長文 title は載せない）
+  const headline = work
+    ? truncateForOg(work.tagline?.trim() || work.title, 48)
+    : "作品が見つかりません";
   const rawThumb = work?.thumbUrl?.trim() || "";
   const thumb = rawThumb.startsWith("http")
     ? rawThumb
@@ -57,7 +62,7 @@ export default async function Image({
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-start",
-            // 下〜140pxは X の title 黒帯領域。文言は上寄せのみ
+            // 下〜160pxは X の title 黒帯領域
             padding: "48px 48px 160px 48px",
           }}
         >
@@ -87,18 +92,18 @@ export default async function Image({
           >
             {badge}
           </div>
-          {/* タイトルは X 黒帯側。画像内はスローガンを上寄せで見せる */}
           <div
             style={{
               display: "flex",
-              marginTop: 36,
-              fontSize: 36,
+              marginTop: 28,
+              fontSize: 40,
               fontWeight: 700,
-              color: "#6b6358",
-              letterSpacing: "0.02em",
+              lineHeight: 1.35,
+              color: "#1f1a14",
+              maxWidth: thumb ? 620 : 1040,
             }}
           >
-            出して、聞いて、ブースト
+            {headline}
           </div>
         </div>
         {thumb ? (
