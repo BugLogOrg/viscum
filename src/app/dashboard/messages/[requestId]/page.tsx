@@ -313,6 +313,11 @@ export default function RequestDmThreadPage() {
   const inviteHref = row.inviteId
     ? `/dm/i/${encodeURIComponent(row.inviteId)}`
     : null;
+  /** 打ち切り・支払済・辞退後は案内文／再発行を出さない */
+  const inviteShareOpen =
+    row.status === "pending" ||
+    row.status === "accepted" ||
+    row.status === "pay_waiting";
   const amountYen = row.amountYen;
   const workExternalUrl =
     row.workExternalUrl?.trim() || liveWork?.externalUrl?.trim() || "";
@@ -323,7 +328,7 @@ export default function RequestDmThreadPage() {
   }
 
   async function copyOutboundAgain() {
-    if (!inviteHref || !origin || !row) return;
+    if (!inviteHref || !origin || !row || !inviteShareOpen) return;
     const { prompts } = splitRequestSummary(seedBody);
     const pitch = pitchText;
     const askBullets =
@@ -352,7 +357,7 @@ export default function RequestDmThreadPage() {
   }
 
   async function reissueInviteFromThread() {
-    if (!row?.inviteId || !handle || reissueBusy) return;
+    if (!row?.inviteId || !handle || reissueBusy || !inviteShareOpen) return;
     const ok = window.confirm(
       "いまの招待リンクを無効化して、新しいURLを発行します。\n既に送った案内のリンクは開けなくなります。よろしいですか？",
     );
@@ -535,7 +540,7 @@ export default function RequestDmThreadPage() {
             ) : null}
           </h1>
           <p className="text-[12px] text-viscum-muted">
-            {inviteHref ? (
+            {inviteHref && inviteShareOpen ? (
               <>
                 <Link
                   href={inviteHref}
@@ -548,12 +553,12 @@ export default function RequestDmThreadPage() {
               "ご依頼ごとのやりとり"
             )}
           </p>
-          {row.outboundUnassigned ? (
+          {row.outboundUnassigned && inviteShareOpen ? (
             <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
               相手はまだ決まっていません。下のお願いカードは送付用リンクと同じ内容です。案内を渡して返事を待っています。
             </p>
           ) : null}
-          {isSeeder && inviteHref ? (
+          {isSeeder && inviteHref && inviteShareOpen ? (
             <div className="mt-2 space-y-2">
               <div className="flex flex-wrap gap-2">
                 <button

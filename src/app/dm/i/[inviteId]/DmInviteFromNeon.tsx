@@ -314,15 +314,11 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                 <SiteFooter />
               </>
             ) : (
-              <div className="space-y-4 px-4 pb-8">
-                <section className="rounded-xl border border-viscum-line bg-viscum-paper-2/50 px-4 py-4">
-                  <p className="text-[13px] font-medium text-viscum-ink">
-                    VISCUMって何？
-                  </p>
-                  <p className="mt-1.5 text-[12px] leading-relaxed text-viscum-muted">
-                    シーダーが作品を出し、必要なときだけフィードバックをお願いする場です。入場無料。
-                  </p>
-                </section>
+              <div className="space-y-4 pb-8">
+                <SeederCredibilityLink handle={invite.fromHandle} />
+                <p className="text-[12px] leading-relaxed text-viscum-muted">
+                  依頼主が誰か・ちゃんと払ってきたかは、上のプロフィールから確認できます（直依頼の中身は公開されません）。
+                </p>
                 <SiteFooter />
               </div>
             )

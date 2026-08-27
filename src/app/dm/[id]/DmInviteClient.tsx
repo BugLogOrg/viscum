@@ -126,7 +126,9 @@ export function DmInviteClient({
           </div>
 
           <section className="space-y-2">
-            <p className="text-[12px] text-viscum-muted">お願いの内容</p>
+            <p className="text-[12px] text-viscum-muted">
+              お願いしたいことの概要
+            </p>
             <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
               {work.description}
             </p>

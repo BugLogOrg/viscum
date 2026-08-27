@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
-import { requestDms, users } from "@/db/schema";
+import { requestDms, users, dmInvites } from "@/db/schema";
 import {
   closesAtFromDeadlineDays,
   type RequestDmStatus,
@@ -213,6 +213,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
     status = "closed";
     pushNote("依頼主がこのお願いを打ち切りました。");
+    const inviteId = loaded.row.inviteId?.trim();
+    if (inviteId) {
+      await db
+        .update(dmInvites)
+        .set({ revokedAt: new Date() })
+        .where(eq(dmInvites.id, inviteId));
+    }
   }
 
   if (

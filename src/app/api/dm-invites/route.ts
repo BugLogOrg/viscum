@@ -47,7 +47,7 @@ export async function POST(req: Request) {
   let workSummary = body?.workSummary?.trim().slice(0, 12_000) || null;
   let amountYen = coerceDirectRequestAmountYen(body?.amountYen, 5000);
   let pitch =
-    body?.pitch?.trim().slice(0, 4000) ||
+    body?.pitch?.trim().slice(0, 1000) ||
     "共有リンクから直依頼しました。よろしくお願いします。";
   let closesAt: Date | null =
     typeof body?.closesInHours === "number" &&
@@ -239,11 +239,12 @@ export async function GET(req: Request) {
   const fromHandle = (from?.handle ?? "").replace(/^@/, "") || "unknown";
   const fromAccountName = from?.name?.trim() || undefined;
 
-  // 未ログイン: タイトル・概要級・金額のみ（作品URL・詳細・希望日は出さない）
+  // 未ログイン: タイトル・概要級・金額・ご挨拶（作品URL・詳細・希望日は出さない）
   if (!isLoggedIn) {
     const teaser =
       inviteTeaserSummary(row.workSummary) ||
       "ログインすると作品URLとお願いの詳細を確認できます。";
+    const pitchPublic = row.pitch?.trim().slice(0, 1000) || undefined;
     return NextResponse.json({
       reveal: "teaser" as const,
       invite: {
@@ -253,6 +254,7 @@ export async function GET(req: Request) {
         fromHandle,
         fromAccountName,
         teaserSummary: teaser,
+        ...(pitchPublic ? { pitch: pitchPublic } : {}),
       },
       persisted: true,
     });

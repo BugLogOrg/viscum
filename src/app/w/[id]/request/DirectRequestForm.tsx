@@ -66,7 +66,7 @@ function normalizeChecklist(rows: string[] | undefined): string[] {
   return cleaned.length ? cleaned.slice(0, MAX_DR_CHECKLIST) : [];
 }
 
-/** 一言＋聞きたいこと（compose親／フォーム内の両方で使う） */
+/** ご挨拶＋聞きたいこと（compose親／フォーム内の両方で使う） */
 export function DirectRequestPitchFields({
   message,
   onMessageChange,
@@ -86,20 +86,24 @@ export function DirectRequestPitchFields({
           htmlFor="request-message"
           className="text-[13px] font-medium text-viscum-ink"
         >
-          お願いの一言{" "}
+          ご挨拶{" "}
           <span className="font-normal text-viscum-muted">任意</span>
         </label>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
-          「なぜ頼むか」など短い一言。空でも進めます。案内文の補足にも使えます。
+          自己紹介や「なぜ頼むか」など。空でも進めます。未ログインの着地にも出ます（最大1000字・http(s)のURL可）。
         </p>
         <textarea
           id="request-message"
-          rows={2}
+          rows={4}
+          maxLength={1000}
           value={message}
           onChange={(e) => onMessageChange(e.target.value)}
           className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
-          placeholder="例: UIの初見だけ見てほしいです"
+          placeholder="例: ○○です。実績→ https://…／初見だけ見てほしいです"
         />
+        <p className="mt-1 text-right text-[11px] text-viscum-muted">
+          {message.length}/1000
+        </p>
       </div>
       <div>
         <p className="text-[13px] font-medium text-viscum-ink">
