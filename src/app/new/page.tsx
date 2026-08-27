@@ -28,7 +28,7 @@ export default function SeedIntentPage() {
                 広く集める（棚に出す）
               </p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-ink">
-                無料コメント／VISCUM内コンペ／公開ブースト。作品一覧に載せて反応を募ります。人を集めるのは告知文のコピーが本線です（直依頼で参加を頼まない）。公開ブーストは公式X紹介つき（リーチ非保証）。
+                無料コメント／VISCUM内コンペ／公開ブースト。作品一覧に載せて反応を募ります。人を集めるのは告知文のコピーが本線です（直依頼で参加を頼まない）。有料コンペ（¥5k／¥10k／¥30k）は公式X紹介つき（リーチ非保証）。
               </p>
               <p className="mt-2 text-[12px] font-medium text-viscum-brand">
                 棚レーンへ →
