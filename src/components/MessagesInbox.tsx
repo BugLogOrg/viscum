@@ -6,9 +6,9 @@ import type { RequestDm } from "@/lib/local-request-dms";
 import {
   formatRequestDmStamp,
   formatYen,
-  statusLabel,
 } from "@/lib/local-request-dms";
 import { displayRequestWorkTitle } from "@/lib/local-seeds";
+import { RequestDeliverableStatus } from "@/components/RequestDeliverableStatus";
 
 type Tab = "all" | "inbox" | "sent";
 
@@ -171,15 +171,10 @@ export function MessagesInbox({
                           </span>
                         ) : null}
                       </p>
-                      <span
-                        className={`shrink-0 text-[11px] ${
-                          outbound || r.status === "pending"
-                            ? "font-medium text-viscum-berry-deep"
-                            : "text-viscum-muted"
-                        }`}
-                      >
-                        {outbound ? "返事待ち" : statusLabel(r.status)}
-                      </span>
+                      <RequestDeliverableStatus
+                        status={r.status}
+                        dense
+                      />
                     </div>
                     <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
                       {formatYen(r.amountYen)} ·{" "}

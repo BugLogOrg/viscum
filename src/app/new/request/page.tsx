@@ -167,6 +167,7 @@ export default function NewDirectRequestPage() {
           externalUrl: externalUrl.trim(),
           focusNote,
           thumbDataUrl: thumbDataUrl ?? seeds[i].thumbDataUrl,
+          updatedAt: new Date().toISOString(),
         };
         writeLocalSeeds(seeds);
       }

@@ -204,13 +204,42 @@ export function formatYen(amount: number): string {
   return `¥${amount.toLocaleString("ja-JP")}`;
 }
 
+/** 一覧・ヘッダ用の短い成果物ステータス */
 export function statusLabel(status: RequestDmStatus): string {
-  if (status === "accepted") return "引き受け済み";
-  if (status === "declined") return "いまは無理";
-  if (status === "pay_waiting") return "支払待ち";
-  if (status === "paid") return "支払済";
+  if (status === "accepted") return "作業中（未提出）";
+  if (status === "declined") return "辞退";
+  if (status === "pay_waiting") return "提出済み・承認待ち";
+  if (status === "paid") return "完了・支払済";
   if (status === "closed") return "打ち切り";
-  return "未返信";
+  return "返事待ち";
+}
+
+/** DM本文・ダッシュボード向けの説明（正本はご依頼DMのやりとり） */
+export function deliverableStatusHint(status: RequestDmStatus): string {
+  if (status === "accepted") {
+    return "引き受け済み。成果はDMに書いて「提出する」。依頼主の完了承認が検品です。";
+  }
+  if (status === "declined") {
+    return "辞退で終了しています。";
+  }
+  if (status === "pay_waiting") {
+    return "提出済み。依頼主が内容を確認し、完了承認・支払いへ進みます。";
+  }
+  if (status === "paid") {
+    return "完了・支払済。公開実績（件数・累計¥）に載ります。";
+  }
+  if (status === "closed") {
+    return "依頼主が打ち切りました。";
+  }
+  return "相手の引き受け待ちです。成果物はまだありません。";
+}
+
+/** ステータス変化メモ（DM本文に自動投稿される文）かどうか */
+export function isDeliverableStatusNote(body: string, fromHandle: string): boolean {
+  if (fromHandle.toLowerCase() === "system") return true;
+  return /^(やる、と返しました|いまは無理、と返しました|提出しました|完了を承認しました|完了承認・お支払いが完了しました|依頼主がこのお願いを打ち切りました|希望日を\d+日延ばしました)/.test(
+    body.trim(),
+  );
 }
 
 /** ご依頼DM一覧・スレ用の日時（例: 2026/08/24 20:10） */

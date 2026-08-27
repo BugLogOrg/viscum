@@ -20,9 +20,13 @@ import {
   unlistLocalSeed,
   publishLocalSeedToShelf,
   workFromLocalSeed,
+  formatLocalSeedStamp,
+  localSeedSavedAt,
+  localSeedClosesAt,
   type LocalSeed,
 } from "@/lib/local-seeds";
 import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
+import { DashboardDirectRequestStatus } from "@/components/DashboardDirectRequestStatus";
 
 function SeedMetrics({ s }: { s: LocalSeed }) {
   return (
@@ -48,6 +52,8 @@ function SeedMetrics({ s }: { s: LocalSeed }) {
 }
 
 function SeedCardChrome({ s }: { s: LocalSeed }) {
+  const savedAt = localSeedSavedAt(s);
+  const closesAt = localSeedClosesAt(s);
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
@@ -81,6 +87,19 @@ function SeedCardChrome({ s }: { s: LocalSeed }) {
       </div>
       <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
         {s.title}
+      </p>
+      <p className="mt-1.5 space-y-0.5 text-[11px] tabular-nums leading-relaxed text-viscum-muted">
+        <span className="block">
+          作成 {formatLocalSeedStamp(s.createdAt)}
+        </span>
+        <span className="block">
+          保存 {formatLocalSeedStamp(savedAt)}
+        </span>
+        {closesAt ? (
+          <span className="block text-viscum-berry-deep">
+            締切 {formatLocalSeedStamp(closesAt.toISOString())}
+          </span>
+        ) : null}
       </p>
       <SeedMetrics s={s} />
     </>
@@ -196,6 +215,12 @@ export default function DashboardPage() {
                 ご依頼DM
               </Link>
               <a
+                href="#request-status"
+                className="text-[13px] font-medium text-viscum-brand underline"
+              >
+                直依頼の進捗
+              </a>
+              <a
                 href="#drafts"
                 className="text-[13px] font-medium text-viscum-brand underline"
               >
@@ -212,6 +237,8 @@ export default function DashboardPage() {
             ログアウト
           </button>
         </div>
+
+        {handle ? <DashboardDirectRequestStatus handle={handle} /> : null}
 
         <section id="drafts" className="scroll-mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">

@@ -13,11 +13,12 @@ import {
   estimateSeederPaysYen,
   formatRequestAmountLabel,
   formatRequestDmStamp,
+  isDeliverableStatusNote,
   isLegacyLocalRequestId,
   isRequestDeadlinePassed,
-  statusLabel,
   type RequestDm,
 } from "@/lib/local-request-dms";
+import { RequestDeliverableStatus } from "@/components/RequestDeliverableStatus";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import {
   displayRequestWorkTitle,
@@ -441,10 +442,8 @@ export default function RequestDmThreadPage() {
             ) : null}
           </h1>
           <p className="text-[12px] text-viscum-muted">
-            状態: {statusLabel(row.status)}
             {inviteHref ? (
               <>
-                {" · "}
                 <Link
                   href={inviteHref}
                   className="font-medium text-viscum-brand underline"
@@ -452,7 +451,9 @@ export default function RequestDmThreadPage() {
                   送付用ページ（正本）
                 </Link>
               </>
-            ) : null}
+            ) : (
+              "ご依頼ごとのやりとり"
+            )}
           </p>
           {row.outboundUnassigned ? (
             <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
@@ -517,6 +518,8 @@ export default function RequestDmThreadPage() {
         />
 
         <div className="px-4">
+        <RequestDeliverableStatus status={row.status} className="mt-4" />
+
         {isRequestDeadlinePassed(row.closesAt) &&
         row.status !== "paid" &&
         row.status !== "declined" &&
@@ -665,22 +668,33 @@ export default function RequestDmThreadPage() {
         <ul className="mt-5 space-y-3">
           {threadMessages.map((m) => {
             const mine = m.fromHandle.toLowerCase() === me;
-            const name = mine
-              ? displayAccountName(handle, readLocalProfile(handle))
-              : m.fromHandle === row.fromHandle
-                ? row.fromAccountName || m.fromHandle
-                : m.fromHandle;
+            const statusNote = isDeliverableStatusNote(m.body, m.fromHandle);
+            const name = statusNote
+              ? "ステータス"
+              : mine
+                ? displayAccountName(handle, readLocalProfile(handle))
+                : m.fromHandle === row.fromHandle
+                  ? row.fromAccountName || m.fromHandle
+                  : m.fromHandle;
             return (
               <li
                 key={m.id}
                 className={`rounded-lg border px-3 py-2.5 text-[14px] leading-relaxed ${
-                  mine
-                    ? "ml-6 border-viscum-brand/25 bg-viscum-leaf-soft/40"
-                    : "mr-6 border-viscum-line bg-white/60"
+                  statusNote
+                    ? "border-dashed border-viscum-line bg-viscum-paper-2/50 text-[13px]"
+                    : mine
+                      ? "ml-6 border-viscum-brand/25 bg-viscum-leaf-soft/40"
+                      : "mr-6 border-viscum-line bg-white/60"
                 }`}
               >
                 <p className="text-[11px] text-viscum-muted">
-                  {name} · @{m.fromHandle}
+                  {name}
+                  {statusNote ? null : (
+                    <>
+                      {" "}
+                      · @{m.fromHandle}
+                    </>
+                  )}
                 </p>
                 <p className="mt-1 whitespace-pre-wrap text-viscum-ink">
                   {m.body}

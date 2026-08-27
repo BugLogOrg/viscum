@@ -40,6 +40,8 @@ export type LocalSeed = {
   bookmarkCount: number;
   commentCount: number;
   createdAt: string;
+  /** 一旦保存・内容更新の日時（未設定＝作成時のみ） */
+  updatedAt?: string;
 };
 
 const KEY = "viscum_local_seeds_v1";
@@ -105,6 +107,7 @@ export function addLocalSeed(
     bookmarkCount: 0,
     commentCount: 0,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
   const next = [row, ...readLocalSeeds()];
   writeLocalSeeds(next);
@@ -117,7 +120,12 @@ export function publishLocalSeedToShelf(id: string): LocalSeed | null {
   const i = seeds.findIndex((s) => s.id === id);
   if (i < 0) return null;
   if (isDirectRequestLane(seeds[i])) return null;
-  seeds[i] = { ...seeds[i], listedOnShelf: true, lane: "shelf" };
+  seeds[i] = {
+    ...seeds[i],
+    listedOnShelf: true,
+    lane: "shelf",
+    updatedAt: new Date().toISOString(),
+  };
   writeLocalSeeds(seeds);
   return seeds[i];
 }
@@ -161,7 +169,11 @@ export function unlistLocalSeed(
   if (!isLocalSeedOwner(seeds[i], actorHandle)) {
     return { ok: false, error: "シーダー本人だけ操作できます" };
   }
-  seeds[i] = { ...seeds[i], listedOnShelf: false };
+  seeds[i] = {
+    ...seeds[i],
+    listedOnShelf: false,
+    updatedAt: new Date().toISOString(),
+  };
   writeLocalSeeds(seeds);
   return { ok: true, seed: seeds[i] };
 }
@@ -326,6 +338,35 @@ export function isDemoSeed(id: string) {
 /** 場内シード詳細は常に `/w/[id]`（local_* 含む） */
 export function workDetailHref(seed: LocalSeed): string {
   return `/w/${seed.id}`;
+}
+
+/** ダッシュボード用：作成・保存日時の表示（例: 2026/8/27 15:10） */
+export function formatLocalSeedStamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat("ja-JP", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+}
+
+/** 最終保存（一旦保存）日時。未設定なら作成日 */
+export function localSeedSavedAt(seed: Pick<LocalSeed, "createdAt" | "updatedAt">): string {
+  return seed.updatedAt || seed.createdAt;
+}
+
+/** 締切絶対時刻（作成日＋closesInDays）。なければ null */
+export function localSeedClosesAt(
+  seed: Pick<LocalSeed, "createdAt" | "closesInDays">,
+): Date | null {
+  if (seed.closesInDays == null || seed.closesInDays <= 0) return null;
+  const ms = Date.parse(seed.createdAt);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms + seed.closesInDays * 86_400_000);
 }
 
 /** 直依頼／DM用に LocalSeed → Work 形へ（デモ詳細なしでもタイトルを載せる） */
