@@ -107,7 +107,7 @@ export default function LoginPage() {
       <main className="px-4 py-8">
         <h1 className="text-xl font-semibold text-viscum-ink">ログイン</h1>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
-          見る・読むは登録なしのままです。ログインすると、自分用のダッシュボードと、シード／書く／払う／PFコメントが使えます。
+          見る・読むは登録なしのままです。ログインすると、自分用のダッシュボードと、シード／書く／払う／受け取る／PFコメントが使えます。
         </p>
 
         {magicLinkUi ? (
