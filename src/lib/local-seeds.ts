@@ -223,8 +223,9 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       id: "promo-15s",
       seederHandle,
       title:
-        "宅配ボックスIoTの15秒プロモ。冒頭1秒で何の製品か分かるかだけ見てほしい（初見レビュー）",
-      description: "表示デモ用。初見レビュー ¥5,000。",
+        "宅配ボックスIoTの15秒プロモ。冒頭1秒で何の製品か、音なしでも伝わるか。掴みとテロップを見てほしい（初見レビュー・¥5,000）",
+      description:
+        "表示デモ用。初見レビュー ¥5,000。見る範囲は冒頭15秒だけでOK。",
       focusNote: courseById("first_impression").questions.join("\n"),
       externalUrl: "https://example.com/promo",
       tags: ["動画"],
@@ -242,8 +243,9 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       id: "novel-open",
       seederHandle,
       title:
-        "短編『団地の屋上』冒頭の改善提案。続きが読みたくなるか、一人目の印象は残るか",
-      description: "表示デモ用。改善提案 ¥10,000。",
+        "短編『団地の屋上』あらすじ＋冒頭800字の改善提案。続きが読みたくなるか、一人目の印象は残るか（¥10,000）",
+      description:
+        "表示デモ用。改善提案 ¥10,000。全文ではなく入口だけのレビュー。",
       focusNote: courseById("brush_up").questions.join("\n"),
       externalUrl: "https://example.com/novel",
       tags: ["小説"],
@@ -261,8 +263,9 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       id: "recipe-site",
       seederHandle,
       title:
-        "5分レシピ棚の公開。検索せずにTonightが出るかだけコメント歓迎（無料コメント）",
-      description: "表示デモ用。無料コメント。ほぼ届いていない例。",
+        "一人暮らし向け5分レシピ棚の公開。検索せずにTonightが出るか、写真と手順はスマホで辛くないか（無料コメント）",
+      description:
+        "表示デモ用。無料コメント。ほぼ届いていない例。",
       externalUrl: "https://example.com/recipe",
       tags: ["Web"],
       status: "none",
@@ -277,8 +280,9 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       id: "chrome-ext-store",
       seederHandle,
       title:
-        "タブ整理Chrome拡張の公開ブースト。ストア／SNSへ正直な反応→報告（予算¥30,000）",
-      description: "表示デモ用。公開ブースト。記入後報告→選んで褒賞。",
+        "タブ整理Chrome拡張の公開ブースト。ストア／SNSへ正直な反応→報告。権限は怖くないか、何が片付くか（予算¥30,000）",
+      description:
+        "表示デモ用。公開ブースト。記入後報告→選んで褒賞。",
       focusNote: PUBLIC_BOOST.criteria.join("\n"),
       externalUrl: "https://example.com/ext",
       tags: ["アプリ"],

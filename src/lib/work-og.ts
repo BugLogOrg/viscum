@@ -24,7 +24,7 @@ export function siteOrigin(): string {
 }
 
 /** OG画像URLのクエリ。見た目変更時に上げて X／CDN キャッシュを切る */
-export const OG_IMAGE_BUST = "20260828e";
+export const OG_IMAGE_BUST = "20260828f";
 
 
 export function truncateForOg(text: string, max: number): string {
