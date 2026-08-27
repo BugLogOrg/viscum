@@ -24,13 +24,10 @@ export function siteOrigin(): string {
 }
 
 /** OG画像URLのクエリ。見た目変更時に上げて X／CDN キャッシュを切る */
-export const OG_IMAGE_BUST = "20260828l";
+export const OG_IMAGE_BUST = "20260828m";
 
-/**
- * カード画像内に描くタイトル上限。
- * og:title（黒帯・LINE太字）は WORK_TITLE_MAX=100 のまま。画像だけ短くして二重感を抑える。
- */
-export const OG_IMAGE_TITLE_MAX = 48;
+/** カード画像内タイトル。作品タイトル上限（100）と同じ */
+export const OG_IMAGE_TITLE_MAX = 100;
 
 
 export function truncateForOg(text: string, max: number): string {
