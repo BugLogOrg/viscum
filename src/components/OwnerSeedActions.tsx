@@ -17,9 +17,13 @@ import {
   type LocalSeed,
 } from "@/lib/local-seeds";
 import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
+import { buildWorkShareText } from "@/lib/work-share-text";
+import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
+import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
+import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
 
 /**
- * シーダー本人だけ：棚から外す／削除。
+ * シーダー本人だけ：棚から外す／削除／告知文コピー。
  * local_* 以外（デモ棚）には出さない。
  */
 export function OwnerSeedActions({
@@ -34,6 +38,7 @@ export function OwnerSeedActions({
   const [seed, setSeed] = useState<LocalSeed | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [origin, setOrigin] = useState("");
 
   const handle = session?.user?.handle?.trim() ?? "";
   const stub: LocalSeed = {
@@ -52,6 +57,10 @@ export function OwnerSeedActions({
   };
 
   useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
+
+  useEffect(() => {
     if (!isClientSeedId(workId)) {
       setSeed(null);
       return;
@@ -65,19 +74,38 @@ export function OwnerSeedActions({
 
   const listed = seed ? isLocalSeedListed(seed) : false;
   const direct = seed ? isDirectRequestLane(seed) : workId.startsWith("drq_");
+  const fromLabel = displayAccountName(handle, readLocalProfile(handle));
 
   if (direct) {
     return (
       <div className="rounded-lg border border-viscum-line bg-white/60 px-3 py-3 space-y-2">
         <p className="text-[12px] font-medium text-viscum-ink">
-          直依頼用メモ（棚には出ません）
+          直依頼用メモ（棚には出ません・本人のみ）
         </p>
-        <Link
-          href={`/w/${encodeURIComponent(workId)}/request`}
-          className="inline-flex rounded-md bg-viscum-berry px-3 py-1.5 text-[13px] font-medium text-white hover:bg-viscum-berry-deep"
-        >
-          直依頼を続ける
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/w/${encodeURIComponent(workId)}/request`}
+            className="inline-flex rounded-md bg-viscum-berry px-3 py-1.5 text-[13px] font-medium text-white hover:bg-viscum-berry-deep"
+          >
+            直依頼を続ける
+          </Link>
+          <ShareTextCopyButton
+            label="案内文をコピー"
+            emptyHint="先に直依頼画面でリンクを確定してください"
+            getText={() => {
+              if (!seed || !origin || !handle) return null;
+              return buildCachedOutboundShareText({
+                workId: seed.id,
+                workTitle: seed.title,
+                workExternalUrl: seed.externalUrl,
+                focusNote: seed.focusNote,
+                fromHandle: handle,
+                fromLabel,
+                origin,
+              });
+            }}
+          />
+        </div>
       </div>
     );
   }
@@ -88,9 +116,16 @@ export function OwnerSeedActions({
         シーダー操作（本人のみ）
       </p>
       <p className="text-[11px] leading-relaxed text-viscum-muted">
-        公開の取り消しは「下書きに戻す」。完全に消すときは「削除」。ログイン中のシーダー本人だけ操作できます。
+        公開の取り消しは「下書きに戻す」。完全に消すときは「削除」。告知文はSNS貼り付け用です。
       </p>
       <div className="flex flex-wrap gap-2">
+        {seed && origin ? (
+          <ShareTextCopyButton
+            getText={() =>
+              buildWorkShareText(workFromLocalSeed(seed), origin)
+            }
+          />
+        ) : null}
         {listed ? (
           <button
             type="button"

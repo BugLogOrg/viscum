@@ -59,6 +59,11 @@ export function getDemoSeederProfile(
   return PROFILES.find((p) => p.handle.toLowerCase() === key);
 }
 
+/** デモ棚の予約ハンドル（表示デモ用アカウント） */
+export function isDemoSeederHandle(handle: string): boolean {
+  return Boolean(getDemoSeederProfile(handle));
+}
+
 /** 表示用：アカウント名＋@英語ID（同名なら @ID のみ） */
 export function accountLabelForHandle(
   handle: string,

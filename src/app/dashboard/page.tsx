@@ -27,6 +27,10 @@ import {
 } from "@/lib/local-seeds";
 import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
 import { DashboardDirectRequestStatus } from "@/components/DashboardDirectRequestStatus";
+import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
+import { buildWorkShareText } from "@/lib/work-share-text";
+import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
+import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 
 function SeedMetrics({ s }: { s: LocalSeed }) {
   return (
@@ -110,12 +114,17 @@ export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [seeds, setSeeds] = useState<LocalSeed[]>([]);
   const [demoOn, setDemoOn] = useState(false);
+  const [origin, setOrigin] = useState("");
 
   function refresh() {
     const h = session?.user?.handle;
     setSeeds(readLocalSeeds());
     setDemoOn(h ? hasDemoSeeds(h) : false);
   }
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     refresh();
@@ -185,6 +194,9 @@ export default function DashboardPage() {
   }
 
   const handle = session.user.handle;
+  const fromLabel = handle
+    ? displayAccountName(handle, readLocalProfile(handle))
+    : "";
 
   return (
     <BrowseChrome>
@@ -298,6 +310,13 @@ export default function DashboardPage() {
                     >
                       公開する
                     </button>
+                    {origin ? (
+                      <ShareTextCopyButton
+                        getText={() =>
+                          buildWorkShareText(workFromLocalSeed(s), origin)
+                        }
+                      />
+                    ) : null}
                     <Link
                       href={`/w/${encodeURIComponent(s.id)}?seeded=1`}
                       className="rounded-md border border-viscum-brand px-3 py-1.5 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
@@ -374,6 +393,23 @@ export default function DashboardPage() {
                     >
                       直依頼を続ける
                     </Link>
+                    {origin && handle ? (
+                      <ShareTextCopyButton
+                        label="案内文をコピー"
+                        emptyHint="先に直依頼画面でリンクを確定してください"
+                        getText={() =>
+                          buildCachedOutboundShareText({
+                            workId: s.id,
+                            workTitle: s.title,
+                            workExternalUrl: s.externalUrl,
+                            focusNote: s.focusNote,
+                            fromHandle: handle,
+                            fromLabel,
+                            origin,
+                          })
+                        }
+                      />
+                    ) : null}
                     <button
                       type="button"
                       className="px-1 py-1.5 text-[12px] text-viscum-berry-deep underline"
@@ -465,6 +501,13 @@ export default function DashboardPage() {
                   </Link>
                   {s.id.startsWith("local_") && !isDemoSeed(s.id) ? (
                     <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                      {origin ? (
+                        <ShareTextCopyButton
+                          getText={() =>
+                            buildWorkShareText(workFromLocalSeed(s), origin)
+                          }
+                        />
+                      ) : null}
                       {isLocalSeedListed(s) ? (
                         <button
                           type="button"
@@ -496,6 +539,20 @@ export default function DashboardPage() {
                       >
                         削除
                       </button>
+                      <Link
+                        href={`/w/${encodeURIComponent(s.id)}`}
+                        className="text-[12px] text-viscum-brand underline"
+                      >
+                        詳細
+                      </Link>
+                    </div>
+                  ) : origin && (isDemoSeed(s.id) || !s.id.startsWith("local_")) ? (
+                    <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                      <ShareTextCopyButton
+                        getText={() =>
+                          buildWorkShareText(workFromLocalSeed(s), origin)
+                        }
+                      />
                       <Link
                         href={`/w/${encodeURIComponent(s.id)}`}
                         className="text-[12px] text-viscum-brand underline"

@@ -148,7 +148,7 @@ export function PortfolioHeader({
               <span>@{handle}</span>
               {demo ? (
                 <span className="shrink-0 rounded-full bg-viscum-line/70 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
-                  デモアカウントです
+                  デモ用アカウント
                 </span>
               ) : null}
             </p>

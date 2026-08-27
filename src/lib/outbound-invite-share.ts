@@ -1,6 +1,9 @@
 /** 外向け案内文（コピペ）。着地URLは確定後の本物のみ。 */
 
-import { DIRECT_REQUEST_DEADLINE_PRESETS } from "@/lib/local-request-dms";
+import {
+  DIRECT_REQUEST_DEADLINE_PRESETS,
+  formatRequestAmountLabel,
+} from "@/lib/local-request-dms";
 
 /** compose時（closesAt未確定）用 */
 export function shareDeadlineLabelFromDays(days: number): string {
@@ -107,4 +110,41 @@ export function writeCachedOutboundInvite(
   } catch {
     /* ignore */
   }
+}
+
+/**
+ * ダッシュボード等から、確定済み招待の案内文を再構成。
+ * 未確定なら null（直依頼画面でリンク確定が必要）。
+ */
+export function buildCachedOutboundShareText(input: {
+  workId: string;
+  workTitle: string;
+  workExternalUrl?: string;
+  focusNote?: string;
+  fromHandle: string;
+  fromLabel: string;
+  origin: string;
+}): string | null {
+  const cached = readCachedOutboundInvite(input.workId, input.fromHandle);
+  if (!cached?.invitePath) return null;
+  const origin = input.origin.replace(/\/$/, "");
+  const askBullets = (input.focusNote ?? "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const bullets =
+    askBullets.length > 0
+      ? askBullets
+      : ["初見の感想を短くいただけると助かります。"];
+  const path = cached.invitePath.startsWith("/")
+    ? cached.invitePath
+    : `/${cached.invitePath}`;
+  return buildOutboundInviteShareText({
+    fromLabel: input.fromLabel,
+    workTitle: input.workTitle,
+    workUrl: input.workExternalUrl?.trim() || undefined,
+    askBullets: bullets,
+    amountLabel: formatRequestAmountLabel(cached.amountYen),
+    inviteUrl: `${origin}${path}`,
+  });
 }
