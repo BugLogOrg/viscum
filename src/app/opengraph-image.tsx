@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { OgViscumMark } from "@/components/OgViscumMark";
 
 export const alt = "VISCUM | 広告×コンペ";
 export const size = { width: 1200, height: 630 };
@@ -35,8 +36,25 @@ export default async function Image() {
           color: "#fff",
         }}
       >
-        <div style={{ display: "flex", fontSize: 32, letterSpacing: "0.08em" }}>
-          VISCUM | 広告×コンペ
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 16,
+          }}
+        >
+          <OgViscumMark size={52} />
+          <div
+            style={{
+              display: "flex",
+              fontSize: 32,
+              letterSpacing: "0.08em",
+              lineHeight: 1,
+            }}
+          >
+            VISCUM | 広告×コンペ
+          </div>
         </div>
         <div
           style={{

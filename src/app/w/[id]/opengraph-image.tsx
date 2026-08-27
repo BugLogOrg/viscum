@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { OgViscumMark } from "@/components/OgViscumMark";
 import {
   resolveWorkForOg,
   siteOrigin,
@@ -35,7 +36,6 @@ export default async function Image({
   const fontData = await loadJpFont();
 
   const badge = work ? workOgBadge(work) : "VISCUM";
-  // 短いタイトル優先（長文は説明欄）
   const headline = work
     ? truncateForOg(work.title?.trim() || work.tagline?.trim() || "", 100)
     : "作品が見つかりません";
@@ -64,32 +64,50 @@ export default async function Image({
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-start",
-            // 下〜160pxは X の title 黒帯領域
             padding: "48px 48px 160px 48px",
           }}
         >
           <div
             style={{
               display: "flex",
-              fontSize: 28,
-              fontWeight: 700,
-              letterSpacing: "0.04em",
-              color: "#2f5d3a",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 14,
             }}
           >
-            VISCUM | 広告×コンペ
+            <OgViscumMark size={46} />
+            <div
+              style={{
+                display: "flex",
+                fontSize: 28,
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                color: "#2f5d3a",
+                lineHeight: 1,
+              }}
+            >
+              VISCUM | 広告×コンペ
+            </div>
           </div>
           <div
             style={{
               display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
               alignSelf: "flex-start",
               marginTop: 22,
               background: "#a84b3a",
               color: "#fff",
               fontSize: 26,
               fontWeight: 700,
-              padding: "10px 18px",
+              // JPフォントは見かけ下寄りなので上下パディングを非対称に
+              paddingTop: 8,
+              paddingBottom: 14,
+              paddingLeft: 18,
+              paddingRight: 18,
               borderRadius: 10,
+              lineHeight: 1,
+              height: 52,
             }}
           >
             {badge}
