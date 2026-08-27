@@ -225,6 +225,12 @@ export function PostSaveNext({ work }: { work: Work }) {
         </p>
         <p className="text-[13px] leading-relaxed text-viscum-ink">
           まだ誰の目にも触れていません。公開すると作品一覧に出ます。
+          <br />
+          あとから確認するときは{" "}
+          <Link href="/dashboard" className="text-viscum-brand underline">
+            「ダッシュボード」
+          </Link>
+          を見てください。
         </p>
       </div>
 

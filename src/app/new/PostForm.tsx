@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
@@ -758,8 +759,14 @@ export function PostForm() {
       >
         {saving ? "保存中…" : "一旦保存する"}
       </button>
-      <p className="text-center text-[11px] text-viscum-muted">
+      <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
         まだ棚には出しません。次の画面で公開できます。
+        <br />
+        あとから確認するときは{" "}
+        <Link href="/dashboard" className="text-viscum-brand underline">
+          「ダッシュボード」
+        </Link>
+        を見てください。
       </p>
 
       {cropSrc && (
