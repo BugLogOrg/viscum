@@ -8,7 +8,6 @@ const nextConfig: NextConfig = {
     ];
   },
   async headers() {
-    // XクローラはOG画像の取得が遅いとカードを諦める。CDNに長く載せる
     const ogCache = [
       {
         key: "Cache-Control",
@@ -19,9 +18,20 @@ const nextConfig: NextConfig = {
         value: "public, s-maxage=86400, stale-while-revalidate=604800",
       },
     ];
+    const thumbCache = [
+      {
+        key: "Cache-Control",
+        value: "public, max-age=31536000, immutable",
+      },
+      {
+        key: "CDN-Cache-Control",
+        value: "public, s-maxage=31536000",
+      },
+    ];
     return [
       { source: "/opengraph-image", headers: ogCache },
       { source: "/w/:id/opengraph-image", headers: ogCache },
+      { source: "/thumbs/:path*", headers: thumbCache },
     ];
   },
 };

@@ -1,0 +1,8 @@
+User-Agent: *
+Allow: /
+
+User-Agent: Twitterbot
+Allow: /
+
+User-Agent: facebookexternalhit
+Allow: /

@@ -24,7 +24,7 @@ export function siteOrigin(): string {
 }
 
 /** OG画像URLのクエリ。見た目変更時に上げて X／CDN キャッシュを切る */
-export const OG_IMAGE_BUST = "20260828i";
+export const OG_IMAGE_BUST = "20260828j";
 
 
 export function truncateForOg(text: string, max: number): string {
@@ -45,7 +45,11 @@ export function workOgBadge(work: Work): string {
 }
 
 export function workOgDescription(work: Work): string {
-  const body = (work.description || work.tagline || "").trim();
+  // 旧長文タイトルを説明先頭に退避したデモがあるので、本文側を優先
+  const raw = (work.description || "").trim();
+  const parts = raw.split(/\n\n+/).map((p) => p.trim()).filter(Boolean);
+  const body =
+    parts.length > 1 ? parts[parts.length - 1] : raw || work.tagline || "";
   if (body) return truncateForOg(body, 160);
   return truncateForOg(`${workOgBadge(work)} — VISCUM`, 160);
 }
@@ -80,7 +84,11 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
       ? `${siteOrigin()}${rawThumb}`
       : null;
   const designedOg = `${siteOrigin()}/w/${encodeURIComponent(id)}/opengraph-image?v=${OG_IMAGE_BUST}`;
-  const ogImage = staticThumb ?? designedOg;
+  // 静的サムネにも ?v= を付け、Xの「画像なし」失敗キャッシュを切る
+  const ogImage = staticThumb
+    ? `${staticThumb}${staticThumb.includes("?") ? "&" : "?"}v=${OG_IMAGE_BUST}`
+    : designedOg;
+  const ogType = staticThumb ? "image/jpeg" : "image/png";
   return {
     title,
     description,
@@ -97,6 +105,7 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
           url: ogImage,
           width: 1200,
           height: 630,
+          type: ogType,
           alt: title || "VISCUM | 広告×コンペ",
         },
       ],
