@@ -11,6 +11,7 @@ import { OwnerSeedActions } from "@/components/OwnerSeedActions";
 import { HotOpenRail } from "@/components/HotOpenRail";
 import { WorkEngage } from "@/components/WorkEngage";
 import { WorkReactionBar } from "@/components/WorkReactionBar";
+import { WorkShareBoost } from "@/components/WorkShareBoost";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import {
   closesAtFromHours,
@@ -230,6 +231,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   title={work.title}
                   bookmarkBase={rx.bookmark}
                 />
+                <WorkShareBoost work={work} isDraft={isDraft} />
                 <WorkEngage
                   workId={work.id}
                   status={work.status}
