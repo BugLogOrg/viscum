@@ -26,6 +26,7 @@ import {
   shareDeadlineLabelFromDays,
   readCachedOutboundInvite,
   writeCachedOutboundInvite,
+  INVITE_VIEW_WARN_THRESHOLD,
 } from "@/lib/outbound-invite-share";
 import {
   accountLabelForHandle,
@@ -312,6 +313,7 @@ export function DirectRequestForm({
   const [invitePath, setInvitePath] = useState<string | null>(null);
   const [requestPath, setRequestPath] = useState<string | null>(null);
   const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteViewCount, setInviteViewCount] = useState<number | null>(null);
   const [activeWork, setActiveWork] = useState(work);
 
   useEffect(() => {
@@ -332,6 +334,49 @@ export function DirectRequestForm({
     setInvitePath(cached.invitePath);
     if (cached.requestPath) setRequestPath(cached.requestPath);
   }, [activeWork.id, fromHandle]);
+
+  // シーダー向け: 招待の閲覧数を定期取得（転送疑いの検知）
+  useEffect(() => {
+    if (!invitePath || !fromHandle) {
+      setInviteViewCount(null);
+      return;
+    }
+    const id = invitePath.split("/").pop()?.trim();
+    if (!id) return;
+    let cancelled = false;
+    const pull = () => {
+      void fetch(`/api/dm-invites?id=${encodeURIComponent(id)}`, {
+        cache: "no-store",
+      })
+        .then(async (res) => {
+          const data = (await res.json().catch(() => ({}))) as {
+            invite?: { viewCount?: number };
+            revoked?: boolean;
+          };
+          if (cancelled) return;
+          if (res.status === 410 || data.revoked) {
+            setInvitePath(null);
+            setInviteViewCount(null);
+            setCopyNote(
+              "この招待リンクは無効化済みです。「リンクを確定」で新しいURLを発行してください。",
+            );
+            return;
+          }
+          if (typeof data.invite?.viewCount === "number") {
+            setInviteViewCount(data.invite.viewCount);
+          }
+        })
+        .catch(() => {
+          /* ignore */
+        });
+    };
+    pull();
+    const t = window.setInterval(pull, 20_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(t);
+    };
+  }, [invitePath, fromHandle]);
 
   useEffect(() => {
     if (fromHandle) rememberViewer(fromHandle);
@@ -545,6 +590,7 @@ export function DirectRequestForm({
       }
       setInvitePath(data.invite.path);
       if (data.request?.path) setRequestPath(data.request.path);
+      setInviteViewCount(0);
       writeCachedOutboundInvite(fromHandle, {
         invitePath: data.invite.path,
         requestPath: data.request?.path,
@@ -641,6 +687,70 @@ export function DirectRequestForm({
     setCopyNote(
       "リンクを確定しました。謝礼額はこの招待に固定されています。案内文をコピーして相手に送ってください（この画面は開きっぱなしで大丈夫です）。",
     );
+  }
+
+  /** 旧リンクを無効化し、新しい招待URLを発行 */
+  async function reissueOutboundInvite() {
+    if (!invitePath || !fromHandle) return;
+    const oldId = invitePath.split("/").pop()?.trim();
+    if (!oldId) return;
+    const ok = window.confirm(
+      "いまの招待リンクを無効化して、新しいURLを発行します。\n既に送った案内のリンクは開けなくなります。よろしいですか？",
+    );
+    if (!ok) return;
+    setInviteBusy(true);
+    setCopyNote(null);
+    try {
+      const w = await resolveWorkForAction();
+      if (!w) {
+        setCopyNote("作品メモを保存できませんでした");
+        return;
+      }
+      const workThumbUrl = await resolveInviteThumbUrl(w.thumbUrl);
+      const res = await fetch("/api/dm-invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          replaceInviteId: oldId,
+          workId: w.id,
+          workTitle: w.title.trim().slice(0, 200) || w.id,
+          workExternalUrl: w.externalUrl?.trim() || undefined,
+          workThumbUrl,
+          workSummary: buildWorkSummary(w) || undefined,
+          amountYen,
+          pitch: message.trim() || undefined,
+          closesInHours: Math.max(24, deadlineDays * 24),
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        invite?: { id: string; path: string; viewCount?: number };
+        request?: { id: string; path: string };
+        error?: string;
+      };
+      if (!res.ok || !data.invite?.path) {
+        setCopyNote(data.error || "再発行に失敗しました");
+        return;
+      }
+      setInvitePath(data.invite.path);
+      setInviteViewCount(
+        typeof data.invite.viewCount === "number" ? data.invite.viewCount : 0,
+      );
+      if (data.request?.path) setRequestPath(data.request.path);
+      writeCachedOutboundInvite(fromHandle, {
+        invitePath: data.invite.path,
+        requestPath: data.request?.path,
+        amountYen,
+        workId: w.id,
+        updatedAt: new Date().toISOString(),
+      });
+      setCopyNote(
+        "旧リンクを無効化し、新しいURLを発行しました。案内文を再コピーして相手に送ってください。",
+      );
+    } catch {
+      setCopyNote("ネットワークエラー");
+    } finally {
+      setInviteBusy(false);
+    }
   }
 
   async function copyShareText() {
@@ -1055,7 +1165,7 @@ export function DirectRequestForm({
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
             {delivery === "outbound"
               ? inviteFixed
-                ? "リンク確定済み。案内文をコピーして外に貼ってください。相手が見るのは末尾リンク先（着地）と同じ内容です。"
+                ? "リンク確定済み。案内文はタイトル・謝礼・招待URLだけ（作品URLや詳細は載せません）。相手は未ログインだと概要まで、ログイン後に詳細・作品URL・希望日が見えます。"
                 : "まだ未確定です。下の「リンクを確定」で招待URLが案内文末尾に入り、謝礼も固定されます。"
               : "届け方に合わせて内部用（短い）の文面です。呼び出しのあと、念押し用に送れます（任意）。"}
           </p>
@@ -1100,6 +1210,16 @@ export function DirectRequestForm({
                 >
                   送付用ページを開く
                 </button>
+                <button
+                  type="button"
+                  disabled={inviteBusy}
+                  onClick={() => {
+                    void reissueOutboundInvite();
+                  }}
+                  className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+                >
+                  リンクを無効化して再発行
+                </button>
                 {requestPath ? (
                   <Link
                     href={requestPath}
@@ -1111,6 +1231,20 @@ export function DirectRequestForm({
               </>
             ) : null}
           </div>
+          {inviteFixed && inviteViewCount != null ? (
+            <p
+              className={`mt-2 text-[12px] leading-relaxed ${
+                inviteViewCount >= INVITE_VIEW_WARN_THRESHOLD
+                  ? "text-viscum-berry-deep"
+                  : "text-viscum-muted"
+              }`}
+            >
+              送付用ページの閲覧: {inviteViewCount}回
+              {inviteViewCount >= INVITE_VIEW_WARN_THRESHOLD
+                ? `（1人に送ったつもりなら転送の可能性があります。上の「無効化して再発行」で旧URLを切れます）`
+                : "（自分のプレビューは数えません）"}
+            </p>
+          ) : null}
           {copyNote && (
             <p className="mt-2 text-[12px] text-viscum-brand">{copyNote}</p>
           )}

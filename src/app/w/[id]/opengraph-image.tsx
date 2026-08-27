@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import {
   resolveWorkForOg,
+  siteOrigin,
   truncateForOg,
   workOgBadge,
 } from "@/lib/work-og";
@@ -33,11 +34,13 @@ export default async function Image({
 
   const badge = work ? workOgBadge(work) : "VISCUM";
   const title = work
-    ? truncateForOg(work.title, 90)
+    ? truncateForOg(work.tagline?.trim() || work.title, 90)
     : "作品が見つかりません";
-  const thumb =
-    work?.thumbUrl?.trim().startsWith("http")
-      ? work.thumbUrl.trim()
+  const rawThumb = work?.thumbUrl?.trim() || "";
+  const thumb = rawThumb.startsWith("http")
+    ? rawThumb
+    : rawThumb.startsWith("/")
+      ? `${siteOrigin()}${rawThumb}`
       : null;
 
   return new ImageResponse(

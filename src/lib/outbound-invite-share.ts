@@ -5,6 +5,9 @@ import {
   formatRequestAmountLabel,
 } from "@/lib/local-request-dms";
 
+/** 直依頼招待の閲覧がこの数以上なら転送疑いの注意を出す */
+export const INVITE_VIEW_WARN_THRESHOLD = 3;
+
 /** compose時（closesAt未確定）用 */
 export function shareDeadlineLabelFromDays(days: number): string {
   const preset = DIRECT_REQUEST_DEADLINE_PRESETS.find((p) => p.days === days);
@@ -29,40 +32,32 @@ export function shareDeadlineLabelFromClosesAt(
 export function buildOutboundInviteShareText(input: {
   fromLabel: string;
   workTitle: string;
+  /** @deprecated 案内文には載せない（ログイン後の着地へ） */
   workUrl?: string;
-  askBullets: string[];
+  /** @deprecated 案内文には載せない */
+  askBullets?: string[];
   pitchTrim?: string;
   amountLabel: string;
-  /** 希望日の1行（例: 返信・提出の目安: …） */
+  /** @deprecated 案内文には載せない（ログイン後） */
   deadlineLabel?: string;
   inviteUrl: string;
 }): string {
-  const askBlockDash = input.askBullets.map((s) => `- ${s}`).join("\n");
-  const pitchExtra =
-    input.pitchTrim && input.askBullets.length > 0 && !input.askBullets.includes(input.pitchTrim)
-      ? `\n（一言）${input.pitchTrim}\n`
-      : "";
-  const deadlineBlock = input.deadlineLabel
-    ? `\n■ 希望日\n${input.deadlineLabel}\n`
-    : "";
+  void input.workUrl;
+  void input.askBullets;
+  void input.pitchTrim;
+  void input.deadlineLabel;
   return (
     `突然のご連絡失礼いたします。${input.fromLabel}と申します。\n` +
     `Viscum（レビュー依頼のサービス）を通じて、作品のフィードバックをお願いしたくご連絡しました。\n` +
     `\n` +
-    `■ 作品\n` +
+    `■ 作品（タイトルのみ）\n` +
     `${input.workTitle.trim() || "（タイトル）"}\n` +
-    (input.workUrl ? `${input.workUrl}\n` : "") +
-    `\n` +
-    `■ お願いしたいこと\n` +
-    `${askBlockDash}\n` +
-    pitchExtra +
-    deadlineBlock +
     `\n` +
     `■ 謝礼\n` +
     `${input.amountLabel}\n` +
     `\n` +
-    `詳細・概要は下記リンク先でご確認いただけます（リンクを知っている方向けです）。\n` +
-    `ご返信・お受け取りにはViscumへのログイン（無料）が必要です。\n` +
+    `詳細・作品URL・希望日は、下記リンク先でログイン後にご覧いただけます。\n` +
+    `※このリンクは特定の方へのご案内です。転送・SNS等での公開はご遠慮ください（直依頼のため）。\n` +
     `ご都合が合わなければ、無視していただいて構いません。\n` +
     `\n` +
     `${input.inviteUrl}`
@@ -112,6 +107,15 @@ export function writeCachedOutboundInvite(
   }
 }
 
+export function clearCachedOutboundInvite(workId: string, fromHandle: string) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(inviteCacheKey(workId, fromHandle));
+  } catch {
+    /* ignore */
+  }
+}
+
 /**
  * ダッシュボード等から、確定済み招待の案内文を再構成。
  * 未確定なら null（直依頼画面でリンク確定が必要）。
@@ -128,22 +132,14 @@ export function buildCachedOutboundShareText(input: {
   const cached = readCachedOutboundInvite(input.workId, input.fromHandle);
   if (!cached?.invitePath) return null;
   const origin = input.origin.replace(/\/$/, "");
-  const askBullets = (input.focusNote ?? "")
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const bullets =
-    askBullets.length > 0
-      ? askBullets
-      : ["初見の感想を短くいただけると助かります。"];
   const path = cached.invitePath.startsWith("/")
     ? cached.invitePath
     : `/${cached.invitePath}`;
+  void input.workExternalUrl;
+  void input.focusNote;
   return buildOutboundInviteShareText({
     fromLabel: input.fromLabel,
     workTitle: input.workTitle,
-    workUrl: input.workExternalUrl?.trim() || undefined,
-    askBullets: bullets,
     amountLabel: formatRequestAmountLabel(cached.amountYen),
     inviteUrl: `${origin}${path}`,
   });

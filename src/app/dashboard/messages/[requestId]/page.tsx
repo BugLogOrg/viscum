@@ -29,6 +29,8 @@ import { splitRequestSummary } from "@/lib/direct-request-offer";
 import {
   buildOutboundInviteShareText,
   shareDeadlineLabelFromClosesAt,
+  writeCachedOutboundInvite,
+  INVITE_VIEW_WARN_THRESHOLD,
 } from "@/lib/outbound-invite-share";
 import { fetchRequestDm, patchRequestDm } from "@/lib/remote-requests";
 
@@ -47,6 +49,8 @@ export default function RequestDmThreadPage() {
   const [copyNote, setCopyNote] = useState<string | null>(null);
   const [payNote, setPayNote] = useState<string | null>(null);
   const [origin, setOrigin] = useState("");
+  const [inviteViewCount, setInviteViewCount] = useState<number | null>(null);
+  const [reissueBusy, setReissueBusy] = useState(false);
 
   useEffect(() => {
     clearLocalRequestDms();
@@ -55,6 +59,42 @@ export default function RequestDmThreadPage() {
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
+
+  // シーダー: 招待閲覧数（転送疑い）
+  useEffect(() => {
+    if (!row?.inviteId || !handle) {
+      setInviteViewCount(null);
+      return;
+    }
+    if (row.fromHandle.replace(/^@/, "").toLowerCase() !== handle.toLowerCase()) {
+      setInviteViewCount(null);
+      return;
+    }
+    let cancelled = false;
+    const pull = () => {
+      void fetch(`/api/dm-invites?id=${encodeURIComponent(row.inviteId!)}`, {
+        cache: "no-store",
+      })
+        .then(async (res) => {
+          const data = (await res.json().catch(() => ({}))) as {
+            invite?: { viewCount?: number };
+          };
+          if (cancelled) return;
+          if (typeof data.invite?.viewCount === "number") {
+            setInviteViewCount(data.invite.viewCount);
+          }
+        })
+        .catch(() => {
+          /* ignore */
+        });
+    };
+    pull();
+    const t = window.setInterval(pull, 20_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(t);
+    };
+  }, [row?.inviteId, row?.fromHandle, handle]);
 
   useEffect(() => {
     if (!handle) {
@@ -311,6 +351,59 @@ export default function RequestDmThreadPage() {
     }
   }
 
+  async function reissueInviteFromThread() {
+    if (!row?.inviteId || !handle || reissueBusy) return;
+    const ok = window.confirm(
+      "いまの招待リンクを無効化して、新しいURLを発行します。\n既に送った案内のリンクは開けなくなります。よろしいですか？",
+    );
+    if (!ok) return;
+    setReissueBusy(true);
+    setCopyNote(null);
+    try {
+      const res = await fetch("/api/dm-invites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          replaceInviteId: row.inviteId,
+          workId: row.workId,
+          workTitle: row.workTitle,
+          workExternalUrl: row.workExternalUrl || undefined,
+          workThumbUrl: row.workThumbUrl || undefined,
+          workSummary: row.workSummary || undefined,
+          amountYen: row.amountYen,
+          pitch: row.pitch || undefined,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        invite?: { id: string; path: string; viewCount?: number };
+        request?: { id: string; path: string };
+        error?: string;
+      };
+      if (!res.ok || !data.invite?.path) {
+        setCopyNote(data.error || "再発行に失敗しました");
+        return;
+      }
+      writeCachedOutboundInvite(handle, {
+        invitePath: data.invite.path,
+        requestPath: data.request?.path ?? `/dashboard/messages/${requestId}`,
+        amountYen: row.amountYen,
+        workId: row.workId,
+        updatedAt: new Date().toISOString(),
+      });
+      setInviteViewCount(
+        typeof data.invite.viewCount === "number" ? data.invite.viewCount : 0,
+      );
+      await refresh();
+      setCopyNote(
+        "旧リンクを無効化し、新しいURLを発行しました。案内文を再コピーして相手に送ってください。",
+      );
+    } catch {
+      setCopyNote("ネットワークエラー");
+    } finally {
+      setReissueBusy(false);
+    }
+  }
+
   async function respond(next: "accepted" | "declined") {
     if (responding) return;
     setResponding(true);
@@ -461,16 +554,42 @@ export default function RequestDmThreadPage() {
             </p>
           ) : null}
           {isSeeder && inviteHref ? (
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  void copyOutboundAgain();
-                }}
-                className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white"
-              >
-                案内文を再コピー
-              </button>
+            <div className="mt-2 space-y-2">
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    void copyOutboundAgain();
+                  }}
+                  className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white"
+                >
+                  案内文を再コピー
+                </button>
+                <button
+                  type="button"
+                  disabled={reissueBusy}
+                  onClick={() => {
+                    void reissueInviteFromThread();
+                  }}
+                  className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+                >
+                  {reissueBusy ? "再発行中…" : "リンクを無効化して再発行"}
+                </button>
+              </div>
+              {inviteViewCount != null ? (
+                <p
+                  className={`text-[12px] leading-relaxed ${
+                    inviteViewCount >= INVITE_VIEW_WARN_THRESHOLD
+                      ? "text-viscum-berry-deep"
+                      : "text-viscum-muted"
+                  }`}
+                >
+                  送付用ページの閲覧: {inviteViewCount}回
+                  {inviteViewCount >= INVITE_VIEW_WARN_THRESHOLD
+                    ? "（多めです。転送されたかも。無効化して再発行できます）"
+                    : "（自分のプレビューは数えません）"}
+                </p>
+              ) : null}
             </div>
           ) : null}
           {copyNote ? (

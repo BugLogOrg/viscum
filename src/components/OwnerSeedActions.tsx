@@ -17,13 +17,12 @@ import {
   type LocalSeed,
 } from "@/lib/local-seeds";
 import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
-import { buildWorkShareText } from "@/lib/work-share-text";
 import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
 
 /**
- * シーダー本人だけ：棚から外す／削除／告知文コピー。
+ * シーダー本人だけ：棚から外す／削除（公開側の告知文は WorkShareBoost）。
  * local_* 以外（デモ棚）には出さない。
  */
 export function OwnerSeedActions({
@@ -116,16 +115,9 @@ export function OwnerSeedActions({
         シーダー操作（本人のみ）
       </p>
       <p className="text-[11px] leading-relaxed text-viscum-muted">
-        公開の取り消しは「下書きに戻す」。完全に消すときは「削除」。告知文はSNS貼り付け用です。
+        公開の取り消しは「下書きに戻す」。完全に消すときは「削除」。告知文は上の「このコンペを広げる」から。
       </p>
       <div className="flex flex-wrap gap-2">
-        {seed && origin ? (
-          <ShareTextCopyButton
-            getText={() =>
-              buildWorkShareText(workFromLocalSeed(seed), origin)
-            }
-          />
-        ) : null}
         {listed ? (
           <button
             type="button"

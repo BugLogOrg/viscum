@@ -253,6 +253,7 @@ export const requestDms = pgTable(
 /**
  * 未登録者向けの共有着地（URLを知っている人向け・鍵ではない）。
  * local_* でも Neon にスナップショットを残し、別端末で開ける。
+ * 漏洩対策: revokedAt で無効化＋再発行。viewCount で異常閲覧の検知材料。
  */
 export const dmInvites = pgTable(
   "dm_invites",
@@ -273,6 +274,10 @@ export const dmInvites = pgTable(
     pitch: text("pitch"),
     /** 締切（任意。共有着地で目立たせる） */
     closesAt: timestamp("closes_at", { withTimezone: true }),
+    /** 無効化時刻（再発行後の旧リンク） */
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    /** 着地の閲覧回数（シーダー自身のプレビューは除外） */
+    viewCount: integer("view_count").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

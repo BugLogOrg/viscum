@@ -59,7 +59,11 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
       robots: { index: false, follow: false },
     };
   }
-  const title = truncateForOg(work.title, 70);
+  // Xの太字行は短い方が読める。tagline優先、なければ title
+  const title = truncateForOg(
+    work.tagline?.trim() || work.title,
+    70,
+  );
   const description = workOgDescription(work);
   const url = `${siteOrigin()}/w/${encodeURIComponent(id)}`;
   return {

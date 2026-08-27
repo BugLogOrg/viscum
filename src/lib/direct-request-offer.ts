@@ -28,6 +28,18 @@ export function splitRequestSummary(raw: string | null | undefined): {
   };
 }
 
+/** 未ログイン着地用。聞きたいこと抜き・短文の概要だけ */
+export function inviteTeaserSummary(
+  workSummary: string | null | undefined,
+  max = 140,
+): string {
+  const { description } = splitRequestSummary(workSummary);
+  const t = description.replace(/\s+/g, " ").trim();
+  if (!t) return "";
+  if (t.length <= max) return t;
+  return `${t.slice(0, max - 1)}…`;
+}
+
 export type DirectRequestOfferSnapshot = {
   fromDisplayName: string;
   fromHandle: string;

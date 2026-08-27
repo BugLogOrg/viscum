@@ -50,6 +50,16 @@ export async function POST(req: Request) {
   if (!invite) {
     return NextResponse.json({ error: "招待が見つかりません" }, { status: 404 });
   }
+  if (invite.revokedAt) {
+    return NextResponse.json(
+      {
+        error:
+          "この招待リンクは無効化されています。依頼主に新しい案内を聞いてください。",
+        revoked: true,
+      },
+      { status: 410 },
+    );
+  }
 
   const isOwnInvite = invite.fromUserId === mentorUserId;
   const now = new Date();

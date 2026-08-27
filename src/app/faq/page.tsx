@@ -259,7 +259,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         <ol className="list-decimal space-y-2 pl-5">
           <li>
             <span className="font-medium">届く</span>
-            … シーダーがあなたに直依頼を送る（または共有URLで着地）。褒賞の金額と作品・お願いが見えます。支払実績は確認用です。
+            … シーダーがあなたに直依頼を送る（または共有URLで着地）。未ログインではタイトル・概要・褒賞額まで。作品URL・詳細・希望日はログイン後。支払実績は確認用です。
           </li>
           <li>
             <span className="font-medium">返す</span>

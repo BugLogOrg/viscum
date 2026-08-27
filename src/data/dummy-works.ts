@@ -108,6 +108,7 @@ const DUMMY_WORKS_RAW: Work[] = [
     description:
       "個人制作物の速報棚＋任意コンペの装置です。初見で迷いやすいところを、聞くこと（足場）に沿って一言ください。",
     externalUrl: "https://viscum.org",
+    thumbUrl: "/thumbs/viscum-self.jpg",
     thumbTone: "leaf",
     paymentsDone: 0,
     sukiCount: 42,
@@ -157,6 +158,7 @@ const DUMMY_WORKS_RAW: Work[] = [
     closesInHours: 20,
     description: "起床後3行だけ書くメモ。通知とウィジェットの初見を見てほしい。",
     externalUrl: "https://example.com/memo",
+    thumbUrl: "/thumbs/note-clip.jpg",
     thumbTone: "moss",
     comments: [
       {
@@ -181,6 +183,7 @@ const DUMMY_WORKS_RAW: Work[] = [
     closesInHours: 8,
     description: "YouTube Shorts用。見る範囲は冒頭15秒だけでOK。聞くこと（足場）に沿って短く。",
     externalUrl: "https://example.com/video",
+    thumbUrl: "/thumbs/promo-15s.jpg",
     thumbTone: "berry",
     comments: [
       {
@@ -205,6 +208,7 @@ const DUMMY_WORKS_RAW: Work[] = [
     closesInHours: 72,
     description: "全文ではなく冒頭のみ。改善提案の聞くこと（足場）に沿って。",
     externalUrl: "https://example.com/novel",
+    thumbUrl: "/thumbs/novel-open.jpg",
     thumbTone: "bark",
     comments: [
       {
@@ -268,6 +272,7 @@ const DUMMY_WORKS_RAW: Work[] = [
     closesInHours: 54,
     description: "Chrome拡張。インストール〜最初のグループ作成まで。",
     externalUrl: "https://example.com/ext",
+    thumbUrl: "/thumbs/chrome-ext.jpg",
     thumbTone: "leaf",
     comments: [],
   },
@@ -397,6 +402,7 @@ const DUMMY_WORKS_RAW: Work[] = [
     hoursAgo: 11,
     description: "コンペなしの公開。感想歓迎。",
     externalUrl: "https://example.com/recipe",
+    thumbUrl: "/thumbs/recipe-site.jpg",
     thumbTone: "moss",
     comments: [],
   },
@@ -447,6 +453,7 @@ const DUMMY_WORKS_RAW: Work[] = [
     description:
       "公開ブースト見本。外に書いてから報告。褒賞はシーダーが選ぶ（¥30,000予算）。",
     externalUrl: "https://example.com/ext",
+    thumbUrl: "/thumbs/chrome-ext-store.jpg",
     thumbTone: "leaf",
     sukiCount: 28,
     bookmarkCount: 15,
