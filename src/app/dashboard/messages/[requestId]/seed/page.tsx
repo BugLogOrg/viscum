@@ -180,7 +180,7 @@ export default function RequestSeedDetailPage() {
       <SiteHeader backHref={threadHref} hideOnMd hidePostCta />
       <main className="mx-auto max-w-lg pb-10">
         <p className="px-4 pt-4 text-[12px] text-viscum-muted">
-          送付用ページと同じフォーマットです
+          ご依頼内容の控え（相手に渡す案内ページと同型・下書きではありません）
           {inviteHref ? (
             <>
               {" · "}
@@ -188,7 +188,7 @@ export default function RequestSeedDetailPage() {
                 href={inviteHref}
                 className="font-medium text-viscum-brand underline"
               >
-                送付用URLを開く
+                案内ページを開く
               </Link>
             </>
           ) : null}

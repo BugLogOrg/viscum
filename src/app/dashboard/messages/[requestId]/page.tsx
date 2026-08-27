@@ -546,7 +546,7 @@ export default function RequestDmThreadPage() {
                   href={inviteHref}
                   className="font-medium text-viscum-brand underline"
                 >
-                  送付用ページ（正本）
+                  相手に渡す案内ページ
                 </Link>
               </>
             ) : (
@@ -555,7 +555,7 @@ export default function RequestDmThreadPage() {
           </p>
           {row.outboundUnassigned && inviteShareOpen ? (
             <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
-              相手はまだ決まっていません。下のお願いカードは送付用リンクと同じ内容です。案内を渡して返事を待っています。
+              相手はまだ返事待ちです。LINEやメールに貼るのは「案内ページ」のリンク（案内文の末尾）です。下のカードはその案内の中身の控えで、下書きではありません。このタブは返事が来たあとに使うやりとり画面です。
             </p>
           ) : null}
           {isSeeder && inviteHref && inviteShareOpen ? (
@@ -589,7 +589,7 @@ export default function RequestDmThreadPage() {
                       : "text-viscum-muted"
                   }`}
                 >
-                  送付用ページの閲覧: {inviteViewCount}回
+                  案内ページの閲覧: {inviteViewCount}回
                   {inviteViewCount >= INVITE_VIEW_WARN_THRESHOLD
                     ? "（多めです。転送されたかも。無効化して再発行できます）"
                     : "（自分のプレビューは数えません）"}
@@ -618,12 +618,34 @@ export default function RequestDmThreadPage() {
           headline={
             isSeeder ? (
               <>
-                <span className="block">あなたが送ったお願い</span>
+                <span className="block">ご依頼内容</span>
                 <span className="mt-1 block text-[12px] font-normal text-viscum-muted">
-                  相手が見る送付用ページと同じ内容です
+                  相手に渡す案内の中身です（下書きではありません）。
+                  {inviteHref ? (
+                    <>
+                      {" "}
+                      相手へ送るリンクは{" "}
+                      <Link
+                        href={inviteHref}
+                        className="font-medium text-viscum-brand underline"
+                      >
+                        こちら（案内ページ）
+                      </Link>
+                      。いまの画面は、返事が来たあとのやりとりです。
+                    </>
+                  ) : (
+                    " いまの画面は、返事が来たあとのやりとりです。"
+                  )}
                 </span>
               </>
-            ) : undefined
+            ) : (
+              <>
+                <span className="block">ご依頼内容</span>
+                <span className="mt-1 block text-[12px] font-normal text-viscum-muted">
+                  依頼主から届いたお願いです
+                </span>
+              </>
+            )
           }
           showFeeNote={!isSeeder}
           afterBody={
@@ -642,7 +664,54 @@ export default function RequestDmThreadPage() {
         />
 
         <div className="px-4">
-        <RequestDeliverableStatus status={row.status} className="mt-4" />
+        <ul className="mt-5 space-y-3">
+          {threadMessages.map((m) => {
+            const mine = m.fromHandle.toLowerCase() === me;
+            const statusNote = isDeliverableStatusNote(m.body, m.fromHandle);
+            const name = statusNote
+              ? "ステータス"
+              : mine
+                ? displayAccountName(handle, readLocalProfile(handle))
+                : m.fromHandle === row.fromHandle
+                  ? row.fromAccountName || m.fromHandle
+                  : m.fromHandle;
+            return (
+              <li
+                key={m.id}
+                className={`rounded-lg border px-3 py-2.5 text-[14px] leading-relaxed ${
+                  statusNote
+                    ? "border-dashed border-viscum-line bg-viscum-paper-2/50 text-[13px]"
+                    : mine
+                      ? "ml-6 border-viscum-brand/25 bg-viscum-leaf-soft/40"
+                      : "mr-6 border-viscum-line bg-white/60"
+                }`}
+              >
+                <p className="text-[11px] text-viscum-muted">
+                  {name}
+                  {statusNote ? null : (
+                    <>
+                      {" "}
+                      · @{m.fromHandle}
+                    </>
+                  )}
+                </p>
+                <p className="mt-1 whitespace-pre-wrap text-viscum-ink">
+                  {m.body}
+                </p>
+                {m.createdAt ? (
+                  <p className="mt-1.5 text-right text-[10px] tabular-nums text-viscum-muted">
+                    <time dateTime={m.createdAt}>
+                      {formatRequestDmStamp(m.createdAt)}
+                    </time>
+                  </p>
+                ) : null}
+              </li>
+            );
+          })}
+        </ul>
+
+        {/* いまの状態は会話のあと（一番下側）で確認する */}
+        <RequestDeliverableStatus status={row.status} className="mt-5" />
 
         {isRequestDeadlinePassed(row.closesAt) &&
         row.status !== "paid" &&
@@ -788,52 +857,6 @@ export default function RequestDmThreadPage() {
             このお願いは打ち切られています。
           </p>
         ) : null}
-
-        <ul className="mt-5 space-y-3">
-          {threadMessages.map((m) => {
-            const mine = m.fromHandle.toLowerCase() === me;
-            const statusNote = isDeliverableStatusNote(m.body, m.fromHandle);
-            const name = statusNote
-              ? "ステータス"
-              : mine
-                ? displayAccountName(handle, readLocalProfile(handle))
-                : m.fromHandle === row.fromHandle
-                  ? row.fromAccountName || m.fromHandle
-                  : m.fromHandle;
-            return (
-              <li
-                key={m.id}
-                className={`rounded-lg border px-3 py-2.5 text-[14px] leading-relaxed ${
-                  statusNote
-                    ? "border-dashed border-viscum-line bg-viscum-paper-2/50 text-[13px]"
-                    : mine
-                      ? "ml-6 border-viscum-brand/25 bg-viscum-leaf-soft/40"
-                      : "mr-6 border-viscum-line bg-white/60"
-                }`}
-              >
-                <p className="text-[11px] text-viscum-muted">
-                  {name}
-                  {statusNote ? null : (
-                    <>
-                      {" "}
-                      · @{m.fromHandle}
-                    </>
-                  )}
-                </p>
-                <p className="mt-1 whitespace-pre-wrap text-viscum-ink">
-                  {m.body}
-                </p>
-                {m.createdAt ? (
-                  <p className="mt-1.5 text-right text-[10px] tabular-nums text-viscum-muted">
-                    <time dateTime={m.createdAt}>
-                      {formatRequestDmStamp(m.createdAt)}
-                    </time>
-                  </p>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
 
         <form onSubmit={(e) => void send(e)} className="mt-6 space-y-2">
           <label className="sr-only" htmlFor="dm-draft">
