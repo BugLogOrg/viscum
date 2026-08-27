@@ -20,7 +20,7 @@ export function isPaidShelfPlanForXAnnounce(
   );
 }
 
-/** X（@viscum_org）告知用。280字以内に収める */
+/** X（@viscumorg）告知用。280字以内に収める */
 export function buildXAnnounceText(
   input: {
     id: string;

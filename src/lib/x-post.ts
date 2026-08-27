@@ -30,7 +30,7 @@ function twitterErrorMessage(e: unknown): string {
   return "tweet failed";
 }
 
-/** @viscum_org として投稿 */
+/** @viscumorg として投稿 */
 export async function postTweetAsViscum(
   text: string,
 ): Promise<{ ok: true; tweetId: string } | { ok: false; error: string }> {

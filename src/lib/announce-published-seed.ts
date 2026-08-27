@@ -49,7 +49,7 @@ export function announceResultMessage(r: AnnounceResult): string | null {
       hint =
         "\n\n402 は認証OKでも投稿APIに課金が必要な状態です。X Developer の Free 枠では投稿できないことが多く、Basic 以上への加入が必要な場合があります。公開自体は完了しています。SNS文は下からコピーして自分のXに貼れます。";
     }
-    return `公開は完了しています。公式X（@viscum_org）への自動告知だけ失敗しました。\n${r.error}${hint}`;
+    return `公開は完了しています。公式X（@viscumorg）への自動告知だけ失敗しました。\n${r.error}${hint}`;
   }
   if (r.skipped) {
     if (r.reason === "not_paid_shelf") {
@@ -61,7 +61,7 @@ export function announceResultMessage(r: AnnounceResult): string | null {
     return "公開は完了。X告知はスキップされました。";
   }
   if (r.tweetId) {
-    return `Xに投稿しました（@viscum_org）。\nhttps://x.com/viscum_org/status/${r.tweetId}`;
+    return `Xに投稿しました（@viscumorg）。\nhttps://x.com/viscumorg/status/${r.tweetId}`;
   }
   return null;
 }

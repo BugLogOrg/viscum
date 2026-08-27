@@ -78,7 +78,7 @@ export async function GET(req: Request) {
 }
 
 /**
- * 有料棚コンペ公開時に公式 @viscum_org へ告知（ADR-037）。
+ * 有料棚コンペ公開時に公式 @viscumorg へ告知（ADR-037）。
  * 無料・直依頼は skipped。X_* 未設定／X_ANNOUNCE_ENABLED≠1 も skipped。
  */
 export async function POST(req: Request) {
