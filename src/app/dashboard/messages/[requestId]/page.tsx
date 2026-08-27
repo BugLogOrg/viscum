@@ -310,16 +310,6 @@ export default function RequestDmThreadPage() {
     }
   }
 
-  async function copyInviteUrlOnly() {
-    if (!inviteHref || !origin) return;
-    try {
-      await navigator.clipboard?.writeText(`${origin}${inviteHref}`);
-      setCopyNote("招待URLをコピーしました");
-    } catch {
-      setCopyNote("コピーに失敗しました");
-    }
-  }
-
   async function respond(next: "accepted" | "declined") {
     if (responding) return;
     setResponding(true);
@@ -479,15 +469,6 @@ export default function RequestDmThreadPage() {
                 className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white"
               >
                 案内文を再コピー
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  void copyInviteUrlOnly();
-                }}
-                className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink"
-              >
-                URLだけコピー
               </button>
             </div>
           ) : null}

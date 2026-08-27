@@ -896,7 +896,7 @@ export function DirectRequestForm({
             届け方 <span className="text-viscum-berry">必須</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            登録済みの人には場内送信。未登録や外のやりとりは、リンク付き案内をコピペ（X・LINE・メールなど）。
+            登録済なら場内で呼び出す。VISCUM外ならリンク付き案内をコピペ（X・LINE・メールなど）。
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <button
@@ -910,7 +910,7 @@ export function DirectRequestForm({
                   : "border border-viscum-line bg-white/70 text-viscum-ink"
               }`}
             >
-              登録済みに送る
+              登録済ユーザーを呼び出す
             </button>
             <button
               type="button"
@@ -924,7 +924,7 @@ export function DirectRequestForm({
                   : "border border-viscum-line bg-white/70 text-viscum-ink"
               }`}
             >
-              外に連絡（コピペ）
+              VISCUM外に送る
             </button>
           </div>
         </div>
@@ -1031,11 +1031,13 @@ export function DirectRequestForm({
         </fieldset>
         ) : (
           <div className="rounded-lg border border-dashed border-viscum-line bg-white/40 px-3 py-3 text-[12px] leading-relaxed text-viscum-muted">
-            <p className="font-medium text-viscum-ink">外への届け方</p>
+            <p className="font-medium text-viscum-ink">VISCUM外への届け方</p>
             <p className="mt-1">
               相手をViscum上で選ぶ必要はありません。流れは{" "}
-              <strong className="font-medium text-viscum-ink">①リンクを確定 → ②案内文をコピー</strong>
-              。確定のときに招待URLとやりとりスレ（返事待ち）が発行されます。コピーだけでは画面は動きません。
+              <strong className="font-medium text-viscum-ink">
+                ①下の「リンクを確定」→ ②案内文をコピーして外へ貼る
+              </strong>
+              。確定のときに招待URLとやりとりスレ（返事待ち）が発行されます。
             </p>
             <p className="mt-1">
               謝礼額は確定時にスレへ固定（この時点ではカード不要。完了時払い）。メール欄からの直送はまだありません。
@@ -1053,9 +1055,9 @@ export function DirectRequestForm({
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
             {delivery === "outbound"
               ? inviteFixed
-                ? "リンク確定済み。案内文もURLも何度でも再コピーできます。相手が見るのは末尾リンク先（着地）と同じ内容です。"
-                : "まだ未確定です。「リンクを確定」すると案内文末尾に招待URLが入り、謝礼も固定されます。"
-              : "届け方に合わせて内部用（短い）の文面です。場内送信のあと、念押し用に送れます（任意）。"}
+                ? "リンク確定済み。案内文をコピーして外に貼ってください。相手が見るのは末尾リンク先（着地）と同じ内容です。"
+                : "まだ未確定です。下の「リンクを確定」で招待URLが案内文末尾に入り、謝礼も固定されます。"
+              : "届け方に合わせて内部用（短い）の文面です。呼び出しのあと、念押し用に送れます（任意）。"}
           </p>
           <textarea
             readOnly
@@ -1065,57 +1067,28 @@ export function DirectRequestForm({
           />
           <div className="mt-2 flex flex-wrap gap-2">
             {shareTone === "external" && !inviteFixed ? (
+              <p className="w-full text-[12px] text-viscum-muted">
+                確定は画面下の「リンクを確定」から。確定後に案内文コピーが使えます。
+              </p>
+            ) : null}
+            {!(shareTone === "external" && !inviteFixed) ? (
               <button
                 type="button"
                 disabled={inviteBusy || !canCopyOutbound}
                 onClick={() => {
-                  void fixOutboundInvite();
+                  void copyShareText();
                 }}
-                className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-50"
+                className={`rounded-md px-3 py-1.5 text-[12px] font-medium disabled:opacity-50 ${
+                  shareTone === "external" && inviteFixed
+                    ? "bg-viscum-berry text-white"
+                    : "border border-viscum-line bg-white text-viscum-ink"
+                }`}
               >
-                {inviteBusy ? "確定中…" : "リンクを確定"}
+                {inviteFixed ? "案内文を再コピー" : "案内文をコピー"}
               </button>
             ) : null}
-            <button
-              type="button"
-              disabled={
-                inviteBusy ||
-                !canCopyOutbound ||
-                (shareTone === "external" && !inviteFixed)
-              }
-              onClick={() => {
-                void copyShareText();
-              }}
-              className={`rounded-md px-3 py-1.5 text-[12px] font-medium disabled:opacity-50 ${
-                shareTone === "external" && inviteFixed
-                  ? "bg-viscum-berry text-white"
-                  : "border border-viscum-line bg-white text-viscum-ink"
-              }`}
-            >
-              {inviteFixed ? "案内文を再コピー" : "案内文をコピー"}
-            </button>
             {shareTone === "external" && inviteFixed ? (
               <>
-                <button
-                  type="button"
-                  disabled={inviteBusy || !invitePath}
-                  onClick={() => {
-                    void (async () => {
-                      if (!invitePath) return;
-                      try {
-                        await navigator.clipboard?.writeText(
-                          `${window.location.origin}${invitePath}`,
-                        );
-                        setCopyNote("招待URLだけコピーしました（何度でも可）");
-                      } catch {
-                        setCopyNote("コピーに失敗しました");
-                      }
-                    })();
-                  }}
-                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
-                >
-                  URLだけコピー
-                </button>
                 <button
                   type="button"
                   disabled={inviteBusy}
@@ -1123,7 +1096,7 @@ export function DirectRequestForm({
                     if (!invitePath) return;
                     window.open(invitePath, "_blank", "noopener,noreferrer");
                   }}
-                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-brand disabled:opacity-50"
+                  className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
                 >
                   送付用ページを開く
                 </button>

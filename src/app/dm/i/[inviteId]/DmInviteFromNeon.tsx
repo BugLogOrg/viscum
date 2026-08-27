@@ -101,6 +101,9 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const displayName =
     invite.fromAccountName?.trim() || seederLabel.line;
   const loginHref = `/login?callbackUrl=${encodeURIComponent(`/dm/i/${invite.id}`)}`;
+  const isOwnInvite =
+    Boolean(handle) &&
+    handle.toLowerCase() === invite.fromHandle.replace(/^@/, "").toLowerCase();
 
   async function sendReply(e: React.FormEvent) {
     e.preventDefault();
@@ -118,6 +121,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
         ok?: boolean;
         path?: string;
         error?: string;
+        asSeeder?: boolean;
       };
       if (res.ok && data.ok) {
         setBody("");
@@ -163,16 +167,32 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
 
               <section className="rounded-xl border border-viscum-brand/30 bg-white/70 px-4 py-4">
                 <p className="text-[13px] font-medium text-viscum-ink">
-                  依頼主へ返事する
+                  {isOwnInvite
+                    ? "このお願いのやりとり"
+                    : "依頼主へ返事する"}
                 </p>
                 <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-                  ここに書いた内容は、依頼主の<strong>ご依頼DM</strong>
-                  に届きます（作品の公開コメント欄には残りません）。ログインが必要です（無料）。
+                  {isOwnInvite ? (
+                    <>
+                      自分の招待着地です。ここに書いた内容は
+                      <strong>ご依頼DM</strong>
+                      に入ります（相手への返事待ちでも、あとから追記できます）。
+                    </>
+                  ) : (
+                    <>
+                      ここに書いた内容は、依頼主の<strong>ご依頼DM</strong>
+                      に届きます（作品の公開コメント欄には残りません）。ログインが必要です（無料）。
+                    </>
+                  )}
                 </p>
 
                 {sentOk ? (
                   <div className="mt-3 space-y-2 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[13px] text-viscum-ink">
-                    <p>ご依頼DMに送りました。依頼主にも同じスレが見えます。</p>
+                    <p>
+                      {isOwnInvite
+                        ? "ご依頼DMに送りました。やりとりスレから続けられます。"
+                        : "ご依頼DMに送りました。依頼主にも同じスレが見えます。"}
+                    </p>
                     {threadPath ? (
                       <Link
                         href={threadPath}
@@ -191,7 +211,11 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                         setSendError(null);
                       }}
                       rows={5}
-                      placeholder="見た感想・気づいた点・質問など"
+                      placeholder={
+                        isOwnInvite
+                          ? "相手への追記・確認・メモなど"
+                          : "見た感想・気づいた点・質問など"
+                      }
                       className="w-full resize-y rounded-md border border-viscum-line bg-white px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
                     />
                     {sendError && (
