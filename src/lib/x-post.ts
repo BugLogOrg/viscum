@@ -1,7 +1,7 @@
 import { TwitterApi, ApiResponseError } from "twitter-api-v2";
 
 export function isXAnnounceConfigured(): boolean {
-  // 明示ONのみ。URL付き投稿は従量で高いので既定オフ（ホットまとめ告知は別途検討）
+  // 明示ONのみ。有料棚（¥5k／¥10k／¥30k）公開時だけ投稿対象（API側でも弾く）
   if (process.env.X_ANNOUNCE_ENABLED !== "1") return false;
   return Boolean(
     process.env.X_API_KEY?.trim() &&

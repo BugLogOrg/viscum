@@ -2,7 +2,10 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { TwitterApi, ApiResponseError } from "twitter-api-v2";
 import { auth } from "@/auth";
-import { buildXAnnounceText } from "@/lib/x-announce-text";
+import {
+  buildXAnnounceText,
+  isPaidShelfPlanForXAnnounce,
+} from "@/lib/x-announce-text";
 import { isXAnnounceConfigured, postTweetAsViscum } from "@/lib/x-post";
 
 const Body = z.object({
@@ -32,6 +35,7 @@ export async function GET(req: Request) {
     handle: session?.user?.handle ?? null,
     configured: isXAnnounceConfigured(),
     announceEnabled: process.env.X_ANNOUNCE_ENABLED === "1",
+    paidShelfOnly: true,
     hasApiKey: Boolean(process.env.X_API_KEY?.trim()),
     hasApiSecret: Boolean(process.env.X_API_SECRET?.trim()),
     hasAccessToken: Boolean(process.env.X_ACCESS_TOKEN?.trim()),
@@ -74,8 +78,8 @@ export async function GET(req: Request) {
 }
 
 /**
- * シード公開時に公式 @viscum_org へ告知。
- * X_* 未設定、または X_ANNOUNCE_ENABLED が 1 以外のときは skipped。
+ * 有料棚コンペ公開時に公式 @viscum_org へ告知（ADR-037）。
+ * 無料・直依頼は skipped。X_* 未設定／X_ANNOUNCE_ENABLED≠1 も skipped。
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -96,6 +100,14 @@ export async function POST(req: Request) {
   const parsed = Body.safeParse(raw);
   if (!parsed.success) {
     return NextResponse.json({ error: "invalid body" }, { status: 400 });
+  }
+
+  if (!isPaidShelfPlanForXAnnounce(parsed.data.plan)) {
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: "not_paid_shelf",
+    });
   }
 
   const origin =

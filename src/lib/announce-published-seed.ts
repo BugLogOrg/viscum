@@ -1,4 +1,5 @@
 import type { Work } from "@/data/dummy-works";
+import { isPaidShelfPlanForXAnnounce } from "@/lib/x-announce-text";
 
 export type AnnounceResult = {
   skipped?: boolean;
@@ -8,10 +9,13 @@ export type AnnounceResult = {
   text?: string;
 };
 
-/** 公開直後に公式Xへ告知（失敗しても公開自体は止めない） */
+/** 公開直後に公式Xへ告知（失敗しても公開自体は止めない）。有料棚のみ。 */
 export async function announcePublishedSeedToX(
   work: Pick<Work, "id" | "title" | "plan" | "prizeYen" | "status">,
 ): Promise<AnnounceResult> {
+  if (!isPaidShelfPlanForXAnnounce(work.plan)) {
+    return { skipped: true, reason: "not_paid_shelf" };
+  }
   try {
     const res = await fetch("/api/x/announce", {
       method: "POST",
@@ -48,8 +52,11 @@ export function announceResultMessage(r: AnnounceResult): string | null {
     return `公開は完了しています。公式X（@viscum_org）への自動告知だけ失敗しました。\n${r.error}${hint}`;
   }
   if (r.skipped) {
+    if (r.reason === "not_paid_shelf") {
+      return null;
+    }
     if (r.reason === "not_configured") {
-      return "公開は完了。公式Xの自動告知はいまオフです（告知文は下からコピーできます）。";
+      return "公開は完了。公式Xの自動告知はいまオフです（告知文は下からコピーできます）。有料コンペ（¥5k／¥10k／¥30k）公開時のみ対象です。";
     }
     return "公開は完了。X告知はスキップされました。";
   }

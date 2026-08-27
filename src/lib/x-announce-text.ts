@@ -1,5 +1,25 @@
 import { planBadgeLabel, formatYen, type Work } from "@/data/dummy-works";
 
+/** ADR-037: 公式X自動告知の対象＝有料棚コンペのみ（¥5k／¥10k／¥30k） */
+export const PAID_SHELF_PLANS_FOR_X_ANNOUNCE = [
+  "first_impression",
+  "brush_up",
+  "public_boost",
+] as const;
+
+export type PaidShelfPlanForXAnnounce =
+  (typeof PAID_SHELF_PLANS_FOR_X_ANNOUNCE)[number];
+
+export function isPaidShelfPlanForXAnnounce(
+  plan: Work["plan"] | string | null | undefined,
+): plan is PaidShelfPlanForXAnnounce {
+  return (
+    plan === "first_impression" ||
+    plan === "brush_up" ||
+    plan === "public_boost"
+  );
+}
+
 /** X（@viscum_org）告知用。280字以内に収める */
 export function buildXAnnounceText(
   input: {
