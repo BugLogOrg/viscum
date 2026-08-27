@@ -24,7 +24,7 @@ export function siteOrigin(): string {
 }
 
 /** OG画像URLのクエリ。見た目変更時に上げて X／CDN キャッシュを切る */
-export const OG_IMAGE_BUST = "20260828h";
+export const OG_IMAGE_BUST = "20260828i";
 
 
 export function truncateForOg(text: string, max: number): string {
@@ -71,7 +71,16 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
   );
   const description = workOgDescription(work);
   const url = `${siteOrigin()}/w/${encodeURIComponent(id)}`;
-  const ogImage = `${siteOrigin()}/w/${encodeURIComponent(id)}/opengraph-image?v=${OG_IMAGE_BUST}`;
+  // 動的OG（opengraph-image）は生成に数秒かかり、Xが画像だけ落とすことがある。
+  // 登録サムネがある作品は静的JPEGを優先（即応答・確実にカード化）。
+  const rawThumb = work.thumbUrl?.trim() || "";
+  const staticThumb = rawThumb.startsWith("http")
+    ? rawThumb
+    : rawThumb.startsWith("/")
+      ? `${siteOrigin()}${rawThumb}`
+      : null;
+  const designedOg = `${siteOrigin()}/w/${encodeURIComponent(id)}/opengraph-image?v=${OG_IMAGE_BUST}`;
+  const ogImage = staticThumb ?? designedOg;
   return {
     title,
     description,
@@ -83,7 +92,14 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
       siteName: "VISCUM",
       title,
       description,
-      images: [{ url: ogImage, width: 1200, height: 630, alt: "VISCUM | 広告×コンペ" }],
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: title || "VISCUM | 広告×コンペ",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
