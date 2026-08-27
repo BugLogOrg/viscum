@@ -42,7 +42,8 @@ export function WorkShareBoost({
         SNSやチャットに貼れる告知文です。シーダー以外もコピーできます。
         {isComp
           ? " 広めると反応が増えやすい一方、ライバルも増えうる点はご承知を。"
-          : null}
+          : null}{" "}
+        公開URLならXにカード（タイトル・画像）が出ます。
       </p>
       {origin ? (
         <ShareTextCopyButton
