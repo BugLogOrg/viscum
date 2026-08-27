@@ -5,7 +5,7 @@ import { ViscumMark } from "@/components/ViscumMark";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "よくある質問 | VISCUM",
+  title: "よくある質問",
   description:
     "なぜこういう場が要るか、棚と直依頼のちがい、プロフィール公開範囲、手数料約10%、他サービスやサクラとの違い。",
 };

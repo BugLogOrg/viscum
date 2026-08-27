@@ -58,12 +58,13 @@ export function resolveWorkForOg(id: string): Work | null {
 export function workPageMetadata(work: Work | null, id: string): Metadata {
   if (!work) {
     return {
-      title: "作品が見つかりません | VISCUM",
+      title: "作品が見つかりません",
       description: "VISCUMの作品ページです。",
       robots: { index: false, follow: false },
     };
   }
   // タイトル短運用（ADR-045）。なければ tagline
+  // タブは layout の template「VISCUM ｜ %s」。OG/X用は作品名のみ
   const title = truncateForOg(
     work.title?.trim() || work.tagline?.trim() || "",
     100,
@@ -72,7 +73,7 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
   const url = `${siteOrigin()}/w/${encodeURIComponent(id)}`;
   const ogImage = `${siteOrigin()}/w/${encodeURIComponent(id)}/opengraph-image?v=${OG_IMAGE_BUST}`;
   return {
-    title: `${title} | VISCUM`,
+    title,
     description,
     alternates: { canonical: url },
     openGraph: {
