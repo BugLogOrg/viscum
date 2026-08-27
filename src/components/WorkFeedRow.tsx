@@ -23,7 +23,7 @@ const TONE: Record<Work["thumbTone"], string> = {
   trunk: "bg-viscum-trunk",
 };
 
-/** はてブ密度 × note横長サムネ。説明は詳細へ（タイトル長文化のため） */
+/** はてブ密度 × note横長サムネ。説明は詳細へ（タイトルは短め運用） */
 export function WorkFeedRow({
   work,
   className = "",

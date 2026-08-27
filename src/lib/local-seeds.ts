@@ -385,7 +385,7 @@ export function workFromLocalSeed(seed: LocalSeed): Work {
   return {
     id: seed.id,
     title: seed.title,
-    tagline: seed.title.slice(0, 48),
+    tagline: seed.title.slice(0, 100),
     seeder: seed.seederHandle,
     seederAccountName: seed.seederAccountName,
     tags: seed.tags,

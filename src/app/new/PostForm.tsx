@@ -21,6 +21,7 @@ import {
   displayAccountName,
   readLocalProfile,
 } from "@/lib/local-profile";
+import { WORK_TITLE_MAX, clampWorkTitle } from "@/lib/work-title";
 
 const RECOMMENDED_TAGS = [
   "アプリ",
@@ -202,6 +203,7 @@ export function PostForm() {
 
   const canSave =
     title.trim().length > 0 &&
+    title.trim().length <= WORK_TITLE_MAX &&
     externalUrl.trim().length > 8 &&
     description.trim().length > 0 &&
     (!compOn || (prizeYen >= 5000 && promptList.length >= 1)) &&
@@ -300,7 +302,7 @@ export function PostForm() {
               seederAccountName.toLowerCase() !== seederHandle.toLowerCase()
                 ? seederAccountName
                 : undefined,
-            title: title.trim(),
+            title: clampWorkTitle(title),
             description: description.trim(),
             focusNote:
               (compOn ? promptList.join("\n") : focusNote.trim()) || undefined,
@@ -332,15 +334,19 @@ export function PostForm() {
           タイトル <span className="text-viscum-berry">必須</span>
         </label>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
-          シード（棚）の見出し＝小さな広告のヘッドライン。何を出して、何をしてほしいかをここに。
+          棚・Xカードに出る短いヘッドライン（最大{WORK_TITLE_MAX}字）。長く書きたい背景は下の説明へ。
         </p>
         <textarea
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          rows={3}
-          placeholder="何を出して、どこを見てほしいか。シードではここが主役です"
+          onChange={(e) => setTitle(e.target.value.slice(0, WORK_TITLE_MAX))}
+          rows={2}
+          maxLength={WORK_TITLE_MAX}
+          placeholder="例: 少額コンペ＝少額広告の顔は伝わるか"
           className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[15px] leading-snug text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none"
         />
+        <p className="mt-1 text-right text-[11px] tabular-nums text-viscum-muted">
+          {title.trim().length}/{WORK_TITLE_MAX}
+        </p>
       </div>
 
       <div>
@@ -414,12 +420,12 @@ export function PostForm() {
           説明 <span className="text-viscum-berry">必須</span>
         </label>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
-          背景と、「どこまで見れば十分か」。タイトルと被らない範囲で短く。
+          背景・文脈・「どこまで見れば十分か」。タイトルに入りきらない長文はここに。
         </p>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          rows={3}
+          rows={5}
           className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] leading-relaxed text-viscum-ink focus:border-viscum-brand focus:outline-none"
         />
       </div>
@@ -747,7 +753,7 @@ export function PostForm() {
           </div>
         )}
         <p className="mt-2 text-[14px] font-semibold leading-snug text-viscum-ink line-clamp-3">
-          {title.trim() || "（タイトルがヘッドラインになります）"}
+          {title.trim() || "（短いタイトルがヘッドラインになります）"}
         </p>
         <p className="mt-1 text-[12px] text-viscum-ink">{previewMeta}</p>
       </div>

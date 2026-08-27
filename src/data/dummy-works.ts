@@ -533,10 +533,26 @@ const DUMMY_WORKS_RAW: Work[] = [
 
 /** コース定義の「聞くこと／募集の目安」をデモ作品の prompts に揃える */
 export const DUMMY_WORKS: Work[] = DUMMY_WORKS_RAW.map((w) => {
-  if (!w.plan) return w;
-  const scaffold = scaffoldForPlan(w.plan);
-  if (!scaffold) return { ...w, prompts: undefined };
-  return { ...w, prompts: scaffold.lines };
+  let next = w;
+  // 長文タイトル→短い見出し＋説明へ寄せる（ADR-045）
+  if (next.title.trim().length > 100) {
+    const long = next.title.trim();
+    const short =
+      next.tagline.trim().length > 0 && next.tagline.trim().length <= 100
+        ? next.tagline.trim()
+        : `${long.slice(0, 99)}…`;
+    const desc = next.description.trim();
+    next = {
+      ...next,
+      title: short,
+      tagline: short,
+      description: desc.startsWith(long) ? desc : `${long}\n\n${desc}`.trim(),
+    };
+  }
+  if (!next.plan) return next;
+  const scaffold = scaffoldForPlan(next.plan);
+  if (!scaffold) return { ...next, prompts: undefined };
+  return { ...next, prompts: scaffold.lines };
 });
 
 export function getWork(id: string): Work | undefined {

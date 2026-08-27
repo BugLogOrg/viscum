@@ -24,7 +24,7 @@ export function siteOrigin(): string {
 }
 
 /** OG画像URLのクエリ。見た目変更時に上げて X／CDN キャッシュを切る */
-export const OG_IMAGE_BUST = "20260828d";
+export const OG_IMAGE_BUST = "20260828e";
 
 
 export function truncateForOg(text: string, max: number): string {
@@ -63,10 +63,10 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
       robots: { index: false, follow: false },
     };
   }
-  // Xの太字行は短い方が読める。tagline優先、なければ title
+  // タイトル短運用（ADR-045）。なければ tagline
   const title = truncateForOg(
-    work.tagline?.trim() || work.title,
-    70,
+    work.title?.trim() || work.tagline?.trim() || "",
+    100,
   );
   const description = workOgDescription(work);
   const url = `${siteOrigin()}/w/${encodeURIComponent(id)}`;

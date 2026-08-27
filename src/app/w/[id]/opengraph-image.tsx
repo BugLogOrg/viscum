@@ -33,9 +33,9 @@ export default async function Image({
   const fontData = await loadJpFont();
 
   const badge = work ? workOgBadge(work) : "VISCUM";
-  // 短い見出し優先（長文 title は載せない）
+  // 短いタイトル優先（長文は説明欄）
   const headline = work
-    ? truncateForOg(work.tagline?.trim() || work.title, 48)
+    ? truncateForOg(work.title?.trim() || work.tagline?.trim() || "", 100)
     : "作品が見つかりません";
   const rawThumb = work?.thumbUrl?.trim() || "";
   const thumb = rawThumb.startsWith("http")

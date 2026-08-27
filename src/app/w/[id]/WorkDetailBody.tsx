@@ -177,7 +177,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
               {work.title}
             </h1>
 
-            <p className="text-[15px] leading-relaxed text-viscum-ink">
+            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
               {work.description}
             </p>
 

@@ -123,7 +123,7 @@ export default function NewDirectRequestPage() {
     () => ({
       id: persistedId ?? DRAFT_WORK_ID,
       title: title.trim() || "（タイトル未入力）",
-      tagline: (title.trim() || "直依頼").slice(0, 48),
+      tagline: (title.trim() || "直依頼").slice(0, 100),
       seeder: handle || "anon",
       tags: [],
       status: "none",
