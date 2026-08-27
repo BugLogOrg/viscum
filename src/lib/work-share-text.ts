@@ -1,5 +1,6 @@
 import { formatYen, planBadgeLabel, type Work } from "@/data/dummy-works";
 import { PUBLIC_BOOST } from "@/data/seed-courses";
+import { OG_IMAGE_BUST } from "@/lib/work-og";
 
 const MENTOR_ASK_MAX = 100;
 
@@ -26,7 +27,8 @@ function mentorAskSnippet(work: Work): string | null {
 
 /** SNS貼り付け用の共有文（詳細・公開直後の正本）。聞きたいこと（足場）は載せない */
 export function buildWorkShareText(work: Work, origin: string): string {
-  const url = `${origin.replace(/\/$/, "")}/w/${work.id}`;
+  // ?v= で X の「取得失敗キャッシュ」を切る（OG画像 bust と同期）
+  const url = `${origin.replace(/\/$/, "")}/w/${work.id}?v=${OG_IMAGE_BUST}`;
   const lines: string[] = [];
   const planLabel = planBadgeLabel(work.plan);
 

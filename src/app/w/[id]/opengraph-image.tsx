@@ -9,6 +9,8 @@ import {
 export const alt = "VISCUM | 広告×コンペ 作品カード";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+/** 生成結果をISR的に保持（毎回フォント取得＋描画しない） */
+export const revalidate = 86400;
 
 async function loadJpFont(): Promise<ArrayBuffer | null> {
   try {
