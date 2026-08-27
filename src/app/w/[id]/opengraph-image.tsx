@@ -2,7 +2,6 @@ import { ImageResponse } from "next/og";
 import {
   resolveWorkForOg,
   siteOrigin,
-  truncateForOg,
   workOgBadge,
 } from "@/lib/work-og";
 
@@ -33,9 +32,6 @@ export default async function Image({
   const fontData = await loadJpFont();
 
   const badge = work ? workOgBadge(work) : "VISCUM";
-  const title = work
-    ? truncateForOg(work.tagline?.trim() || work.title, 90)
-    : "作品が見つかりません";
   const rawThumb = work?.thumbUrl?.trim() || "";
   const thumb = rawThumb.startsWith("http")
     ? rawThumb
@@ -61,64 +57,48 @@ export default async function Image({
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-start",
-            // X の title 黒帯が下端を覆うので、重要文言は上〜中腹に置く
-            padding: "56px 52px 140px 52px",
+            // 下〜140pxは X の title 黒帯領域。文言は上寄せのみ
+            padding: "48px 48px 160px 48px",
           }}
         >
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
-              gap: 20,
+              fontSize: 28,
+              fontWeight: 700,
+              letterSpacing: "0.04em",
+              color: "#2f5d3a",
             }}
           >
-            <div
-              style={{
-                display: "flex",
-                fontSize: 26,
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                color: "#2f5d3a",
-              }}
-            >
-              VISCUM | 広告×コンペ
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignSelf: "flex-start",
-                background: "#a84b3a",
-                color: "#fff",
-                fontSize: 26,
-                fontWeight: 700,
-                padding: "10px 18px",
-                borderRadius: 10,
-              }}
-            >
-              {badge}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                fontSize: 44,
-                fontWeight: 700,
-                lineHeight: 1.35,
-                color: "#1f1a14",
-                maxWidth: thumb ? 620 : 1040,
-              }}
-            >
-              {title}
-            </div>
-            <div
-              style={{
-                display: "flex",
-                marginTop: 8,
-                fontSize: 24,
-                color: "#6b6358",
-              }}
-            >
-              出して、聞いて、ブースト
-            </div>
+            VISCUM | 広告×コンペ
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignSelf: "flex-start",
+              marginTop: 22,
+              background: "#a84b3a",
+              color: "#fff",
+              fontSize: 26,
+              fontWeight: 700,
+              padding: "10px 18px",
+              borderRadius: 10,
+            }}
+          >
+            {badge}
+          </div>
+          {/* タイトルは X 黒帯側。画像内はスローガンを上寄せで見せる */}
+          <div
+            style={{
+              display: "flex",
+              marginTop: 36,
+              fontSize: 36,
+              fontWeight: 700,
+              color: "#6b6358",
+              letterSpacing: "0.02em",
+            }}
+          >
+            出して、聞いて、ブースト
           </div>
         </div>
         {thumb ? (

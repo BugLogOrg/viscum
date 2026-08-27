@@ -23,6 +23,10 @@ export function siteOrigin(): string {
   return "https://viscum.vercel.app";
 }
 
+/** OG画像URLのクエリ。見た目変更時に上げて X／CDN キャッシュを切る */
+export const OG_IMAGE_BUST = "20260828b";
+
+
 export function truncateForOg(text: string, max: number): string {
   const t = text.replace(/\s+/g, " ").trim();
   if (t.length <= max) return t;
@@ -66,6 +70,7 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
   );
   const description = workOgDescription(work);
   const url = `${siteOrigin()}/w/${encodeURIComponent(id)}`;
+  const ogImage = `${siteOrigin()}/w/${encodeURIComponent(id)}/opengraph-image?v=${OG_IMAGE_BUST}`;
   return {
     title: `${title} | VISCUM`,
     description,
@@ -77,11 +82,13 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
       siteName: "VISCUM",
       title,
       description,
+      images: [{ url: ogImage, width: 1200, height: 630, alt: "VISCUM | 広告×コンペ" }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
+      images: [ogImage],
     },
   };
 }
