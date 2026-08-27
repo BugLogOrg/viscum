@@ -6,20 +6,20 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
-  title: "VISCUM（ヤドリギ）",
+  title: "VISCUM | 広告×コンペ",
   description:
     "作ったものを出して、最初の反応を集める場所。VISCUM内コンペと公開ブースト。入場無料。",
   openGraph: {
     type: "website",
     locale: "ja_JP",
     siteName: "VISCUM",
-    title: "VISCUM（ヤドリギ）",
+    title: "VISCUM | 広告×コンペ",
     description:
       "作ったものを出して、最初の反応を集める場所。VISCUM内コンペと公開ブースト。入場無料。",
   },
   twitter: {
     card: "summary_large_image",
-    title: "VISCUM（ヤドリギ）",
+    title: "VISCUM | 広告×コンペ",
     description:
       "作ったものを出して、最初の反応を集める場所。VISCUM内コンペと公開ブースト。入場無料。",
   },

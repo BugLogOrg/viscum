@@ -22,6 +22,27 @@ export function writeLocalComments(workId: string, comments: Comment[]) {
   );
 }
 
+/** 端末内に残っている全作品のローカルコメント */
+export function listAllLocalCommentBuckets(): {
+  workId: string;
+  comments: Comment[];
+}[] {
+  if (typeof window === "undefined") return [];
+  const out: { workId: string; comments: Comment[] }[] = [];
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith(prefix)) continue;
+      const workId = key.slice(prefix.length);
+      if (!workId) continue;
+      out.push({ workId, comments: readLocalComments(workId) });
+    }
+  } catch {
+    return out;
+  }
+  return out;
+}
+
 export function addLocalComment(
   workId: string,
   input: {

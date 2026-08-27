@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "VISCUM";
+export const alt = "VISCUM | 広告×コンペ";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -34,8 +34,8 @@ export default async function Image() {
           color: "#fff",
         }}
       >
-        <div style={{ display: "flex", fontSize: 36, letterSpacing: "0.2em" }}>
-          VISCUM
+        <div style={{ display: "flex", fontSize: 32, letterSpacing: "0.08em" }}>
+          VISCUM | 広告×コンペ
         </div>
         <div
           style={{

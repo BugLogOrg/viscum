@@ -6,7 +6,7 @@ import {
   workOgBadge,
 } from "@/lib/work-og";
 
-export const alt = "VISCUM 作品カード";
+export const alt = "VISCUM | 広告×コンペ 作品カード";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -60,8 +60,9 @@ export default async function Image({
             flex: 1,
             display: "flex",
             flexDirection: "column",
-            justifyContent: "space-between",
-            padding: "56px 52px",
+            justifyContent: "flex-start",
+            // X の title 黒帯が下端を覆うので、重要文言は上〜中腹に置く
+            padding: "56px 52px 140px 52px",
           }}
         >
           <div
@@ -74,13 +75,13 @@ export default async function Image({
             <div
               style={{
                 display: "flex",
-                fontSize: 28,
+                fontSize: 26,
                 fontWeight: 700,
-                letterSpacing: "0.14em",
+                letterSpacing: "0.06em",
                 color: "#2f5d3a",
               }}
             >
-              VISCUM
+              VISCUM | 広告×コンペ
             </div>
             <div
               style={{
@@ -108,15 +109,16 @@ export default async function Image({
             >
               {title}
             </div>
-          </div>
-          <div
-            style={{
-              display: "flex",
-              fontSize: 24,
-              color: "#6b6358",
-            }}
-          >
-            出して、聞いて、ブースト
+            <div
+              style={{
+                display: "flex",
+                marginTop: 8,
+                fontSize: 24,
+                color: "#6b6358",
+              }}
+            >
+              出して、聞いて、ブースト
+            </div>
           </div>
         </div>
         {thumb ? (
