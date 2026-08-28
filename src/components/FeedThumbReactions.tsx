@@ -51,7 +51,7 @@ export function FeedThumbReactions({
 
   return (
     <div
-      className="flex items-center gap-1"
+      className="flex items-center gap-1.5"
       onClick={(e) => e.stopPropagation()}
       role="group"
       aria-label="反応の色"
@@ -67,9 +67,9 @@ export function FeedThumbReactions({
 
         const inner = (
           <>
-            <ProtocolMark id={c.id} filled={isYellow && bmOn} className="h-3.5 w-3.5" />
+            <ProtocolMark id={c.id} filled={isYellow && bmOn} className="h-5 w-5" />
             <span
-              className={`text-[11px] font-medium tabular-nums leading-none ${
+              className={`text-[12px] font-medium tabular-nums leading-none ${
                 isYellow && bmOn ? "text-viscum-ink" : "text-viscum-muted"
               }`}
             >
@@ -87,7 +87,7 @@ export function FeedThumbReactions({
               aria-label={label}
               aria-pressed={bmOn}
               onClick={onYellow}
-              className={`inline-flex items-center gap-1 rounded-md px-1 py-0.5 transition ${
+              className={`inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 transition ${
                 bmOn
                   ? "bg-viscum-protocol-yellow-soft"
                   : "hover:bg-viscum-paper-2"
@@ -104,7 +104,7 @@ export function FeedThumbReactions({
             href={`/w/${workId}`}
             title={label}
             aria-label={label}
-            className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 opacity-80 transition hover:bg-viscum-paper-2 hover:opacity-100"
+            className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 opacity-80 transition hover:bg-viscum-paper-2 hover:opacity-100"
           >
             {inner}
           </Link>
