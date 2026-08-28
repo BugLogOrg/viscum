@@ -408,14 +408,14 @@ export function WorkEngage({
           <p className="font-medium text-viscum-berry-deep">コンペ帯</p>
           <p className="mt-1 text-viscum-ink">
             {prizeYen
-              ? `予算 ${formatYen(prizeYen)}（選んだ人に褒賞）`
-              : "予算なし"}
+              ? `褒賞 ${formatYen(prizeYen)}（選んだ人へ）`
+              : "褒賞なし"}
             {deadlineLine ? ` · 締切 ${deadlineLine}` : ""}
             {status === "pay_soon" && " · 決済準備中"}
             {compClosed && " · 受付終了"}
             {typeof paymentsDone === "number" &&
               paymentsDone > 0 &&
-              ` · 支払い完了 ${paymentsDone}件`}
+              ` · 褒賞支払い完了 ${paymentsDone}件`}
             {compActive &&
               paymentsDone === 0 &&
               hasAdoptedUntipped &&
