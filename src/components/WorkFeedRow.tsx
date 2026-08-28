@@ -41,7 +41,7 @@ function showStatusBlock(work: Work): boolean {
 }
 
 /**
- * フィード行 — 左: サムネ → ステータス帯／右: 作品×反応・シーダー・気になる（右下）。
+ * フィード行 — 左: サムネ → ステータス帯／右: 作品・投稿者・反応・気になる。
  * タイトルは入力上限（100字）どおり全表示。無料も帯に出す（¥0は書かない）。
  */
 export function WorkFeedRow({
@@ -100,7 +100,7 @@ export function WorkFeedRow({
             </p>
             {deadline ? (
               <p
-                className="mt-0.5 text-[10px] leading-snug text-viscum-muted"
+                className="mt-0.5 break-words text-[12px] leading-snug text-viscum-muted"
                 title={
                   work.closesInHours != null ? `締切 ${deadline}` : undefined
                 }
@@ -123,14 +123,6 @@ export function WorkFeedRow({
             </p>
           ) : null}
 
-          <p className="mt-1.5 text-[13px] font-medium leading-none text-viscum-ink">
-            <span aria-hidden className="mr-1">
-              💬
-            </span>
-            {commentN}
-            <span className="ml-0.5 font-normal text-viscum-muted">件の反応</span>
-          </p>
-
           {!statusBlock && work.status === "closed" ? (
             <p className="mt-2 text-[12px] text-viscum-muted">
               {work.paymentsDone && work.paymentsDone > 0
@@ -151,12 +143,26 @@ export function WorkFeedRow({
               preferredName={work.seederAccountName}
             />
           </Link>
-          <div className="mt-1 flex justify-end">
-            <FeedThumbReactions
-              workId={work.id}
-              title={work.title}
-              bookmarkBase={rx.bookmark}
-            />
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <Link
+              href={`/w/${work.id}`}
+              className="min-w-0 text-[13px] font-medium leading-none text-viscum-ink active:opacity-90"
+            >
+              <span aria-hidden className="mr-1">
+                💬
+              </span>
+              {commentN}
+              <span className="ml-0.5 font-normal text-viscum-muted">
+                件の反応
+              </span>
+            </Link>
+            <div className="shrink-0">
+              <FeedThumbReactions
+                workId={work.id}
+                title={work.title}
+                bookmarkBase={rx.bookmark}
+              />
+            </div>
           </div>
         </div>
       </div>
