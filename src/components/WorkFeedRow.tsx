@@ -12,7 +12,7 @@ import {
 import { FeedThumbReactions } from "@/components/FeedThumbReactions";
 import { SeederNameText } from "@/components/SeederNameText";
 
-/** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1） */
+/** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1）。詳細・投稿プレビューでも参照 */
 export const THUMB_ASPECT = "aspect-[1280/670]";
 
 const TONE: Record<Work["thumbTone"], string> = {
@@ -32,7 +32,6 @@ function mediaLine(work: Work): string | null {
 function showCompBlock(work: Work): boolean {
   if (work.status === "closed") return false;
   if (work.status === "none" && !work.prizeYen) return false;
-  // 有料コンペ／決済準備、または金額付きの開催
   return (
     work.status === "open" ||
     work.status === "pay_soon" ||
@@ -41,8 +40,8 @@ function showCompBlock(work: Work): boolean {
 }
 
 /**
- * フィード行 — 作品 × 反応 × コンペ（三本柱）。
- * 金額・締切は消さず一塊に。バッジ散乱をやめる。
+ * フィード行 — サムネ上置き・作品 × 反応 × コンペ。
+ * 金額は一塊に残すが本文と同系サイズ（金額だけ巨大化しない）。
  */
 export function WorkFeedRow({
   work,
@@ -61,24 +60,36 @@ export function WorkFeedRow({
 
   return (
     <article
-      className={`flex gap-2.5 border-b border-viscum-line px-3 py-2.5 transition hover:bg-viscum-paper-2/80 ${className}`}
+      className={`border-b border-viscum-line px-3 py-3 transition hover:bg-viscum-paper-2/80 ${className}`}
     >
-      <div className="w-[9.5rem] shrink-0 self-start">
+      {/* サムネ全面上置き */}
+      <Link
+        href={`/w/${work.id}`}
+        className={`relative block w-full overflow-hidden rounded-md ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
+        style={{ aspectRatio: "1280 / 670" }}
+        aria-hidden
+        tabIndex={-1}
+      >
+        {work.thumbUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={work.thumbUrl}
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        ) : null}
+      </Link>
+
+      <div className="mt-1.5 flex items-center justify-between gap-2">
         <Link
           href={`/w/${work.id}`}
-          className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
-          style={{ aspectRatio: "1280 / 670" }}
-          aria-hidden
-          tabIndex={-1}
+          className="min-w-0 text-[13px] font-medium text-viscum-ink active:opacity-90"
         >
-          {work.thumbUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={work.thumbUrl}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : null}
+          <span aria-hidden className="mr-1">
+            💬
+          </span>
+          {commentN}
+          <span className="ml-0.5 font-normal text-viscum-muted">件の反応</span>
         </Link>
         <FeedThumbReactions
           workId={work.id}
@@ -89,9 +100,8 @@ export function WorkFeedRow({
 
       <Link
         href={`/w/${work.id}`}
-        className="min-w-0 flex-1 self-start active:opacity-90"
+        className="mt-1.5 block min-w-0 active:opacity-90"
       >
-        {/* ① 作品 */}
         <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink line-clamp-3">
           {work.title}
         </h2>
@@ -101,44 +111,27 @@ export function WorkFeedRow({
           </p>
         ) : null}
 
-        {/* ② 反応 */}
-        <p className="mt-1.5 text-[14px] font-semibold leading-none text-viscum-ink">
-          <span aria-hidden className="mr-1">
-            💬
-          </span>
-          {commentN}
-          <span className="ml-1 text-[13px] font-medium text-viscum-ink">
-            件の反応
-          </span>
-        </p>
-
-        {/* ③ コンペ一塊（第二の主役） */}
         {comp ? (
-          <div
-            className={`mt-2 rounded border px-2.5 py-1.5 ${
-              work.status === "pay_soon"
-                ? "border-viscum-bark/40 bg-viscum-bark/10"
-                : "border-viscum-berry/35 bg-viscum-berry/10"
-            }`}
-          >
-            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-              <span className="text-[12px] font-semibold text-viscum-berry-deep">
+          <div className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2 px-2.5 py-1.5">
+            <p className="text-[13px] leading-snug text-viscum-ink">
+              <span className="font-medium">
                 {planLabel ??
                   (work.status === "pay_soon" ? "決済準備中" : "コンペ開催中")}
               </span>
               {work.prizeYen != null && work.prizeYen > 0 ? (
-                <span className="text-[15px] font-bold tabular-nums text-viscum-berry-deep">
-                  {formatYen(work.prizeYen)}
-                </span>
+                <>
+                  <span aria-hidden className="mx-1.5 text-viscum-muted">
+                    ·
+                  </span>
+                  <span className="tabular-nums font-medium text-viscum-berry-deep">
+                    {formatYen(work.prizeYen)}
+                  </span>
+                </>
               ) : null}
-            </div>
+            </p>
             {deadline ? (
               <p
-                className={`mt-0.5 text-[12px] ${
-                  work.status === "closed"
-                    ? "text-viscum-muted"
-                    : "font-medium text-viscum-berry-deep"
-                }`}
+                className="mt-0.5 text-[12px] text-viscum-muted"
                 title={
                   work.closesInHours != null ? `締切 ${deadline}` : undefined
                 }
@@ -159,7 +152,6 @@ export function WorkFeedRow({
           </p>
         )}
 
-        {/* 補助メタ（視線の主役にしない） */}
         <p className="mt-1.5 truncate text-[11px] text-viscum-muted">
           <span title={`投稿 ${formatHoursAgo(work.hoursAgo)}`}>
             {postedShort}

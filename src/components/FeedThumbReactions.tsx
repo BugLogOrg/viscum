@@ -35,7 +35,7 @@ export function FeedThumbReactions({
 
   return (
     <div
-      className="mt-1 flex items-center justify-center gap-1"
+      className="flex items-center justify-center gap-1"
       onClick={(e) => e.stopPropagation()}
     >
       <button
