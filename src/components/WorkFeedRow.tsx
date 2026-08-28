@@ -32,18 +32,43 @@ function mediaLine(work: Work): string | null {
   return tags.join(" · ");
 }
 
-function showStatusBlock(work: Work): boolean {
-  if (work.status === "closed") return false;
-  if (work.plan === "free_comment" || work.status === "none") return true;
-  return (
+/** サムネ下ステータス帯の中身（開催／無料／終了を一箇所に） */
+function feedStatus(work: Work): {
+  title: string;
+  prizeYen?: number;
+  deadline?: string | null;
+} | null {
+  if (work.status === "closed") {
+    return {
+      title:
+        work.paymentsDone && work.paymentsDone > 0
+          ? "終了 · 支払い済み"
+          : "終了",
+    };
+  }
+  if (work.plan === "free_comment" || work.status === "none") {
+    return {
+      title: planBadgeLabel(work.plan) ?? "コメント歓迎",
+    };
+  }
+  if (
     work.status === "open" ||
     work.status === "pay_soon" ||
     (work.prizeYen != null && work.prizeYen > 0)
-  );
+  ) {
+    return {
+      title:
+        planBadgeLabel(work.plan) ??
+        (work.status === "pay_soon" ? "決済準備中" : "コンペ開催中"),
+      prizeYen: work.prizeYen,
+      deadline: formatDeadlineFeed(work.closesInHours, work.status),
+    };
+  }
+  return null;
 }
 
 /**
- * フィード行 — 左: サムネ → 気になる → ステータス帯／右: 作品・緑青赤の件数。
+ * フィード行 — 左: サムネ → ステータス帯 → 気になる／右: 作品・緑青赤件数。
  */
 export function WorkFeedRow({
   work,
@@ -52,11 +77,9 @@ export function WorkFeedRow({
   work: Work;
   className?: string;
 }) {
-  const deadline = formatDeadlineFeed(work.closesInHours, work.status);
   const rx = getWorkReactionCounts(work);
-  const planLabel = planBadgeLabel(work.plan);
   const media = mediaLine(work);
-  const statusBlock = showStatusBlock(work);
+  const status = feedStatus(work);
 
   return (
     <article
@@ -80,6 +103,36 @@ export function WorkFeedRow({
           ) : null}
         </Link>
 
+        {status ? (
+          <div className="mt-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
+            <p className="text-[11px] leading-snug text-viscum-ink">
+              <span className="font-medium">{status.title}</span>
+              {status.prizeYen != null && status.prizeYen > 0 ? (
+                <>
+                  <span aria-hidden className="mx-1 text-viscum-muted">
+                    ·
+                  </span>
+                  <span className="tabular-nums font-medium text-viscum-berry-deep">
+                    {formatYen(status.prizeYen)}
+                  </span>
+                </>
+              ) : null}
+            </p>
+            {status.deadline ? (
+              <p
+                className="mt-0.5 break-words text-[12px] leading-snug text-viscum-muted"
+                title={
+                  work.closesInHours != null
+                    ? `締切 ${status.deadline}`
+                    : undefined
+                }
+              >
+                締切 {status.deadline}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <div className="mt-1 flex justify-start">
           <FeedBookmarkButton
             workId={work.id}
@@ -87,37 +140,6 @@ export function WorkFeedRow({
             bookmarkBase={rx.bookmark}
           />
         </div>
-
-        {statusBlock ? (
-          <div className="mt-1 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
-            <p className="text-[11px] leading-snug text-viscum-ink">
-              <span className="font-medium">
-                {planLabel ??
-                  (work.status === "pay_soon" ? "決済準備中" : "コンペ開催中")}
-              </span>
-              {work.prizeYen != null && work.prizeYen > 0 ? (
-                <>
-                  <span aria-hidden className="mx-1 text-viscum-muted">
-                    ·
-                  </span>
-                  <span className="tabular-nums font-medium text-viscum-berry-deep">
-                    {formatYen(work.prizeYen)}
-                  </span>
-                </>
-              ) : null}
-            </p>
-            {deadline ? (
-              <p
-                className="mt-0.5 break-words text-[12px] leading-snug text-viscum-muted"
-                title={
-                  work.closesInHours != null ? `締切 ${deadline}` : undefined
-                }
-              >
-                締切 {deadline}
-              </p>
-            ) : null}
-          </div>
-        ) : null}
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -128,14 +150,6 @@ export function WorkFeedRow({
           {media ? (
             <p className="mt-0.5 text-[12px] leading-snug text-viscum-muted">
               {media}
-            </p>
-          ) : null}
-
-          {!statusBlock && work.status === "closed" ? (
-            <p className="mt-2 text-[12px] text-viscum-muted">
-              {work.paymentsDone && work.paymentsDone > 0
-                ? "終了 · 支払い済み"
-                : "終了"}
             </p>
           ) : null}
         </Link>
