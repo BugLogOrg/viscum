@@ -43,7 +43,7 @@ function showCompBlock(work: Work): boolean {
 }
 
 /**
- * フィード行 — 左: コンペ帯（上段）→ サムネ → 気になる／右: 作品 × 反応。
+ * フィード行 — 左: サムネ → コンペ帯（下段）→ 気になる／右: 作品 × 反応。
  */
 export function WorkFeedRow({
   work,
@@ -65,8 +65,25 @@ export function WorkFeedRow({
       className={`flex gap-2.5 border-b border-viscum-line px-3 py-2.5 transition hover:bg-viscum-paper-2/80 ${className}`}
     >
       <div className={`${FEED_THUMB_W} shrink-0 self-start`}>
+        <Link
+          href={`/w/${work.id}`}
+          className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
+          style={{ aspectRatio: "1280 / 670" }}
+          aria-hidden
+          tabIndex={-1}
+        >
+          {work.thumbUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={work.thumbUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : null}
+        </Link>
+
         {comp ? (
-          <div className="mb-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
+          <div className="mt-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
             <p className="text-[11px] leading-snug text-viscum-ink">
               <span className="font-medium">
                 {planLabel ??
@@ -96,22 +113,6 @@ export function WorkFeedRow({
           </div>
         ) : null}
 
-        <Link
-          href={`/w/${work.id}`}
-          className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
-          style={{ aspectRatio: "1280 / 670" }}
-          aria-hidden
-          tabIndex={-1}
-        >
-          {work.thumbUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={work.thumbUrl}
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          ) : null}
-        </Link>
         <div className="mt-1">
           <FeedThumbReactions
             workId={work.id}
