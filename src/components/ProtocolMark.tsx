@@ -3,25 +3,35 @@ import type { ProtocolColorId, ProtocolIconId } from "@/lib/protocol-colors";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
 function SproutGlyph({ className }: { className?: string }) {
-  /* 芽: 茎＋左右の葉（塗り寄りで小さくても読める） */
+  /* 双葉: 短い茎＋左右に開いた丸みのある子葉（Y字に見えないよう葉を大きく） */
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden fill="none">
       <path
-        d="M12 20.5V11"
+        d="M12 20V13"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path
-        d="M12 12.5c-2.8-0.2-5.2-1.8-6.2-4.2 2.6-0.3 5.1 0.8 6.2 3.2z"
+      {/* 左の子葉 */}
+      <ellipse
+        cx="7.6"
+        cy="10.2"
+        rx="4.2"
+        ry="2.7"
+        transform="rotate(-38 7.6 10.2)"
         fill="currentColor"
       />
-      <path
-        d="M12 11.5c2.6-0.4 4.8-2.2 5.6-4.6-2.5 0-4.8 1.2-5.6 3.6z"
+      {/* 右の子葉 */}
+      <ellipse
+        cx="16.4"
+        cy="10.2"
+        rx="4.2"
+        ry="2.7"
+        transform="rotate(38 16.4 10.2)"
         fill="currentColor"
-        fillOpacity="0.85"
       />
-      <circle cx="12" cy="20.5" r="1.1" fill="currentColor" />
+      {/* 付け根の小さな節 */}
+      <circle cx="12" cy="12.8" r="1.15" fill="currentColor" />
     </svg>
   );
 }
