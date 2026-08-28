@@ -15,6 +15,9 @@ import { SeederNameText } from "@/components/SeederNameText";
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1）。詳細・投稿プレビューでも参照 */
 export const THUMB_ASPECT = "aspect-[1280/670]";
 
+/** フィード左カラム幅（旧 9.5rem の約 1.2 倍） */
+const FEED_THUMB_W = "w-[11.4rem]";
+
 const TONE: Record<Work["thumbTone"], string> = {
   leaf: "bg-viscum-leaf-deep",
   moss: "bg-viscum-moss",
@@ -29,7 +32,7 @@ function mediaLine(work: Work): string | null {
   return tags.join(" · ");
 }
 
-function showCompBlock(work: Work): boolean {
+function showCompOverlay(work: Work): boolean {
   if (work.status === "closed") return false;
   if (work.status === "none" && !work.prizeYen) return false;
   return (
@@ -40,8 +43,7 @@ function showCompBlock(work: Work): boolean {
 }
 
 /**
- * フィード行 — 左サムネ＋右に作品 × 反応 × コンペ。
- * 金額は一塊に残すが巨大化しない（紙色の帯）。
+ * フィード行 — 左サムネ（上にコンペ帯）＋右に作品 × 反応。
  */
 export function WorkFeedRow({
   work,
@@ -56,18 +58,17 @@ export function WorkFeedRow({
   const planLabel = planBadgeLabel(work.plan);
   const media = mediaLine(work);
   const commentN = work.comments.length;
-  const comp = showCompBlock(work);
+  const comp = showCompOverlay(work);
 
   return (
     <article
       className={`flex gap-2.5 border-b border-viscum-line px-3 py-2.5 transition hover:bg-viscum-paper-2/80 ${className}`}
     >
-      <div className="w-[9.5rem] shrink-0 self-start">
+      <div className={`${FEED_THUMB_W} shrink-0 self-start`}>
         <Link
           href={`/w/${work.id}`}
           className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
           style={{ aspectRatio: "1280 / 670" }}
-          aria-hidden
           tabIndex={-1}
         >
           {work.thumbUrl ? (
@@ -77,6 +78,41 @@ export function WorkFeedRow({
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
             />
+          ) : null}
+
+          {comp ? (
+            <div className="absolute inset-x-0 bottom-0 bg-viscum-paper/95 px-1.5 py-1 shadow-[0_-1px_0_rgba(42,36,32,0.06)] backdrop-blur-[2px]">
+              <p className="text-[11px] leading-snug text-viscum-ink">
+                <span className="font-medium">
+                  {planLabel ??
+                    (work.status === "pay_soon"
+                      ? "決済準備中"
+                      : "コンペ開催中")}
+                </span>
+                {work.prizeYen != null && work.prizeYen > 0 ? (
+                  <>
+                    <span aria-hidden className="mx-1 text-viscum-muted">
+                      ·
+                    </span>
+                    <span className="tabular-nums font-medium text-viscum-berry-deep">
+                      {formatYen(work.prizeYen)}
+                    </span>
+                  </>
+                ) : null}
+              </p>
+              {deadline ? (
+                <p
+                  className="mt-0.5 text-[10px] leading-snug text-viscum-muted"
+                  title={
+                    work.closesInHours != null
+                      ? `締切 ${deadline}`
+                      : undefined
+                  }
+                >
+                  締切 {deadline}
+                </p>
+              ) : null}
+            </div>
           ) : null}
         </Link>
         <div className="mt-1">
@@ -109,46 +145,18 @@ export function WorkFeedRow({
           <span className="ml-0.5 font-normal text-viscum-muted">件の反応</span>
         </p>
 
-        {comp ? (
-          <div className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2 px-2.5 py-1.5">
-            <p className="text-[13px] leading-snug text-viscum-ink">
-              <span className="font-medium">
-                {planLabel ??
-                  (work.status === "pay_soon" ? "決済準備中" : "コンペ開催中")}
-              </span>
-              {work.prizeYen != null && work.prizeYen > 0 ? (
-                <>
-                  <span aria-hidden className="mx-1.5 text-viscum-muted">
-                    ·
-                  </span>
-                  <span className="tabular-nums font-medium text-viscum-berry-deep">
-                    {formatYen(work.prizeYen)}
-                  </span>
-                </>
-              ) : null}
-            </p>
-            {deadline ? (
-              <p
-                className="mt-0.5 text-[12px] text-viscum-muted"
-                title={
-                  work.closesInHours != null ? `締切 ${deadline}` : undefined
-                }
-              >
-                締切 {deadline}
-              </p>
-            ) : null}
-          </div>
-        ) : work.status === "closed" ? (
+        {!comp && work.status === "closed" ? (
           <p className="mt-2 text-[12px] text-viscum-muted">
             {work.paymentsDone && work.paymentsDone > 0
               ? "終了 · 支払い済み"
               : "終了"}
           </p>
-        ) : (
+        ) : null}
+        {!comp && work.status !== "closed" ? (
           <p className="mt-2 text-[12px] text-viscum-muted">
             {planLabel ?? "コメント歓迎"}
           </p>
-        )}
+        ) : null}
 
         <p className="mt-1.5 truncate text-[11px] text-viscum-muted">
           <span title={`投稿 ${formatHoursAgo(work.hoursAgo)}`}>
