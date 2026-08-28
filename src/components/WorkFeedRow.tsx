@@ -32,7 +32,7 @@ function mediaLine(work: Work): string | null {
   return tags.join(" · ");
 }
 
-function showCompOverlay(work: Work): boolean {
+function showCompBlock(work: Work): boolean {
   if (work.status === "closed") return false;
   if (work.status === "none" && !work.prizeYen) return false;
   return (
@@ -43,7 +43,7 @@ function showCompOverlay(work: Work): boolean {
 }
 
 /**
- * フィード行 — 左サムネ（上にコンペ帯）＋右に作品 × 反応。
+ * フィード行 — 左: コンペ帯（上段）→ サムネ → 気になる／右: 作品 × 反応。
  */
 export function WorkFeedRow({
   work,
@@ -58,17 +58,49 @@ export function WorkFeedRow({
   const planLabel = planBadgeLabel(work.plan);
   const media = mediaLine(work);
   const commentN = work.comments.length;
-  const comp = showCompOverlay(work);
+  const comp = showCompBlock(work);
 
   return (
     <article
       className={`flex gap-2.5 border-b border-viscum-line px-3 py-2.5 transition hover:bg-viscum-paper-2/80 ${className}`}
     >
       <div className={`${FEED_THUMB_W} shrink-0 self-start`}>
+        {comp ? (
+          <div className="mb-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
+            <p className="text-[11px] leading-snug text-viscum-ink">
+              <span className="font-medium">
+                {planLabel ??
+                  (work.status === "pay_soon" ? "決済準備中" : "コンペ開催中")}
+              </span>
+              {work.prizeYen != null && work.prizeYen > 0 ? (
+                <>
+                  <span aria-hidden className="mx-1 text-viscum-muted">
+                    ·
+                  </span>
+                  <span className="tabular-nums font-medium text-viscum-berry-deep">
+                    {formatYen(work.prizeYen)}
+                  </span>
+                </>
+              ) : null}
+            </p>
+            {deadline ? (
+              <p
+                className="mt-0.5 text-[10px] leading-snug text-viscum-muted"
+                title={
+                  work.closesInHours != null ? `締切 ${deadline}` : undefined
+                }
+              >
+                締切 {deadline}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         <Link
           href={`/w/${work.id}`}
           className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
           style={{ aspectRatio: "1280 / 670" }}
+          aria-hidden
           tabIndex={-1}
         >
           {work.thumbUrl ? (
@@ -78,41 +110,6 @@ export function WorkFeedRow({
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
             />
-          ) : null}
-
-          {comp ? (
-            <div className="absolute inset-x-0 bottom-0 bg-viscum-paper/95 px-1.5 py-1 shadow-[0_-1px_0_rgba(42,36,32,0.06)] backdrop-blur-[2px]">
-              <p className="text-[11px] leading-snug text-viscum-ink">
-                <span className="font-medium">
-                  {planLabel ??
-                    (work.status === "pay_soon"
-                      ? "決済準備中"
-                      : "コンペ開催中")}
-                </span>
-                {work.prizeYen != null && work.prizeYen > 0 ? (
-                  <>
-                    <span aria-hidden className="mx-1 text-viscum-muted">
-                      ·
-                    </span>
-                    <span className="tabular-nums font-medium text-viscum-berry-deep">
-                      {formatYen(work.prizeYen)}
-                    </span>
-                  </>
-                ) : null}
-              </p>
-              {deadline ? (
-                <p
-                  className="mt-0.5 text-[10px] leading-snug text-viscum-muted"
-                  title={
-                    work.closesInHours != null
-                      ? `締切 ${deadline}`
-                      : undefined
-                  }
-                >
-                  締切 {deadline}
-                </p>
-              ) : null}
-            </div>
           ) : null}
         </Link>
         <div className="mt-1">
