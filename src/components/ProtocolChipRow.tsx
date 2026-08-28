@@ -57,7 +57,7 @@ export function ProtocolChipRow({
             <ProtocolMark
               id={c.id}
               filled={c.id === "yellow" && on}
-              className={`h-3.5 w-3.5 ${on && c.id !== "yellow" ? "text-white" : ""}`}
+              className="h-3.5 w-3.5"
             />
             <span>{c.label}</span>
             {c.labelStatus === "provisional" ? (
