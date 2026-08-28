@@ -29,6 +29,20 @@
   --viscum-accent: var(--viscum-berry);
   --viscum-brand: var(--viscum-leaf-deep);
   --viscum-success: var(--viscum-moss);
+
+  /*
+   * 反応プロトコル（ビビッド）— トンマナ（アース）と混ぜない。
+   * ブランド葉・ベリー実と Hue を離す（ブレスト §3.2〜3.3）。
+   * 仮値。見本 /lab/protocol で目視調整する。
+   */
+  --viscum-protocol-green: #00c853;
+  --viscum-protocol-green-soft: #d4f5e0;
+  --viscum-protocol-blue: #2979ff;
+  --viscum-protocol-blue-soft: #d6e6ff;
+  --viscum-protocol-yellow: #ffc400;
+  --viscum-protocol-yellow-soft: #fff3c4;
+  --viscum-protocol-red: #e53935;
+  --viscum-protocol-red-soft: #ffd5d4;
 }
 
 @theme inline {
@@ -43,10 +57,19 @@
   --color-viscum-leaf-soft: var(--viscum-leaf-soft);
   --color-viscum-berry: var(--viscum-berry);
   --color-viscum-berry-soft: var(--viscum-berry-soft);
+  --color-viscum-berry-deep: var(--viscum-berry-deep);
   --color-viscum-moss: var(--viscum-moss);
   --color-viscum-trunk: var(--viscum-trunk);
   --color-viscum-bark: var(--viscum-bark);
   --color-viscum-bark-soft: var(--viscum-bark-soft);
+  --color-viscum-protocol-green: var(--viscum-protocol-green);
+  --color-viscum-protocol-green-soft: var(--viscum-protocol-green-soft);
+  --color-viscum-protocol-blue: var(--viscum-protocol-blue);
+  --color-viscum-protocol-blue-soft: var(--viscum-protocol-blue-soft);
+  --color-viscum-protocol-yellow: var(--viscum-protocol-yellow);
+  --color-viscum-protocol-yellow-soft: var(--viscum-protocol-yellow-soft);
+  --color-viscum-protocol-red: var(--viscum-protocol-red);
+  --color-viscum-protocol-red-soft: var(--viscum-protocol-red-soft);
 }
 
 /* AppShell 外の長いページ用。フィード本体の切替ガクつきは AppShell 内スクロールで止める */
