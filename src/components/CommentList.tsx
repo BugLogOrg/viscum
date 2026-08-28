@@ -210,13 +210,13 @@ export function CommentList({
                   <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
                     {c.attitude ? (
                       <span
-                        className="inline-flex items-center gap-1"
+                        className="inline-flex items-center gap-1.5"
                         title={
                           PROTOCOL_COLORS.find((p) => p.id === c.attitude)
                             ?.attitude
                         }
                       >
-                        <ProtocolMark id={c.attitude} className="h-3.5 w-3.5" />
+                        <ProtocolMark id={c.attitude} className="h-7 w-7" />
                         <span className="text-[11px] font-medium text-viscum-muted">
                           {
                             PROTOCOL_COLORS.find((p) => p.id === c.attitude)
