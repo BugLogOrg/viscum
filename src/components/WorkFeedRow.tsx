@@ -12,8 +12,8 @@ import { SeederNameText } from "@/components/SeederNameText";
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1）。詳細・投稿プレビューでも参照 */
 export const THUMB_ASPECT = "aspect-[1280/670]";
 
-/** フィード左カラム幅（旧 9.5rem の約 1.2 倍） */
-const FEED_THUMB_W = "w-[11.4rem]";
+/** フィード左カラム幅（旧 11.4rem の約 90%・モバイルで右切れ緩和） */
+const FEED_THUMB_W = "w-[10.25rem]";
 
 const TONE: Record<Work["thumbTone"], string> = {
   leaf: "bg-viscum-leaf-deep",
@@ -55,7 +55,6 @@ export function WorkFeedRow({
   const rx = getWorkReactionCounts(work);
   const planLabel = planBadgeLabel(work.plan);
   const media = mediaLine(work);
-  const commentN = work.comments.length;
   const statusBlock = showStatusBlock(work);
 
   return (
@@ -143,26 +142,12 @@ export function WorkFeedRow({
               preferredName={work.seederAccountName}
             />
           </Link>
-          <div className="mt-1 flex items-center justify-between gap-2">
-            <Link
-              href={`/w/${work.id}`}
-              className="min-w-0 text-[13px] font-medium leading-none text-viscum-ink active:opacity-90"
-            >
-              <span aria-hidden className="mr-1">
-                💬
-              </span>
-              {commentN}
-              <span className="ml-0.5 font-normal text-viscum-muted">
-                件の反応
-              </span>
-            </Link>
-            <div className="shrink-0">
-              <FeedThumbReactions
-                workId={work.id}
-                title={work.title}
-                bookmarkBase={rx.bookmark}
-              />
-            </div>
+          <div className="mt-1 flex justify-end">
+            <FeedThumbReactions
+              workId={work.id}
+              title={work.title}
+              bookmarkBase={rx.bookmark}
+            />
           </div>
         </div>
       </div>

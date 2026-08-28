@@ -51,7 +51,7 @@ export function FeedThumbReactions({
 
   return (
     <div
-      className="flex items-center gap-1.5"
+      className="flex items-center gap-0.5"
       onClick={(e) => e.stopPropagation()}
       role="group"
       aria-label="反応の色"
@@ -87,7 +87,7 @@ export function FeedThumbReactions({
               aria-label={label}
               aria-pressed={bmOn}
               onClick={onYellow}
-              className={`inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 transition ${
+              className={`inline-flex items-center gap-0.5 rounded-md px-0.5 py-1 transition ${
                 bmOn
                   ? "bg-viscum-protocol-yellow-soft"
                   : "hover:bg-viscum-paper-2"
@@ -104,7 +104,7 @@ export function FeedThumbReactions({
             href={`/w/${workId}`}
             title={label}
             aria-label={label}
-            className="inline-flex items-center gap-1.5 rounded-md px-1.5 py-1 opacity-80 transition hover:bg-viscum-paper-2 hover:opacity-100"
+            className="inline-flex items-center gap-0.5 rounded-md px-0.5 py-1 opacity-80 transition hover:bg-viscum-paper-2 hover:opacity-100"
           >
             {inner}
           </Link>
