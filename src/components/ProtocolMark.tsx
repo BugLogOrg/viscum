@@ -126,7 +126,7 @@ export function ProtocolMark({
 }) {
   const def = PROTOCOL_COLORS.find((c) => c.id === id)!;
   return (
-    <span className={`inline-flex shrink-0 ${COLOR_CLASS[id]}`}>
+    <span className={`inline-flex shrink-0 leading-none ${COLOR_CLASS[id]}`}>
       {glyph(def.icon, className, filled)}
     </span>
   );
