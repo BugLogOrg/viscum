@@ -174,7 +174,23 @@ const DUMMY_WORKS_RAW: Work[] = [
         body: "1. 何の作品／サービスだと思いましたか？\n朝起きてすぐ三行書くメモアプリ。\n\n2. どんな人向けだと思いましたか？\n日記は重いが、短い一行なら続けたい人。\n\n3. 興味を持ちましたか？理由も一言\n興味あり。『書け』より『今日の一行目』の方が優しそう。\n\n4. 一番気になったところはどこですか？\n起動直後が真っ白で、何をするか3秒迷いました。プレースホルダか昨日の続きが見えると安心します。",
         attitude: "green",
         hoursAgo: 2,
+      },,
+      {
+        id: "c2",
+        author: "朝活NN",
+        subject: "三行のハードルはちょうど良い",
+        body: "『書け』より『今日の一行目』の温度は賛成です。プレースホルダさえあれば通し。",
+        attitude: "blue",
+        hoursAgo: 2,
       },
+      {
+        id: "c3",
+        author: "通知OO",
+        subject: "余談：ウィジェット文言案",
+        body: "本題外ですが、ウィジェットに昨日の末尾行が見えると復帰が速そうです。",
+        attitude: "green",
+        hoursAgo: 1,
+      }
     ],
   },
   {
@@ -200,7 +216,15 @@ const DUMMY_WORKS_RAW: Work[] = [
         body: "1. 何の作品／サービスだと思いましたか？\n宅配ボックス（IoT）の15秒プロモ。\n\n2. どんな人向けだと思いましたか？\n共働きで荷物の受け取りに困っている人。\n\n3. 興味を持ちましたか？理由も一言\n興味あり。荷物がボックスに落ちるカットは分かりやすい。\n\n4. 一番気になったところはどこですか？\n音なしだと冒頭1秒で製品名が弱く、テロップを半拍早く出したいです。",
         attitude: "red",
         hoursAgo: 1,
-      },
+      },,
+      {
+        id: "c2",
+        author: "映像PP",
+        subject: "落ちるカットは分かりやすい",
+        body: "製品理解は賛成。テロップ半拍早く、で十分だと思います。",
+        attitude: "blue",
+        hoursAgo: 2,
+      }
     ],
   },
   {
@@ -227,7 +251,23 @@ const DUMMY_WORKS_RAW: Work[] = [
         attitude: "red",
         hoursAgo: 4,
         adopted: true,
+      },,
+      {
+        id: "c2",
+        author: "読書QQ",
+        subject: "あらすじの長さはちょうどよい",
+        body: "負荷の加減は賛成です。動機の薄ささえ直せば続きが欲しくなります。",
+        attitude: "blue",
+        hoursAgo: 3,
       },
+      {
+        id: "c3",
+        author: "余談RR",
+        subject: "タイトル案『団地の風向き』",
+        body: "話変わりますが、タイトル候補に風向きを入れると屋上動機と繋がります。",
+        attitude: "green",
+        hoursAgo: 1,
+      }
     ],
   },
   {
@@ -244,7 +284,32 @@ const DUMMY_WORKS_RAW: Work[] = [
     description: "B2B請求書SaaSのランディング初見チェックです。誰向けのサービスか3秒で分かるか、ヒーロー文とCTAの温度は営業っぽすぎないか。決済UIはまだ準備中なので、見た目とコピー中心でお願いします。ターゲット誤解、専門用語の壁、次に押すべきボタンの位置を指摘してほしいです。\n\n決済UIはまだ準備中。コメントは歓迎、チップ確定は後から。",
     externalUrl: "https://example.com/lp",
     thumbTone: "trunk",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "営業寄りP",
+        subject: "誰向けか3秒では弱い。業種を先に",
+        body: "ヒーローが機能説明に寄り、請求書SaaSと気づくまでに一息かかります。業種一言を先に出すとターゲット誤解が減りそうです。",
+        attitude: "red",
+        hoursAgo: 4,
+      },
+      {
+        id: "c2",
+        author: "コピーQ",
+        subject: "CTAは押せる。用語の壁だけ",
+        body: "次に押すボタンの位置は良いです。専門用語が続く段落だけ、初見向けに括弧注釈があると青信号寄りになります。",
+        attitude: "blue",
+        hoursAgo: 2,
+      },
+      {
+        id: "c3",
+        author: "観察R",
+        subject: "料金表へのジャンプ案",
+        body: "本題から跳ねますが、ヒーロー直下に『料金は後で』チップがあると営業っぽさを抑えつつ不安も減りそうです。",
+        attitude: "green",
+        hoursAgo: 1,
+      },
+    ],
   },
   {
     id: "idle-game",
@@ -266,7 +331,23 @@ const DUMMY_WORKS_RAW: Work[] = [
         body: "チュートリアル後、次の変化まで待ち時間が長く、『待つ楽しさ』が言語化されていませんでした。最初の5分で小さな花が咲くなど、報酬の粒度を細かくすると放置ゲーの快感に乗れると思います。コンペなしでもお礼だけもらえる空気は良いです。",
         attitude: "red",
         hoursAgo: 6,
+      },,
+      {
+        id: "c2",
+        author: "放置SS",
+        subject: "お礼だけの空気は良い",
+        body: "コンペなしでも感想が書ける場として賛成です。報酬粒度だけ直せば回ります。",
+        attitude: "blue",
+        hoursAgo: 3,
       },
+      {
+        id: "c3",
+        author: "余談TT",
+        subject: "最初の花をチュートリアル内に",
+        body: "本題から跳ねますが、チュートリアル中に小さな花が咲くと『待つ楽しさ』の言語化になります。",
+        attitude: "green",
+        hoursAgo: 1,
+      }
     ],
   },
   {
@@ -284,7 +365,32 @@ const DUMMY_WORKS_RAW: Work[] = [
     externalUrl: "https://example.com/ext",
     thumbUrl: "/thumbs/chrome-ext.jpg",
     thumbTone: "leaf",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "拡張S",
+        subject: "権限ダイアログは許容範囲",
+        body: "インストール〜最初のグループ作成まで迷いませんでした。権限説明も怖くない温度です。",
+        attitude: "blue",
+        hoursAgo: 5,
+      },
+      {
+        id: "c2",
+        author: "UI T",
+        subject: "グループ名のプレースホルダが弱い",
+        body: "空欄だと何を書くか一瞬止まります。『仕事／趣味』例があると初動が楽です。",
+        attitude: "red",
+        hoursAgo: 3,
+      },
+      {
+        id: "c3",
+        author: "アイコンU",
+        subject: "ストア文面は短い方が刺さる",
+        body: "余談ですが、アイコンは葉モチーフで識別しやすい。ストア一行をさらに削ると良さそう。",
+        attitude: "green",
+        hoursAgo: 2,
+      },
+    ],
   },
   {
     id: "podcast-cover",
@@ -300,7 +406,32 @@ const DUMMY_WORKS_RAW: Work[] = [
     description: "ポッドキャスト封面の大喜利コンペです。真面目な添削より、タイトル案・一言ツッコミ・サムネの第一印象をください。音声番組の顔としてクリックしたくなるか。短くて尖った案ほど採用しやすいです。初見レビュー帯の軽量祭りなので気軽に。色・フォント・余白の違和感の指摘も歓迎しています。\n\n真面目な添削よりタイトル・一言ツッコミ歓迎。",
     externalUrl: "https://example.com/pod",
     thumbTone: "berry",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "大喜利V",
+        subject: "タイトル案『夜の周波数』",
+        body: "封面の第一印象は落ち着きすぎ。タイトル案：『夜の周波数』『マイクのあとに残る』。クリックしたくなる顔に寄せたい。",
+        attitude: "green",
+        hoursAgo: 6,
+      },
+      {
+        id: "c2",
+        author: "デザインW",
+        subject: "フォントが番組の温度とズレ",
+        body: "真面目すぎるゴシックで、音声番組のゆるさが消えます。余白は良いので字体だけ尖らせたい。",
+        attitude: "red",
+        hoursAgo: 4,
+      },
+      {
+        id: "c3",
+        author: "リスナーX",
+        subject: "色は覚えやすい。推し",
+        body: "ベリー系の実色は番組ロゴとして残ります。このまま通しで良いと思います。",
+        attitude: "blue",
+        hoursAgo: 1,
+      },
+    ],
   },
   {
     id: "closed-one",
@@ -340,7 +471,15 @@ const DUMMY_WORKS_RAW: Work[] = [
         body: "決済準備中で止まらず、支払い完了まで見えるとメンターも次に書きやすいです。スコアではなく件数の事実で十分だと思います。",
         attitude: "blue",
         hoursAgo: 36,
-      },
+      },,
+      {
+        id: "c3",
+        author: "余談YY",
+        subject: "アーカイブ棚の並び案",
+        body: "話変わりますが、終了作品を月で束ねると学びログが見やすくなりそうです。",
+        attitude: "green",
+        hoursAgo: 20,
+      }
     ],
   },
   {
@@ -369,7 +508,15 @@ const DUMMY_WORKS_RAW: Work[] = [
         attitude: "blue",
         hoursAgo: 3,
         adopted: true,
-      },
+      },,
+      {
+        id: "c2",
+        author: "余談XX",
+        subject: "空状態に昨日の続き案",
+        body: "本題外ですが、起動直後に『昨日の続き』チップがあると不安が消えます。",
+        attitude: "green",
+        hoursAgo: 1,
+      }
     ],
   },
   {
@@ -386,7 +533,24 @@ const DUMMY_WORKS_RAW: Work[] = [
     description: "予約フローのFigmaクリックプロトです。スマホ親指ゾーンで最初の3タップまで見てほしい。戻る位置、次へ、日付選択の迷いをコメントください。デザインの美しさより到達のしやすさ優先です。指が届かない、一段深い、ラベルが曖昧——この手の指摘が特に欲しいです。短文で大丈夫です。\n\nFigmaプロト。見る範囲は最初の3タップまで。",
     externalUrl: "https://example.com/figma",
     thumbTone: "bark",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "親指Y",
+        subject: "日付選択が一段深い",
+        body: "最初の3タップで日付まで届きません。戻るは左上で届くが、次へが親指ゾーン外です。",
+        attitude: "red",
+        hoursAgo: 2,
+      },
+      {
+        id: "c2",
+        author: "到達Z",
+        subject: "ラベルは明確。到達優先OK",
+        body: "美しさより到達の方針は伝わっています。次へさえ親指内に落とせば通しです。",
+        attitude: "blue",
+        hoursAgo: 1,
+      },
+    ],
   },
   {
     id: "cli-tool",
@@ -402,7 +566,32 @@ const DUMMY_WORKS_RAW: Work[] = [
     description: "READMEとgifだけ見てもらうCLIツールのドキュメント初見レビューです。インストール前の期待値は合うか、何をするコマンドか怖そうに見えないか。実際のinstallは不要です。専門用語の壁とデモ動画の長さ、コピーコマンドの安心感も見てほしい。初心者目線のコメント大歓迎です。短くてOK。\n\nリポジトリのREADMEとgifだけ。実際のinstallは不要。",
     externalUrl: "https://example.com/cli",
     thumbTone: "leaf",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "初心者AA",
+        subject: "gifは安心。用語が壁",
+        body: "install前の期待値は合います。専門用語の壁だけ。括弧で一言あると怖さが消えます。",
+        attitude: "blue",
+        hoursAgo: 4,
+      },
+      {
+        id: "c2",
+        author: "DocsBB",
+        subject: "デモが長すぎて離脱",
+        body: "gifが15秒超で要点がぼやけます。最初の5秒に『何が終わるか』を出したい。",
+        attitude: "red",
+        hoursAgo: 2,
+      },
+      {
+        id: "c3",
+        author: "余談CC",
+        subject: "コピーボタンの位置案",
+        body: "本題外ですが、コード枠右上にコピーがあると初心者の安心感が一気に上がりそうです。",
+        attitude: "green",
+        hoursAgo: 1,
+      },
+    ],
   },
   {
     id: "recipe-site",
@@ -417,7 +606,24 @@ const DUMMY_WORKS_RAW: Work[] = [
     externalUrl: "https://example.com/recipe",
     thumbUrl: "/thumbs/recipe-site.jpg",
     thumbTone: "moss",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "今夜DD",
+        subject: "Tonightの一皿は出る。密度はOK",
+        body: "検索なしで候補が出るのは良い。写真と手順の密度はスマホでも辛くないです。",
+        attitude: "blue",
+        hoursAgo: 5,
+      },
+      {
+        id: "c2",
+        author: "材料EE",
+        subject: "単位が揺れて決断コスト増",
+        body: "小さじ／グラムが混在して迷いが増えます。単位を揃えるだけで足りそうです。",
+        attitude: "red",
+        hoursAgo: 3,
+      },
+    ],
   },
   {
     id: "pitch-deck",
@@ -433,7 +639,32 @@ const DUMMY_WORKS_RAW: Work[] = [
     description: "1枚ピッチPDFの視線誘導レビューです。最初の3秒で何のサービスか伝わるか、次に何をしてほしいかが分かるか。投資家向けというより個人開発の仲間向けトーンです。誤解ポイントと目線の止まる場所を件名に書いてくれると嬉しいです。文字量の多さ、余白の足りなさも見てほしいです。\n\nPDF1枚。初見の視線と誤解ポイントをください。",
     externalUrl: "https://example.com/pitch",
     thumbTone: "berry",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "投資目線FF",
+        subject: "課題スライドは通る",
+        body: "誰の何の痛みかが一枚で分かります。このまま賛成寄り。",
+        attitude: "blue",
+        hoursAgo: 8,
+      },
+      {
+        id: "c2",
+        author: "スライドGG",
+        subject: "数字の出典が弱い",
+        body: "市場規模の一枚だけ根拠が薄く、止めました。脚注か出典リンクが欲しいです。",
+        attitude: "red",
+        hoursAgo: 6,
+      },
+      {
+        id: "c3",
+        author: "余談HH",
+        subject: "表紙に作品名を大きく",
+        body: "話変わりますが、表紙ロゴより作品名を大きくすると棚カードとの対応が楽です。",
+        attitude: "green",
+        hoursAgo: 1,
+      },
+    ],
   },
   {
     id: "podcast-op",
@@ -449,7 +680,24 @@ const DUMMY_WORKS_RAW: Work[] = [
     description: "ポッドキャストOP30秒の掴みチェックです。スキップされない導入になっているか、トーンは親しすぎ／堅すぎないか。音声のみ・映像なし前提でお願いします。冒頭の自己紹介の長さと本題への入り方にコメントください。BGMの大きさ、間の取り方の違和感も短文で十分です。厳しめで大丈夫。\n\n音声のみ。導入の長さとトーン。",
     externalUrl: "https://example.com/pod",
     thumbTone: "trunk",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "音声II",
+        subject: "OPの尺はちょうど良い",
+        body: "冒頭の掴みは残ります。この長さで賛成です。",
+        attitude: "blue",
+        hoursAgo: 7,
+      },
+      {
+        id: "c2",
+        author: "編集JJ",
+        subject: "ノイズが気になって止まった",
+        body: "環境音が大きすぎて本題に入る前に離脱しそうです。レベルだけ整えたい。",
+        attitude: "red",
+        hoursAgo: 3,
+      },
+    ],
   },
   {
     id: "chrome-ext-store",
@@ -478,7 +726,15 @@ const DUMMY_WORKS_RAW: Work[] = [
         body: "1. 指定した公開場所へ正直な反応・投稿を残す\nChromeウェブストアに『タブが束ねられて視界が楽』と短評を投稿しました。\n\n2. 実利用したうえで書く\nスクショ3枚を見てからインストールし、実際にタブを束ねて使いました。触っていない評価ではありません。\n\n3. シーダー指定の観点に触れる\n権限ダイアログは許容範囲。何が片付く拡張かはアイコンと一文でだいたい伝わります。\n\n4. やらせ・星の売買保証は不可／開示\n星の指定はしていません。個人利用の正直な短評です。\n\n5. 記入後に投稿URL等を報告\n報告URL（デモ仮置き）→ https://example.com/review-demo",
         attitude: "blue",
         hoursAgo: 2,
-      },
+      },,
+      {
+        id: "c2",
+        author: "確認WW",
+        subject: "報告URL付きは信頼できる",
+        body: "実利用のうえで書いている流れは賛成です。このフォーマットで通し。",
+        attitude: "blue",
+        hoursAgo: 2,
+      }
     ],
   },
   {
@@ -503,7 +759,15 @@ const DUMMY_WORKS_RAW: Work[] = [
         body: "1. 良かったところは？\n結末の一文で余韻が切れず、読み直したくなりました。長さの負荷もちょうどよいです。\n\n2. 違和感があったところは？（理由つき）\nタイトル『バス停の傘』と結末のモチーフがまだ薄い。傘が出るのが遅い。\n\n3. 分かりにくかったところは？\n中盤の会話が誰視点か一瞬迷いました。\n\n4. 自分ならどう直しますか？（代案）\n冒頭か中盤で傘を一度見せ、結末で回収する。件名にネタバレ可なら『傘を置いていく』案も候補。",
         attitude: "red",
         hoursAgo: 6,
-      },
+      },,
+      {
+        id: "c2",
+        author: "読後UU",
+        subject: "余韻は通る。傘の回収だけ",
+        body: "結末の一文は賛成です。傘を一度見せる修正で十分だと思います。",
+        attitude: "blue",
+        hoursAgo: 2,
+      }
     ],
   },
   {
@@ -528,7 +792,15 @@ const DUMMY_WORKS_RAW: Work[] = [
         body: "1. 良かったところは？\nB案は『払うから見て』が穏やかで、個人プロダクトの温度に合う。\n\n2. 違和感があったところは？（理由つき）\nA案の『今すぐ』が企業LPっぽく、本気シグナルより催促に見える。\n\n3. 分かりにくかったところは？\nA/Bの差分がヒーロー文だけで、CTAボタン色まで揃っていると迷う。\n\n4. 自分ならどう直しますか？（代案）\nBをベースに、金額を副文で明示。件名に『B・払う気』と書く運用も良いです。",
         attitude: "blue",
         hoursAgo: 1,
-      },
+      },,
+      {
+        id: "c2",
+        author: "余談VV",
+        subject: "CTA色もB寄せに",
+        body: "話変わりますが、ボタン色までA/B差分にすると迷いが減りそうです。",
+        attitude: "green",
+        hoursAgo: 1,
+      }
     ],
   },
   {
@@ -543,7 +815,32 @@ const DUMMY_WORKS_RAW: Work[] = [
     description: "アプリアイコン案4種の識別チェック（コンペなし）です。小さいサイズでも何のアプリか分かるか、ヤドリギっぽさと汎用アイコンの間でどれが強いか。好き嫌いベースで大丈夫です。ホーム画面に並んだ想像での一言コメント歓迎。似て見える組や、潰れて読めない案があれば教えてください。\n\nコンペなし。好き嫌いコメント歓迎。",
     externalUrl: "https://example.com/icon",
     thumbTone: "berry",
-    comments: [],
+    comments: [
+      {
+        id: "c1",
+        author: "アイコンKK",
+        subject: "線の太さは揃っている",
+        body: "セットとして一貫しています。このまま使えます。",
+        attitude: "blue",
+        hoursAgo: 9,
+      },
+      {
+        id: "c2",
+        author: "識別LL",
+        subject: "2つが似てて判別しづらい",
+        body: "保存とブックマークが近すぎます。シルエットをもう少し分けたい。",
+        attitude: "red",
+        hoursAgo: 4,
+      },
+      {
+        id: "c3",
+        author: "色MM",
+        subject: "単色運用のヒント",
+        body: "余談：単色塗りでも識別できるかテストすると、色依存UIに強くなれそうです。",
+        attitude: "green",
+        hoursAgo: 1,
+      },
+    ],
   },
 ];
 
