@@ -8,7 +8,7 @@ import {
   workOgBadge,
 } from "@/lib/work-og";
 
-export const alt = "VISCUM | 広告×コンペ 作品カード";
+export const alt = "VISCUM | 作品×反応×コンペ 作品カード";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 /** 生成結果をISR的に保持（毎回フォント取得＋描画しない） */
@@ -90,7 +90,7 @@ export default async function Image({
                 lineHeight: 1,
               }}
             >
-              VISCUM | 広告×コンペ
+              VISCUM | 作品×反応×コンペ
             </div>
           </div>
           <div

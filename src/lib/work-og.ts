@@ -97,7 +97,7 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
           width: 1200,
           height: 630,
           type: "image/png",
-          alt: title || "VISCUM | 広告×コンペ",
+          alt: title || "VISCUM | 作品×反応×コンペ",
         },
       ],
     },

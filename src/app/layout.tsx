@@ -7,7 +7,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
   title: {
-    default: "VISCUM ｜ 広告×コンペ",
+    default: "VISCUM ｜ 作品×反応×コンペ",
     template: "VISCUM ｜ %s",
   },
   description:
@@ -16,13 +16,13 @@ export const metadata: Metadata = {
     type: "website",
     locale: "ja_JP",
     siteName: "VISCUM",
-    title: "VISCUM ｜ 広告×コンペ",
+    title: "VISCUM ｜ 作品×反応×コンペ",
     description:
       "作ったものを出して、最初の反応を集める場所。VISCUM内コンペと公開ブースト。入場無料。",
   },
   twitter: {
     card: "summary_large_image",
-    title: "VISCUM ｜ 広告×コンペ",
+    title: "VISCUM ｜ 作品×反応×コンペ",
     description:
       "作ったものを出して、最初の反応を集める場所。VISCUM内コンペと公開ブースト。入場無料。",
   },
