@@ -145,11 +145,11 @@ export function MentorFactsCard({
           </dd>
         </div>
         <div>
-          <dt className="inline text-viscum-muted">採用された：</dt>
+          <dt className="inline text-viscum-muted">選出された：</dt>
           <dd className="inline tabular-nums">{facts.adoptedCount}件</dd>
         </div>
         <div>
-          <dt className="inline text-viscum-muted">チップ受取：</dt>
+          <dt className="inline text-viscum-muted">褒賞受取：</dt>
           <dd className="inline tabular-nums">{facts.tipsReceivedCount}件</dd>
         </div>
         <div>
@@ -184,7 +184,7 @@ export function MentoredWorksList({
         メンターとして参加した作品 · {participations.length}件
       </p>
       <p className="px-4 pt-1 text-[11px] text-viscum-muted">
-        コメントした棚です（採用・決済前も含む）。採用・チップはバッジで事実表示します。
+        コメントした棚です（選出・決済前も含む）。選出・褒賞はバッジで事実表示します。
       </p>
       {participations.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">
@@ -207,12 +207,12 @@ export function MentoredWorksList({
                   />
                   {adopted && (
                     <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
-                      採用
+                      選出
                     </span>
                   )}
                   {tipped && (
                     <span className="rounded bg-viscum-berry/15 px-1.5 py-0.5 text-[10px] font-medium text-viscum-berry-deep">
-                      チップ受取
+                      褒賞受取
                     </span>
                   )}
                 </div>

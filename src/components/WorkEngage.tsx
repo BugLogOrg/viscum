@@ -31,6 +31,7 @@ import {
 
 type Props = {
   workId: string;
+  seederHandle: string;
   status: CompStatus;
   prizeYen?: number;
   paymentsDone?: number;
@@ -47,6 +48,7 @@ type Props = {
  */
 export function WorkEngage({
   workId,
+  seederHandle,
   status,
   prizeYen,
   paymentsDone,
@@ -406,7 +408,7 @@ export function WorkEngage({
           <p className="font-medium text-viscum-berry-deep">コンペ帯</p>
           <p className="mt-1 text-viscum-ink">
             {prizeYen
-              ? `予算 ${formatYen(prizeYen)}（採用した人に褒賞）`
+              ? `予算 ${formatYen(prizeYen)}（選んだ人に褒賞）`
               : "予算なし"}
             {deadlineLine ? ` · 締切 ${deadlineLine}` : ""}
             {status === "pay_soon" && " · 決済準備中"}
@@ -417,7 +419,7 @@ export function WorkEngage({
             {compActive &&
               paymentsDone === 0 &&
               hasAdoptedUntipped &&
-              " · 採用済み・支払い待ち"}
+              " · 選出済み・褒賞の支払い待ち"}
           </p>
 
           {compClosed && (
@@ -429,20 +431,20 @@ export function WorkEngage({
                 このコンペは締め切っています
               </p>
               <p className="mt-1 text-viscum-muted">
-                このラウンドの賞金・チップ対象にはなりません。再コンペの希望や、追加の感想・指摘のコメントは歓迎です。
+                このラウンドの褒賞対象にはなりません。再コンペの希望や、追加の感想・指摘のコメントは歓迎です。
               </p>
             </div>
           )}
 
           {compClosed && (paymentsDone ?? 0) > 0 && (
             <p className="mt-2 text-[12px] text-viscum-muted">
-              採用時支払いは完了済み。メンターはコメント展開先の「受け取る」から出金（デモ）。
+              褒賞の支払いは完了済み。メンターはコメント展開先の「受け取る」から出金（デモ）。
             </p>
           )}
           {compActive && hasAdoptedUntipped && (
             <p className="mt-2 text-[12px] text-viscum-muted">
-              決済準備中の先: コメントを展開 →「採用して支払う」で Checkout
-              デモへ。
+              決済準備中の先: シーダー本人がコメントを展開 →「褒賞を渡す」で
+              Checkout。
             </p>
           )}
 
@@ -732,6 +734,7 @@ export function WorkEngage({
         status={status}
         prizeYen={prizeYen}
         workId={workId}
+        seederHandle={seederHandle}
       />
     </div>
   );

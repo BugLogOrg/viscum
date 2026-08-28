@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { CommentBody, commentPreviewPlain } from "@/components/CommentBody";
 import { DemoBadge } from "@/components/DemoBadge";
 import { ProtocolMark } from "@/components/ProtocolMark";
@@ -27,6 +28,10 @@ function isPortfolioHandle(raw: string) {
 
 function isNeonCommentId(id: string) {
   return NEON_COMMENT_ID.test(id);
+}
+
+function normHandle(h: string) {
+  return h.replace(/^@/, "").trim().toLowerCase();
 }
 
 /** 英語IDなら PF へ。アカウント名があれば併記。デモは「デモ用」 */
@@ -83,12 +88,19 @@ export function CommentList({
   status,
   prizeYen,
   workId,
+  seederHandle,
 }: {
   comments: Comment[];
   status: CompStatus;
   prizeYen?: number;
   workId: string;
+  /** 作品のシーダー。操作ボタンはこの人だけに出す */
+  seederHandle: string;
 }) {
+  const { data: session } = useSession();
+  const me = normHandle(session?.user?.handle ?? "");
+  const isSeeder = Boolean(me) && me === normHandle(seederHandle);
+
   const [openId, setOpenId] = useState<string | null>(
     comments.find((c) => c.adopted)?.id ?? comments[0]?.id ?? null,
   );
@@ -102,7 +114,7 @@ export function CommentList({
     }
   }, [comments]);
 
-  const tipLabel = prizeYen ? formatYen(prizeYen) : "¥5,000";
+  const prizeLabel = prizeYen ? formatYen(prizeYen) : "¥5,000";
   const amountYen = prizeYen && prizeYen >= 5000 ? prizeYen : 5000;
 
   async function startCheckout(commentId: string) {
@@ -137,6 +149,9 @@ export function CommentList({
       </h2>
       <p className="mt-1 text-[11px] text-viscum-muted">
         件名をタップして本文を展開（Gmail型）
+        {isSeeder
+          ? " · お礼・褒賞の操作はこの画面のシーダーだけが使えます"
+          : ""}
       </p>
       {payError && (
         <p className="mt-2 rounded-md border border-viscum-berry/40 bg-viscum-berry/10 px-3 py-2 text-[12px] text-viscum-berry-deep">
@@ -154,12 +169,27 @@ export function CommentList({
         {comments.map((c) => {
           const open = openId === c.id;
           const neon = isNeonCommentId(c.id);
+          const isCommentAuthor =
+            Boolean(me) && me === normHandle(c.author);
           const canPayLive =
+            isSeeder &&
             neon &&
             !c.tipped &&
             !c.afterClose &&
             status !== "none" &&
             status !== "closed";
+          const showSeederThanks =
+            isSeeder && !c.adopted && !c.afterClose && !neon;
+          const showSeederDemoPrize =
+            showSeederThanks && status !== "none" && status !== "closed";
+          const showSeederDemoPayHint =
+            isSeeder &&
+            !neon &&
+            c.adopted &&
+            !c.tipped &&
+            status !== "none" &&
+            status !== "closed";
+
           return (
             <li key={c.id}>
               <button
@@ -200,7 +230,7 @@ export function CommentList({
                     </span>
                     {c.adopted && (
                       <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
-                        採用
+                        選出
                       </span>
                     )}
                     {c.afterClose && (
@@ -210,7 +240,7 @@ export function CommentList({
                     )}
                     {c.tipped && (
                       <span className="rounded bg-viscum-berry/15 px-1.5 py-0.5 text-[10px] font-medium text-viscum-berry-deep">
-                        支払い済み
+                        褒賞済み
                       </span>
                     )}
                   </span>
@@ -237,24 +267,21 @@ export function CommentList({
                 <div className="border-t border-viscum-line/80 bg-viscum-paper px-3 py-3 pl-9">
                   <CommentBody body={c.body} imageUrls={c.imageUrls} />
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {!c.adopted && !c.afterClose && !neon && (
-                      <>
-                        <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
-                          ありがとう
-                        </span>
-                        <span className="rounded border border-viscum-moss/40 bg-viscum-leaf-soft px-2 py-0.5 text-[11px] text-viscum-leaf-deep">
-                          採用
-                        </span>
-                        {status !== "none" && status !== "closed" && (
-                          <span className="rounded bg-viscum-berry px-2 py-0.5 text-[11px] text-white">
-                            チップ {tipLabel}
-                          </span>
-                        )}
-                      </>
-                    )}
                     {c.afterClose && (
                       <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
-                        終了後コメント（このラウンドの賞金対象外）
+                        終了後コメント（このラウンドの褒賞対象外）
+                      </span>
+                    )}
+
+                    {/* シーダー専用：お礼・褒賞（見た目仮／本番は Checkout） */}
+                    {showSeederThanks && (
+                      <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
+                        ありがとう
+                      </span>
+                    )}
+                    {showSeederDemoPrize && (
+                      <span className="rounded bg-viscum-berry px-2 py-0.5 text-[11px] text-white">
+                        褒賞 {prizeLabel}
                       </span>
                     )}
 
@@ -270,11 +297,11 @@ export function CommentList({
                       >
                         {payingId === c.id
                           ? "Checkoutへ…"
-                          : `採用して支払う ${tipLabel}`}
+                          : `褒賞を渡す ${prizeLabel}`}
                       </button>
                     )}
 
-                    {!neon && c.adopted && !c.tipped && status !== "none" && (
+                    {showSeederDemoPayHint && (
                       <button
                         type="button"
                         className="rounded-md bg-viscum-berry px-2.5 py-1 text-[11px] font-medium text-white"
@@ -284,38 +311,41 @@ export function CommentList({
                               "デモ初期コメントは実決済対象外です。",
                               "",
                               "Neonに保存されたコメント（ログイン投稿）を開き、",
-                              "「採用して支払う」で Stripe Checkout に進みます。",
+                              "「褒賞を渡す」で Stripe Checkout に進みます。",
                             ].join("\n"),
                           );
                         }}
                       >
-                        採用して支払う {tipLabel}（デモ）
+                        褒賞を渡す {prizeLabel}（デモ）
                       </button>
                     )}
 
+                    {/* 結果表示は全員。受け取り操作はメンター本人だけ */}
                     {c.tipped && (
                       <>
                         <span className="rounded border border-viscum-berry/40 bg-viscum-berry/10 px-2 py-0.5 text-[11px] font-medium text-viscum-berry-deep">
-                          チップ支払い済み{" "}
+                          褒賞支払い済み{" "}
                           {formatYen(c.tipYen ?? prizeYen ?? 5000)}
                         </span>
-                        <button
-                          type="button"
-                          className="rounded-md border border-viscum-moss bg-viscum-leaf-soft px-2.5 py-1 text-[11px] font-medium text-viscum-leaf-deep"
-                          onClick={() => {
-                            window.alert(
-                              [
-                                "メンター出金（Connect）は次段です。",
-                                "",
-                                "いまはシーダーの Checkout（入金）まで。",
-                                "支払い済み後に payout=eligible になり、",
-                                "出金リンクは Connect 配線後に有効化します。",
-                              ].join("\n"),
-                            );
-                          }}
-                        >
-                          受け取る（Connect・準備中）
-                        </button>
+                        {isCommentAuthor ? (
+                          <button
+                            type="button"
+                            className="rounded-md border border-viscum-moss bg-viscum-leaf-soft px-2.5 py-1 text-[11px] font-medium text-viscum-leaf-deep"
+                            onClick={() => {
+                              window.alert(
+                                [
+                                  "メンター出金（Connect）は次段です。",
+                                  "",
+                                  "いまはシーダーの Checkout（入金）まで。",
+                                  "支払い済み後に payout=eligible になり、",
+                                  "出金リンクは Connect 配線後に有効化します。",
+                                ].join("\n"),
+                              );
+                            }}
+                          >
+                            受け取る（Connect・準備中）
+                          </button>
+                        ) : null}
                       </>
                     )}
                   </div>

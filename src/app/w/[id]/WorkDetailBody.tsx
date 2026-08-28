@@ -234,6 +234,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                 <WorkShareBoost work={work} isDraft={isDraft} />
                 <WorkEngage
                   workId={work.id}
+                  seederHandle={work.seeder}
                   status={work.status}
                   prizeYen={work.prizeYen}
                   paymentsDone={work.paymentsDone}
