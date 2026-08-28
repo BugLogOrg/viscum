@@ -29,9 +29,10 @@ function mediaLine(work: Work): string | null {
   return tags.join(" · ");
 }
 
-function showCompBlock(work: Work): boolean {
+function showStatusBlock(work: Work): boolean {
   if (work.status === "closed") return false;
-  if (work.status === "none" && !work.prizeYen) return false;
+  // 無料コメント（status none）も有料と同じくサムネ下の帯へ
+  if (work.plan === "free_comment" || work.status === "none") return true;
   return (
     work.status === "open" ||
     work.status === "pay_soon" ||
@@ -40,8 +41,8 @@ function showCompBlock(work: Work): boolean {
 }
 
 /**
- * フィード行 — 左: サムネ → コンペ帯／右: 作品×反応・シーダー・気になる（右下）。
- * タイトルは入力上限（100字）どおり全表示。
+ * フィード行 — 左: サムネ → ステータス帯／右: 作品×反応・シーダー・気になる（右下）。
+ * タイトルは入力上限（100字）どおり全表示。無料も帯に出す（¥0は書かない）。
  */
 export function WorkFeedRow({
   work,
@@ -55,7 +56,7 @@ export function WorkFeedRow({
   const planLabel = planBadgeLabel(work.plan);
   const media = mediaLine(work);
   const commentN = work.comments.length;
-  const comp = showCompBlock(work);
+  const statusBlock = showStatusBlock(work);
 
   return (
     <article
@@ -79,7 +80,7 @@ export function WorkFeedRow({
           ) : null}
         </Link>
 
-        {comp ? (
+        {statusBlock ? (
           <div className="mt-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
             <p className="text-[11px] leading-snug text-viscum-ink">
               <span className="font-medium">
@@ -130,16 +131,11 @@ export function WorkFeedRow({
             <span className="ml-0.5 font-normal text-viscum-muted">件の反応</span>
           </p>
 
-          {!comp && work.status === "closed" ? (
+          {!statusBlock && work.status === "closed" ? (
             <p className="mt-2 text-[12px] text-viscum-muted">
               {work.paymentsDone && work.paymentsDone > 0
                 ? "終了 · 支払い済み"
                 : "終了"}
-            </p>
-          ) : null}
-          {!comp && work.status !== "closed" ? (
-            <p className="mt-2 text-[12px] text-viscum-muted">
-              {planLabel ?? "コメント歓迎"}
             </p>
           ) : null}
         </Link>
