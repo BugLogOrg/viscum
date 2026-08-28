@@ -7,7 +7,7 @@ export type ProtocolColorId = "green" | "blue" | "yellow" | "red";
 
 /** 役割を表す線画アイコン（仮。語とセットで使う） */
 export type ProtocolIconId =
-  | "spark" /** 緑: 跳ねる・フラッシュ */
+  | "sprout" /** 緑: 跳ねる・芽・横への生長 */
   | "check" /** 青: 通る・賛成 */
   | "bookmark" /** 黄: 気になる・あとで */
   | "cross"; /** 赤: 反論・違う */
@@ -34,8 +34,8 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     labelStatus: "provisional",
     attitude: "本題から跳ねる・転用・フラッシュアイデア（By the way）",
     emoji: "🟢",
-    icon: "spark",
-    iconWhy: "閃き・横へのジャンプ。電球は「正解」に寄りやすいので火花",
+    icon: "sprout",
+    iconWhy: "芽＝横へ伸びる・新しい接続。火花はヤドリギにも見えるが、芽の方が生長・転用に近い",
   },
   {
     id: "blue",

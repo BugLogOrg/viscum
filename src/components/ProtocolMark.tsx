@@ -2,21 +2,26 @@ import type { ReactNode } from "react";
 import type { ProtocolColorId, ProtocolIconId } from "@/lib/protocol-colors";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
-function SparkGlyph({ className }: { className?: string }) {
+function SproutGlyph({ className }: { className?: string }) {
+  /* 芽: 茎＋左右の葉（塗り寄りで小さくても読める） */
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M12 3.5v3.2M12 17.3v3.2M3.5 12h3.2M17.3 12h3.2" />
-      <path d="M6.2 6.2l2.2 2.2M15.6 15.6l2.2 2.2M17.8 6.2l-2.2 2.2M8.4 15.6l-2.2 2.2" />
-      <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none" />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="none">
+      <path
+        d="M12 20.5V11"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 12.5c-2.8-0.2-5.2-1.8-6.2-4.2 2.6-0.3 5.1 0.8 6.2 3.2z"
+        fill="currentColor"
+      />
+      <path
+        d="M12 11.5c2.6-0.4 4.8-2.2 5.6-4.6-2.5 0-4.8 1.2-5.6 3.6z"
+        fill="currentColor"
+        fillOpacity="0.85"
+      />
+      <circle cx="12" cy="20.5" r="1.1" fill="currentColor" />
     </svg>
   );
 }
@@ -101,8 +106,8 @@ function glyph(
   filled?: boolean,
 ): ReactNode {
   switch (icon) {
-    case "spark":
-      return <SparkGlyph className={className} />;
+    case "sprout":
+      return <SproutGlyph className={className} />;
     case "check":
       return <CheckGlyph className={className} />;
     case "bookmark":
