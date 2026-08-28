@@ -3,7 +3,6 @@ import type { ProtocolColorId, ProtocolIconId } from "@/lib/protocol-colors";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
 function SproutGlyph({ className }: { className?: string }) {
-  /* 双葉: 短い茎＋左右に開いた丸みのある子葉（Y字に見えないよう葉を大きく） */
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden fill="none">
       <path
@@ -12,7 +11,6 @@ function SproutGlyph({ className }: { className?: string }) {
         strokeWidth="2"
         strokeLinecap="round"
       />
-      {/* 左の子葉 */}
       <ellipse
         cx="7.6"
         cy="10.2"
@@ -21,7 +19,6 @@ function SproutGlyph({ className }: { className?: string }) {
         transform="rotate(-38 7.6 10.2)"
         fill="currentColor"
       />
-      {/* 右の子葉 */}
       <ellipse
         cx="16.4"
         cy="10.2"
@@ -30,31 +27,37 @@ function SproutGlyph({ className }: { className?: string }) {
         transform="rotate(38 16.4 10.2)"
         fill="currentColor"
       />
-      {/* 付け根の小さな節 */}
       <circle cx="12" cy="12.8" r="1.15" fill="currentColor" />
     </svg>
   );
 }
 
-function CheckGlyph({ className }: { className?: string }) {
-  /* ☑: 塗り四角＋白チェック（線だけより認識しやすい） */
+function ThumbUpGlyph({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <rect
-        x="3.5"
-        y="3.5"
-        width="17"
-        height="17"
-        rx="3"
+      <path
         fill="currentColor"
+        d="M14.6 4.2c-.55-.9-1.7-1.15-2.55-.55L9.2 5.7c-.35.25-.55.65-.55 1.1v.7H6.8c-1.2 0-2.15 1-2.1 2.2l.35 8.1c.05 1.15 1 2.05 2.15 2.05h7.35c.9 0 1.7-.55 2.05-1.4l2.1-5.15c.45-1.1-.35-2.3-1.55-2.3h-3.05V6.5c0-.9-.4-1.75-1.1-2.3z"
       />
       <path
-        d="M7.8 12.2l2.8 2.8 5.6-5.8"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        fill="currentColor"
+        d="M4.5 9.5h1.8v10H4.5c-.55 0-1-.45-1-1v-8c0-.55.45-1 1-1z"
+      />
+    </svg>
+  );
+}
+
+function ThumbDownGlyph({ className }: { className?: string }) {
+  /* 賛成の対＝gotoHELL役。上下反転の手 */
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path
+        fill="currentColor"
+        d="M9.4 19.8c.55.9 1.7 1.15 2.55.55l2.85-2.05c.35-.25.55-.65.55-1.1v-.7h1.85c1.2 0 2.15-1 2.1-2.2l-.35-8.1c-.05-1.15-1-2.05-2.15-2.05H9.45c-.9 0-1.7.55-2.05 1.4L5.3 10.7c-.45 1.1.35 2.3 1.55 2.3h3.05v2.5c0 .9.4 1.75 1.1 2.3z"
+      />
+      <path
+        fill="currentColor"
+        d="M19.5 14.5h-1.8v-10h1.8c.55 0 1 .45 1 1v8c0 .55-.45 1-1 1z"
       />
     </svg>
   );
@@ -80,31 +83,8 @@ function BookmarkGlyph({
     >
       <path
         d="M7.5 4.5h9a1 1 0 0 1 1 1v14l-5.5-3.2L6.5 19.5v-14a1 1 0 0 1 1-1z"
-        fill={filled ? "currentColor" : "currentColor"}
-        fillOpacity={filled ? 1 : 0.22}
-      />
-    </svg>
-  );
-}
-
-function CrossGlyph({ className }: { className?: string }) {
-  /* 塗り四角＋白×（チェックと対になる却下） */
-  return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <rect
-        x="3.5"
-        y="3.5"
-        width="17"
-        height="17"
-        rx="3"
         fill="currentColor"
-      />
-      <path
-        d="M8.5 8.5l7 7M15.5 8.5l-7 7"
-        fill="none"
-        stroke="#fff"
-        strokeWidth="2.2"
-        strokeLinecap="round"
+        fillOpacity={filled ? 1 : 0.22}
       />
     </svg>
   );
@@ -118,12 +98,12 @@ function glyph(
   switch (icon) {
     case "sprout":
       return <SproutGlyph className={className} />;
-    case "check":
-      return <CheckGlyph className={className} />;
+    case "thumbUp":
+      return <ThumbUpGlyph className={className} />;
     case "bookmark":
       return <BookmarkGlyph className={className} filled={filled} />;
-    case "cross":
-      return <CrossGlyph className={className} />;
+    case "thumbDown":
+      return <ThumbDownGlyph className={className} />;
   }
 }
 

@@ -8,9 +8,9 @@ export type ProtocolColorId = "green" | "blue" | "yellow" | "red";
 /** 役割を表す線画アイコン（仮。語とセットで使う） */
 export type ProtocolIconId =
   | "sprout" /** 緑: 跳ねる・芽・横への生長 */
-  | "check" /** 青: 通る・賛成 */
+  | "thumbUp" /** 青: 賛成 */
   | "bookmark" /** 黄: 気になる・あとで */
-  | "cross"; /** 赤: 反論・違う */
+  | "thumbDown"; /** 赤: 反論（gotoHELL役） */
 
 export type ProtocolColorDef = {
   id: ProtocolColorId;
@@ -35,7 +35,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     attitude: "本題から跳ねる・転用・フラッシュアイデア（By the way）",
     emoji: "🟢",
     icon: "sprout",
-    iconWhy: "芽＝横へ伸びる・新しい接続。火花はヤドリギにも見えるが、芽の方が生長・転用に近い",
+    iconWhy: "芽＝横へ伸びる・新しい接続",
   },
   {
     id: "blue",
@@ -45,8 +45,8 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     labelStatus: "provisional",
     attitude: "通る・良いまとめ／対話では賛成寄り",
     emoji: "🔵",
-    icon: "check",
-    iconWhy: "☑＝塗り四角＋チェック。線だけ丸は薄い。👍より混線しにくい",
+    icon: "thumbUp",
+    iconWhy: "サムズアップ＝賛成。☑／丸チェックより一目で態度が分かる",
   },
   {
     id: "yellow",
@@ -57,7 +57,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     attitude: "あとで戻る／印（ADR-046）。bookmark を黄へ",
     emoji: "🟡",
     icon: "bookmark",
-    iconWhy: "保存・あとでの世界語。目玉より「印」に近い",
+    iconWhy: "保存・あとでの世界語",
   },
   {
     id: "red",
@@ -65,9 +65,9 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     softVar: "--viscum-protocol-red-soft",
     label: "反論",
     labelStatus: "provisional",
-    attitude: "止まれ・違う・ひっかかる",
+    attitude: "止まれ・違う・ひっかかる（表の語は反論／中のノリは gotoHELL）",
     emoji: "🔴",
-    icon: "cross",
-    iconWhy: "違う・止まれ。チェックと対の塗り四角＋×。⚠は黄と被りやすい",
+    icon: "thumbDown",
+    iconWhy: "サムズダウン＝賛成の対。gotoHELL役。×四角より態度が伝わる",
   },
 ];
