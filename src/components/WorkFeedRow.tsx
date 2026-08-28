@@ -40,8 +40,8 @@ function showCompBlock(work: Work): boolean {
 }
 
 /**
- * フィード行 — サムネ上置き・作品 × 反応 × コンペ。
- * 金額は一塊に残すが本文と同系サイズ（金額だけ巨大化しない）。
+ * フィード行 — 左サムネ＋右に作品 × 反応 × コンペ。
+ * 金額は一塊に残すが巨大化しない（紙色の帯）。
  */
 export function WorkFeedRow({
   work,
@@ -60,47 +60,37 @@ export function WorkFeedRow({
 
   return (
     <article
-      className={`border-b border-viscum-line px-3 py-3 transition hover:bg-viscum-paper-2/80 ${className}`}
+      className={`flex gap-2.5 border-b border-viscum-line px-3 py-2.5 transition hover:bg-viscum-paper-2/80 ${className}`}
     >
-      {/* サムネ全面上置き */}
-      <Link
-        href={`/w/${work.id}`}
-        className={`relative block w-full overflow-hidden rounded-md ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
-        style={{ aspectRatio: "1280 / 670" }}
-        aria-hidden
-        tabIndex={-1}
-      >
-        {work.thumbUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={work.thumbUrl}
-            alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-        ) : null}
-      </Link>
-
-      <div className="mt-1.5 flex items-center justify-between gap-2">
+      <div className="w-[9.5rem] shrink-0 self-start">
         <Link
           href={`/w/${work.id}`}
-          className="min-w-0 text-[13px] font-medium text-viscum-ink active:opacity-90"
+          className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
+          style={{ aspectRatio: "1280 / 670" }}
+          aria-hidden
+          tabIndex={-1}
         >
-          <span aria-hidden className="mr-1">
-            💬
-          </span>
-          {commentN}
-          <span className="ml-0.5 font-normal text-viscum-muted">件の反応</span>
+          {work.thumbUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={work.thumbUrl}
+              alt=""
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+          ) : null}
         </Link>
-        <FeedThumbReactions
-          workId={work.id}
-          title={work.title}
-          bookmarkBase={rx.bookmark}
-        />
+        <div className="mt-1">
+          <FeedThumbReactions
+            workId={work.id}
+            title={work.title}
+            bookmarkBase={rx.bookmark}
+          />
+        </div>
       </div>
 
       <Link
         href={`/w/${work.id}`}
-        className="mt-1.5 block min-w-0 active:opacity-90"
+        className="min-w-0 flex-1 self-start active:opacity-90"
       >
         <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink line-clamp-3">
           {work.title}
@@ -110,6 +100,14 @@ export function WorkFeedRow({
             {media}
           </p>
         ) : null}
+
+        <p className="mt-1.5 text-[13px] font-medium leading-none text-viscum-ink">
+          <span aria-hidden className="mr-1">
+            💬
+          </span>
+          {commentN}
+          <span className="ml-0.5 font-normal text-viscum-muted">件の反応</span>
+        </p>
 
         {comp ? (
           <div className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2 px-2.5 py-1.5">
