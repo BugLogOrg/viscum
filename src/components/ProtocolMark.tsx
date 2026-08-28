@@ -22,19 +22,25 @@ function SparkGlyph({ className }: { className?: string }) {
 }
 
 function CheckGlyph({ className }: { className?: string }) {
+  /* ☑: 塗り四角＋白チェック（線だけより認識しやすい） */
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="8.25" />
-      <path d="M8.2 12.2l2.6 2.6 5-5.2" />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <rect
+        x="3.5"
+        y="3.5"
+        width="17"
+        height="17"
+        rx="3"
+        fill="currentColor"
+      />
+      <path
+        d="M7.8 12.2l2.8 2.8 5.6-5.8"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -59,26 +65,32 @@ function BookmarkGlyph({
     >
       <path
         d="M7.5 4.5h9a1 1 0 0 1 1 1v14l-5.5-3.2L6.5 19.5v-14a1 1 0 0 1 1-1z"
-        fill={filled ? "currentColor" : "none"}
+        fill={filled ? "currentColor" : "currentColor"}
+        fillOpacity={filled ? 1 : 0.22}
       />
     </svg>
   );
 }
 
 function CrossGlyph({ className }: { className?: string }) {
+  /* 塗り四角＋白×（チェックと対になる却下） */
   return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="8.25" />
-      <path d="M9 9l6 6M15 9l-6 6" />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <rect
+        x="3.5"
+        y="3.5"
+        width="17"
+        height="17"
+        rx="3"
+        fill="currentColor"
+      />
+      <path
+        d="M8.5 8.5l7 7M15.5 8.5l-7 7"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

@@ -46,7 +46,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     attitude: "通る・良いまとめ／対話では賛成寄り",
     emoji: "🔵",
     icon: "check",
-    iconWhy: "通る・OKの最短記号。👍はSNS好意と混線しやすいのでチェック",
+    iconWhy: "☑＝塗り四角＋チェック。線だけ丸は薄い。👍より混線しにくい",
   },
   {
     id: "yellow",
@@ -68,6 +68,6 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     attitude: "止まれ・違う・ひっかかる",
     emoji: "🔴",
     icon: "cross",
-    iconWhy: "違う・止まれ。⚠だけだと注意（黄）と被るので ×",
+    iconWhy: "違う・止まれ。チェックと対の塗り四角＋×。⚠は黄と被りやすい",
   },
 ];
