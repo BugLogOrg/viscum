@@ -40,9 +40,9 @@ export default function ProtocolLabPage() {
             色見本 — プロトコル
           </h1>
           <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-muted">
-            場の空気はアース。反応の言語はビビッド。色だけで意味を伝えず、必ず語を併記（CUD）。
-            黄だけ表札確定（気になる）。他は仮。コメント投稿にはまだ繋いでいません。
-            フィードは説明なし4色を急がず、黄ベタ丸＋件数（右）だけ。4色＋語はここで目視。
+            場の空気はアース。反応色もいまは<strong className="font-medium text-viscum-ink">アース試し</strong>
+            （ビビッドは浮いたので一旦退避）。色＋語（CUD）。黄だけ表札確定（気になる）。
+            フィード右下に4色ベタ丸＋件数（右）を再掲。語なし常時の是非は目視で判断。
           </p>
         </div>
 
@@ -130,7 +130,7 @@ export default function ProtocolLabPage() {
             </div>
           </div>
           <p className="text-[12px] leading-relaxed text-viscum-muted">
-            近い／遠いの感覚で変数をいじる。本番フィードにはまだ出しません。
+            近い／遠いの感覚で変数をいじる。いまプロトコルはアース寄り（ビビッド退避）。
           </p>
         </section>
 

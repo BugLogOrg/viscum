@@ -78,7 +78,7 @@ export function ProtocolChipDemo() {
             ? PROTOCOL_COLORS.find((c) => c.id === picked)?.label
             : "なし"}
         </span>
-        （ベタ色丸＋語。フィードは説明なし4色を急がず、黄だけ）
+        （ベタ色丸＋語。プロトコル色はアース試し）
       </p>
     </div>
   );

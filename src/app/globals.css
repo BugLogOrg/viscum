@@ -31,18 +31,18 @@
   --viscum-success: var(--viscum-moss);
 
   /*
-   * 反応プロトコル（ビビッド）— トンマナ（アース）と混ぜない。
-   * ブランド葉・ベリー実と Hue を離す（ブレスト §3.2〜3.3）。
-   * 仮値。見本 /lab/protocol で目視調整する。
+   * 反応プロトコル色 — 2026-08-29: ビビッド仮置き → アース試し。
+   * 紙・葉・幹・実の湿度に寄せる。ブランド葉／ベリー実と完全一致は避けつつ Hue は近傍。
+   * 見本 /lab/protocol 。合わなければまた振る。
    */
-  --viscum-protocol-green: #00c853;
-  --viscum-protocol-green-soft: #d4f5e0;
-  --viscum-protocol-blue: #2979ff;
-  --viscum-protocol-blue-soft: #d6e6ff;
-  --viscum-protocol-yellow: #ffc400;
-  --viscum-protocol-yellow-soft: #fff3c4;
-  --viscum-protocol-red: #e53935;
-  --viscum-protocol-red-soft: #ffd5d4;
+  --viscum-protocol-green: #5e8a4e;
+  --viscum-protocol-green-soft: #e0ead6;
+  --viscum-protocol-blue: #5a7a8c;
+  --viscum-protocol-blue-soft: #dce5ea;
+  --viscum-protocol-yellow: #c9a227;
+  --viscum-protocol-yellow-soft: #f0e6c4;
+  --viscum-protocol-red: #a85a42;
+  --viscum-protocol-red-soft: #f0ddd6;
 }
 
 @theme inline {
