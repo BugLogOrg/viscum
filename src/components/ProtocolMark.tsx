@@ -32,32 +32,37 @@ function SproutGlyph({ className }: { className?: string }) {
   );
 }
 
-function ThumbUpGlyph({ className }: { className?: string }) {
+/** 賛成・通る：丸＋チェック（小さな手より残る） */
+function CheckCircleGlyph({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <circle cx="12" cy="12" r="9" fill="currentColor" />
       <path
-        fill="currentColor"
-        d="M14.6 4.2c-.55-.9-1.7-1.15-2.55-.55L9.2 5.7c-.35.25-.55.65-.55 1.1v.7H6.8c-1.2 0-2.15 1-2.1 2.2l.35 8.1c.05 1.15 1 2.05 2.15 2.05h7.35c.9 0 1.7-.55 2.05-1.4l2.1-5.15c.45-1.1-.35-2.3-1.55-2.3h-3.05V6.5c0-.9-.4-1.75-1.1-2.3z"
-      />
-      <path
-        fill="currentColor"
-        d="M4.5 9.5h1.8v10H4.5c-.55 0-1-.45-1-1v-8c0-.55.45-1 1-1z"
+        d="M8.2 12.2l2.4 2.4 5.2-5.4"
+        fill="none"
+        stroke="var(--viscum-paper, #f7f3eb)"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );
 }
 
-function ThumbDownGlyph({ className }: { className?: string }) {
-  /* 賛成の対。上下反転の手 */
+/** 止まれ：八角標識（語と直結） */
+function StopOctagonGlyph({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
       <path
         fill="currentColor"
-        d="M9.4 19.8c.55.9 1.7 1.15 2.55.55l2.85-2.05c.35-.25.55-.65.55-1.1v-.7h1.85c1.2 0 2.15-1 2.1-2.2l-.35-8.1c-.05-1.15-1-2.05-2.15-2.05H9.45c-.9 0-1.7.55-2.05 1.4L5.3 10.7c-.45 1.1.35 2.3 1.55 2.3h3.05v2.5c0 .9.4 1.75 1.1 2.3z"
+        d="M8.2 3.5h7.6l4.7 4.7v7.6l-4.7 4.7H8.2L3.5 15.8V8.2L8.2 3.5z"
       />
       <path
-        fill="currentColor"
-        d="M19.5 14.5h-1.8v-10h1.8c.55 0 1 .45 1 1v8c0 .55-.45 1-1 1z"
+        d="M7.5 12h9"
+        fill="none"
+        stroke="var(--viscum-paper, #f7f3eb)"
+        strokeWidth="2.4"
+        strokeLinecap="round"
       />
     </svg>
   );
@@ -98,12 +103,12 @@ function glyph(
   switch (icon) {
     case "sprout":
       return <SproutGlyph className={className} />;
-    case "thumbUp":
-      return <ThumbUpGlyph className={className} />;
+    case "checkCircle":
+      return <CheckCircleGlyph className={className} />;
     case "bookmark":
       return <BookmarkGlyph className={className} filled={filled} />;
-    case "thumbDown":
-      return <ThumbDownGlyph className={className} />;
+    case "stopOctagon":
+      return <StopOctagonGlyph className={className} />;
   }
 }
 

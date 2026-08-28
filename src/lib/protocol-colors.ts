@@ -11,9 +11,9 @@ export type CommentAttitudeId = Exclude<ProtocolColorId, "yellow">;
 /** 役割を表す線画アイコン（仮。語とセットで使う） */
 export type ProtocolIconId =
   | "sprout" /** 緑: 跳ねる・芽・横への生長 */
-  | "thumbUp" /** 青: 賛成 */
+  | "checkCircle" /** 青: 賛成・通る */
   | "bookmark" /** 黄: 気になる・あとで */
-  | "thumbDown"; /** 赤: 止まれ・直した方がいい */
+  | "stopOctagon"; /** 赤: 止まれ */
 
 export type ProtocolColorDef = {
   id: ProtocolColorId;
@@ -48,8 +48,8 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     labelStatus: "provisional",
     attitude: "このまま通る・良いところとして推せる",
     emoji: "🔵",
-    icon: "thumbUp",
-    iconWhy: "サムズアップ＝賛成。☑／丸チェックより一目で態度が分かる",
+    icon: "checkCircle",
+    iconWhy: "丸にチェック＝通る・賛成。小さなサムズより形が残る",
   },
   {
     id: "yellow",
@@ -70,8 +70,8 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     labelStatus: "provisional",
     attitude: "引っかかった・ここは直した方がいい",
     emoji: "🔴",
-    icon: "thumbDown",
-    iconWhy: "サムズダウン＝止まれ。×四角より態度が伝わる",
+    icon: "stopOctagon",
+    iconWhy: "止まれ標識＝止める。サムズダウンより語と直結",
   },
 ];
 
