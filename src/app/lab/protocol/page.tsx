@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 import { ProtocolChipDemo } from "@/components/ProtocolChipRow";
+import { ProtocolMark } from "@/components/ProtocolMark";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
 
@@ -40,9 +41,8 @@ export default function ProtocolLabPage() {
             色見本 — プロトコル
           </h1>
           <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-muted">
-            場の空気はアース。反応色もいまは<strong className="font-medium text-viscum-ink">アース試し</strong>
-            （ビビッドは浮いたので一旦退避）。色＋語（CUD）。黄だけ表札確定（気になる）。
-            フィード右下に4色ベタ丸＋件数（右）を再掲。語なし常時の是非は目視で判断。
+            場の空気はアース。反応色もアース試し。CUD＝<strong className="font-medium text-viscum-ink">色＋アイコン＋語</strong>。
+            黄だけ表札確定（気になる）。フィード右下は色付きアイコン＋件数（右）。
           </p>
         </div>
 
@@ -63,22 +63,23 @@ export default function ProtocolLabPage() {
                 key={c.id}
                 className="flex items-start gap-3 rounded-md border border-viscum-line bg-viscum-paper-2/80 px-3 py-2.5"
               >
-                <span
-                  className="mt-0.5 h-10 w-10 shrink-0 rounded-full"
-                  style={{ background: `var(${c.cssVar})` }}
-                  aria-hidden
-                />
+                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/70">
+                  <ProtocolMark id={c.id} className="h-5 w-5" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-medium text-viscum-ink">
                     {c.label}
                     <span className="ml-1.5 text-[11px] font-normal text-viscum-muted">
-                      {c.labelStatus === "fixed" ? "確定" : "仮"}
+                      {c.labelStatus === "fixed" ? "確定" : "仮"} · {c.icon}
                     </span>
                   </p>
                   <p className="mt-0.5 text-[12px] leading-snug text-viscum-muted">
                     {c.attitude}
                   </p>
-                  <p className="mt-1 font-mono text-[10px] text-viscum-trunk">
+                  <p className="mt-1 text-[11px] leading-snug text-viscum-trunk">
+                    アイコン: {c.iconWhy}
+                  </p>
+                  <p className="mt-1 font-mono text-[10px] text-viscum-muted">
                     {c.cssVar}
                   </p>
                 </div>

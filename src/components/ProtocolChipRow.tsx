@@ -5,7 +5,7 @@ import {
   PROTOCOL_COLORS,
   type ProtocolColorId,
 } from "@/lib/protocol-colors";
-import { ProtocolDot } from "@/components/ProtocolDot";
+import { ProtocolMark } from "@/components/ProtocolMark";
 
 const CHIP_CLASS: Record<ProtocolColorId, { idle: string; on: string }> = {
   green: {
@@ -30,7 +30,7 @@ const CHIP_CLASS: Record<ProtocolColorId, { idle: string; on: string }> = {
   },
 };
 
-/** 見本用。ベタ色丸＋語（CUD）。本番コメント投稿には未接続 */
+/** 見本: 色＋アイコン＋語（CUD） */
 export function ProtocolChipRow({
   value,
   onChange,
@@ -54,7 +54,11 @@ export function ProtocolChipRow({
               on ? styles.on : styles.idle
             }`}
           >
-            <ProtocolDot id={c.id} className="h-2.5 w-2.5" />
+            <ProtocolMark
+              id={c.id}
+              filled={c.id === "yellow" && on}
+              className={`h-3.5 w-3.5 ${on && c.id !== "yellow" ? "text-white" : ""}`}
+            />
             <span>{c.label}</span>
             {c.labelStatus === "provisional" ? (
               <span className="text-[10px] font-normal opacity-70">仮</span>
@@ -78,7 +82,7 @@ export function ProtocolChipDemo() {
             ? PROTOCOL_COLORS.find((c) => c.id === picked)?.label
             : "なし"}
         </span>
-        （ベタ色丸＋語。プロトコル色はアース試し）
+        （色＋アイコン＋語）
       </p>
     </div>
   );

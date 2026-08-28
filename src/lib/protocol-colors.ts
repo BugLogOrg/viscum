@@ -1,22 +1,28 @@
 /**
- * 4色反応プロトコル（ビビッド層）。
- * トンマナ（アース）とは別レイヤ。意味は色＋短い語で伝える（CUD）。
- * 黄の表札のみ ADR-046 確定。他は仮置き。
+ * 4色反応プロトコル。
+ * CUD: 色＋短い語＋形（アイコン）。黄の表札のみ ADR-046 確定。
+ * 色はいまアース試し（globals.css）。
  */
 export type ProtocolColorId = "green" | "blue" | "yellow" | "red";
 
+/** 役割を表す線画アイコン（仮。語とセットで使う） */
+export type ProtocolIconId =
+  | "spark" /** 緑: 跳ねる・フラッシュ */
+  | "check" /** 青: 通る・賛成 */
+  | "bookmark" /** 黄: 気になる・あとで */
+  | "cross"; /** 赤: 反論・違う */
+
 export type ProtocolColorDef = {
   id: ProtocolColorId;
-  /** CSS 変数名（--viscum-protocol-*） */
   cssVar: string;
   softVar: string;
-  /** UI に出す短い語 */
   label: string;
-  /** 確定か仮か */
   labelStatus: "fixed" | "provisional";
-  /** 態度の核（ツールチップ・説明用） */
   attitude: string;
   emoji: string;
+  icon: ProtocolIconId;
+  /** なぜそのアイコンか（lab・議論用） */
+  iconWhy: string;
 };
 
 export const PROTOCOL_COLORS: ProtocolColorDef[] = [
@@ -28,6 +34,8 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     labelStatus: "provisional",
     attitude: "本題から跳ねる・転用・フラッシュアイデア（By the way）",
     emoji: "🟢",
+    icon: "spark",
+    iconWhy: "閃き・横へのジャンプ。電球は「正解」に寄りやすいので火花",
   },
   {
     id: "blue",
@@ -37,6 +45,8 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     labelStatus: "provisional",
     attitude: "通る・良いまとめ／対話では賛成寄り",
     emoji: "🔵",
+    icon: "check",
+    iconWhy: "通る・OKの最短記号。👍はSNS好意と混線しやすいのでチェック",
   },
   {
     id: "yellow",
@@ -44,8 +54,10 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     softVar: "--viscum-protocol-yellow-soft",
     label: "気になる",
     labelStatus: "fixed",
-    attitude: "あとで戻る／印（ADR-046）。bookmark の件数・トグルを🟡へ。形は色丸",
+    attitude: "あとで戻る／印（ADR-046）。bookmark を黄へ",
     emoji: "🟡",
+    icon: "bookmark",
+    iconWhy: "保存・あとでの世界語。目玉より「印」に近い",
   },
   {
     id: "red",
@@ -55,5 +67,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     labelStatus: "provisional",
     attitude: "止まれ・違う・ひっかかる",
     emoji: "🔴",
+    icon: "cross",
+    iconWhy: "違う・止まれ。⚠だけだと注意（黄）と被るので ×",
   },
 ];

@@ -6,12 +6,11 @@ import { formatCount } from "@/data/dummy-works";
 import { hasReaction, toggleReaction } from "@/lib/local-reactions";
 import { bumpLocalSeedStat } from "@/lib/local-seeds";
 import { PROTOCOL_COLORS, type ProtocolColorId } from "@/lib/protocol-colors";
-import { ProtocolDot } from "@/components/ProtocolDot";
+import { ProtocolMark } from "@/components/ProtocolMark";
 
 /**
- * フィード右下: プロトコル4色（アース試し）。
- * 🟡気になる＝bookmark。他は詳細コメント集計のプレースホルダ。
- * 件数は色丸の右。形はベタ塗り。
+ * フィード右下: 色＋アイコン＋件数（右）。
+ * 黄＝bookmark。他はプレースホルダ。
  */
 export function FeedThumbReactions({
   workId,
@@ -27,7 +26,6 @@ export function FeedThumbReactions({
   greenBase?: number;
   blueBase?: number;
   redBase?: number;
-  /** @deprecated スキ廃止。呼び出し互換のため無視 */
   sukiBase?: number;
 }) {
   const [bmOn, setBmOn] = useState(false);
@@ -69,7 +67,7 @@ export function FeedThumbReactions({
 
         const inner = (
           <>
-            <ProtocolDot id={c.id} className="h-2.5 w-2.5" />
+            <ProtocolMark id={c.id} filled={isYellow && bmOn} className="h-3.5 w-3.5" />
             <span
               className={`text-[11px] font-medium tabular-nums leading-none ${
                 isYellow && bmOn ? "text-viscum-ink" : "text-viscum-muted"
