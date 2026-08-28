@@ -32,37 +32,36 @@ function SproutGlyph({ className }: { className?: string }) {
   );
 }
 
-/** 賛成・通る：丸＋チェック（小さな手より残る） */
-function CheckCircleGlyph({ className }: { className?: string }) {
+/**
+ * 👍相当。絵文字はCSSで色を塗れないので、同形のSVGをプロトコル色で塗る。
+ * 塊を太くして小サイズでも手だと読めるようにする。
+ */
+function ThumbUpGlyph({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <circle cx="12" cy="12" r="9" fill="currentColor" />
       <path
-        d="M8.2 12.2l2.4 2.4 5.2-5.4"
-        fill="none"
-        stroke="var(--viscum-paper, #f7f3eb)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        fill="currentColor"
+        d="M13.95 3.55c-.7-1.05-2.15-1.2-3.05-.3L8.2 6.05c-.25.25-.4.6-.4.95v1.35H5.85c-1.35 0-2.4 1.15-2.25 2.5l.9 8.35c.15 1.35 1.3 2.35 2.65 2.35h7.7c1.05 0 2-.65 2.35-1.65l2.55-7.1c.5-1.4-.55-2.85-2-2.85h-3.5V6.2c0-1-.45-1.95-1.3-2.65z"
+      />
+      <path
+        fill="currentColor"
+        d="M3.75 10.35h2.35v10.15H3.75c-.7 0-1.25-.55-1.25-1.25v-7.65c0-.7.55-1.25 1.25-1.25z"
       />
     </svg>
   );
 }
 
-/** 止まれ：八角標識（語と直結） */
-function StopOctagonGlyph({ className }: { className?: string }) {
+/** 👎相当。上下反転の手。止まれ役 */
+function ThumbDownGlyph({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
       <path
         fill="currentColor"
-        d="M8.2 3.5h7.6l4.7 4.7v7.6l-4.7 4.7H8.2L3.5 15.8V8.2L8.2 3.5z"
+        d="M10.05 20.45c.7 1.05 2.15 1.2 3.05.3l2.7-2.8c.25-.25.4-.6.4-.95v-1.35h1.95c1.35 0 2.4-1.15 2.25-2.5l-.9-8.35c-.15-1.35-1.3-2.35-2.65-2.35h-7.7c-1.05 0-2 .65-2.35 1.65L4.25 9.4c-.5 1.4.55 2.85 2 2.85h3.5v2.55c0 1 .45 1.95 1.3 2.65z"
       />
       <path
-        d="M7.5 12h9"
-        fill="none"
-        stroke="var(--viscum-paper, #f7f3eb)"
-        strokeWidth="2.4"
-        strokeLinecap="round"
+        fill="currentColor"
+        d="M20.25 13.65h-2.35V3.5h2.35c.7 0 1.25.55 1.25 1.25v7.65c0 .7-.55 1.25-1.25 1.25z"
       />
     </svg>
   );
@@ -103,12 +102,12 @@ function glyph(
   switch (icon) {
     case "sprout":
       return <SproutGlyph className={className} />;
-    case "checkCircle":
-      return <CheckCircleGlyph className={className} />;
+    case "thumbUp":
+      return <ThumbUpGlyph className={className} />;
     case "bookmark":
       return <BookmarkGlyph className={className} filled={filled} />;
-    case "stopOctagon":
-      return <StopOctagonGlyph className={className} />;
+    case "thumbDown":
+      return <ThumbDownGlyph className={className} />;
   }
 }
 
