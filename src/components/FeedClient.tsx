@@ -14,6 +14,7 @@ import {
 } from "@/lib/local-follows";
 import {
   getDemoSeederProfile,
+  isDemoSeederHandle,
   searchDemoUsers,
   THUMB_TONE_CLASS,
   type SuggestedSeeder,
@@ -26,6 +27,7 @@ import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SuggestFollows } from "@/components/SuggestFollows";
 import { FollowButton } from "@/components/FollowButton";
+import { DemoBadge } from "@/components/DemoBadge";
 
 type Filter = "all" | "open" | "follow";
 
@@ -426,6 +428,7 @@ export function FeedClient() {
                       <span className="shrink-0 text-[12px] text-viscum-muted">
                         @{p.handle}
                       </span>
+                      {isDemoSeederHandle(p.handle) ? <DemoBadge /> : null}
                     </span>
                     {p.bio ? (
                       <span className="mt-0.5 block truncate text-[11px] text-viscum-muted">

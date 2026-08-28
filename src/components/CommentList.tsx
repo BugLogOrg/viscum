@@ -3,10 +3,18 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CommentBody, commentPreviewPlain } from "@/components/CommentBody";
+import { DemoBadge } from "@/components/DemoBadge";
 import { ProtocolMark } from "@/components/ProtocolMark";
 import type { Comment, CompStatus } from "@/data/dummy-works";
-import { formatHoursAgo, formatYen } from "@/data/dummy-works";
-import { accountLabelForHandle } from "@/data/suggested-seeders";
+import {
+  formatHoursAgo,
+  formatYen,
+  isDemoCommentId,
+} from "@/data/dummy-works";
+import {
+  accountLabelForHandle,
+  isDemoSeederHandle,
+} from "@/data/suggested-seeders";
 import { readLocalProfile } from "@/lib/local-profile";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
@@ -21,20 +29,29 @@ function isNeonCommentId(id: string) {
   return NEON_COMMENT_ID.test(id);
 }
 
-/** 英語IDなら PF へ。アカウント名があれば併記 */
+/** 英語IDなら PF へ。アカウント名があれば併記。デモは「デモ用」 */
 function CommentAuthor({
   author,
   accountName,
+  demo,
 }: {
   author: string;
   accountName?: string;
+  demo?: boolean;
 }) {
   const raw = author.replace(/^@/, "").trim();
+  const showDemo = Boolean(demo) || isDemoSeederHandle(raw);
+
   if (!isPortfolioHandle(raw)) {
-    return <span>{author.startsWith("@") ? author : author}</span>;
+    return (
+      <span className="inline-flex flex-wrap items-baseline gap-1">
+        <span>{author.startsWith("@") ? author : author}</span>
+        {showDemo ? <DemoBadge /> : null}
+      </span>
+    );
   }
 
-  const demo = accountLabelForHandle(raw);
+  const demoLabel = accountLabelForHandle(raw);
   const localName =
     typeof window !== "undefined"
       ? readLocalProfile(raw)?.accountName?.trim()
@@ -42,19 +59,22 @@ function CommentAuthor({
   const name =
     accountName?.trim() ||
     localName ||
-    (demo.accountName.toLowerCase() !== raw.toLowerCase()
-      ? demo.accountName
+    (demoLabel.accountName.toLowerCase() !== raw.toLowerCase()
+      ? demoLabel.accountName
       : "");
   const label = name ? `${name} @${raw}` : `@${raw}`;
 
   return (
-    <Link
-      href={`/u/${encodeURIComponent(raw)}`}
-      onClick={(e) => e.stopPropagation()}
-      className="font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
-    >
-      {label}
-    </Link>
+    <span className="inline-flex flex-wrap items-baseline gap-1">
+      <Link
+        href={`/u/${encodeURIComponent(raw)}`}
+        onClick={(e) => e.stopPropagation()}
+        className="font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
+      >
+        {label}
+      </Link>
+      {showDemo ? <DemoBadge /> : null}
+    </span>
   );
 }
 
@@ -198,6 +218,7 @@ export function CommentList({
                     <CommentAuthor
                       author={c.author}
                       accountName={c.accountName}
+                      demo={isDemoCommentId(c.id)}
                     />
                     <span> · {formatHoursAgo(c.hoursAgo)}</span>
                     {!open && (

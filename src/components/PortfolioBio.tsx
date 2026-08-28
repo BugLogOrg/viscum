@@ -9,8 +9,10 @@ import {
 } from "@/lib/local-profile";
 import {
   getDemoSeederProfile,
+  isDemoSeederHandle,
   THUMB_TONE_CLASS,
 } from "@/data/suggested-seeders";
+import { DemoBadge } from "@/components/DemoBadge";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import { FollowGraphList } from "@/components/FollowGraphList";
 import { SuggestFollows } from "@/components/SuggestFollows";
@@ -34,11 +36,12 @@ export function PortfolioHeader({
 }) {
   const { data: session } = useSession();
   const me = session?.user?.handle?.trim() || "";
-  const demo = getDemoSeederProfile(handle);
+  const demoProfile = getDemoSeederProfile(handle);
+  const isDemo = isDemoSeederHandle(handle);
   const [accountName, setAccountName] = useState(
-    demo?.displayName ?? handle,
+    demoProfile?.displayName ?? handle,
   );
-  const [bio, setBio] = useState<string | null>(demo?.bio ?? null);
+  const [bio, setBio] = useState<string | null>(demoProfile?.bio ?? null);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [followingN, setFollowingN] = useState(0);
   const [followerN, setFollowerN] = useState(0);
@@ -48,9 +51,9 @@ export function PortfolioHeader({
 
   useEffect(() => {
     // デモ棚の人物像はローカル／Neonの実名で上書きしない（tori に mDB が乗る事故防止）
-    if (demo) {
-      setAccountName(demo.displayName);
-      setBio(demo.bio);
+    if (demoProfile) {
+      setAccountName(demoProfile.displayName);
+      setBio(demoProfile.bio);
       setAvatar(null);
       return;
     }
@@ -86,7 +89,7 @@ export function PortfolioHeader({
       cancelled = true;
       window.removeEventListener("viscum-profile-updated", sync);
     };
-  }, [handle, demo?.handle]);
+  }, [handle, demoProfile?.handle]);
 
   useEffect(() => {
     const sync = () => {
@@ -108,9 +111,9 @@ export function PortfolioHeader({
     setTab(null);
   }, [handle]);
 
-  const letter = demo?.glyph ?? accountName.slice(0, 1).toUpperCase();
-  const toneClass = demo
-    ? `${THUMB_TONE_CLASS[demo.thumbTone]} ${demo.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`
+  const letter = demoProfile?.glyph ?? accountName.slice(0, 1).toUpperCase();
+  const toneClass = demoProfile
+    ? `${THUMB_TONE_CLASS[demoProfile.thumbTone]} ${demoProfile.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`
     : "bg-viscum-berry text-white";
   const loginCb = `/u/${encodeURIComponent(handle)}`;
   const isOwn =
@@ -146,11 +149,7 @@ export function PortfolioHeader({
             </h1>
             <p className="mt-0.5 flex flex-wrap items-center gap-2 truncate text-[13px] text-viscum-muted">
               <span>@{handle}</span>
-              {demo ? (
-                <span className="shrink-0 rounded-full bg-viscum-line/70 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
-                  デモ用アカウント
-                </span>
-              ) : null}
+              {isDemo ? <DemoBadge className="rounded-full px-2 text-[10px]" /> : null}
             </p>
           </div>
         </div>

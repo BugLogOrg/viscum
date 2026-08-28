@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { useSeederDisplayLine } from "@/hooks/useSeederDisplayLine";
 import { isDemoSeederHandle } from "@/data/suggested-seeders";
+import { DemoBadge } from "@/components/DemoBadge";
 
 /**
  * シーダー表示：アカウント名＋@英語ID。
  * 端末プロフィール → API の順で名前を補完する。
- * デモ棚の予約IDには「デモ用アカウント」を併記。
+ * デモ棚の予約IDには「デモ用」を併記。
  */
 export function SeederLink({
   handle,
@@ -32,11 +33,7 @@ export function SeederLink({
       >
         {line}
       </Link>
-      {demo ? (
-        <span className="rounded bg-viscum-paper-2 px-1.5 py-0.5 text-[10px] font-medium text-viscum-muted">
-          デモ用アカウント
-        </span>
-      ) : null}
+      {demo ? <DemoBadge className="px-1.5 text-[10px]" /> : null}
     </span>
   );
 }

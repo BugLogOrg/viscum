@@ -5,10 +5,12 @@ import Link from "next/link";
 import {
   accountLabelForHandle,
   getDemoSeederProfile,
+  isDemoSeederHandle,
   THUMB_TONE_CLASS,
 } from "@/data/suggested-seeders";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import { FollowButton } from "@/components/FollowButton";
+import { DemoBadge } from "@/components/DemoBadge";
 
 type Row = {
   handle: string;
@@ -16,6 +18,7 @@ type Row = {
   bio: string;
   glyph: string;
   toneClass: string;
+  isDemo: boolean;
 };
 
 function rowForHandle(handle: string): Row {
@@ -34,7 +37,14 @@ function rowForHandle(handle: string): Row {
   const toneClass = demo
     ? `${THUMB_TONE_CLASS[demo.thumbTone]} ${demo.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`
     : "bg-viscum-berry text-white";
-  return { handle: h, displayName, bio, glyph, toneClass };
+  return {
+    handle: h,
+    displayName,
+    bio,
+    glyph,
+    toneClass,
+    isDemo: isDemoSeederHandle(h),
+  };
 }
 
 /** フォロー／フォロワー一覧。各行でフォロー可 */
@@ -83,6 +93,7 @@ export function FollowGraphList({
                 <span className="shrink-0 text-[12px] text-viscum-muted">
                   @{r.handle}
                 </span>
+                {r.isDemo ? <DemoBadge /> : null}
               </span>
               {r.bio ? (
                 <span className="mt-0.5 block truncate text-[11px] text-viscum-muted">

@@ -12,6 +12,7 @@ import {
   THUMB_TONE_CLASS,
 } from "@/data/suggested-seeders";
 import { FollowButton } from "@/components/FollowButton";
+import { DemoBadge } from "@/components/DemoBadge";
 
 /** デモ棚の色タイル付きでユーザーをおすすめ（フォロー中が空でも寂しくない） */
 export function SuggestFollows({
@@ -80,6 +81,7 @@ export function SuggestFollows({
                   <span className="shrink-0 text-[12px] text-viscum-muted">
                     @{s.handle}
                   </span>
+                  <DemoBadge />
                 </span>
                 <span className="mt-0.5 block truncate text-[11px] text-viscum-muted">
                   {s.bio}

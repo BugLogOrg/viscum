@@ -852,6 +852,32 @@ export const DUMMY_WORKS: Work[] = DUMMY_WORKS_RAW.map((w) => {
   return { ...w, prompts: scaffold.lines };
 });
 
+const DEMO_SHELF_IDS = new Set(DUMMY_WORKS.map((w) => w.id));
+
+/** フィード／詳細の棚デモ作品（local_* の本人投稿は含まない） */
+export function isDemoShelfWorkId(id: string): boolean {
+  return DEMO_SHELF_IDS.has(id);
+}
+
+const NEON_COMMENT_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * 棚に最初から載っているコメント。
+ * 端末の local_c_ と Neon UUID は本人／本番扱いでデモではない。
+ */
+export function isDemoCommentId(id: string): boolean {
+  if (!id) return false;
+  if (id.startsWith("local_c_")) return false;
+  if (NEON_COMMENT_ID.test(id)) return false;
+  return true;
+}
+
+/** デモ棚に作品を持つシーダー英語ID */
+export function listDemoSeederHandles(): string[] {
+  return [...new Set(DUMMY_WORKS.map((w) => w.seeder.toLowerCase()))];
+}
+
 export function getWork(id: string): Work | undefined {
   return DUMMY_WORKS.find((w) => w.id === id);
 }

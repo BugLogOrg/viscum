@@ -1,4 +1,4 @@
-import { DUMMY_WORKS, type Work } from "@/data/dummy-works";
+import { DUMMY_WORKS, listDemoSeederHandles, type Work } from "@/data/dummy-works";
 import { listLocalProfiles, peekCachedAccountName } from "@/lib/local-profile";
 
 export type DemoSeederProfile = {
@@ -52,6 +52,12 @@ const PROFILES: DemoSeederProfile[] = [
   },
 ];
 
+/** プロフィール表＋棚に作品がある全シーダー（rio / moss 等も含む） */
+const DEMO_SEEDER_HANDLES = new Set([
+  ...PROFILES.map((p) => p.handle.toLowerCase()),
+  ...listDemoSeederHandles(),
+]);
+
 export function getDemoSeederProfile(
   handle: string,
 ): DemoSeederProfile | undefined {
@@ -61,7 +67,8 @@ export function getDemoSeederProfile(
 
 /** デモ棚の予約ハンドル（表示デモ用アカウント） */
 export function isDemoSeederHandle(handle: string): boolean {
-  return Boolean(getDemoSeederProfile(handle));
+  const key = handle.replace(/^@/, "").trim().toLowerCase();
+  return DEMO_SEEDER_HANDLES.has(key);
 }
 
 /** 表示用：アカウント名＋@英語ID（同名なら @ID のみ） */
@@ -107,11 +114,11 @@ export function accountLabelForHandle(
 
 /** デモ棚の英語ID。実アカウント登録では使えない */
 export function isReservedDemoHandle(handle: string): boolean {
-  return Boolean(getDemoSeederProfile(handle));
+  return isDemoSeederHandle(handle);
 }
 
 export function listReservedDemoHandles(): string[] {
-  return PROFILES.map((p) => p.handle);
+  return [...DEMO_SEEDER_HANDLES];
 }
 
 /** 棚デモからおすすめユーザーを組み立て（本物の活発ユーザーが出るまでの仮） */
