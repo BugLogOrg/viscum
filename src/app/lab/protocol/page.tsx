@@ -42,6 +42,7 @@ export default function ProtocolLabPage() {
           <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-muted">
             場の空気はアース。反応の言語はビビッド。色だけで意味を伝えず、必ず語を併記（CUD）。
             黄だけ表札確定（気になる）。他は仮。コメント投稿にはまだ繋いでいません。
+            フィード右下の4色は、🟡だけ既存の気になる件数。他は詳細コメントからの集計が流れる想定。
           </p>
         </div>
 
