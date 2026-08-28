@@ -64,11 +64,6 @@ export function CommentAttitudePicker({
               />
               <span className="min-w-0 self-center text-[13px] font-medium leading-none text-viscum-ink">
                 {c.label}
-                {c.labelStatus === "provisional" ? (
-                  <span className="ml-1 text-[10px] font-normal text-viscum-muted">
-                    仮
-                  </span>
-                ) : null}
               </span>
               <span className="col-start-2 text-[11px] leading-snug text-viscum-muted">
                 {c.attitude}

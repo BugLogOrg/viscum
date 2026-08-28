@@ -60,9 +60,6 @@ export function ProtocolChipRow({
               className="h-3.5 w-3.5"
             />
             <span>{c.label}</span>
-            {c.labelStatus === "provisional" ? (
-              <span className="text-[10px] font-normal opacity-70">仮</span>
-            ) : null}
           </button>
         );
       })}
