@@ -207,25 +207,25 @@ export function CommentList({
                   {open ? "▾" : "▸"}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
                     {c.attitude ? (
                       <span
-                        className="inline-flex items-center gap-1.5"
+                        className="inline-flex shrink-0"
                         title={
-                          PROTOCOL_COLORS.find((p) => p.id === c.attitude)
-                            ?.attitude
+                          [
+                            PROTOCOL_COLORS.find((p) => p.id === c.attitude)
+                              ?.label,
+                            PROTOCOL_COLORS.find((p) => p.id === c.attitude)
+                              ?.attitude,
+                          ]
+                            .filter(Boolean)
+                            .join("：") || undefined
                         }
                       >
                         <ProtocolMark id={c.attitude} className="h-7 w-7" />
-                        <span className="text-[11px] font-medium text-viscum-muted">
-                          {
-                            PROTOCOL_COLORS.find((p) => p.id === c.attitude)
-                              ?.label
-                          }
-                        </span>
                       </span>
                     ) : null}
-                    <span className="text-sm font-semibold text-viscum-ink">
+                    <span className="text-sm font-semibold leading-snug text-viscum-ink">
                       {c.subject}
                     </span>
                     {c.adopted && (
