@@ -42,7 +42,7 @@ export default function ProtocolLabPage() {
           <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-muted">
             場の空気はアース。反応の言語はビビッド。色だけで意味を伝えず、必ず語を併記（CUD）。
             黄だけ表札確定（気になる）。他は仮。コメント投稿にはまだ繋いでいません。
-            フィード右下の4色は、🟡だけ既存の気になる件数。他は詳細コメントからの集計が流れる想定。
+            フィードは説明なし4色を急がず、黄ベタ丸＋件数（右）だけ。4色＋語はここで目視。
           </p>
         </div>
 
@@ -64,15 +64,12 @@ export default function ProtocolLabPage() {
                 className="flex items-start gap-3 rounded-md border border-viscum-line bg-viscum-paper-2/80 px-3 py-2.5"
               >
                 <span
-                  className="mt-0.5 h-10 w-10 shrink-0 rounded-md border border-black/5 shadow-sm"
+                  className="mt-0.5 h-10 w-10 shrink-0 rounded-full"
                   style={{ background: `var(${c.cssVar})` }}
                   aria-hidden
                 />
                 <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-medium text-viscum-ink">
-                    <span aria-hidden className="mr-1">
-                      {c.emoji}
-                    </span>
                     {c.label}
                     <span className="ml-1.5 text-[11px] font-normal text-viscum-muted">
                       {c.labelStatus === "fixed" ? "確定" : "仮"}

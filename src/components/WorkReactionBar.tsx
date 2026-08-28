@@ -38,8 +38,8 @@ export function WorkReactionBar({
   return (
     <div className="space-y-2 rounded-lg border border-viscum-line bg-white/50 px-3 py-3">
       <p className="text-[11px] leading-relaxed text-viscum-muted">
-        <strong className="font-medium text-viscum-ink">🟡 気になる</strong>
-        ＝あとで戻る保存（温度の1タップも兼ねる）。4色のうち黄の表札。
+        <strong className="font-medium text-viscum-ink">気になる</strong>
+        ＝あとで戻る保存（温度の1タップも兼ねる）。プロトコル黄（ベタ色丸）。
         {workId.startsWith("local_")
           ? "この端末の件数です。"
           : "数字は他の人も含めた件数です。"}
@@ -50,7 +50,7 @@ export function WorkReactionBar({
         >
           「気になる」
         </Link>
-        で見られます。緑・青・赤の態度はコメント時に選び、カードへ集計されます。
+        で見られます。緑・青・赤はコメント時に語付きで選ぶ想定（フィードに説明なし4色は急がない）。
       </p>
       <button
         type="button"
@@ -62,7 +62,10 @@ export function WorkReactionBar({
             : "border-viscum-line bg-viscum-paper text-viscum-ink hover:border-[color:var(--viscum-protocol-yellow)]"
         }`}
       >
-        <span aria-hidden>🟡</span>
+        <span
+          className="inline-block h-2.5 w-2.5 shrink-0 rounded-full bg-viscum-protocol-yellow"
+          aria-hidden
+        />
         <span>{bmOn ? "気になる済み" : "気になる"}</span>
         <span className="tabular-nums opacity-90">{formatCount(bmN)}</span>
       </button>

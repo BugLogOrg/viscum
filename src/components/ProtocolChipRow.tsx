@@ -5,6 +5,7 @@ import {
   PROTOCOL_COLORS,
   type ProtocolColorId,
 } from "@/lib/protocol-colors";
+import { ProtocolDot } from "@/components/ProtocolDot";
 
 const CHIP_CLASS: Record<ProtocolColorId, { idle: string; on: string }> = {
   green: {
@@ -29,7 +30,7 @@ const CHIP_CLASS: Record<ProtocolColorId, { idle: string; on: string }> = {
   },
 };
 
-/** 見本用。4色とも同じ形（絵文字丸）。本番コメント投稿には未接続 */
+/** 見本用。ベタ色丸＋語（CUD）。本番コメント投稿には未接続 */
 export function ProtocolChipRow({
   value,
   onChange,
@@ -53,10 +54,8 @@ export function ProtocolChipRow({
               on ? styles.on : styles.idle
             }`}
           >
-            <span className="text-[15px] leading-none" aria-hidden>
-              {c.emoji}
-            </span>
-            {c.label}
+            <ProtocolDot id={c.id} className="h-2.5 w-2.5" />
+            <span>{c.label}</span>
             {c.labelStatus === "provisional" ? (
               <span className="text-[10px] font-normal opacity-70">仮</span>
             ) : null}
@@ -79,7 +78,7 @@ export function ProtocolChipDemo() {
             ? PROTOCOL_COLORS.find((c) => c.id === picked)?.label
             : "なし"}
         </span>
-        （形は全色とも色丸絵文字。🟡＝気になるのデータ）
+        （ベタ色丸＋語。フィードは説明なし4色を急がず、黄だけ）
       </p>
     </div>
   );
