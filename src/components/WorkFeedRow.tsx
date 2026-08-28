@@ -6,14 +6,17 @@ import {
   planBadgeLabel,
   getWorkReactionCounts,
 } from "@/data/dummy-works";
-import { FeedThumbReactions } from "@/components/FeedThumbReactions";
+import {
+  FeedAttitudeCounts,
+  FeedBookmarkButton,
+} from "@/components/FeedThumbReactions";
 import { SeederNameText } from "@/components/SeederNameText";
 
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1）。詳細・投稿プレビューでも参照 */
 export const THUMB_ASPECT = "aspect-[1280/670]";
 
-/** フィード左カラム幅（旧 11.4rem の約 90%・モバイルで右切れ緩和） */
-const FEED_THUMB_W = "w-[10.25rem]";
+/** モバイルは狭め・md以上は旧幅に戻す */
+const FEED_THUMB_W = "w-[10.25rem] md:w-[11.4rem]";
 
 const TONE: Record<Work["thumbTone"], string> = {
   leaf: "bg-viscum-leaf-deep",
@@ -31,7 +34,6 @@ function mediaLine(work: Work): string | null {
 
 function showStatusBlock(work: Work): boolean {
   if (work.status === "closed") return false;
-  // 無料コメント（status none）も有料と同じくサムネ下の帯へ
   if (work.plan === "free_comment" || work.status === "none") return true;
   return (
     work.status === "open" ||
@@ -41,8 +43,7 @@ function showStatusBlock(work: Work): boolean {
 }
 
 /**
- * フィード行 — 左: サムネ → ステータス帯／右: 作品・投稿者・反応・気になる。
- * タイトルは入力上限（100字）どおり全表示。無料も帯に出す（¥0は書かない）。
+ * フィード行 — 左: サムネ → 気になる → ステータス帯／右: 作品・緑青赤の件数。
  */
 export function WorkFeedRow({
   work,
@@ -79,8 +80,16 @@ export function WorkFeedRow({
           ) : null}
         </Link>
 
+        <div className="mt-1 flex justify-start">
+          <FeedBookmarkButton
+            workId={work.id}
+            title={work.title}
+            bookmarkBase={rx.bookmark}
+          />
+        </div>
+
         {statusBlock ? (
-          <div className="mt-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
+          <div className="mt-1 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
             <p className="text-[11px] leading-snug text-viscum-ink">
               <span className="font-medium">
                 {planLabel ??
@@ -143,11 +152,7 @@ export function WorkFeedRow({
             />
           </Link>
           <div className="mt-1 flex justify-end">
-            <FeedThumbReactions
-              workId={work.id}
-              title={work.title}
-              bookmarkBase={rx.bookmark}
-            />
+            <FeedAttitudeCounts workId={work.id} />
           </div>
         </div>
       </div>
