@@ -68,7 +68,7 @@ function feedStatus(work: Work): {
 }
 
 /**
- * フィード行 — 左: サムネ → ステータス帯 → 気になる／右: 作品・緑青赤件数。
+ * フィード行 — 左: サムネ → ステータス帯 →（下端）気になる／右: 作品・緑青赤件数。
  */
 export function WorkFeedRow({
   work,
@@ -85,7 +85,9 @@ export function WorkFeedRow({
     <article
       className={`flex gap-2.5 border-b border-viscum-line px-3 py-2.5 transition hover:bg-viscum-paper-2/80 ${className}`}
     >
-      <div className={`${FEED_THUMB_W} shrink-0 self-start`}>
+      <div
+        className={`${FEED_THUMB_W} flex shrink-0 flex-col self-stretch`}
+      >
         <Link
           href={`/w/${work.id}`}
           className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
@@ -133,7 +135,7 @@ export function WorkFeedRow({
           </div>
         ) : null}
 
-        <div className="mt-1 flex justify-start">
+        <div className="mt-auto flex justify-start pt-1.5">
           <FeedBookmarkButton
             workId={work.id}
             title={work.title}
