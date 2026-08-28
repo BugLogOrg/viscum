@@ -48,7 +48,7 @@ function ThumbUpGlyph({ className }: { className?: string }) {
 }
 
 function ThumbDownGlyph({ className }: { className?: string }) {
-  /* 賛成の対＝gotoHELL役。上下反転の手 */
+  /* 賛成の対。上下反転の手 */
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>
       <path

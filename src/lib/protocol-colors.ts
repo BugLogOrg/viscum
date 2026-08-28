@@ -13,7 +13,7 @@ export type ProtocolIconId =
   | "sprout" /** 緑: 跳ねる・芽・横への生長 */
   | "thumbUp" /** 青: 賛成 */
   | "bookmark" /** 黄: 気になる・あとで */
-  | "thumbDown"; /** 赤: 反論（gotoHELL役） */
+  | "thumbDown"; /** 赤: 反論・ひっかかり */
 
 export type ProtocolColorDef = {
   id: ProtocolColorId;
@@ -35,7 +35,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     softVar: "--viscum-protocol-green-soft",
     label: "話変わるけど",
     labelStatus: "provisional",
-    attitude: "本題から跳ねる・転用・フラッシュアイデア（By the way）",
+    attitude: "本筋から外れる話・別の使い方・ふと浮かんだ案",
     emoji: "🟢",
     icon: "sprout",
     iconWhy: "芽＝横へ伸びる・新しい接続",
@@ -46,7 +46,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     softVar: "--viscum-protocol-blue-soft",
     label: "賛成",
     labelStatus: "provisional",
-    attitude: "通る・良いまとめ／対話では賛成寄り",
+    attitude: "このまま良い／まとめとして賛成",
     emoji: "🔵",
     icon: "thumbUp",
     iconWhy: "サムズアップ＝賛成。☑／丸チェックより一目で態度が分かる",
@@ -68,10 +68,10 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     softVar: "--viscum-protocol-red-soft",
     label: "反論",
     labelStatus: "provisional",
-    attitude: "止まれ・違う・ひっかかる（表の語は反論／中のノリは gotoHELL）",
+    attitude: "違う・引っかかった・ここは直してほしい",
     emoji: "🔴",
     icon: "thumbDown",
-    iconWhy: "サムズダウン＝賛成の対。gotoHELL役。×四角より態度が伝わる",
+    iconWhy: "サムズダウン＝賛成の対。×四角より態度が伝わる",
   },
 ];
 

@@ -54,18 +54,23 @@ export function CommentAttitudePicker({
               title={c.attitude}
               aria-pressed={on}
               onClick={() => onChange(c.id as CommentAttitudeId)}
-              className={`rounded-md border px-2.5 py-2 text-left transition ${
+              className={`flex h-full flex-col items-stretch justify-start rounded-md border px-2.5 py-2 text-left transition ${
                 on ? styles.on : styles.idle
               }`}
             >
-              <span className="flex items-center gap-1.5 text-[13px] font-medium text-viscum-ink">
-                <ProtocolMark id={c.id} className="h-4 w-4" />
-                {c.label}
-                {c.labelStatus === "provisional" ? (
-                  <span className="text-[10px] font-normal text-viscum-muted">
-                    仮
-                  </span>
-                ) : null}
+              <span className="flex items-start gap-1.5 text-[13px] font-medium leading-snug text-viscum-ink">
+                <ProtocolMark
+                  id={c.id}
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                />
+                <span className="min-w-0">
+                  {c.label}
+                  {c.labelStatus === "provisional" ? (
+                    <span className="ml-1 text-[10px] font-normal text-viscum-muted">
+                      仮
+                    </span>
+                  ) : null}
+                </span>
               </span>
               <span className="mt-1 block text-[11px] leading-snug text-viscum-muted">
                 {c.attitude}
