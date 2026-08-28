@@ -2,10 +2,7 @@ import Link from "next/link";
 import type { Work } from "@/data/dummy-works";
 import {
   formatDeadlineFeed,
-  formatMonthDay,
-  formatHoursAgo,
   formatYen,
-  postedAtFromHoursAgo,
   planBadgeLabel,
   getWorkReactionCounts,
 } from "@/data/dummy-works";
@@ -43,7 +40,8 @@ function showCompBlock(work: Work): boolean {
 }
 
 /**
- * フィード行 — 左: サムネ → コンペ帯（下段）→ 気になる／右: 作品 × 反応。
+ * フィード行 — 左: サムネ → コンペ帯／右: 作品×反応・シーダー・気になる（右下）。
+ * タイトルは入力上限（100字）どおり全表示。
  */
 export function WorkFeedRow({
   work,
@@ -53,7 +51,6 @@ export function WorkFeedRow({
   className?: string;
 }) {
   const deadline = formatDeadlineFeed(work.closesInHours, work.status);
-  const postedShort = formatMonthDay(postedAtFromHoursAgo(work.hoursAgo));
   const rx = getWorkReactionCounts(work);
   const planLabel = planBadgeLabel(work.plan);
   const media = mediaLine(work);
@@ -112,65 +109,61 @@ export function WorkFeedRow({
             ) : null}
           </div>
         ) : null}
-
-        <div className="mt-1">
-          <FeedThumbReactions
-            workId={work.id}
-            title={work.title}
-            bookmarkBase={rx.bookmark}
-          />
-        </div>
       </div>
 
-      <Link
-        href={`/w/${work.id}`}
-        className="min-w-0 flex-1 self-start active:opacity-90"
-      >
-        <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink line-clamp-3">
-          {work.title}
-        </h2>
-        {media ? (
-          <p className="mt-0.5 text-[12px] leading-snug text-viscum-muted">
-            {media}
-          </p>
-        ) : null}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Link href={`/w/${work.id}`} className="min-w-0 active:opacity-90">
+          <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink">
+            {work.title}
+          </h2>
+          {media ? (
+            <p className="mt-0.5 text-[12px] leading-snug text-viscum-muted">
+              {media}
+            </p>
+          ) : null}
 
-        <p className="mt-1.5 text-[13px] font-medium leading-none text-viscum-ink">
-          <span aria-hidden className="mr-1">
-            💬
-          </span>
-          {commentN}
-          <span className="ml-0.5 font-normal text-viscum-muted">件の反応</span>
-        </p>
-
-        {!comp && work.status === "closed" ? (
-          <p className="mt-2 text-[12px] text-viscum-muted">
-            {work.paymentsDone && work.paymentsDone > 0
-              ? "終了 · 支払い済み"
-              : "終了"}
+          <p className="mt-1.5 text-[13px] font-medium leading-none text-viscum-ink">
+            <span aria-hidden className="mr-1">
+              💬
+            </span>
+            {commentN}
+            <span className="ml-0.5 font-normal text-viscum-muted">件の反応</span>
           </p>
-        ) : null}
-        {!comp && work.status !== "closed" ? (
-          <p className="mt-2 text-[12px] text-viscum-muted">
-            {planLabel ?? "コメント歓迎"}
-          </p>
-        ) : null}
 
-        <p className="mt-1.5 truncate text-[11px] text-viscum-muted">
-          <span title={`投稿 ${formatHoursAgo(work.hoursAgo)}`}>
-            {postedShort}
-          </span>
-          <span aria-hidden className="mx-1">
-            ·
-          </span>
-          <span className="text-viscum-trunk" title="シーダー">
+          {!comp && work.status === "closed" ? (
+            <p className="mt-2 text-[12px] text-viscum-muted">
+              {work.paymentsDone && work.paymentsDone > 0
+                ? "終了 · 支払い済み"
+                : "終了"}
+            </p>
+          ) : null}
+          {!comp && work.status !== "closed" ? (
+            <p className="mt-2 text-[12px] text-viscum-muted">
+              {planLabel ?? "コメント歓迎"}
+            </p>
+          ) : null}
+        </Link>
+
+        <div className="mt-auto pt-1.5">
+          <Link
+            href={`/w/${work.id}`}
+            className="block truncate text-[11px] text-viscum-trunk active:opacity-90"
+            title="シーダー"
+          >
             <SeederNameText
               handle={work.seeder}
               preferredName={work.seederAccountName}
             />
-          </span>
-        </p>
-      </Link>
+          </Link>
+          <div className="mt-1 flex justify-end">
+            <FeedThumbReactions
+              workId={work.id}
+              title={work.title}
+              bookmarkBase={rx.bookmark}
+            />
+          </div>
+        </div>
+      </div>
     </article>
   );
 }

@@ -5,7 +5,7 @@ import { formatCount } from "@/data/dummy-works";
 import { hasReaction, toggleReaction } from "@/lib/local-reactions";
 import { bumpLocalSeedStat } from "@/lib/local-seeds";
 
-/** TOPサムネ下：気になるのみ（ADR-036） */
+/** フィード行の気になる（ADR-036）。配置は呼び出し側 */
 export function FeedThumbReactions({
   workId,
   title,
