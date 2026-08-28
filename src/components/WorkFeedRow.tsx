@@ -168,7 +168,10 @@ export function WorkFeedRow({
             />
           </Link>
           <div className="mt-1 flex justify-end">
-            <FeedAttitudeCounts workId={work.id} />
+            <FeedAttitudeCounts
+              workId={work.id}
+              comments={work.comments}
+            />
           </div>
         </div>
       </div>

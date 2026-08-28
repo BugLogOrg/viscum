@@ -28,6 +28,7 @@ export async function postWorkComment(input: {
   body: string;
   imageUrls?: string[];
   afterClose?: boolean;
+  attitude: "green" | "blue" | "red";
 }): Promise<{ ok: boolean; comment?: Comment; error?: string; persisted?: boolean }> {
   try {
     const res = await fetch("/api/comments", {

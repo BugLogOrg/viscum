@@ -1,5 +1,6 @@
 /** 作品詳細に足したコメント（端末内・デモ永続） */
 import type { Comment } from "@/data/dummy-works";
+import type { CommentAttitudeId } from "@/lib/protocol-colors";
 
 const prefix = "viscum_local_comments_v1_";
 
@@ -52,9 +53,10 @@ export function addLocalComment(
     body: string;
     afterClose?: boolean;
     imageUrls?: string[];
+    attitude: CommentAttitudeId;
   },
 ): Comment {
-  const row: Comment & { afterClose?: boolean } = {
+  const row: Comment = {
     id: `local_c_${Date.now().toString(36)}`,
     author: input.author,
     accountName: input.accountName,
@@ -63,6 +65,7 @@ export function addLocalComment(
     hoursAgo: 0,
     afterClose: input.afterClose,
     imageUrls: input.imageUrls?.length ? input.imageUrls : undefined,
+    attitude: input.attitude,
   };
   const next = [row, ...readLocalComments(workId)];
   writeLocalComments(workId, next);

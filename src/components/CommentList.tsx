@@ -3,10 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CommentBody, commentPreviewPlain } from "@/components/CommentBody";
+import { ProtocolMark } from "@/components/ProtocolMark";
 import type { Comment, CompStatus } from "@/data/dummy-works";
 import { formatHoursAgo, formatYen } from "@/data/dummy-works";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import { readLocalProfile } from "@/lib/local-profile";
+import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
 const NEON_COMMENT_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -156,6 +158,23 @@ export function CommentList({
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                    {c.attitude ? (
+                      <span
+                        className="inline-flex items-center gap-1"
+                        title={
+                          PROTOCOL_COLORS.find((p) => p.id === c.attitude)
+                            ?.attitude
+                        }
+                      >
+                        <ProtocolMark id={c.attitude} className="h-3.5 w-3.5" />
+                        <span className="text-[11px] font-medium text-viscum-muted">
+                          {
+                            PROTOCOL_COLORS.find((p) => p.id === c.attitude)
+                              ?.label
+                          }
+                        </span>
+                      </span>
+                    ) : null}
                     <span className="text-sm font-semibold text-viscum-ink">
                       {c.subject}
                     </span>

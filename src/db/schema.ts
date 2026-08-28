@@ -134,6 +134,8 @@ export const comments = pgTable(
     adoptedAt: timestamp("adopted_at", { withTimezone: true }),
     /** 締切後投稿（賞金対象外・ADR-015） */
     afterClose: boolean("after_close").notNull().default(false),
+    /** コメント態度: green | blue | red（ADR-047） */
+    attitude: text("attitude"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

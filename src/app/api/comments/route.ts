@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { comments, payments, users } from "@/db/schema";
 import type { Comment } from "@/data/dummy-works";
+import { isCommentAttitudeId } from "@/lib/protocol-colors";
 
 function hoursAgoFrom(date: Date): number {
   return Math.max(
@@ -20,6 +21,7 @@ function toClientComment(
     imageUrls: string[] | null;
     adoptedAt: Date | null;
     afterClose: boolean;
+    attitude: string | null;
     createdAt: Date;
     handle: string | null;
     name: string | null;
@@ -41,6 +43,7 @@ function toClientComment(
     tipped: paid?.tipped || undefined,
     tipYen: paid?.tipYen,
     afterClose: row.afterClose || undefined,
+    attitude: isCommentAttitudeId(row.attitude) ? row.attitude : undefined,
   };
 }
 
@@ -68,6 +71,7 @@ export async function GET(req: Request) {
       imageUrls: comments.imageUrls,
       adoptedAt: comments.adoptedAt,
       afterClose: comments.afterClose,
+      attitude: comments.attitude,
       createdAt: comments.createdAt,
       handle: users.handle,
       name: users.name,
@@ -138,11 +142,13 @@ export async function POST(req: Request) {
     body?: string;
     imageUrls?: string[];
     afterClose?: boolean;
+    attitude?: string;
   } | null;
 
   const workId = body?.workId?.trim();
   const subject = body?.subject?.trim().slice(0, 80) ?? "";
   const text = body?.body?.trim().slice(0, 12000) ?? "";
+  const attitude = isCommentAttitudeId(body?.attitude) ? body.attitude : null;
   const imageUrls = Array.isArray(body?.imageUrls)
     ? body.imageUrls
         .filter((u) => typeof u === "string" && u.length > 0)
@@ -154,6 +160,12 @@ export async function POST(req: Request) {
   }
   if (!subject) {
     return NextResponse.json({ error: "件名が必要です" }, { status: 400 });
+  }
+  if (!attitude) {
+    return NextResponse.json(
+      { error: "コメントの態度（緑／青／赤）を選んでください" },
+      { status: 400 },
+    );
   }
   if (!text && imageUrls.length === 0) {
     return NextResponse.json(
@@ -183,6 +195,7 @@ export async function POST(req: Request) {
       body: text || "（画像のみ）",
       imageUrls,
       afterClose: Boolean(body?.afterClose),
+      attitude,
     })
     .returning({
       id: comments.id,
@@ -191,6 +204,7 @@ export async function POST(req: Request) {
       imageUrls: comments.imageUrls,
       adoptedAt: comments.adoptedAt,
       afterClose: comments.afterClose,
+      attitude: comments.attitude,
       createdAt: comments.createdAt,
     });
 

@@ -5,6 +5,9 @@
  */
 export type ProtocolColorId = "green" | "blue" | "yellow" | "red";
 
+/** コメント投稿で選ぶ態度（黄＝気になるは含めない） */
+export type CommentAttitudeId = Exclude<ProtocolColorId, "yellow">;
+
 /** 役割を表す線画アイコン（仮。語とセットで使う） */
 export type ProtocolIconId =
   | "sprout" /** 緑: 跳ねる・芽・横への生長 */
@@ -71,3 +74,27 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     iconWhy: "サムズダウン＝賛成の対。gotoHELL役。×四角より態度が伝わる",
   },
 ];
+
+/** コメント必須の3態度（緑・青・赤） */
+export const COMMENT_ATTITUDES: ProtocolColorDef[] = PROTOCOL_COLORS.filter(
+  (c): c is ProtocolColorDef & { id: CommentAttitudeId } => c.id !== "yellow",
+);
+
+export function isCommentAttitudeId(v: unknown): v is CommentAttitudeId {
+  return v === "green" || v === "blue" || v === "red";
+}
+
+export function countCommentAttitudes(comments: { attitude?: string }[]): Record<
+  CommentAttitudeId,
+  number
+> {
+  const out: Record<CommentAttitudeId, number> = {
+    green: 0,
+    blue: 0,
+    red: 0,
+  };
+  for (const c of comments) {
+    if (isCommentAttitudeId(c.attitude)) out[c.attitude] += 1;
+  }
+  return out;
+}

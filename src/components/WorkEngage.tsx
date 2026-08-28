@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { CommentList } from "@/components/CommentList";
+import { CommentAttitudePicker } from "@/components/CommentAttitudePicker";
 import { formatYen, type Comment, type CompStatus } from "@/data/dummy-works";
 import {
   addLocalComment,
@@ -13,6 +14,7 @@ import {
   fetchWorkComments,
   postWorkComment,
 } from "@/lib/remote-comments";
+import type { CommentAttitudeId } from "@/lib/protocol-colors";
 import {
   countImagesInBlocks,
   emptyComposeBlocks,
@@ -62,6 +64,7 @@ export function WorkEngage({
   const [remoteExtra, setRemoteExtra] = useState<Comment[]>([]);
   const [openForm, setOpenForm] = useState(false);
   const [subject, setSubject] = useState("");
+  const [attitude, setAttitude] = useState<CommentAttitudeId | null>(null);
   const [blocks, setBlocks] = useState<CommentBlock[]>(emptyComposeBlocks);
   const [error, setError] = useState<string | null>(null);
   const [justPosted, setJustPosted] = useState(false);
@@ -156,6 +159,7 @@ export function WorkEngage({
 
   function resetForm() {
     setSubject("");
+    setAttitude(null);
     setBlocks((prev) => {
       for (const b of prev) {
         if (b.type === "image" && b.previewUrl.startsWith("blob:")) {
@@ -295,6 +299,10 @@ export function WorkEngage({
       setError("件名を書いてください。");
       return;
     }
+    if (!attitude) {
+      setError("コメントの態度（緑／青／赤）を選んでください。");
+      return;
+    }
     if (blocks.some((b) => b.type === "image" && b.uploading)) {
       setError("画像のアップロードが終わるまで待ってください。");
       return;
@@ -323,6 +331,7 @@ export function WorkEngage({
         body,
         imageUrls,
         afterClose: compClosed,
+        attitude,
       });
       if (remote.ok && remote.comment) {
         setRemoteExtra((prev) => [remote.comment!, ...prev]);
@@ -340,6 +349,7 @@ export function WorkEngage({
         body,
         afterClose: compClosed,
         imageUrls,
+        attitude,
       });
       setLocalExtra(readLocalComments(workId));
       resetForm();
@@ -501,6 +511,8 @@ export function WorkEngage({
                   className="w-full rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand"
                 />
               </label>
+
+              <CommentAttitudePicker value={attitude} onChange={setAttitude} />
 
               {scaffoldLabel && scaffoldLines.length > 0 && (
                 <div className="rounded-md border border-viscum-line/80 bg-viscum-paper-2/80 px-2.5 py-2">
@@ -679,6 +691,7 @@ export function WorkEngage({
                   disabled={
                     submitting ||
                     busyUpload ||
+                    !attitude ||
                     blocks.some((b) => b.type === "image" && b.uploading)
                   }
                   className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
