@@ -5,6 +5,7 @@ import {
   PROTOCOL_COLORS,
   type ProtocolColorId,
 } from "@/lib/protocol-colors";
+import { EyeIcon } from "@/components/EyeIcon";
 
 const CHIP_CLASS: Record<ProtocolColorId, { idle: string; on: string }> = {
   green: {
@@ -42,6 +43,7 @@ export function ProtocolChipRow({
       {PROTOCOL_COLORS.map((c) => {
         const on = value === c.id;
         const styles = CHIP_CLASS[c.id];
+        const isYellow = c.id === "yellow";
         return (
           <button
             key={c.id}
@@ -53,11 +55,15 @@ export function ProtocolChipRow({
               on ? styles.on : styles.idle
             }`}
           >
-            <span
-              className="h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ background: `var(${c.cssVar})` }}
-              aria-hidden
-            />
+            {isYellow ? (
+              <EyeIcon filled={on} className="h-3.5 w-3.5 shrink-0" />
+            ) : (
+              <span
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ background: `var(${c.cssVar})` }}
+                aria-hidden
+              />
+            )}
             {c.label}
             {c.labelStatus === "provisional" ? (
               <span className="text-[10px] font-normal opacity-70">仮</span>
@@ -81,7 +87,7 @@ export function ProtocolChipDemo() {
             ? PROTOCOL_COLORS.find((c) => c.id === picked)?.label
             : "なし"}
         </span>
-        （タップで切替・本番未接続）
+        （黄＝既存の目玉アイコンと同一・本番コメント未接続）
       </p>
     </div>
   );

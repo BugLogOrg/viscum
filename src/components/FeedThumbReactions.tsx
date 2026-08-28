@@ -4,8 +4,9 @@ import { useEffect, useState, type MouseEvent } from "react";
 import { formatCount } from "@/data/dummy-works";
 import { hasReaction, toggleReaction } from "@/lib/local-reactions";
 import { bumpLocalSeedStat } from "@/lib/local-seeds";
+import { EyeIcon } from "@/components/EyeIcon";
 
-/** フィード行の気になる（ADR-036）。配置は呼び出し側 */
+/** フィード行の気になる＝プロトコル黄（ADR-036／046）。配置は呼び出し側 */
 export function FeedThumbReactions({
   workId,
   title,
@@ -46,8 +47,8 @@ export function FeedThumbReactions({
         onClick={onToggle}
         className={`inline-flex items-center gap-0.5 rounded-md px-1 py-1 transition ${
           bmOn
-            ? "text-viscum-brand"
-            : "text-viscum-muted hover:bg-viscum-paper-2 hover:text-viscum-brand"
+            ? "text-[color:var(--viscum-protocol-yellow)]"
+            : "text-viscum-muted hover:bg-viscum-paper-2 hover:text-[color:var(--viscum-protocol-yellow)]"
         }`}
       >
         <EyeIcon filled={bmOn} className="h-4 w-4 shrink-0" />
@@ -56,34 +57,5 @@ export function FeedThumbReactions({
         </span>
       </button>
     </div>
-  );
-}
-
-function EyeIcon({
-  filled,
-  className,
-}: {
-  filled: boolean;
-  className?: string;
-}) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      className={className}
-      aria-hidden
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M2.5 12s3.5-6.5 9.5-6.5S21.5 12 21.5 12s-3.5 6.5-9.5 6.5S2.5 12 2.5 12z" />
-      <circle
-        cx="12"
-        cy="12"
-        r="2.75"
-        fill={filled ? "currentColor" : "none"}
-      />
-    </svg>
   );
 }

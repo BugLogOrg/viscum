@@ -44,7 +44,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     softVar: "--viscum-protocol-yellow-soft",
     label: "気になる",
     labelStatus: "fixed",
-    attitude: "あとで戻る／印（ADR-046）。bookmark とマップ",
+    attitude: "あとで戻る／印（ADR-046）。bookmark とマップ。形は目玉アイコン",
     emoji: "🟡",
   },
   {
