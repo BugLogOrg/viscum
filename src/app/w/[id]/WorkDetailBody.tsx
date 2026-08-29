@@ -224,22 +224,34 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
               </dl>
             </div>
 
-            <h1 className="text-2xl font-semibold leading-snug text-viscum-ink">
-              {work.title}
-            </h1>
+            <div>
+              <p className="text-[15px] font-semibold leading-snug text-viscum-ink">
+                タイトル：
+              </p>
+              <h1 className="mt-1 text-xl font-semibold leading-snug text-viscum-ink">
+                {work.title}
+              </h1>
+            </div>
 
             {work.focusNote?.trim() ? (
               <div>
-                <p className="text-[13px] font-medium text-viscum-ink">ご挨拶</p>
+                <p className="text-[15px] font-semibold leading-snug text-viscum-ink">
+                  ご挨拶：
+                </p>
                 <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
                   {work.focusNote.trim()}
                 </p>
               </div>
             ) : null}
 
-            <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
-              {work.description}
-            </p>
+            <div>
+              <p className="text-[15px] font-semibold leading-snug text-viscum-ink">
+                説明：
+              </p>
+              <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
+                {work.description}
+              </p>
+            </div>
 
             {scaffoldLines.length > 0 && scaffoldLabel && (
               <div className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">

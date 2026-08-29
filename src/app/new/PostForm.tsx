@@ -21,7 +21,7 @@ import {
   displayAccountName,
   readLocalProfile,
 } from "@/lib/local-profile";
-import { WORK_TITLE_MAX, clampWorkTitle } from "@/lib/work-title";
+import { WORK_TITLE_MAX, WORK_DESCRIPTION_MAX, clampWorkTitle } from "@/lib/work-title";
 
 const RECOMMENDED_TAGS = [
   "アプリ",
@@ -206,6 +206,7 @@ export function PostForm() {
     title.trim().length <= WORK_TITLE_MAX &&
     externalUrl.trim().length > 8 &&
     description.trim().length > 0 &&
+    description.trim().length <= WORK_DESCRIPTION_MAX &&
     (!compOn || (prizeYen >= 5000 && promptList.length >= 1)) &&
     (!extReviewOn || extPrizeYen === PUBLIC_BOOST.yen);
 
@@ -387,8 +388,8 @@ export function PostForm() {
       }}
     >
       <div>
-        <label className="block text-[13px] font-medium text-viscum-ink">
-          タイトル <span className="text-viscum-berry">必須</span>
+        <label className="block text-[15px] font-semibold text-viscum-ink">
+          タイトル： <span className="text-[13px] font-medium text-viscum-berry">必須</span>
         </label>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
           棚・Xカードに出る短いヘッドライン（最大{WORK_TITLE_MAX}字）。長く書きたい背景は下の説明へ。
@@ -407,9 +408,9 @@ export function PostForm() {
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-viscum-ink">
-          ご挨拶{" "}
-          <span className="font-normal text-viscum-muted">任意</span>
+        <label className="block text-[15px] font-semibold text-viscum-ink">
+          ご挨拶：{" "}
+          <span className="text-[13px] font-normal text-viscum-muted">任意</span>
         </label>
         <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
           メンターへの声かけです。見てほしい入口・温度・背景を一言。コースを選んでも消えません。初見／改善では下の「聞くこと」も別で足せます。
@@ -490,18 +491,25 @@ export function PostForm() {
       </div>
 
       <div>
-        <label className="block text-[13px] font-medium text-viscum-ink">
-          説明 <span className="text-viscum-berry">必須</span>
+        <label className="block text-[15px] font-semibold text-viscum-ink">
+          説明： <span className="text-[13px] font-medium text-viscum-berry">必須</span>
         </label>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
-          背景・文脈・「どこまで見れば十分か」。タイトルに入りきらない長文はここに。
+          背景・文脈・「どこまで見れば十分か」。タイトルに入りきらない長文はここに（最大
+          {WORK_DESCRIPTION_MAX}字）。
         </p>
         <textarea
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) =>
+            setDescription(e.target.value.slice(0, WORK_DESCRIPTION_MAX))
+          }
           rows={5}
+          maxLength={WORK_DESCRIPTION_MAX}
           className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] leading-relaxed text-viscum-ink focus:border-viscum-brand focus:outline-none"
         />
+        <p className="mt-1 text-right text-[11px] tabular-nums text-viscum-muted">
+          {description.trim().length}/{WORK_DESCRIPTION_MAX}
+        </p>
       </div>
 
       <div>
