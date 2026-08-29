@@ -7,6 +7,7 @@ import {
   isPaidShelfPlanForXAnnounce,
 } from "@/lib/x-announce-text";
 import { isXAnnounceConfigured, postTweetAsViscum } from "@/lib/x-post";
+import { resolvePublicOrigin } from "@/lib/public-origin";
 
 const Body = z.object({
   id: z.string().min(1).max(80),
@@ -110,10 +111,9 @@ export async function POST(req: Request) {
     });
   }
 
-  const origin =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    process.env.AUTH_URL?.replace(/\/$/, "") ||
-    "https://viscum.org";
+  const origin = resolvePublicOrigin(
+    process.env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL,
+  );
 
   const text = buildXAnnounceText(parsed.data, origin);
   const posted = await postTweetAsViscum(text);

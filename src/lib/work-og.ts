@@ -5,22 +5,25 @@ import {
   planBadgeLabel,
   type Work,
 } from "@/data/dummy-works";
+import { resolvePublicOrigin } from "@/lib/public-origin";
 
-/** 本番・プレビュー用の絶対URL基点 */
+/** 本番・プレビュー用の絶対URL基点（vercel.app は viscum.org に寄せる） */
 export function siteOrigin(): string {
   const explicit =
     process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
     process.env.NEXT_PUBLIC_APP_URL?.trim() ||
     process.env.AUTH_URL?.trim() ||
     "";
-  if (explicit) return explicit.replace(/\/$/, "");
+  if (explicit) return resolvePublicOrigin(explicit);
   if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
-    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL.replace(/\/$/, "")}`;
+    return resolvePublicOrigin(
+      `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`,
+    );
   }
   if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`;
+    return resolvePublicOrigin(`https://${process.env.VERCEL_URL}`);
   }
-  return "https://viscum.org";
+  return resolvePublicOrigin();
 }
 
 /** OG画像URLのクエリ。見た目変更時に上げて X／CDN キャッシュを切る */

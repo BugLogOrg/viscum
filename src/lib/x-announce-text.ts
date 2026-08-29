@@ -1,4 +1,5 @@
 import { planBadgeLabel, formatYen, type Work } from "@/data/dummy-works";
+import { resolvePublicOrigin } from "@/lib/public-origin";
 
 /** ADR-037: 公式X自動告知の対象＝有料棚コンペのみ（¥5k／¥10k／¥30k） */
 export const PAID_SHELF_PLANS_FOR_X_ANNOUNCE = [
@@ -29,9 +30,9 @@ export function buildXAnnounceText(
     prizeYen?: number | null;
     status?: Work["status"];
   },
-  origin: string,
+  origin?: string,
 ): string {
-  const base = origin.replace(/\/$/, "") || "https://viscum.org";
+  const base = resolvePublicOrigin(origin);
   const url = `${base}/w/${encodeURIComponent(input.id)}`;
   const planLabel = planBadgeLabel(input.plan);
   const head =
