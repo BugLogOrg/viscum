@@ -6,7 +6,6 @@ import { useSession, signOut } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatYen } from "@/data/dummy-works";
 import {
   readLocalSeeds,
   installDemoSeeds,
@@ -107,11 +106,6 @@ function SeedCardChrome({ s }: { s: LocalSeed }) {
             }`}
           >
             {isLocalSeedListed(s) ? "公開中" : "下書き"}
-          </span>
-        )}
-        {(s.prizeYen != null || s.extPrizeYen != null) && s.status === "open" && (
-          <span className="text-[11px] text-viscum-muted">
-            予算 {formatYen(s.prizeYen ?? s.extPrizeYen ?? 0)}
           </span>
         )}
       </div>
@@ -272,7 +266,7 @@ export default function DashboardPage() {
                     href="#published"
                     className="block py-2.5 underline-offset-2 hover:underline"
                   >
-                    公開中のシード
+                    公開中のシード棚
                     {neonPublished.length + published.length > 0
                       ? `（${neonPublished.length + published.length}）`
                       : ""}
@@ -304,7 +298,7 @@ export default function DashboardPage() {
         <section id="published" className="scroll-mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-[15px] font-semibold text-viscum-ink">
-              公開中のシード
+              公開中のシード棚
               {published.length > 0 ? (
                 <span className="ml-1.5 text-[13px] font-normal text-viscum-muted">
                   {published.length}件
@@ -346,7 +340,7 @@ export default function DashboardPage() {
           {neonPublished.length === 0 && published.length === 0 ? (
             <div className="rounded-lg border border-dashed border-viscum-line px-4 py-6 text-center">
               <p className="text-[13px] leading-relaxed text-viscum-muted">
-                公開中のシードはまだありません。
+                公開中のシード棚はまだありません。
               </p>
               <Link
                 href="/new"
@@ -540,7 +534,7 @@ export default function DashboardPage() {
               ) : null}
             </h2>
             <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
-              まだ外に出していないもの。シード用と直依頼用はボタンが違うので、下で分けています。進行中のやりとりは
+              まだ外に出していないもの。シード棚用と直依頼用はボタンが違うので、下で分けています。進行中のやりとりは
               <Link
                 href="/dashboard/messages"
                 className="mx-0.5 font-medium text-viscum-brand underline"
@@ -554,7 +548,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-[13px] font-semibold text-viscum-ink">
-                シード（未公開）
+                シード棚（未公開）
                 {neonDrafts.length + drafts.length > 0 ? (
                   <span className="ml-1.5 text-[12px] font-normal text-viscum-muted">
                     {neonDrafts.length + drafts.length}件

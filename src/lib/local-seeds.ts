@@ -284,7 +284,7 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       id: "chrome-ext-store",
       seederHandle,
       title:
-        "タブ整理Chrome拡張の公開ブースト。ストア／SNSへ正直な反応→報告。権限は怖くないか、何が片付くか（予算¥30,000）",
+        "タブ整理Chrome拡張の公開ブースト。ストア／SNSへ正直な反応→報告。権限は怖くないか、何が片付くか（褒賞¥30,000）",
       description:
         "表示デモ用。公開ブースト。記入後報告→選んで褒賞。",
       focusNote: "ストア／SNSへの正直な反応を募集します。権限の怖さと何が片付くかを見てほしいです。",

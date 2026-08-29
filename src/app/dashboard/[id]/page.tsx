@@ -12,7 +12,6 @@ import {
   ANALYTICS_METRIC_LABEL,
   type AnalyticsMetric,
 } from "@/components/AnalyticsChart";
-import { formatYen } from "@/data/dummy-works";
 import {
   readLocalSeeds,
   isDemoSeed,
@@ -219,12 +218,6 @@ export default function SeedStatsPage() {
             {isDemoSeed(seed.id) && (
               <span className="rounded-full bg-viscum-paper-2 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
                 表示デモ
-              </span>
-            )}
-            {(seed.prizeYen != null || seed.extPrizeYen != null) &&
-              seed.status === "open" && (
-              <span className="text-[11px] text-viscum-muted">
-                予算 {formatYen(seed.prizeYen ?? seed.extPrizeYen ?? 0)}
               </span>
             )}
           </div>
