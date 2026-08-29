@@ -2,32 +2,23 @@ import type { ReactNode } from "react";
 import type { ProtocolColorId, ProtocolIconId } from "@/lib/protocol-colors";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
+/**
+ * 別軸：絵文字🌱をそのまま使う。
+ * 自前SVGはY／Tに化けやすい。色塗り不可だが🌱自体が緑なのでプロトコル緑と両立する。
+ * （👍系は色が乗らない＋誤読があるので絵文字不採用のまま）
+ */
 function SproutGlyph({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="none">
-      <path
-        d="M12 20V13"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <ellipse
-        cx="7.6"
-        cy="10.2"
-        rx="4.2"
-        ry="2.7"
-        transform="rotate(-38 7.6 10.2)"
-        fill="currentColor"
-      />
-      <ellipse
-        cx="16.4"
-        cy="10.2"
-        rx="4.2"
-        ry="2.7"
-        transform="rotate(38 16.4 10.2)"
-        fill="currentColor"
-      />
-      <circle cx="12" cy="12.8" r="1.15" fill="currentColor" />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <text
+        x="12"
+        y="16.8"
+        textAnchor="middle"
+        fontSize="17"
+        style={{ userSelect: "none" }}
+      >
+        🌱
+      </text>
     </svg>
   );
 }

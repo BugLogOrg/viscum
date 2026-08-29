@@ -48,14 +48,44 @@ export default function ProtocolLabPage() {
 
         <section className="space-y-3">
           <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
-            1. タップ用チップ（並び見本）
+            1. アイコン単体（語なし）
+          </h2>
+          <p className="text-[12px] leading-relaxed text-viscum-muted">
+            コメント一覧・フィード右下はだいたいこの見え方。緑＝芽（別軸）。
+          </p>
+          <div className="flex flex-wrap items-end gap-5 rounded-md border border-viscum-line bg-white/60 px-4 py-5">
+            {PROTOCOL_COLORS.map((c) => (
+              <div key={c.id} className="flex flex-col items-center gap-2">
+                <ProtocolMark id={c.id} className="h-10 w-10" />
+                <span className="text-[11px] text-viscum-muted">{c.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-end gap-4 rounded-md border border-viscum-line bg-viscum-protocol-green-soft/40 px-4 py-4">
+            <span className="w-full text-[11px] text-viscum-muted">緑・芽のサイズ比較</span>
+            {(["h-5 w-5", "h-7 w-7", "h-8 w-8", "h-10 w-10", "h-14 w-14"] as const).map(
+              (size) => (
+                <div key={size} className="flex flex-col items-center gap-1.5">
+                  <ProtocolMark id="green" className={size} />
+                  <span className="font-mono text-[9px] text-viscum-muted">
+                    {size.split(" ")[0]}
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
+            2. タップ用チップ（並び見本）
           </h2>
           <ProtocolChipDemo />
         </section>
 
         <section className="space-y-3">
           <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
-            2. プロトコル4色（ビビッド）
+            3. プロトコル4色（詳細）
           </h2>
           <ul className="space-y-2">
             {PROTOCOL_COLORS.map((c) => (
@@ -90,7 +120,7 @@ export default function ProtocolLabPage() {
 
         <section className="space-y-3">
           <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
-            3. トンマナ（アース）— 混ぜない対照
+            4. トンマナ（アース）— 混ぜない対照
           </h2>
           <div className="flex flex-wrap gap-2">
             {EARTH.map((e) => (
@@ -110,7 +140,7 @@ export default function ProtocolLabPage() {
 
         <section className="space-y-3">
           <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
-            4. 衝突チェック（離れているか）
+            5. 衝突チェック（離れているか）
           </h2>
           <div className="grid grid-cols-2 gap-2 text-[12px]">
             <div className="rounded-md border border-viscum-line p-2.5">
