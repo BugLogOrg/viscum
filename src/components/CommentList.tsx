@@ -171,19 +171,26 @@ export function CommentList({
           const neon = isNeonCommentId(c.id);
           const isCommentAuthor =
             Boolean(me) && me === normHandle(c.author);
+          /** 自分のコメントには褒賞UIを出さない（APIエラー前に止める） */
           const canPayLive =
             isSeeder &&
+            !isCommentAuthor &&
             neon &&
             !c.tipped &&
             !c.afterClose &&
             status !== "none" &&
             status !== "closed";
           const showSeederThanks =
-            isSeeder && !c.adopted && !c.afterClose && !neon;
+            isSeeder &&
+            !isCommentAuthor &&
+            !c.adopted &&
+            !c.afterClose &&
+            !neon;
           const showSeederDemoPrize =
             showSeederThanks && status !== "none" && status !== "closed";
           const showSeederDemoPayHint =
             isSeeder &&
+            !isCommentAuthor &&
             !neon &&
             c.adopted &&
             !c.tipped &&
