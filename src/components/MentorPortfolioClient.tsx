@@ -195,7 +195,7 @@ export function MentoredWorksList({
       className="border-b border-viscum-line"
       aria-label={`${at}が参加した作品`}
     >
-      <h2 className="px-4 pt-5 text-[18px] font-bold leading-tight tracking-wide text-viscum-ink">
+      <h2 className="border-b border-viscum-line bg-viscum-paper-2/40 px-4 py-3 text-[18px] font-bold leading-tight tracking-wide text-viscum-ink">
         <span className="text-viscum-brand">@{at}</span>
         {" "}
         が参加した作品
@@ -203,7 +203,7 @@ export function MentoredWorksList({
           · {participations.length}件
         </span>
       </h2>
-      <p className="px-4 pt-1.5 text-[12px] leading-snug text-viscum-muted">
+      <p className="px-4 pt-2 text-[12px] leading-snug text-viscum-muted">
         コメントして参加した棚です（選出・決済前も含む）。選出・褒賞はバッジで事実表示します。
       </p>
       {participations.length === 0 ? (

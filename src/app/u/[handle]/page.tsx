@@ -38,8 +38,18 @@ export default async function SeederPortfolioPage({ params }: Props) {
           handle={display}
           action={<FollowButton handle={display} />}
         />
+      </header>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 max-w-lg">
+      {/* プロフィール直下＝シード棚（何が並ぶかを先に見せる） */}
+      <SeededWorksPortfolio handle={display} initialWorks={works} />
+
+      <MentoredWorksList
+        handle={display}
+        initialParticipations={mentored}
+      />
+
+      <section className="border-b border-viscum-line px-4 py-5">
+        <div className="grid gap-2 sm:grid-cols-2 max-w-lg">
           <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[13px] font-medium text-viscum-ink">
@@ -85,14 +95,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
             どちらもスコアや順位ではありません。シーダー側は決済完了の件数と金額、メンター側の参加作品はコメントした時点の事実です（選出・褒賞は別途）。直依頼の中身・相手一覧はここに出しません。メンターの累計受取は「いくら稼いだ自慢」ではなく、ちゃんと払われた透明性のための表示です。コンペで選ばれた反応は既定で公開されます。
           </p>
         </details>
-      </header>
-
-      <SeededWorksPortfolio handle={display} initialWorks={works} />
-
-      <MentoredWorksList
-        handle={display}
-        initialParticipations={mentored}
-      />
+      </section>
 
       <PortfolioWall handle={display} />
 

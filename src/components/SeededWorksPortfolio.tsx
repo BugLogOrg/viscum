@@ -64,7 +64,7 @@ export function SeededWorksPortfolio({ handle, initialWorks }: Props) {
 
   return (
     <section className="border-b border-viscum-line" aria-label={`${at}がシードした作品`}>
-      <h2 className="px-4 pt-5 text-[18px] font-bold leading-tight tracking-wide text-viscum-ink">
+      <h2 className="border-b border-viscum-line bg-viscum-paper-2/40 px-4 py-3 text-[18px] font-bold leading-tight tracking-wide text-viscum-ink">
         <span className="text-viscum-brand">@{at}</span>
         {" "}
         がシードした作品
@@ -72,7 +72,7 @@ export function SeededWorksPortfolio({ handle, initialWorks }: Props) {
           · {works.length}件
         </span>
       </h2>
-      <p className="px-4 pt-1.5 text-[12px] leading-snug text-viscum-muted">
+      <p className="px-4 pt-2 text-[12px] leading-snug text-viscum-muted">
         棚に出した作品です（コンペ募集中・決済前も含む）。直依頼だけの作品や下書きはここには出ません。
       </p>
       {works.length === 0 ? (
