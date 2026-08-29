@@ -122,7 +122,7 @@ export function WorkFeedRow({
             </p>
             {status.deadline ? (
               <p
-                className="mt-0.5 break-words text-[12px] leading-snug text-viscum-muted"
+                className="mt-0.5 break-words text-[11px] leading-snug text-viscum-muted"
                 title={
                   work.closesInHours != null
                     ? `締切 ${status.deadline}`
