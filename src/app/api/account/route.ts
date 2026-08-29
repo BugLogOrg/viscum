@@ -5,6 +5,7 @@ import { getDb, hasDatabase } from "@/db";
 import {
   accounts,
   comments,
+  follows,
   payments,
   requestDms,
   users,
@@ -48,6 +49,11 @@ export async function DELETE() {
   }
 
   try {
+    await db
+      .delete(follows)
+      .where(
+        or(eq(follows.followerId, userId), eq(follows.followingId, userId)),
+      );
     await db
       .delete(payments)
       .where(

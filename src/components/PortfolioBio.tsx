@@ -17,11 +17,10 @@ import { LinkifiedText } from "@/components/LinkifiedText";
 import { FollowGraphList } from "@/components/FollowGraphList";
 import { SuggestFollows } from "@/components/SuggestFollows";
 import {
-  countFollowers,
-  countFollowing,
   FOLLOWS_UPDATED,
   listFollowers,
   listFollowing,
+  mergeHandleLists,
 } from "@/lib/local-follows";
 
 type GraphTab = "following" | "followers";
@@ -92,18 +91,59 @@ export function PortfolioHeader({
   }, [handle, demoProfile?.handle]);
 
   useEffect(() => {
-    const sync = () => {
-      setFollowingN(countFollowing(handle));
-      setFollowerN(countFollowers(handle));
-      setFollowingHandles(listFollowing(handle));
-      setFollowerHandles(listFollowers(handle));
+    const key = handle.replace(/^@/, "").trim();
+    const applyMerged = (remoteFollowing?: string[], remoteFollowers?: string[]) => {
+      const following = mergeHandleLists(
+        listFollowing(key),
+        remoteFollowing ?? [],
+      );
+      const followers = mergeHandleLists(
+        listFollowers(key),
+        remoteFollowers ?? [],
+      );
+      setFollowingHandles(following);
+      setFollowerHandles(followers);
+      setFollowingN(following.length);
+      setFollowerN(followers.length);
     };
+
+    let remoteFollowing: string[] = [];
+    let remoteFollowers: string[] = [];
+
+    const sync = () => applyMerged(remoteFollowing, remoteFollowers);
     sync();
+
+    let cancelled = false;
+    void fetch(`/api/follows?handle=${encodeURIComponent(key)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (
+          data: {
+            following?: string[];
+            followers?: string[];
+            persisted?: boolean;
+          } | null,
+        ) => {
+          if (cancelled || !data) return;
+          remoteFollowing = data.following ?? [];
+          remoteFollowers = data.followers ?? [];
+          applyMerged(remoteFollowing, remoteFollowers);
+        },
+      )
+      .catch(() => {
+        /* 端末グラフのみ */
+      });
+
     window.addEventListener(FOLLOWS_UPDATED, sync);
     window.addEventListener("storage", sync);
+    window.addEventListener("focus", sync);
+    document.addEventListener("visibilitychange", sync);
     return () => {
+      cancelled = true;
       window.removeEventListener(FOLLOWS_UPDATED, sync);
       window.removeEventListener("storage", sync);
+      window.removeEventListener("focus", sync);
+      document.removeEventListener("visibilitychange", sync);
     };
   }, [handle]);
 

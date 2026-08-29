@@ -18,9 +18,10 @@ export function FollowButton({
   loginCallbackUrl?: string;
 }) {
   const { data: session, status } = useSession();
-  const me = session?.user?.handle?.trim() || "";
+  const me = (session?.user?.handle ?? "").replace(/^@/, "").trim();
   const target = handle.replace(/^@/, "").trim();
-  const self = me && me.toLowerCase() === target.toLowerCase();
+  const self =
+    Boolean(me) && me.toLowerCase() === target.toLowerCase();
 
   const [following, setLocal] = useState(false);
 
@@ -33,7 +34,25 @@ export function FollowButton({
     sync();
     window.addEventListener(FOLLOWS_UPDATED, sync);
     window.addEventListener("storage", sync);
+
+    let cancelled = false;
+    void fetch(`/api/follows?handle=${encodeURIComponent(target)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then(
+        (data: { meFollowing?: boolean; persisted?: boolean } | null) => {
+          if (cancelled || !data || typeof data.meFollowing !== "boolean") {
+            return;
+          }
+          setLocal(data.meFollowing);
+          if (data.meFollowing) setFollowing(me, target, true);
+        },
+      )
+      .catch(() => {
+        /* 端末グラフのまま */
+      });
+
     return () => {
+      cancelled = true;
       window.removeEventListener(FOLLOWS_UPDATED, sync);
       window.removeEventListener("storage", sync);
     };
@@ -68,8 +87,16 @@ export function FollowButton({
     <button
       type="button"
       onClick={() => {
-        const next = setFollowing(me, target, !following);
+        const next = !following;
         setLocal(next);
+        setFollowing(me, target, next);
+        void fetch("/api/follows", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ handle: target, following: next }),
+        }).catch(() => {
+          /* デモ人物などは端末内のみで足りる */
+        });
       }}
       className={
         following

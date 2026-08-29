@@ -257,6 +257,30 @@ export const requestDms = pgTable(
 );
 
 /**
+ * ユーザー同士のフォロー（英語IDは users.handle 経由で解決）。
+ * デモ人物（Neon未登録）は端末内 local-follows のみ。
+ */
+export const follows = pgTable(
+  "follows",
+  {
+    followerId: text("follower_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    followingId: text("following_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.followerId, t.followingId] }),
+    index("follows_follower_idx").on(t.followerId),
+    index("follows_following_idx").on(t.followingId),
+  ],
+);
+
+/**
  * 未登録者向けの共有着地（URLを知っている人向け・鍵ではない）。
  * local_* でも Neon にスナップショットを残し、別端末で開ける。
  * 漏洩対策: revokedAt で無効化＋再発行。viewCount で異常閲覧の検知材料。
@@ -296,6 +320,7 @@ export type WorkRow = typeof works.$inferSelect;
 export type CommentRow = typeof comments.$inferSelect;
 export type PaymentRow = typeof payments.$inferSelect;
 export type RequestDmRow = typeof requestDms.$inferSelect;
+export type FollowRow = typeof follows.$inferSelect;
 export type DmInviteRow = typeof dmInvites.$inferSelect;
 
 export type WorkPlan =

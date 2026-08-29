@@ -7,8 +7,10 @@ import Link from "next/link";
 import { DUMMY_WORKS, type Work } from "@/data/dummy-works";
 import {
   FOLLOWS_UPDATED,
+  absorbServerFollowing,
   clearRememberedViewer,
   listFollowing,
+  mergeHandleLists,
   readRememberedViewer,
   rememberViewer,
 } from "@/lib/local-follows";
@@ -158,13 +160,35 @@ export function FeedClient({
   }, [sessionHandle, status]);
 
   useEffect(() => {
+    let remote: string[] = [];
     const sync = () => {
-      setFollowingHandles(viewerHandle ? listFollowing(viewerHandle) : []);
+      setFollowingHandles(
+        viewerHandle
+          ? mergeHandleLists(listFollowing(viewerHandle), remote)
+          : [],
+      );
     };
     sync();
     window.addEventListener(FOLLOWS_UPDATED, sync);
     window.addEventListener("storage", sync);
+
+    let cancelled = false;
+    if (viewerHandle) {
+      void fetch("/api/follows?mine=1")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { following?: string[] } | null) => {
+          if (cancelled || !data?.following) return;
+          remote = data.following;
+          absorbServerFollowing(viewerHandle, remote);
+          sync();
+        })
+        .catch(() => {
+          /* 端末グラフのみ */
+        });
+    }
+
     return () => {
+      cancelled = true;
       window.removeEventListener(FOLLOWS_UPDATED, sync);
       window.removeEventListener("storage", sync);
     };

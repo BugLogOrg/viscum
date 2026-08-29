@@ -10,20 +10,58 @@ function normalize(handle: string) {
   return handle.replace(/^@/, "").trim().toLowerCase();
 }
 
+/** キー・値を小文字に揃え、重複キーをマージ（過去データの大文字混在対策） */
+function normalizeMap(raw: FollowMap): FollowMap {
+  const migrated: FollowMap = {};
+  for (const [k, list] of Object.entries(raw)) {
+    const nk = normalize(k);
+    if (!nk) continue;
+    const set = new Set(migrated[nk] ?? []);
+    for (const h of list ?? []) {
+      const t = normalize(h);
+      if (t && t !== nk) set.add(t);
+    }
+    migrated[nk] = [...set];
+  }
+  return migrated;
+}
+
+function mapsEqual(a: FollowMap, b: FollowMap): boolean {
+  const ak = Object.keys(a).sort();
+  const bk = Object.keys(b).sort();
+  if (ak.length !== bk.length) return false;
+  for (let i = 0; i < ak.length; i += 1) {
+    if (ak[i] !== bk[i]) return false;
+    const aa = [...(a[ak[i]] ?? [])].sort().join(",");
+    const bb = [...(b[bk[i]] ?? [])].sort().join(",");
+    if (aa !== bb) return false;
+  }
+  return true;
+}
+
 function readMap(): FollowMap {
   if (typeof window === "undefined") return {};
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw) as FollowMap;
-    return parsed && typeof parsed === "object" ? parsed : {};
+    if (!parsed || typeof parsed !== "object") return {};
+    const normalized = normalizeMap(parsed);
+    if (!mapsEqual(parsed, normalized)) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(normalized));
+      } catch {
+        /* ignore quota */
+      }
+    }
+    return normalized;
   } catch {
     return {};
   }
 }
 
 function writeMap(map: FollowMap) {
-  localStorage.setItem(KEY, JSON.stringify(map));
+  localStorage.setItem(KEY, JSON.stringify(normalizeMap(map)));
   window.dispatchEvent(new Event(FOLLOWS_UPDATED));
 }
 
@@ -60,8 +98,7 @@ export function readRememberedViewer(): string {
 export function listFollowing(viewerHandle: string): string[] {
   const key = normalize(viewerHandle);
   if (!key) return [];
-  const list = readMap()[key] ?? [];
-  return list.map((h) => h.toLowerCase());
+  return [...(readMap()[key] ?? [])];
 }
 
 export function isFollowing(viewerHandle: string, targetHandle: string): boolean {
@@ -117,4 +154,32 @@ export function listFollowers(targetHandle: string): string[] {
 /** その人をフォローしている人数（端末内グラフ全体を集計） */
 export function countFollowers(targetHandle: string): number {
   return listFollowers(targetHandle).length;
+}
+
+/** 重複のない英語ID一覧をマージ（サーバ＋端末） */
+export function mergeHandleLists(...lists: string[][]): string[] {
+  const set = new Set<string>();
+  for (const list of lists) {
+    for (const h of list) {
+      const n = normalize(h);
+      if (n) set.add(n);
+    }
+  }
+  return [...set];
+}
+
+/**
+ * サーバ側のフォロー中一覧を端末キャッシュへ反映（デモ人物の端末フォローは残す）。
+ * `serverFollowing` に無い実アカウント分は消さない（オフライン差分を壊さない）。
+ * 追加だけ行う。
+ */
+export function absorbServerFollowing(
+  viewerHandle: string,
+  serverFollowing: string[],
+) {
+  const viewer = normalize(viewerHandle);
+  if (!viewer || typeof window === "undefined") return;
+  for (const h of serverFollowing) {
+    setFollowing(viewer, h, true);
+  }
 }
