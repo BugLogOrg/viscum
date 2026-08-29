@@ -77,9 +77,14 @@ export default async function SeederPortfolioPage({ params }: Props) {
           />
         </div>
 
-        <p className="mt-2 text-[11px] leading-snug text-viscum-muted">
-          どちらもスコアや順位ではありません。シーダー側は決済完了の件数と金額、メンター側の参加作品はコメントした時点の事実です（採用・チップは別途）。直依頼の中身・相手一覧はここに出しません。メンターの累計受取は「いくら稼いだ自慢」ではなく、ちゃんと払われた透明性のための表示です。コンペで選ばれた反応は既定で公開されます。
-        </p>
+        <details className="mt-2 max-w-lg group">
+          <summary className="cursor-pointer list-none text-[12px] text-viscum-brand underline decoration-viscum-brand/40 underline-offset-2 marker:content-none [&::-webkit-details-marker]:hidden">
+            実績について
+          </summary>
+          <p className="mt-1.5 text-[11px] leading-snug text-viscum-muted">
+            どちらもスコアや順位ではありません。シーダー側は決済完了の件数と金額、メンター側の参加作品はコメントした時点の事実です（採用・チップは別途）。直依頼の中身・相手一覧はここに出しません。メンターの累計受取は「いくら稼いだ自慢」ではなく、ちゃんと払われた透明性のための表示です。コンペで選ばれた反応は既定で公開されます。
+          </p>
+        </details>
       </header>
 
       <SeededWorksPortfolio handle={display} initialWorks={works} />

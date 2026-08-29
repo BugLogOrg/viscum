@@ -138,7 +138,9 @@ export function MentorFactsCard({
           </span>
         )}
       </div>
-      <p className="mt-1 text-[10px] text-viscum-muted">書く側の事実</p>
+      <p className="mt-1 text-[10px] leading-snug text-viscum-muted">
+        作品に反応する側をメンターと呼びます（書く側の事実）
+      </p>
       <dl className="mt-2 space-y-0.5 text-[14px] text-viscum-ink">
         <div>
           <dt className="inline text-viscum-muted">参加作品：</dt>
