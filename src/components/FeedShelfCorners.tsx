@@ -293,11 +293,11 @@ export function FeedShelfCorners({
   if (layout === "sideDuo") {
     return (
       <aside
-        className={`flex w-full min-w-0 flex-col overflow-hidden border-t border-viscum-line bg-viscum-paper-2/30 xl:w-auto xl:flex-row xl:self-start xl:border-l xl:border-t-0 xl:pr-4 ${className}`}
+        className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:w-auto xl:flex-row xl:self-start xl:border-l xl:border-t-0 xl:pr-4 ${className}`}
         aria-label="発見"
       >
-        {/* 内側右（携帯では上）：注目 → 終了間近 */}
-        <div className="min-w-0 xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-viscum-line">
+        {/* 内側右（携帯では上）：注目 → 終了間近。内側スクロールは付けない（ページと二重になる） */}
+        <div className="min-w-0 xl:sticky xl:top-12 xl:w-72 xl:shrink-0 xl:border-r xl:border-viscum-line">
           <HotSection hot={hot} className="min-w-0 px-3 py-3" />
           <ClosingSoonSection
             closing={closing}
@@ -307,7 +307,7 @@ export function FeedShelfCorners({
           />
         </div>
         {/* 外側右（携帯では下）：偏差 */}
-        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-t-0">
+        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:w-72 xl:shrink-0 xl:border-t-0">
           <SkewSection skewed={skewed} className="min-w-0 px-3 py-3" />
         </div>
       </aside>
