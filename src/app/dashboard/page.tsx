@@ -389,7 +389,7 @@ export default function DashboardPage() {
                           href={`/w/${encodeURIComponent(w.id)}`}
                           className={btnStatus}
                         >
-                          詳細
+                          シード詳細
                         </Link>
                         {origin ? (
                           <ShareTextCopyButton
@@ -448,94 +448,81 @@ export default function DashboardPage() {
                   className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
                 >
                   <SeedCardChrome s={s} />
-                  {s.id.startsWith("local_") && !isDemoSeed(s.id) ? (
-                    <SeedActionRow
-                      left={
-                        <>
-                          <Link
-                            href={`/dashboard/${encodeURIComponent(s.id)}`}
-                            className={btnStatus}
-                          >
-                            成績を見る
-                          </Link>
-                          <Link
-                            href={`/w/${encodeURIComponent(s.id)}`}
-                            className={btnStatus}
-                          >
-                            詳細
-                          </Link>
-                          {origin ? (
-                            <ShareTextCopyButton
-                              getText={() =>
-                                buildWorkShareText(workFromLocalSeed(s), origin)
-                              }
-                            />
-                          ) : null}
-                        </>
-                      }
-                      right={
-                        <>
-                          {isLocalSeedListed(s) ? (
-                            <button
-                              type="button"
-                              className={btnEdit}
-                              onClick={() => {
-                                const res = unlistLocalSeed(s.id, handle);
-                                if (res.ok) refresh();
-                                else window.alert(res.error);
-                              }}
-                            >
-                              下書きに戻す
-                            </button>
-                          ) : null}
-                          <button
-                            type="button"
-                            className={btnDanger}
-                            onClick={() => {
+                  <SeedActionRow
+                    left={
+                      <>
+                        <Link
+                          href={`/dashboard/${encodeURIComponent(s.id)}`}
+                          className={btnStatus}
+                        >
+                          成績を見る
+                        </Link>
+                        <Link
+                          href={`/w/${encodeURIComponent(s.id)}`}
+                          className={btnStatus}
+                        >
+                          シード詳細
+                        </Link>
+                        {origin ? (
+                          <ShareTextCopyButton
+                            getText={() =>
+                              buildWorkShareText(workFromLocalSeed(s), origin)
+                            }
+                          />
+                        ) : null}
+                      </>
+                    }
+                    right={
+                      <>
+                        <button
+                          type="button"
+                          className={btnEdit}
+                          onClick={() => {
+                            if (isDemoSeed(s.id)) {
+                              // デモは「未公開」に戻す先がないので一覧から外す
                               if (
                                 !window.confirm(
-                                  "このシードを削除しますか？成績の数字も一緒に消えます。",
+                                  "この表示デモを公開一覧から外しますか？",
                                 )
                               ) {
                                 return;
                               }
-                              const res = deleteLocalSeed(s.id, handle);
-                              if (res.ok) refresh();
-                              else window.alert(res.error);
-                            }}
-                          >
-                            削除
-                          </button>
-                        </>
-                      }
-                    />
-                  ) : (
-                    <SeedActionRow
-                      left={
-                        <>
-                          <Link
-                            href={`/dashboard/${encodeURIComponent(s.id)}`}
-                            className={btnStatus}
-                          >
-                            成績を見る
-                          </Link>
-                          <Link
-                            href={`/w/${encodeURIComponent(s.id)}`}
-                            className={btnStatus}
-                          >
-                            詳細
-                          </Link>
-                          {origin ? (
-                            <ShareTextCopyButton
-                              getText={() =>
-                                buildWorkShareText(workFromLocalSeed(s), origin)
-                              }
-                            />
-                          ) : null}
-                        </>
-                      }
-                    />
-                  )}
+                              const del = deleteLocalSeed(s.id, handle);
+                              if (del.ok) refresh();
+                              else window.alert(del.error);
+                              return;
+                            }
+                            if (!isLocalSeedListed(s)) return;
+                            const res = unlistLocalSeed(s.id, handle);
+                            if (res.ok) refresh();
+                            else window.alert(res.error);
+                          }}
+                        >
+                          下書きに戻す
+                        </button>
+                        <button
+                          type="button"
+                          className={btnDanger}
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                isDemoSeed(s.id)
+                                  ? "この表示デモを一覧から外しますか？（まとめて消すなら上の「デモを消す」）"
+                                  : "このシードを削除しますか？成績の数字も一緒に消えます。",
+                              )
+                            ) {
+                              return;
+                            }
+                            const res = deleteLocalSeed(s.id, handle);
+                            if (res.ok) refresh();
+                            else window.alert(res.error);
+                          }}
+                        >
+                          削除
+                        </button>
+                      </>
+                    }
+                  />
                 </li>
               ))}
             </ul>

@@ -181,14 +181,11 @@ export function unlistLocalSeed(
   return { ok: true, seed: seeds[i] };
 }
 
-/** シードを削除。本人のみ。デモ棚IDは消さない */
+/** シードを削除。本人のみ */
 export function deleteLocalSeed(
   id: string,
   actorHandle: string,
 ): LocalSeedOwnerResult {
-  if (isDemoSeed(id)) {
-    return { ok: false, error: "表示デモは「デモを消す」からまとめて外してください" };
-  }
   const seeds = readLocalSeeds();
   const i = seeds.findIndex((s) => s.id === id);
   if (i < 0) return { ok: false, error: "見つかりません" };
