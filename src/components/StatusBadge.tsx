@@ -1,14 +1,19 @@
 import type { CompStatus } from "@/data/dummy-works";
 import { formatYen } from "@/data/dummy-works";
 
+/** UIバッジ用。売る金額ではなく場に載せた褒賞として見せる */
+function prizePart(prize: number): string {
+  return `褒賞 ${formatYen(prize)}`;
+}
+
 const LABELS: Record<
   CompStatus,
   { text: (prize?: number, paymentsDone?: number, planLabel?: string) => string; className: string }
 > = {
   open: {
     text: (prize, _paymentsDone, planLabel) => {
-      if (planLabel && prize) return `${planLabel} · ${formatYen(prize)}`;
-      if (prize) return `開催中 · ${formatYen(prize)}`;
+      if (planLabel && prize) return `${planLabel} · ${prizePart(prize)}`;
+      if (prize) return `開催中 · ${prizePart(prize)}`;
       return planLabel ?? "開催中";
     },
     className: "badge-open",
@@ -16,7 +21,7 @@ const LABELS: Record<
   pay_soon: {
     text: (prize, _paymentsDone, planLabel) => {
       const head = planLabel ?? "決済準備中";
-      return prize ? `${head} · ${formatYen(prize)}` : head;
+      return prize ? `${head} · ${prizePart(prize)}` : head;
     },
     className: "bg-viscum-bark text-white",
   },

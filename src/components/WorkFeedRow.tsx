@@ -121,7 +121,7 @@ export function WorkFeedRow({
                     ·
                   </span>
                   <span className="tabular-nums font-medium text-viscum-berry-deep">
-                    {formatYen(status.prizeYen)}
+                    褒賞 {formatYen(status.prizeYen)}
                   </span>
                 </>
               ) : null}
