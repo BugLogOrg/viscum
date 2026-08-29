@@ -334,7 +334,7 @@ export function FeedClient({
   const showEntranceLine =
     filter === "all" && !specialty && !query.trim();
   const entranceLine = showEntranceLine
-    ? "作ったものに、知らない人の反応を。"
+    ? "作ったものに、リアルな反応を。"
     : null;
 
   const contextCrumbs: string[] = [
