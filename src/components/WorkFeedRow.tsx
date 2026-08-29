@@ -167,7 +167,7 @@ export function WorkFeedRow({
               preferredName={work.seederAccountName}
             />
           </Link>
-          <div className="mt-0.5 flex -translate-y-0.5 justify-end">
+          <div className="mt-1 flex justify-end">
             <FeedAttitudeCounts
               workId={work.id}
               comments={work.comments}

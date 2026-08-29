@@ -187,8 +187,13 @@ export function ProtocolMark({
   className?: string;
 }) {
   const def = PROTOCOL_COLORS.find((c) => c.id === id)!;
+  // 芽は土があるので視覚重心が下がりやすい → 緑だけわずかに上げる
+  const optical =
+    id === "green" ? "-translate-y-0.5" : "";
   return (
-    <span className={`inline-flex shrink-0 leading-none ${COLOR_CLASS[id]}`}>
+    <span
+      className={`inline-flex shrink-0 leading-none ${optical} ${COLOR_CLASS[id]}`}
+    >
       {glyph(def.icon, className, filled)}
     </span>
   );

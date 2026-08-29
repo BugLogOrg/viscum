@@ -101,7 +101,7 @@ export function FeedAttitudeCounts({
             href={`/w/${workId}`}
             title={`${c.label}：${c.attitude}`}
             aria-label={`${c.label} ${formatCount(n)}`}
-            className="inline-flex -translate-y-px items-center gap-0.5 rounded-md px-0.5 py-0.5 text-viscum-muted opacity-80 transition hover:bg-viscum-paper-2 hover:opacity-100"
+            className="inline-flex items-center gap-0.5 rounded-md px-0.5 py-1 text-viscum-muted opacity-80 transition hover:bg-viscum-paper-2 hover:opacity-100"
           >
             <ProtocolMark id={id} className="h-5 w-5" />
             <span className="text-[12px] font-medium tabular-nums leading-none">
