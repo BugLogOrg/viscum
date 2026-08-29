@@ -59,8 +59,8 @@ export function SiteHeader({
               className="flex min-w-0 items-center gap-1.5 truncate text-sm font-semibold tracking-wide text-viscum-brand"
               title="VISCUM／ヤドリギ"
             >
-              <ViscumMark className="h-5 w-5" />
-              <span className="tracking-[0.12em]">{title}</span>
+              <ViscumMark className="h-6 w-6" />
+              <span className="tracking-[0.12em] text-[15px]">{title}</span>
             </Link>
           )}
         </div>

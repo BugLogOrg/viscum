@@ -411,7 +411,7 @@ export function FeedClient({
     >
       <SiteHeader hideOnMd />
       {entranceLine ? (
-        <p className="font-viscum-display border-b border-viscum-line px-4 py-2.5 text-[14px] font-semibold leading-snug tracking-[0.04em] text-viscum-trunk md:hidden">
+        <p className="font-viscum-display border-b border-viscum-line px-4 py-2 text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted md:hidden">
           {entranceLine}
         </p>
       ) : null}

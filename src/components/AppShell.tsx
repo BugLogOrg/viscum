@@ -36,7 +36,7 @@ export function AppShell({
   onFeedFilter?: (f: "all" | "open" | "follow") => void;
   /** 検索欄を空にする（ロゴ／すべて用） */
   onClearSearch?: () => void;
-  /** ロゴ：すべて＋検索クリア＋専門リセット */
+  /** ロゴ：すべて＋検索クリア＋カテゴリーリセット */
   onHome?: () => void;
   openCount?: number;
   showSpecialty?: boolean;
@@ -75,19 +75,19 @@ export function AppShell({
             <button
               type="button"
               onClick={onHome}
-              className="flex items-center gap-2 text-[15px] font-semibold tracking-[0.12em] text-viscum-brand"
+              className="flex items-center gap-2 text-[17px] font-semibold tracking-[0.12em] text-viscum-brand"
               title="VISCUM／ヤドリギ"
             >
-              <ViscumMark className="h-6 w-6" />
+              <ViscumMark className="h-7 w-7" />
               VISCUM
             </button>
           ) : (
             <Link
               href="/"
-              className="flex items-center gap-2 text-[15px] font-semibold tracking-[0.12em] text-viscum-brand"
+              className="flex items-center gap-2 text-[17px] font-semibold tracking-[0.12em] text-viscum-brand"
               title="VISCUM／ヤドリギ"
             >
-              <ViscumMark className="h-6 w-6" />
+              <ViscumMark className="h-7 w-7" />
               VISCUM
             </Link>
           )}
@@ -167,7 +167,7 @@ export function AppShell({
         {showSpecialty && (
           <div className="mt-1 border-t border-viscum-line px-3 py-3">
             <p className="mb-2 text-[11px] font-medium tracking-wide text-viscum-brand">
-              専門
+              カテゴリー
             </p>
             <ul className="space-y-0.5">
               <li>
@@ -227,7 +227,7 @@ export function AppShell({
       <div className="min-w-0 flex-1 lg:border-r lg:border-viscum-line lg:pr-3">
         <div className="sticky top-0 z-10 hidden h-12 items-center gap-3 border-b border-viscum-line bg-viscum-paper/95 px-4 backdrop-blur-sm md:flex">
           {entranceLine ? (
-            <p className="font-viscum-display min-w-0 flex-1 truncate text-[15px] font-semibold leading-snug tracking-[0.04em] text-viscum-trunk">
+            <p className="font-viscum-display min-w-0 flex-1 truncate text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted">
               {entranceLine}
             </p>
           ) : (
