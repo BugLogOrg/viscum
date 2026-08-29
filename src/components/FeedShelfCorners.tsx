@@ -17,32 +17,40 @@ import {
 } from "@/lib/hot-open-ranking";
 import { countCommentAttitudes } from "@/lib/protocol-colors";
 
-/** 賛成(青)／止まれ(赤)の偏り＝偏差。逆張り・応援向きの発見用 */
+/** 賛成(青)／止まれ(赤)の偏り＝偏差。表示は別／賛／止で合計を合わせる */
 function rankSkewedWorks(
   works: Work[],
   opts?: { excludeId?: string; limit?: number },
-): { work: Work; lean: "blue" | "red"; blue: number; red: number }[] {
+): {
+  work: Work;
+  lean: "blue" | "red";
+  green: number;
+  blue: number;
+  red: number;
+}[] {
   const limit = opts?.limit ?? 5;
   const scored = works
     .filter((w) => w.status === "open" && w.id !== opts?.excludeId)
     .map((w) => {
       const c = countCommentAttitudes(w.comments ?? []);
+      const green = c.green;
       const blue = c.blue;
       const red = c.red;
-      const total = blue + red;
-      if (total < 2) return null;
-      const skew = Math.abs(blue - red) / total;
-      if (skew < 0.25) return null; // 拮抗は除外（やや緩め）
+      const duel = blue + red;
+      if (duel < 2) return null;
+      const skew = Math.abs(blue - red) / duel;
+      if (skew < 0.25) return null;
       const lean: "blue" | "red" = blue >= red ? "blue" : "red";
-      const score = skew * Math.log(1 + total);
-      return { work: w, lean, blue, red, score };
+      const score = skew * Math.log(1 + duel);
+      return { work: w, lean, green, blue, red, score };
     })
     .filter((x): x is NonNullable<typeof x> => x != null)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
-  return scored.map(({ work, lean, blue, red }) => ({
+  return scored.map(({ work, lean, green, blue, red }) => ({
     work,
     lean,
+    green,
     blue,
     red,
   }));
@@ -53,10 +61,16 @@ function CompactWorkLink({
   skewHint,
 }: {
   work: Work;
-  skewHint?: { lean: "blue" | "red"; blue: number; red: number };
+  skewHint?: {
+    lean: "blue" | "red";
+    green: number;
+    blue: number;
+    red: number;
+  };
 }) {
   const rx = getWorkReactionCounts(work);
   const countdown = formatClosesIn(work.closesInHours, work.status);
+  const commentN = work.comments?.length ?? 0;
   return (
     <Link
       href={`/w/${work.id}`}
@@ -85,8 +99,8 @@ function CompactWorkLink({
                 : "text-viscum-protocol-red"
             }`}
           >
-            {skewHint.lean === "blue" ? "賛成寄り" : "止まれ寄り"} · 賛
-            {skewHint.blue}／止{skewHint.red}
+            {skewHint.lean === "blue" ? "賛成寄り" : "止まれ寄り"} · 別
+            {skewHint.green}／賛{skewHint.blue}／止{skewHint.red}
           </span>
         ) : null}
       </div>
@@ -101,7 +115,7 @@ function CompactWorkLink({
           />
         </span>
         <span>気になる {formatCount(rx.bookmark)}</span>
-        <span>コメント {formatCount(work.comments?.length ?? 0)}</span>
+        <span>コメント {formatCount(commentN)}</span>
       </p>
     </Link>
   );
@@ -159,9 +173,12 @@ function SkewSection({
         賛成／止まれに寄っている開催中。逆張りの余地
       </p>
       <ul className="mt-1.5 divide-y divide-viscum-line">
-        {skewed.map(({ work, lean, blue, red }) => (
+        {skewed.map(({ work, lean, green, blue, red }) => (
           <li key={work.id}>
-            <CompactWorkLink work={work} skewHint={{ lean, blue, red }} />
+            <CompactWorkLink
+              work={work}
+              skewHint={{ lean, green, blue, red }}
+            />
           </li>
         ))}
       </ul>
