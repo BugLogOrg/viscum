@@ -222,6 +222,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     },
     async jwt({ token, user, trigger, session }) {
+      /** handle／オンボフラグの DB 再読。毎回 auth() で Neon を叩かない */
+      const FLAGS_TTL_MS = 5 * 60 * 1000;
       if (trigger === "update") {
         const s = session as
           | { handle?: string; onboardingDone?: boolean; email?: string }
@@ -246,11 +248,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.email = user.email;
       }
       const id = (token.id as string | undefined) || user?.id;
-      if (id && hasDatabase() && trigger !== "update") {
+      const flagsCheckedAt =
+        typeof token.flagsCheckedAt === "number" ? token.flagsCheckedAt : 0;
+      const flagsStale = Date.now() - flagsCheckedAt > FLAGS_TTL_MS;
+      // サインイン直後、または TTL 切れのときだけ loadUserFlags（通知・各APIの auth が軽くなる）
+      if (
+        id &&
+        hasDatabase() &&
+        trigger !== "update" &&
+        (Boolean(user) || flagsStale || token.handle === undefined)
+      ) {
         const flags = await loadUserFlags(id);
         token.handle = flags.handle ?? undefined;
         token.needsHandle = !flags.handle;
         token.needsOnboarding = Boolean(flags.handle) && !flags.onboardingDone;
+        token.flagsCheckedAt = Date.now();
       } else if (user?.handle) {
         token.handle = user.handle;
         token.needsHandle = false;
@@ -259,6 +271,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const flags = await loadUserFlags(id);
           token.needsOnboarding =
             Boolean(flags.handle) && !flags.onboardingDone;
+          token.flagsCheckedAt = Date.now();
         } else {
           token.needsOnboarding = false;
         }
@@ -272,6 +285,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       ) {
         const flags = await loadUserFlags(id);
         token.needsOnboarding = Boolean(flags.handle) && !flags.onboardingDone;
+        token.flagsCheckedAt = Date.now();
       }
       // 棚デモIDのデモセッションは guest に落とす（ヘッダが tori になる事故防止）
       const tid = String(token.id || "");
