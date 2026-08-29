@@ -32,7 +32,7 @@ function rankSkewedWorks(
       const total = blue + red;
       if (total < 2) return null;
       const skew = Math.abs(blue - red) / total;
-      if (skew < 0.35) return null;
+      if (skew < 0.25) return null; // 拮抗は除外（やや緩め）
       const lean: "blue" | "red" = blue >= red ? "blue" : "red";
       const score = skew * Math.log(1 + total);
       return { work: w, lean, blue, red, score };
@@ -191,10 +191,28 @@ export function FeedShelfCorners({
 
   useEffect(() => {
     if (worksProp) return;
-    const refresh = () => setLocalShelf(loadClientShelfWorks());
+    let cancelled = false;
+    const refresh = () => {
+      const local = loadClientShelfWorks();
+      void fetch("/api/works?listed=1")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { works?: Work[] } | null) => {
+          if (cancelled) return;
+          const neon = data?.works ?? [];
+          const neonIds = new Set(neon.map((w) => w.id));
+          const rest = local.filter((w) => !neonIds.has(w.id));
+          setLocalShelf([...neon, ...rest]);
+        })
+        .catch(() => {
+          if (!cancelled) setLocalShelf(local);
+        });
+    };
     refresh();
     window.addEventListener("focus", refresh);
-    return () => window.removeEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", refresh);
+    };
   }, [worksProp]);
 
   const works = worksProp ?? localShelf;
@@ -203,17 +221,21 @@ export function FeedShelfCorners({
     () => rankHotOpenWorks(works, { excludeId: excludeWorkId, limit: 5 }),
     [works, excludeWorkId],
   );
-  const skewed = useMemo(
-    () => rankSkewedWorks(works, { excludeId: excludeWorkId, limit: 5 }),
-    [works, excludeWorkId],
-  );
+  // 偏差は「いま見ている作品」も候補に残す（除外するとTOPと件数がズレる）
+  // ただしリスト先頭で自分自身は出さない
+  const skewed = useMemo(() => {
+    const all = rankSkewedWorks(works, { limit: 6 });
+    if (!excludeWorkId) return all.slice(0, 5);
+    const without = all.filter((x) => x.work.id !== excludeWorkId);
+    return without.slice(0, 5);
+  }, [works, excludeWorkId]);
 
   if (hot.length === 0 && skewed.length === 0) return null;
 
   if (layout === "sideDuo") {
     return (
       <aside
-        className={`flex w-full min-w-0 flex-col overflow-hidden border-t border-viscum-line bg-viscum-paper-2/30 xl:w-auto xl:flex-row xl:self-start xl:border-l xl:border-t-0 ${className}`}
+        className={`flex w-full min-w-0 flex-col overflow-hidden border-t border-viscum-line bg-viscum-paper-2/30 xl:w-auto xl:flex-row xl:self-start xl:border-l xl:border-t-0 xl:pr-4 ${className}`}
         aria-label="発見"
       >
         <div className="min-w-0 xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-viscum-line">

@@ -224,7 +224,7 @@ export function AppShell({
         )}
       </aside>
 
-      <div className="min-w-0 flex-1 lg:border-r lg:border-viscum-line">
+      <div className="min-w-0 flex-1 lg:border-r lg:border-viscum-line lg:pr-3">
         <div className="sticky top-0 z-10 hidden h-12 items-center gap-3 border-b border-viscum-line bg-viscum-paper/95 px-4 backdrop-blur-sm md:flex">
           {entranceLine ? (
             <p className="min-w-0 flex-1 truncate text-[13px] leading-snug text-viscum-ink">
