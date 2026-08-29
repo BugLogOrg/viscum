@@ -26,6 +26,8 @@ export function AppShell({
   openCount,
   showSpecialty = true,
   variant = "feed",
+  /** Phase 2: ロゴ横（md以上のメイン先頭帯） */
+  entranceLine,
 }: {
   children: ReactNode;
   activeTag?: string | null;
@@ -39,6 +41,7 @@ export function AppShell({
   openCount?: number;
   showSpecialty?: boolean;
   variant?: "feed" | "chrome";
+  entranceLine?: string | null;
 }) {
   const interactive = variant === "feed" && !!onFeedFilter;
   const shelfActive = interactive && feedFilter === "all";
@@ -222,7 +225,14 @@ export function AppShell({
       </aside>
 
       <div className="min-w-0 flex-1 lg:border-r lg:border-viscum-line">
-        <div className="sticky top-0 z-10 hidden h-12 items-center justify-end border-b border-viscum-line bg-viscum-paper/95 px-4 backdrop-blur-sm md:flex">
+        <div className="sticky top-0 z-10 hidden h-12 items-center gap-3 border-b border-viscum-line bg-viscum-paper/95 px-4 backdrop-blur-sm md:flex">
+          {entranceLine ? (
+            <p className="min-w-0 flex-1 truncate text-[13px] leading-snug text-viscum-ink">
+              {entranceLine}
+            </p>
+          ) : (
+            <span className="min-w-0 flex-1" aria-hidden />
+          )}
           <HeaderAccountActions />
         </div>
         {children}

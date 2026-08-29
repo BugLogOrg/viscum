@@ -13,12 +13,15 @@ export function SiteHeader({
   hidePostCta = false,
   /** ログイン／オンボなど：通知・アカウント操作を出さない */
   hideAccountActions = false,
+  /** Phase 2: ロゴ横の入口一文（モバイル） */
+  entranceLine,
 }: {
   title?: string;
   backHref?: string;
   hideOnMd?: boolean;
   hidePostCta?: boolean;
   hideAccountActions?: boolean;
+  entranceLine?: string | null;
 }) {
   return (
     <header
@@ -26,8 +29,8 @@ export function SiteHeader({
         hideOnMd ? "md:hidden" : ""
       }`}
     >
-      <div className="flex h-12 items-center justify-between gap-3 px-4">
-        <div className="flex min-w-0 items-center gap-2">
+      <div className="flex h-12 items-center justify-between gap-2 px-4">
+        <div className="flex min-w-0 flex-1 items-center gap-2">
           {backHref ? (
             <Link
               href={backHref}
@@ -38,13 +41,18 @@ export function SiteHeader({
           ) : (
             <Link
               href="/"
-              className="flex min-w-0 items-center gap-1.5 truncate text-sm font-semibold tracking-wide text-viscum-brand"
+              className="flex shrink-0 items-center gap-1.5 text-sm font-semibold tracking-wide text-viscum-brand"
               title="VISCUM／ヤドリギ"
             >
               <ViscumMark className="h-5 w-5" />
               <span className="tracking-[0.12em]">{title}</span>
             </Link>
           )}
+          {entranceLine && !backHref ? (
+            <p className="min-w-0 truncate text-[11px] leading-snug text-viscum-ink sm:text-[12px]">
+              {entranceLine}
+            </p>
+          ) : null}
         </div>
         {!hideAccountActions || !hidePostCta ? (
           <div className="flex shrink-0 items-center gap-1">

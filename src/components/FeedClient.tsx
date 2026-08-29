@@ -277,6 +277,9 @@ export function FeedClient({
   /** Phase 2 最小: 入口一文はホーム（すべて・濾しなし）だけ */
   const showEntranceLine =
     filter === "all" && !specialty && !query.trim();
+  const entranceLine = showEntranceLine
+    ? "個人作品を見つけて、気軽に感想を残せる場所。"
+    : null;
 
   const contextCrumbs: string[] = [
     filter === "follow"
@@ -321,8 +324,9 @@ export function FeedClient({
       onClearSearch={clearSearch}
       onHome={goHomeFeed}
       openCount={openCount}
+      entranceLine={entranceLine}
     >
-      <SiteHeader hideOnMd />
+      <SiteHeader hideOnMd entranceLine={entranceLine} />
       {publishedId ? (
         <div className="border-b border-viscum-leaf/40 bg-viscum-leaf-soft/50 px-4 py-3">
           <p className="text-[14px] font-medium text-viscum-leaf-deep">
@@ -373,13 +377,6 @@ export function FeedClient({
               この表示を消す
             </button>
           </div>
-        </div>
-      ) : null}
-      {showEntranceLine ? (
-        <div className="border-b border-viscum-line px-4 py-3">
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            個人制作を見つけて、気軽に感想を残せる場所。
-          </p>
         </div>
       ) : null}
       <div className="border-b border-viscum-line px-4 py-3">
