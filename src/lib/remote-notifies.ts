@@ -8,9 +8,10 @@ import {
 
 export type RemoteNotify = LocalNotify & { kind: NotifyKind | "follow_seed" };
 
-const TTL_MS = 15_000;
+const LIST_TTL_MS = 15_000;
+const UNREAD_TTL_MS = 30_000;
 
-let cache:
+let listCache:
   | {
       at: number;
       prefsKey: string;
@@ -21,11 +22,16 @@ let cache:
       };
     }
   | null = null;
-let inflight: Promise<{
+let listInflight: Promise<{
   notifications: RemoteNotify[];
   unread: number;
   persisted: boolean;
 }> | null = null;
+
+let unreadCache:
+  | { at: number; prefsKey: string; unread: number }
+  | null = null;
+let unreadInflight: Promise<number> | null = null;
 
 function prefsQuery(): string {
   const p = readNotifyPrefs();
@@ -36,6 +42,22 @@ function prefsQuery(): string {
   return s ? `?${s}` : "";
 }
 
+function prefsKey(): string {
+  return prefsQuery();
+}
+
+/** キャッシュがあれば同期で返す（ページ初回の点滅防止） */
+export function peekRemoteNotifiesCache(): {
+  notifications: RemoteNotify[];
+  unread: number;
+  persisted: boolean;
+} | null {
+  if (!listCache) return null;
+  if (listCache.prefsKey !== prefsKey()) return null;
+  if (Date.now() - listCache.at >= LIST_TTL_MS) return null;
+  return listCache.value;
+}
+
 export async function fetchRemoteNotifies(opts?: {
   force?: boolean;
 }): Promise<{
@@ -43,21 +65,21 @@ export async function fetchRemoteNotifies(opts?: {
   unread: number;
   persisted: boolean;
 }> {
-  const prefsKey = prefsQuery();
+  const key = prefsKey();
   const now = Date.now();
   if (
     !opts?.force &&
-    cache &&
-    cache.prefsKey === prefsKey &&
-    now - cache.at < TTL_MS
+    listCache &&
+    listCache.prefsKey === key &&
+    now - listCache.at < LIST_TTL_MS
   ) {
-    return cache.value;
+    return listCache.value;
   }
-  if (inflight) return inflight;
+  if (listInflight) return listInflight;
 
-  inflight = (async () => {
+  listInflight = (async () => {
     try {
-      const res = await fetch(`/api/notifications${prefsKey}`, {
+      const res = await fetch(`/api/notifications${key}`, {
         cache: "no-store",
       });
       if (!res.ok) {
@@ -73,16 +95,67 @@ export async function fetchRemoteNotifies(opts?: {
         unread: data.unread ?? 0,
         persisted: Boolean(data.persisted),
       };
-      cache = { at: Date.now(), prefsKey, value };
+      listCache = { at: Date.now(), prefsKey: key, value };
+      unreadCache = { at: Date.now(), prefsKey: key, unread: value.unread };
       return value;
     } catch {
       return { notifications: [], unread: 0, persisted: false };
     } finally {
-      inflight = null;
+      listInflight = null;
     }
   })();
 
-  return inflight;
+  return listInflight;
+}
+
+/** ヘッダ用：未読件数だけ（一覧は取らない） */
+export async function fetchRemoteUnreadCount(opts?: {
+  force?: boolean;
+}): Promise<number> {
+  const key = prefsKey();
+  const now = Date.now();
+  if (
+    !opts?.force &&
+    unreadCache &&
+    unreadCache.prefsKey === key &&
+    now - unreadCache.at < UNREAD_TTL_MS
+  ) {
+    return unreadCache.unread;
+  }
+  if (
+    !opts?.force &&
+    listCache &&
+    listCache.prefsKey === key &&
+    now - listCache.at < LIST_TTL_MS
+  ) {
+    return listCache.value.unread;
+  }
+  if (unreadInflight) return unreadInflight;
+
+  unreadInflight = (async () => {
+    try {
+      const sep = key ? "&" : "?";
+      const res = await fetch(`/api/notifications${key}${sep}unread=1`, {
+        cache: "no-store",
+      });
+      if (!res.ok) return 0;
+      const data = (await res.json()) as { unread?: number };
+      const unread = data.unread ?? 0;
+      unreadCache = { at: Date.now(), prefsKey: key, unread };
+      return unread;
+    } catch {
+      return 0;
+    } finally {
+      unreadInflight = null;
+    }
+  })();
+
+  return unreadInflight;
+}
+
+export function invalidateRemoteNotifyCache() {
+  listCache = null;
+  unreadCache = null;
 }
 
 export async function markRemoteNotifyRead(id: string): Promise<void> {
@@ -92,7 +165,7 @@ export async function markRemoteNotifyRead(id: string): Promise<void> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id }),
     });
-    cache = null;
+    invalidateRemoteNotifyCache();
   } catch {
     /* ignore */
   }
@@ -105,7 +178,7 @@ export async function markAllRemoteNotifiesRead(): Promise<void> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ all: true }),
     });
-    cache = null;
+    invalidateRemoteNotifyCache();
   } catch {
     /* ignore */
   }

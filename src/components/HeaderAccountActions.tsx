@@ -6,7 +6,7 @@ import { useSession, signOut } from "next-auth/react";
 import {
   clearDemoNotifies,
 } from "@/lib/local-notifies";
-import { fetchRemoteNotifies } from "@/lib/remote-notifies";
+import { fetchRemoteUnreadCount } from "@/lib/remote-notifies";
 import {
   displayAccountName,
   readAvatarDataUrl,
@@ -42,7 +42,7 @@ export function HeaderAccountActions({
       return;
     }
     const syncUnread = () => {
-      void fetchRemoteNotifies().then((r) => setUnread(r.unread));
+      void fetchRemoteUnreadCount().then((n) => setUnread(n));
     };
     syncUnread();
     const onFocus = () => syncUnread();
@@ -115,7 +115,7 @@ export function HeaderAccountActions({
         aria-label="通知"
         className="relative rounded-md p-2 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
         onClick={() => {
-          void fetchRemoteNotifies().then((r) => setUnread(r.unread));
+          void fetchRemoteUnreadCount({ force: true }).then((n) => setUnread(n));
         }}
       >
         <BellIcon className="h-5 w-5" />
