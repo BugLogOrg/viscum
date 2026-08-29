@@ -9,7 +9,10 @@ export type LocalSeed = {
   seederAccountName?: string;
   title: string;
   description: string;
+  /** メンターへのご挨拶（自由文。コースの聞くこととは別） */
   focusNote?: string;
+  /** 聞くこと／募集の目安（コース用。ご挨拶とは別） */
+  scaffoldLines?: string[];
   externalUrl: string;
   tags: string[];
   status: "none" | "open" | "pay_soon" | "closed";
@@ -226,11 +229,13 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
         "宅配ボックスIoTの15秒プロモ。冒頭1秒で何の製品か、音なしでも伝わるか。掴みとテロップを見てほしい（初見レビュー・¥5,000）",
       description:
         "表示デモ用。初見レビュー ¥5,000。見る範囲は冒頭15秒だけでOK。",
-      focusNote: courseById("first_impression").questions.join("\n"),
+      focusNote: "冒頭15秒だけでOK。掴みとテロップ、厳しめで短くて大丈夫です。",
+      scaffoldLines: [...courseById("first_impression").questions],
       externalUrl: "https://example.com/promo",
       tags: ["動画"],
       status: "open",
       planLabel: "初見レビュー",
+      seedPlan: "first_impression",
       prizeYen: 5000,
       closesInDays: 5,
       viewCount: 428,
@@ -246,11 +251,13 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
         "短編『団地の屋上』あらすじ＋冒頭800字の改善提案。続きが読みたくなるか、一人目の印象は残るか（¥10,000）",
       description:
         "表示デモ用。改善提案 ¥10,000。全文ではなく入口だけのレビュー。",
-      focusNote: courseById("brush_up").questions.join("\n"),
+      focusNote: "全文ではなく入口だけ。続きが読みたくなる温度を見てほしいです。",
+      scaffoldLines: [...courseById("brush_up").questions],
       externalUrl: "https://example.com/novel",
       tags: ["小説"],
       status: "open",
       planLabel: "改善提案",
+      seedPlan: "brush_up",
       prizeYen: 10000,
       closesInDays: 10,
       viewCount: 91,
@@ -283,11 +290,13 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
         "タブ整理Chrome拡張の公開ブースト。ストア／SNSへ正直な反応→報告。権限は怖くないか、何が片付くか（予算¥30,000）",
       description:
         "表示デモ用。公開ブースト。記入後報告→選んで褒賞。",
-      focusNote: PUBLIC_BOOST.criteria.join("\n"),
+      focusNote: "ストア／SNSへの正直な反応を募集します。権限の怖さと何が片付くかを見てほしいです。",
+      scaffoldLines: [...PUBLIC_BOOST.criteria],
       externalUrl: "https://example.com/ext",
       tags: ["アプリ"],
       status: "open",
       planLabel: "公開ブースト",
+      seedPlan: "public_boost",
       extReviewOn: true,
       extPrizeYen: 30000,
       prizeYen: 30000,
@@ -400,9 +409,36 @@ export function workFromLocalSeed(seed: LocalSeed): Work {
     closesInHours:
       seed.closesInDays != null ? seed.closesInDays * 24 : undefined,
     description: seed.description,
-    prompts: seed.focusNote
-      ? seed.focusNote.split("\n").map((s) => s.trim()).filter(Boolean)
-      : undefined,
+    focusNote: (() => {
+      const note = seed.focusNote?.trim();
+      if (!note) return undefined;
+      // 旧データ: 有料コースで focusNote に質問だけ入っていた → ご挨拶扱いしない
+      if (
+        !seed.scaffoldLines?.length &&
+        (plan === "first_impression" ||
+          plan === "brush_up" ||
+          plan === "public_boost")
+      ) {
+        return undefined;
+      }
+      return note;
+    })(),
+    prompts: (() => {
+      if (seed.scaffoldLines?.length) {
+        return seed.scaffoldLines.map((s) => s.trim()).filter(Boolean);
+      }
+      // 旧データ互換: 有料コースの focusNote は聞くことだった
+      if (
+        plan === "first_impression" ||
+        plan === "brush_up" ||
+        plan === "public_boost"
+      ) {
+        return seed.focusNote
+          ? seed.focusNote.split("\n").map((s) => s.trim()).filter(Boolean)
+          : undefined;
+      }
+      return undefined;
+    })(),
     externalUrl: seed.externalUrl,
     thumbTone: "leaf",
     thumbUrl: seed.thumbDataUrl,

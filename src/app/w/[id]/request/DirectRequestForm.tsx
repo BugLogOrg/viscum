@@ -111,7 +111,7 @@ export function DirectRequestPitchFields({
           <span className="font-normal text-viscum-muted">任意・リスト</span>
         </p>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
-          コンペの「聞くこと」と同じ足場です。案内文は箇条書き、リンク先にも載ります（概要の長文はコピペには入れません）。
+          コンペの「聞くこと」と同じおすすめ質問です。案内文は箇条書き、リンク先にも載ります（概要の長文はコピペには入れません）。
         </p>
         <ul className="mt-2 space-y-2">
           {rows.map((q, i) => (

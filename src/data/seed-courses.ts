@@ -66,20 +66,20 @@ export const PUBLIC_BOOST = {
   ],
 } as const;
 
-/** 投稿フォームと同じ足場文言（デモ作品・詳細表示用） */
+/** 投稿フォームと同じ聞くこと文言（デモ作品・詳細表示用） */
 export function scaffoldForPlan(plan: SeedPlanId): {
   label: string;
   lines: string[];
 } | null {
   if (plan === "first_impression" || plan === "brush_up") {
     return {
-      label: "聞くこと（足場）",
+      label: "聞くこと",
       lines: [...courseById(plan).questions],
     };
   }
   if (plan === "public_boost") {
     return {
-      label: "募集の目安（足場）",
+      label: "募集の目安",
       lines: [...PUBLIC_BOOST.criteria],
     };
   }

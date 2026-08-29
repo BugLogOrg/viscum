@@ -4,10 +4,15 @@ import { OG_IMAGE_BUST } from "@/lib/work-og";
 
 const MENTOR_ASK_MAX = 100;
 
-/** 共有用にメンターへのお願いだけ短く（足場の聞くことは載せない） */
+/** 共有用にご挨拶だけ短く（聞くことリストは載せない） */
 function mentorAskSnippet(work: Work): string | null {
+  const greeting = work.focusNote?.trim();
+  if (greeting) {
+    if (greeting.length <= MENTOR_ASK_MAX) return greeting;
+    return `${greeting.slice(0, MENTOR_ASK_MAX)}…`;
+  }
   const plan = work.plan;
-  // コンペ／公開ブーストの prompts は足場＝聞きたいこと → 共有に出さない
+  // 有料コースの prompts は聞くこと → 共有に出さない
   if (
     plan === "first_impression" ||
     plan === "brush_up" ||
@@ -15,6 +20,7 @@ function mentorAskSnippet(work: Work): string | null {
   ) {
     return null;
   }
+  // 旧無料: prompts にご挨拶相当が入っていた場合
   const raw = (work.prompts ?? [])
     .map((p) => p.trim())
     .filter(Boolean)
@@ -25,7 +31,7 @@ function mentorAskSnippet(work: Work): string | null {
   return `${raw.slice(0, MENTOR_ASK_MAX)}…`;
 }
 
-/** SNS貼り付け用の共有文（詳細・公開直後の正本）。聞きたいこと（足場）は載せない */
+/** SNS貼り付け用の共有文（詳細・公開直後の正本）。聞くことは載せない */
 export function buildWorkShareText(work: Work, origin: string): string {
   // ?v= で X の「取得失敗キャッシュ」を切る（OG画像 bust と同期）
   const url = `${origin.replace(/\/$/, "")}/w/${work.id}?v=${OG_IMAGE_BUST}`;

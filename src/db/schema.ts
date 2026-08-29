@@ -84,9 +84,9 @@ export const works = pgTable("works", {
     .references(() => users.id),
   title: text("title").notNull(),
   description: text("description").notNull(),
-  /** @deprecated 足場は scaffold_lines へ。互換のため残す */
+  /** @deprecated 聞くことは scaffold_lines へ。互換のため残す */
   focusNote: text("focus_note"),
-  /** 聞くこと／募集の目安（足場） */
+  /** 聞くこと／募集の目安（おすすめ質問） */
   scaffoldLines: jsonb("scaffold_lines").$type<string[]>(),
   externalUrl: text("external_url").notNull(),
   tags: jsonb("tags").$type<string[]>().notNull().default([]),

@@ -177,6 +177,15 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
               {work.title}
             </h1>
 
+            {work.focusNote?.trim() ? (
+              <div>
+                <p className="text-[13px] font-medium text-viscum-ink">ご挨拶</p>
+                <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
+                  {work.focusNote.trim()}
+                </p>
+              </div>
+            ) : null}
+
             <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
               {work.description}
             </p>
@@ -187,14 +196,14 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   {scaffoldLabel}
                   {isDraft ? (
                     <span className="ml-1 text-[11px] font-normal text-viscum-muted">
-                      （公開後に相手へ見える足場）
+                      （公開後に相手へ見えます）
                     </span>
                   ) : null}
                 </p>
                 <p className="mt-0.5 text-[11px] text-viscum-muted">
                   {work.plan === "public_boost"
-                    ? "テンプレは足場です。報告コメントでは投稿URLなども含めてください。"
-                    : "テンプレは足場です。そのまま答えても、アレンジしても構いません。"}
+                    ? "おすすめの目安です。報告コメントでは投稿URLなども含めてください。"
+                    : "おすすめ質問です。そのまま答えても、アレンジしても構いません。"}
                 </p>
                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-[14px] leading-relaxed text-viscum-ink">
                   {scaffoldLines.map((line) => (

@@ -49,6 +49,8 @@ export type Work = {
   closesInHours?: number;
   featured?: boolean;
   description: string;
+  /** メンターへのご挨拶（自由文） */
+  focusNote?: string;
   prompts?: string[];
   externalUrl: string;
   /** サムネ用の葉〜実の色キー */

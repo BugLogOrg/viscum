@@ -304,8 +304,17 @@ export function PostForm() {
                 : undefined,
             title: clampWorkTitle(title),
             description: description.trim(),
-            focusNote:
-              (compOn ? promptList.join("\n") : focusNote.trim()) || undefined,
+            focusNote: focusNote.trim() || undefined,
+            scaffoldLines: (() => {
+              if (compOn) return promptList.length ? promptList : undefined;
+              if (extReviewOn) {
+                const lines = boostCriteria
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                return lines.length ? lines : undefined;
+              }
+              return undefined;
+            })(),
             externalUrl: externalUrl.trim(),
             tags,
             status: compOn ? "open" : "none",
@@ -347,6 +356,23 @@ export function PostForm() {
         <p className="mt-1 text-right text-[11px] tabular-nums text-viscum-muted">
           {title.trim().length}/{WORK_TITLE_MAX}
         </p>
+      </div>
+
+      <div>
+        <label className="block text-[13px] font-medium text-viscum-ink">
+          ご挨拶{" "}
+          <span className="font-normal text-viscum-muted">任意</span>
+        </label>
+        <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
+          メンターへの声かけです。見てほしい入口・温度・背景を一言。コースを選んでも消えません。初見／改善では下の「聞くこと」も別で足せます。
+        </p>
+        <textarea
+          value={focusNote}
+          onChange={(e) => setFocusNote(e.target.value)}
+          rows={3}
+          placeholder="例: 冒頭1秒で何の製品か分かるか、厳しめで短くて大丈夫です"
+          className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] leading-relaxed text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none"
+        />
       </div>
 
       <div>
@@ -428,30 +454,6 @@ export function PostForm() {
           rows={5}
           className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] leading-relaxed text-viscum-ink focus:border-viscum-brand focus:outline-none"
         />
-      </div>
-
-      <div>
-        <label className="block text-[13px] font-medium text-viscum-ink">
-          メンターへのお願い
-        </label>
-        {!compOn ? (
-          <>
-            <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
-              見てほしいところの入口です。書いていない論点を書かれても大丈夫（採用・褒賞はシーダーが選びます）。無料コメントでも書けます。
-            </p>
-            <textarea
-              value={focusNote}
-              onChange={(e) => setFocusNote(e.target.value)}
-              rows={2}
-              placeholder="例: 冒頭1秒で何の製品か分かるか"
-              className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] leading-relaxed text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none"
-            />
-          </>
-        ) : (
-          <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
-            初見レビュー／改善提案を選ぶと、下でおすすめ質問を足場にします。編集・追加・削除できます。
-          </p>
-        )}
       </div>
 
       <div>
@@ -589,7 +591,7 @@ export function PostForm() {
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[13px] font-medium text-viscum-ink">
-                  聞くこと（足場）
+                  聞くこと
                 </p>
                 <button
                   type="button"
@@ -600,7 +602,7 @@ export function PostForm() {
                 </button>
               </div>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
-                テンプレは足場です。そのまま答えても大丈夫。気づいたことがあれば追加でアレンジしても構いません（最大
+                おすすめ質問です。編集・追加・削除できます。メンターはそのまま答えても、アレンジしても構いません（最大
                 {MAX_COURSE_QUESTIONS}問）。
               </p>
               <ul className="mt-2 space-y-2">
@@ -695,7 +697,7 @@ export function PostForm() {
             <div>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[13px] font-medium text-viscum-ink">
-                  募集の目安（足場）
+                  募集の目安
                 </p>
                 <button
                   type="button"

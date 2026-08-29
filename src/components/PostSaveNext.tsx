@@ -146,7 +146,7 @@ export function PostSaveNext({ work }: { work: Work }) {
             SNS用の文（任意）
           </p>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
-            聞きたいこと（足場）は入れていません。詳しくはリンク先で。公開URLなら投稿に付けるとカード（タイトル・画像）が出ます。端末内だけの下書きURLはXから見えません。
+            聞きたいことは入れていません。詳しくはリンク先で。公開URLなら投稿に付けるとカード（タイトル・画像）が出ます。端末内だけの下書きURLはXから見えません。
           </p>
           <pre className="whitespace-pre-wrap break-all rounded-md border border-viscum-line bg-viscum-paper-2/80 px-3 py-2 text-[12px] text-viscum-trunk">
             {text || "…"}
