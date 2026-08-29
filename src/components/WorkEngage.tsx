@@ -397,12 +397,6 @@ export function WorkEngage({
 
   return (
     <div className="space-y-4">
-      {compActive && (
-        <p className="text-[15px] leading-relaxed text-viscum-muted">
-          見てほしいところは入口です。ここに書かれていないことでも、気づいたら書いて大丈夫です。
-        </p>
-      )}
-
       {showCompBand && (
         <div className="rounded-lg border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-3 text-sm">
           <p className="font-medium text-viscum-berry-deep">コンペ帯</p>
@@ -516,15 +510,20 @@ export function WorkEngage({
               <CommentAttitudePicker value={attitude} onChange={setAttitude} />
 
               {scaffoldLabel && scaffoldLines.length > 0 && (
-                <div className="rounded-md border border-viscum-line/80 bg-viscum-paper-2/80 px-2.5 py-2">
-                  <p className="text-[11px] font-medium text-viscum-ink">
-                    {scaffoldLabel}に沿って書くと読みやすいです
+                <div className="space-y-2">
+                  <div className="rounded-md border border-viscum-line/80 bg-viscum-paper-2/80 px-2.5 py-2">
+                    <p className="text-[11px] font-medium text-viscum-ink">
+                      {scaffoldLabel}に沿って書くと読みやすいです
+                    </p>
+                    <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-[11px] leading-snug text-viscum-muted">
+                      {scaffoldLines.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ol>
+                  </div>
+                  <p className="text-[13px] leading-relaxed text-viscum-muted">
+                    見てほしいところは入口です。ここに書かれていないことでも、気づいたら書いて大丈夫です。
                   </p>
-                  <ol className="mt-1 list-decimal space-y-0.5 pl-4 text-[11px] leading-snug text-viscum-muted">
-                    {scaffoldLines.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ol>
                 </div>
               )}
 
