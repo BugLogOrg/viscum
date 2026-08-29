@@ -39,6 +39,7 @@ function mergeParticipations(
       adopted: prev.adopted || p.adopted,
       tipped: prev.tipped || p.tipped,
       commentSubject: prev.commentSubject ?? p.commentSubject,
+      commentId: prev.commentId ?? p.commentId,
     });
   }
   return [...byId.values()];
@@ -57,6 +58,7 @@ function loadLocalForHandle(handle: string): MentorParticipation[] {
       adopted: mine.some((c) => Boolean(c.adopted)),
       tipped: mine.some((c) => Boolean(c.tipped)),
       commentSubject: mine[0]?.subject,
+      commentId: mine[0]?.id,
     });
   }
   return [...byId.values()];
@@ -192,7 +194,7 @@ export function MentoredWorksList({
         メンターとして参加した作品 · {participations.length}件
       </p>
       <p className="px-4 pt-1 text-[11px] text-viscum-muted">
-        コメントした棚です（選出・決済前も含む）。選出・褒賞はバッジで事実表示します。
+        コメントした棚です（選出・決済前も含む）。選出・褒賞はバッジで事実表示します。カードから自分のコメント位置へ飛べます。
       </p>
       {participations.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">
@@ -201,7 +203,12 @@ export function MentoredWorksList({
       ) : (
         <>
           <div className="mt-2 lg:grid lg:grid-cols-2 lg:divide-x lg:divide-viscum-line">
-            {pageItems.map(({ work, adopted, tipped, commentSubject }) => (
+            {pageItems.map(
+              ({ work, adopted, tipped, commentSubject, commentId }) => {
+              const workHref = commentId
+                ? `/w/${work.id}?c=${encodeURIComponent(commentId)}`
+                : `/w/${work.id}`;
+              return (
               <div key={work.id} className="relative min-w-0">
                 {(adopted || tipped || commentSubject) && (
                   <div className="flex flex-wrap gap-1.5 px-4 pt-3">
@@ -222,9 +229,14 @@ export function MentoredWorksList({
                     ) : null}
                   </div>
                 )}
-                <WorkFeedRow work={work} className="lg:border-viscum-line" />
+                <WorkFeedRow
+                  work={work}
+                  href={workHref}
+                  className="lg:border-viscum-line"
+                />
               </div>
-            ))}
+              );
+            })}
           </div>
           <PortfolioPagerBar
             page={page}

@@ -968,6 +968,8 @@ export type MentorParticipation = {
   adopted: boolean;
   tipped: boolean;
   commentSubject?: string;
+  /** 自分のコメントへ深リンク用（最新1件） */
+  commentId?: string;
 };
 
 /** デモ用。コメント author がハンドルと一致しないダミーへの上書き */
@@ -1071,6 +1073,7 @@ export function getWorksMentoredBy(handle: string): MentorParticipation[] {
         adopted: Boolean(prev?.adopted || c.adopted),
         tipped: Boolean(prev?.tipped || c.tipped),
         commentSubject: prev?.commentSubject ?? c.subject,
+        commentId: prev?.commentId ?? c.id,
       });
     }
   }

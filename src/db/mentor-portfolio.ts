@@ -99,6 +99,7 @@ export async function mentorPortfolioFromDb(handle: string): Promise<{
         adopted,
         tipped: tippedYen != null,
         commentSubject: row.subject,
+        commentId: row.commentId,
       });
     } else {
       byWork.set(row.workId, {
@@ -106,6 +107,7 @@ export async function mentorPortfolioFromDb(handle: string): Promise<{
         adopted: prev.adopted || adopted,
         tipped: prev.tipped || tippedYen != null,
         commentSubject: prev.commentSubject ?? row.subject,
+        commentId: prev.commentId ?? row.commentId,
       });
     }
   }
@@ -166,6 +168,7 @@ export async function mentorPortfolioForHandle(handle: string): Promise<{
         adopted: prev.adopted || p.adopted,
         tipped: prev.tipped || p.tipped,
         commentSubject: prev.commentSubject ?? p.commentSubject,
+        commentId: prev.commentId ?? p.commentId,
       });
     }
   }

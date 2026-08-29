@@ -73,10 +73,14 @@ function feedStatus(work: Work): {
 export function WorkFeedRow({
   work,
   className = "",
+  href,
 }: {
   work: Work;
   className?: string;
+  /** 省略時は作品詳細。メンター棚では `?c=` 付きでコメントへ */
+  href?: string;
 }) {
+  const workHref = href ?? `/w/${work.id}`;
   const rx = getWorkReactionCounts(work);
   const media = mediaLine(work);
   const status = feedStatus(work);
@@ -89,7 +93,7 @@ export function WorkFeedRow({
         className={`${FEED_THUMB_W} flex shrink-0 flex-col self-stretch`}
       >
         <Link
-          href={`/w/${work.id}`}
+          href={workHref}
           className={`relative block overflow-hidden rounded ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
           style={{ aspectRatio: "1280 / 670" }}
           aria-hidden
@@ -147,7 +151,7 @@ export function WorkFeedRow({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Link href={`/w/${work.id}`} className="min-w-0 active:opacity-90">
+        <Link href={workHref} className="min-w-0 active:opacity-90">
           <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink">
             {work.title}
           </h2>

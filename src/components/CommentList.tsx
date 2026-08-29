@@ -121,6 +121,22 @@ export function CommentList({
     setThankedIds(new Set([...fromComments, ...local]));
   }, [comments, workId]);
 
+  /** PFメンター棚などから ?c= で来たとき、該当コメントを開いてスクロール */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const focusId = new URLSearchParams(window.location.search).get("c");
+    if (!focusId) return;
+    if (!comments.some((c) => c.id === focusId)) return;
+    setOpenId(focusId);
+    const timer = window.setTimeout(() => {
+      document.getElementById(`comment-${focusId}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 120);
+    return () => window.clearTimeout(timer);
+  }, [comments]);
+
   const prizeLabel = prizeYen ? formatYen(prizeYen) : "¥5,000";
   const amountYen = prizeYen && prizeYen >= 5000 ? prizeYen : 5000;
 
@@ -280,7 +296,7 @@ export function CommentList({
             !isDemoCommentId(c.id);
 
           return (
-            <li key={c.id}>
+            <li key={c.id} id={`comment-${c.id}`}>
               <button
                 type="button"
                 onClick={() => setOpenId(open ? null : c.id)}
