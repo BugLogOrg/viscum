@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
-import { StatusBadge } from "@/components/StatusBadge";
+import { WorkFeedRow } from "@/components/WorkFeedRow";
+import {
+  PortfolioPagerBar,
+  PORTFOLIO_PAGE_SIZE,
+  usePortfolioPage,
+} from "@/components/PortfolioPager";
 import {
   formatYen,
-  planBadgeLabel,
   type MentorFacts,
   type MentorParticipation,
 } from "@/data/dummy-works";
 import { listAllLocalCommentBuckets } from "@/lib/local-comments";
 import { resolveWorkClient } from "@/lib/local-seeds";
-import { accountLabelForHandle } from "@/data/suggested-seeders";
 
 function norm(h: string) {
   return h.replace(/^@/, "").trim().toLowerCase();
@@ -168,7 +170,7 @@ type ListProps = {
   initialParticipations: MentorParticipation[];
 };
 
-/** メンターとして参加した作品棚 */
+/** メンターとして参加した作品棚（シード棚の下・TOP同様2列・10件） */
 export function MentoredWorksList({
   handle,
   initialParticipations,
@@ -177,9 +179,13 @@ export function MentoredWorksList({
     handle,
     initialParticipations,
   );
+  const { page, pageCount, pageItems, goToPage } = usePortfolioPage(
+    participations,
+    PORTFOLIO_PAGE_SIZE,
+  );
 
   return (
-    <section>
+    <section className="border-b border-viscum-line">
       <p className="px-4 pt-4 text-[20px] font-bold text-viscum-ink">
         メンターとして参加した作品 · {participations.length}件
       </p>
@@ -191,42 +197,40 @@ export function MentoredWorksList({
           まだ参加した作品はありません。
         </p>
       ) : (
-        <ul className="mt-2 divide-y divide-viscum-line border-t border-viscum-line">
-          {participations.map(({ work, adopted, tipped, commentSubject }) => (
-            <li key={work.id}>
-              <Link
-                href={`/w/${encodeURIComponent(work.id)}`}
-                className="block px-4 py-3 transition hover:bg-viscum-paper-2/80"
-              >
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <StatusBadge
-                    status={work.status}
-                    prizeYen={work.prizeYen}
-                    planLabel={planBadgeLabel(work.plan)}
-                    dense
-                  />
-                  {adopted && (
-                    <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
-                      選出
-                    </span>
-                  )}
-                  {tipped && (
-                    <span className="rounded bg-viscum-berry/15 px-1.5 py-0.5 text-[10px] font-medium text-viscum-berry-deep">
-                      褒賞受取
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
-                  {work.title}
-                </p>
-                <p className="mt-1 text-[11px] text-viscum-muted">
-                  シーダー {accountLabelForHandle(work.seeder).line}
-                  {commentSubject ? ` · 「${commentSubject}」` : ""}
-                </p>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        <>
+          <div className="mt-2 lg:grid lg:grid-cols-2 lg:divide-x lg:divide-viscum-line">
+            {pageItems.map(({ work, adopted, tipped, commentSubject }) => (
+              <div key={work.id} className="relative min-w-0">
+                {(adopted || tipped || commentSubject) && (
+                  <div className="flex flex-wrap gap-1.5 px-4 pt-3">
+                    {adopted ? (
+                      <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                        選出
+                      </span>
+                    ) : null}
+                    {tipped ? (
+                      <span className="rounded bg-viscum-berry/15 px-1.5 py-0.5 text-[10px] font-medium text-viscum-berry-deep">
+                        褒賞受取
+                      </span>
+                    ) : null}
+                    {commentSubject ? (
+                      <span className="truncate text-[11px] text-viscum-muted">
+                        「{commentSubject}」
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+                <WorkFeedRow work={work} className="lg:border-viscum-line" />
+              </div>
+            ))}
+          </div>
+          <PortfolioPagerBar
+            page={page}
+            pageCount={pageCount}
+            onPrev={() => goToPage(page - 1)}
+            onNext={() => goToPage(page + 1)}
+          />
+        </>
       )}
     </section>
   );

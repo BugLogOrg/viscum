@@ -32,14 +32,14 @@ export default async function SeederPortfolioPage({ params }: Props) {
     <BrowseChrome>
       <SiteHeader backHref="/" hideOnMd />
 
-      <div className="max-w-lg">
+      <div className="w-full max-w-5xl">
       <header className="border-b border-viscum-line px-4 py-5">
         <PortfolioHeader
           handle={display}
           action={<FollowButton handle={display} />}
         />
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 max-w-lg">
           <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[13px] font-medium text-viscum-ink">

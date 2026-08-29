@@ -2,6 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
+import {
+  PortfolioPagerBar,
+  PORTFOLIO_PAGE_SIZE,
+  usePortfolioPage,
+} from "@/components/PortfolioPager";
 import type { Work } from "@/data/dummy-works";
 import {
   isDirectRequestLane,
@@ -18,8 +23,7 @@ type Props = {
 
 /**
  * 公開プロフィールの「シードした作品」。
- * 決済完了ではなく、棚に出した段階（コンペ募集中含む）で載せる。
- * 直依頼レーン・下書きは載せない。
+ * TOP同様 lg 2列・10件ページ。直依頼レーン・下書きは載せない。
  */
 export function SeededWorksPortfolio({ handle, initialWorks }: Props) {
   const [localWorks, setLocalWorks] = useState<Work[]>([]);
@@ -51,6 +55,11 @@ export function SeededWorksPortfolio({ handle, initialWorks }: Props) {
     return [...map.values()].sort((a, b) => a.hoursAgo - b.hoursAgo);
   }, [initialWorks, localWorks]);
 
+  const { page, pageCount, pageItems, goToPage } = usePortfolioPage(
+    works,
+    PORTFOLIO_PAGE_SIZE,
+  );
+
   return (
     <section className="border-b border-viscum-line">
       <p className="px-4 pt-4 text-[20px] font-bold text-viscum-ink">
@@ -64,11 +73,23 @@ export function SeededWorksPortfolio({ handle, initialWorks }: Props) {
           まだシードした作品はありません。
         </p>
       ) : (
-        <div className="mt-2">
-          {works.map((w) => (
-            <WorkFeedRow key={w.id} work={w} />
-          ))}
-        </div>
+        <>
+          <div className="mt-2 lg:grid lg:grid-cols-2 lg:divide-x lg:divide-viscum-line">
+            {pageItems.map((w) => (
+              <WorkFeedRow
+                key={w.id}
+                work={w}
+                className="lg:border-viscum-line"
+              />
+            ))}
+          </div>
+          <PortfolioPagerBar
+            page={page}
+            pageCount={pageCount}
+            onPrev={() => goToPage(page - 1)}
+            onNext={() => goToPage(page + 1)}
+          />
+        </>
       )}
     </section>
   );
