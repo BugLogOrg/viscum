@@ -85,8 +85,8 @@ function CompactWorkLink({
                 : "text-viscum-protocol-red"
             }`}
           >
-            {skewHint.lean === "blue" ? "賛成寄り" : "止まれ寄り"} · 青
-            {skewHint.blue}／赤{skewHint.red}
+            {skewHint.lean === "blue" ? "賛成寄り" : "止まれ寄り"} · 賛
+            {skewHint.blue}／止{skewHint.red}
           </span>
         ) : null}
       </div>
