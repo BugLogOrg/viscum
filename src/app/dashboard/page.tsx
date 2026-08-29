@@ -237,9 +237,23 @@ export default function DashboardPage() {
             </p>
             <nav
               aria-label="ダッシュボード目次"
-              className="mt-3 rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-1"
+              className="mt-3 rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-2"
             >
-              <ul className="divide-y divide-viscum-line text-[13px] font-medium text-viscum-brand">
+              <p className="text-[11px] font-medium tracking-wide text-viscum-muted">
+                目次
+              </p>
+              <ul className="mt-1 divide-y divide-viscum-line text-[13px] font-medium text-viscum-brand">
+                <li>
+                  <a
+                    href="#published"
+                    className="block py-2.5 underline-offset-2 hover:underline"
+                  >
+                    公開中のシード
+                    {neonPublished.length + published.length > 0
+                      ? `（${neonPublished.length + published.length}）`
+                      : ""}
+                  </a>
+                </li>
                 <li>
                   <Link
                     href="/dashboard/messages"
@@ -250,20 +264,23 @@ export default function DashboardPage() {
                 </li>
                 <li>
                   <a
-                    href="#request-status"
-                    className="block py-2.5 underline-offset-2 hover:underline"
-                  >
-                    直依頼の進捗
-                  </a>
-                </li>
-                <li>
-                  <a
                     href="#drafts"
                     className="block py-2.5 underline-offset-2 hover:underline"
                   >
                     下書き
                     {neonDrafts.length + drafts.length > 0
                       ? `（${neonDrafts.length + drafts.length}）`
+                      : ""}
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#direct-requests"
+                    className="block py-2.5 underline-offset-2 hover:underline"
+                  >
+                    直依頼の下書き
+                    {requestPacks.length > 0
+                      ? `（${requestPacks.length}）`
                       : ""}
                   </a>
                 </li>
@@ -671,7 +688,7 @@ export default function DashboardPage() {
         <section id="direct-requests" className="scroll-mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-[15px] font-semibold text-viscum-ink">
-              直依頼メモ
+              直依頼の下書き
               {requestPacks.length > 0 ? (
                 <span className="ml-1.5 text-[13px] font-normal text-viscum-muted">
                   {requestPacks.length}件
@@ -686,7 +703,7 @@ export default function DashboardPage() {
             </Link>
           </div>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
-            棚には出ない別ID（drq_）です。相手と金額の指定へ進めます。
+            まだ相手に送る前の下書きです（棚に出ない drq_）。相手・金額を決めてご依頼DMへ進めます。進行中のやりとりはご依頼DMを見てください。
           </p>
           {requestPacks.length === 0 ? (
             <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">

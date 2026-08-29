@@ -69,11 +69,11 @@ export function DashboardDirectRequestStatus({
           href="/dashboard/messages"
           className="text-[13px] font-medium text-viscum-brand underline"
         >
-          ご依頼DM一覧
+          一覧へ
         </Link>
       </div>
       <p className="text-[11px] leading-relaxed text-viscum-muted">
-        成果物のステータス確認はご依頼DM本文が正本です。ここでも同じラベルで進捗を見られます。
+        進行中のご依頼DMのステータス抜粋です。やりとり・提出の正本はご依頼DMです。
       </p>
 
       {loading ? (
