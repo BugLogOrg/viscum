@@ -17,14 +17,7 @@ import {
 } from "@/lib/hot-open-ranking";
 import { countCommentAttitudes } from "@/lib/protocol-colors";
 
-function rankNewestWorks(works: Work[], limit = 5): Work[] {
-  return works
-    .slice()
-    .sort((a, b) => a.hoursAgo - b.hoursAgo)
-    .slice(0, limit);
-}
-
-/** 賛成(青)／止まれ(赤)の偏り。逆張り・応援向きの発見用 */
+/** 賛成(青)／止まれ(赤)の偏り＝偏差。逆張り・応援向きの発見用 */
 function rankSkewedWorks(
   works: Work[],
   opts?: { excludeId?: string; limit?: number },
@@ -146,20 +139,12 @@ export function FeedShelfCorners({
     () => rankHotOpenWorks(works, { excludeId: excludeWorkId, limit: 5 }),
     [works, excludeWorkId],
   );
-  const newest = useMemo(
-    () =>
-      rankNewestWorks(
-        works.filter((w) => w.id !== excludeWorkId),
-        5,
-      ),
-    [works, excludeWorkId],
-  );
   const skewed = useMemo(
     () => rankSkewedWorks(works, { excludeId: excludeWorkId, limit: 5 }),
     [works, excludeWorkId],
   );
 
-  if (hot.length === 0 && newest.length === 0 && skewed.length === 0) {
+  if (hot.length === 0 && skewed.length === 0) {
     return null;
   }
 
@@ -194,28 +179,10 @@ export function FeedShelfCorners({
         </section>
       ) : null}
 
-      {newest.length > 0 ? (
-        <section className="border-b border-viscum-line px-3 py-3" aria-label="新着">
-          <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
-            新着
-          </h2>
-          <p className="mt-1 text-[11px] leading-snug text-viscum-muted">
-            最近シードされた作品
-          </p>
-          <ul className="mt-1.5 divide-y divide-viscum-line">
-            {newest.map((w) => (
-              <li key={w.id}>
-                <CompactWorkLink work={w} />
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
-
       {skewed.length > 0 ? (
-        <section className="px-3 py-3" aria-label="賛否が偏っている">
+        <section className="px-3 py-3" aria-label="偏差">
           <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
-            賛否が偏っている
+            偏差
           </h2>
           <p className="mt-1 text-[11px] leading-snug text-viscum-muted">
             賛成か止まれに寄っている開催中。逆張りコメントの余地
