@@ -669,10 +669,7 @@ export function FeedClient({
           </nav>
         ) : null}
       </section>
-      {filter === "all" &&
-      !specialty &&
-      !query.trim() &&
-      page <= 1 ? (
+      {filter === "all" && !specialty && !query.trim() ? (
         <FeedShelfCorners works={shelf} layout="bottom" />
       ) : null}
     </AppShell>
