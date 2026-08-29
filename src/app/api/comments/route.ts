@@ -166,7 +166,7 @@ export async function POST(req: Request) {
   }
   if (!attitude) {
     return NextResponse.json(
-      { error: "コメントの態度（緑／青／赤）を選んでください" },
+      { error: "コメントの態度（賛同／止まれ／別軸）を選んでください" },
       { status: 400 },
     );
   }

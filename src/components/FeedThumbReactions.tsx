@@ -65,7 +65,7 @@ export function FeedBookmarkButton({
 
 /**
  * 緑・青・赤の件数表示（情報の呼び出し・タップで詳細へ）。
- * フィードでは押せない態度選択ではなく、コメント態度の集計。
+ * 並びは賛同→止まれ→別軸。フィードでは押せない態度選択ではなく、コメント態度の集計。
  */
 export function FeedAttitudeCounts({
   workId,

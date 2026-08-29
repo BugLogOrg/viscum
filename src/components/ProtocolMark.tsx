@@ -89,7 +89,7 @@ function SproutGlyph({ className }: { className?: string }) {
   );
 }
 
-/** 賛成・通る：丸＋チェック（小サイズでも記号として読める） */
+/** 賛同・通る：丸＋チェック（小サイズでも記号として読める） */
 function CheckCircleGlyph({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden>

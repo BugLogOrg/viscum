@@ -11,7 +11,7 @@ export type CommentAttitudeId = Exclude<ProtocolColorId, "yellow">;
 /** 役割を表す線画アイコン（仮。語とセットで使う） */
 export type ProtocolIconId =
   | "sprout" /** 緑: 跳ねる・芽・横への生長 */
-  | "checkCircle" /** 青: 賛成・通る */
+  | "checkCircle" /** 青: 賛同・通る */
   | "bookmark" /** 黄: 気になる・あとで */
   | "stopOctagon"; /** 赤: 止まれ */
 
@@ -44,12 +44,12 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     id: "blue",
     cssVar: "--viscum-protocol-blue",
     softVar: "--viscum-protocol-blue-soft",
-    label: "賛成",
+    label: "賛同",
     labelStatus: "provisional",
     attitude: "このままでもイケてる・良いものとして推せる",
     emoji: "🔵",
     icon: "checkCircle",
-    iconWhy: "丸チェック＝通る・賛成（2026-08-29 確定。手アイコンは不採用）",
+    iconWhy: "丸チェック＝通る・賛同（2026-08-29 確定。手アイコンは不採用）",
   },
   {
     id: "yellow",
@@ -75,10 +75,16 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
   },
 ];
 
-/** コメント必須の3態度（緑・青・赤） */
-export const COMMENT_ATTITUDES: ProtocolColorDef[] = PROTOCOL_COLORS.filter(
-  (c): c is ProtocolColorDef & { id: CommentAttitudeId } => c.id !== "yellow",
-);
+/** コメント必須の3態度。並びは賛同→止まれ→別軸（別軸は第三の道） */
+const COMMENT_ATTITUDE_ORDER: CommentAttitudeId[] = ["blue", "red", "green"];
+
+export const COMMENT_ATTITUDES: (ProtocolColorDef & {
+  id: CommentAttitudeId;
+})[] = COMMENT_ATTITUDE_ORDER.map((id) => {
+  const c = PROTOCOL_COLORS.find((x) => x.id === id);
+  if (!c) throw new Error(`missing protocol color: ${id}`);
+  return c as ProtocolColorDef & { id: CommentAttitudeId };
+});
 
 export function isCommentAttitudeId(v: unknown): v is CommentAttitudeId {
   return v === "green" || v === "blue" || v === "red";

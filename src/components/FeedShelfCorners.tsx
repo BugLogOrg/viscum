@@ -17,7 +17,7 @@ import {
 } from "@/lib/hot-open-ranking";
 import { countCommentAttitudes } from "@/lib/protocol-colors";
 
-/** 賛成(青)／止まれ(赤)の偏り＝偏差。表示は別／賛／止で合計を合わせる */
+/** 賛同(青)／止まれ(赤)の偏り＝偏差。表示は賛／止／別で合計を合わせる */
 function rankSkewedWorks(
   works: Work[],
   opts?: { excludeId?: string; limit?: number },
@@ -99,8 +99,8 @@ function CompactWorkLink({
                 : "text-viscum-protocol-red"
             }`}
           >
-            {skewHint.lean === "blue" ? "賛成寄り" : "止まれ寄り"} · 別
-            {skewHint.green}／賛{skewHint.blue}／止{skewHint.red}
+            {skewHint.lean === "blue" ? "賛同寄り" : "止まれ寄り"} · 賛
+            {skewHint.blue}／止{skewHint.red}／別{skewHint.green}
           </span>
         ) : null}
       </div>
@@ -170,7 +170,7 @@ function SkewSection({
         偏差
       </h2>
       <p className="mt-1 text-[11px] leading-snug break-words text-viscum-muted">
-        賛成／止まれに寄っている開催中。逆張りの余地
+        賛同／止まれに寄っている開催中。逆張りの余地
       </p>
       <ul className="mt-1.5 divide-y divide-viscum-line">
         {skewed.map(({ work, lean, green, blue, red }) => (
