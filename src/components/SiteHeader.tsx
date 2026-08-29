@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
 import { ViscumMark } from "@/components/ViscumMark";
+import { VISCUM_ENTRANCE_LINE } from "@/lib/brand-copy";
 
 export function SiteHeader({
   title = "VISCUM",
@@ -14,13 +15,22 @@ export function SiteHeader({
   hidePostCta = false,
   /** ログイン／オンボなど：通知・アカウント操作を出さない */
   hideAccountActions = false,
+  /** 入口一文（モバイル帯）。md以上は AppShell 側。nullで非表示 */
+  entranceLine,
 }: {
   title?: string;
   backHref?: string;
   hideOnMd?: boolean;
   hidePostCta?: boolean;
   hideAccountActions?: boolean;
+  entranceLine?: string | null;
 }) {
+  const resolvedEntrance =
+    entranceLine === null
+      ? null
+      : entranceLine === undefined
+        ? VISCUM_ENTRANCE_LINE
+        : entranceLine;
   // hideOnMd 時、md以上は AppShell 側の HeaderAccountActions だけにする（二重 fetch 防止）
   const [showMobileAccount, setShowMobileAccount] = useState(!hideOnMd);
 
@@ -81,6 +91,11 @@ export function SiteHeader({
           <span className="w-0" aria-hidden />
         )}
       </div>
+      {resolvedEntrance ? (
+        <p className="font-viscum-display border-t border-viscum-line px-4 py-2 text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted">
+          {resolvedEntrance}
+        </p>
+      ) : null}
     </header>
   );
 }

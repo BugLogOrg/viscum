@@ -6,6 +6,7 @@ import { HeaderAccountActions } from "@/components/HeaderAccountActions";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
 import { DEMO_SPECIALTIES } from "@/data/specialties";
+import { VISCUM_ENTRANCE_LINE } from "@/lib/brand-copy";
 
 export { DEMO_SPECIALTIES };
 
@@ -14,6 +15,7 @@ export { DEMO_SPECIALTIES };
  * - feed: フィード上でフィルタを state 操作
  * - chrome: 作品詳細・/dashboard など。ナビはホームへのリンク（左カラム常時）
  * アカウント操作は右上メニューへ（左には棚ナビのみ）
+ * 入口一文はシェル常駐（md帯）。モバイルは SiteHeader 側。
  */
 export function AppShell({
   children,
@@ -26,7 +28,7 @@ export function AppShell({
   openCount,
   showSpecialty = true,
   variant = "feed",
-  /** Phase 2: ロゴ横（md以上のメイン先頭帯） */
+  /** undefined=既定文言／null=非表示／文字列=上書き */
   entranceLine,
 }: {
   children: ReactNode;
@@ -43,6 +45,12 @@ export function AppShell({
   variant?: "feed" | "chrome";
   entranceLine?: string | null;
 }) {
+  const resolvedEntrance =
+    entranceLine === null
+      ? null
+      : entranceLine === undefined
+        ? VISCUM_ENTRANCE_LINE
+        : entranceLine;
   const interactive = variant === "feed" && !!onFeedFilter;
   const shelfActive = interactive && feedFilter === "all";
   const followActive = interactive && feedFilter === "follow";
@@ -226,9 +234,9 @@ export function AppShell({
 
       <div className="min-w-0 flex-1 lg:border-r lg:border-viscum-line lg:pr-3">
         <div className="sticky top-0 z-10 hidden h-12 items-center gap-3 border-b border-viscum-line bg-viscum-paper/95 px-4 backdrop-blur-sm md:flex">
-          {entranceLine ? (
+          {resolvedEntrance ? (
             <p className="font-viscum-display min-w-0 flex-1 truncate text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted">
-              {entranceLine}
+              {resolvedEntrance}
             </p>
           ) : (
             <span className="min-w-0 flex-1" aria-hidden />

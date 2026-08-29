@@ -330,13 +330,6 @@ export function FeedClient({
     (w) => w.status === "open" || w.status === "pay_soon",
   ).length;
 
-  /** Phase 2 最小: 入口一文はホーム（すべて・濾しなし）だけ */
-  const showEntranceLine =
-    filter === "all" && !specialty && !query.trim();
-  const entranceLine = showEntranceLine
-    ? "作ったものに、リアルな反応を。"
-    : null;
-
   const contextCrumbs: string[] = [
     filter === "follow"
       ? sessionPending
@@ -407,14 +400,8 @@ export function FeedClient({
       onClearSearch={clearSearch}
       onHome={goHomeFeed}
       openCount={openCount}
-      entranceLine={entranceLine}
     >
       <SiteHeader hideOnMd />
-      {entranceLine ? (
-        <p className="font-viscum-display border-b border-viscum-line px-4 py-2 text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted md:hidden">
-          {entranceLine}
-        </p>
-      ) : null}
       {publishedId ? (
         <div className="border-b border-viscum-leaf/40 bg-viscum-leaf-soft/50 px-4 py-3">
           <p className="text-[14px] font-medium text-viscum-leaf-deep">
