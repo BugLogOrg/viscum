@@ -187,9 +187,8 @@ export function ProtocolMark({
   className?: string;
 }) {
   const def = PROTOCOL_COLORS.find((c) => c.id === id)!;
-  // 芽は土があるので視覚重心が下がりやすい → 緑だけわずかに上げる（2px→試:3px）
-  const optical =
-    id === "green" ? "-translate-y-[3px]" : "";
+  // 芽は土があるので視覚重心が下がりやすい → 緑だけ 3px 上げ（2026-08-29 mDB OK）
+  const optical = id === "green" ? "-translate-y-[3px]" : "";
   return (
     <span
       className={`inline-flex shrink-0 leading-none ${optical} ${COLOR_CLASS[id]}`}
