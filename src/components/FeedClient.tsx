@@ -33,6 +33,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SuggestFollows } from "@/components/SuggestFollows";
 import { FollowButton } from "@/components/FollowButton";
 import { DemoBadge } from "@/components/DemoBadge";
+import { FeedShelfCorners } from "@/components/FeedShelfCorners";
 
 type Filter = "all" | "open" | "follow";
 
@@ -598,6 +599,9 @@ export function FeedClient({
             </p>
           )}
       </section>
+      {filter === "all" && !specialty && !query.trim() ? (
+        <FeedShelfCorners works={shelf} />
+      ) : null}
     </AppShell>
   );
 }
