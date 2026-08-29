@@ -71,3 +71,26 @@ export function addLocalComment(
   writeLocalComments(workId, next);
   return row;
 }
+
+/** 本人端末のローカルコメント削除（選出・褒賞済みは不可） */
+export function removeLocalComment(
+  workId: string,
+  commentId: string,
+): { ok: true } | { ok: false; error: string } {
+  const list = readLocalComments(workId);
+  const target = list.find((c) => c.id === commentId);
+  if (!target) {
+    return { ok: false, error: "コメントが見つかりません" };
+  }
+  if (target.adopted) {
+    return { ok: false, error: "選出済みのコメントは削除できません" };
+  }
+  if (target.tipped) {
+    return { ok: false, error: "褒賞支払い済みのコメントは削除できません" };
+  }
+  writeLocalComments(
+    workId,
+    list.filter((c) => c.id !== commentId),
+  );
+  return { ok: true };
+}

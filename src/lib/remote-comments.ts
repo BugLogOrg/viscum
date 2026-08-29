@@ -81,3 +81,26 @@ export async function postCommentThanks(input: {
     return { ok: false, error: "ネットワークエラー" };
   }
 }
+
+/** 投稿者本人のコメント削除（選出・褒賞済みはサーバでも拒否） */
+export async function deleteWorkComment(input: {
+  workId: string;
+  commentId: string;
+}): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const res = await fetch(
+      `/api/comments/${encodeURIComponent(input.commentId)}?workId=${encodeURIComponent(input.workId)}`,
+      { method: "DELETE" },
+    );
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: data.error || `削除に失敗（${res.status}）`,
+      };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "ネットワークエラー" };
+  }
+}

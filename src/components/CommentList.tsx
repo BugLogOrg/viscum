@@ -18,7 +18,8 @@ import {
 } from "@/data/suggested-seeders";
 import { readLocalProfile } from "@/lib/local-profile";
 import { addLocalThanks, readLocalThanks } from "@/lib/local-thanks";
-import { postCommentThanks } from "@/lib/remote-comments";
+import { removeLocalComment } from "@/lib/local-comments";
+import { deleteWorkComment, postCommentThanks } from "@/lib/remote-comments";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
 const NEON_COMMENT_ID =
@@ -91,6 +92,7 @@ export function CommentList({
   prizeYen,
   workId,
   seederHandle,
+  onCommentDeleted,
 }: {
   comments: Comment[];
   status: CompStatus;
@@ -98,6 +100,7 @@ export function CommentList({
   workId: string;
   /** 作品のシーダー。操作ボタンはこの人だけに出す */
   seederHandle: string;
+  onCommentDeleted?: (commentId: string) => void;
 }) {
   const { data: session } = useSession();
   const me = normHandle(session?.user?.handle ?? "");
@@ -111,6 +114,8 @@ export function CommentList({
   const [thankedIds, setThankedIds] = useState<Set<string>>(() => new Set());
   const [thankingId, setThankingId] = useState<string | null>(null);
   const [thankError, setThankError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     const fromComments = comments.filter((c) => c.thanked).map((c) => c.id);
@@ -172,6 +177,43 @@ export function CommentList({
     }
   }
 
+  async function startDelete(c: Comment) {
+    if (
+      !window.confirm(
+        "このコメントを削除しますか？元に戻せません。",
+      )
+    ) {
+      return;
+    }
+    setDeleteError(null);
+    setDeletingId(c.id);
+    try {
+      if (c.id.startsWith("local_c_")) {
+        const res = removeLocalComment(workId, c.id);
+        if (!res.ok) {
+          setDeleteError(res.error);
+          return;
+        }
+        onCommentDeleted?.(c.id);
+        if (openId === c.id) setOpenId(null);
+        return;
+      }
+      if (!isNeonCommentId(c.id)) {
+        setDeleteError("デモ用コメントは削除できません");
+        return;
+      }
+      const res = await deleteWorkComment({ workId, commentId: c.id });
+      if (!res.ok) {
+        setDeleteError(res.error || "削除に失敗しました");
+        return;
+      }
+      onCommentDeleted?.(c.id);
+      if (openId === c.id) setOpenId(null);
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   return (
     <section className="border-t border-viscum-line pt-4" aria-label="コメント">
       <h2 className="text-[20px] font-bold text-viscum-ink">
@@ -191,6 +233,11 @@ export function CommentList({
       {thankError && (
         <p className="mt-2 rounded-md border border-viscum-berry/40 bg-viscum-berry/10 px-3 py-2 text-[12px] text-viscum-berry-deep">
           {thankError}
+        </p>
+      )}
+      {deleteError && (
+        <p className="mt-2 rounded-md border border-viscum-berry/40 bg-viscum-berry/10 px-3 py-2 text-[12px] text-viscum-berry-deep">
+          {deleteError}
         </p>
       )}
 
@@ -235,6 +282,11 @@ export function CommentList({
             !c.tipped &&
             status !== "none" &&
             status !== "closed";
+          const canDeleteOwn =
+            isCommentAuthor &&
+            !c.adopted &&
+            !c.tipped &&
+            !isDemoCommentId(c.id);
 
           return (
             <li key={c.id}>
@@ -381,6 +433,20 @@ export function CommentList({
                         }}
                       >
                         褒賞を渡す {prizeLabel}（デモ）
+                      </button>
+                    )}
+
+                    {canDeleteOwn && (
+                      <button
+                        type="button"
+                        disabled={deletingId === c.id}
+                        className="rounded-md border border-viscum-line px-2.5 py-1 text-[11px] font-medium text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry-deep disabled:opacity-60"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void startDelete(c);
+                        }}
+                      >
+                        {deletingId === c.id ? "削除中…" : "削除"}
                       </button>
                     )}
 

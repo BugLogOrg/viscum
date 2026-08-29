@@ -72,6 +72,7 @@ export function WorkEngage({
 
   const [localExtra, setLocalExtra] = useState<Comment[]>([]);
   const [remoteExtra, setRemoteExtra] = useState<Comment[]>([]);
+  const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set());
   const [openForm, setOpenForm] = useState(false);
   const [subject, setSubject] = useState("");
   const [attitude, setAttitude] = useState<CommentAttitudeId | null>(null);
@@ -88,6 +89,7 @@ export function WorkEngage({
   useEffect(() => {
     setLocalExtra(readLocalComments(workId));
     setRemoteExtra([]);
+    setRemovedIds(new Set());
     let cancelled = false;
     void fetchWorkComments(workId).then((res) => {
       if (cancelled) return;
@@ -137,12 +139,13 @@ export function WorkEngage({
     const seen = new Set<string>();
     const merged: Comment[] = [];
     for (const c of [...remoteExtra, ...localExtra, ...initialComments]) {
+      if (removedIds.has(c.id)) continue;
       if (seen.has(c.id)) continue;
       seen.add(c.id);
       merged.push(c);
     }
     return withLocalThanks(workId, merged);
-  }, [remoteExtra, localExtra, initialComments, workId]);
+  }, [remoteExtra, localExtra, initialComments, workId, removedIds]);
 
   const showCompBand =
     status === "open" || status === "pay_soon" || status === "closed";
@@ -793,6 +796,11 @@ export function WorkEngage({
         prizeYen={prizeYen}
         workId={workId}
         seederHandle={seederHandle}
+        onCommentDeleted={(commentId) => {
+          setRemovedIds((prev) => new Set([...prev, commentId]));
+          setLocalExtra((prev) => prev.filter((c) => c.id !== commentId));
+          setRemoteExtra((prev) => prev.filter((c) => c.id !== commentId));
+        }}
       />
     </div>
   );
