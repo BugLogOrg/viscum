@@ -152,8 +152,8 @@ export function installDemoNotifies() {
     {
       id: "n_demo_tip",
       kind: "tip_received",
-      title: "チップを受け取りました",
-      body: "コメントが採用され、チップの支払いが完了しました（デモ）。",
+      title: "褒賞を受け取りました",
+      body: "コメントが選出され、褒賞の支払いが完了しました（デモ）。",
       href: "/u/tori",
       createdAt: new Date(now - 2 * 86400000).toISOString(),
       read: true,

@@ -176,7 +176,7 @@ export async function POST(req: Request) {
             currency: "jpy",
             unit_amount: amountYen,
             product_data: {
-              name: "Viscum 採用褒賞",
+              name: "Viscum 褒賞",
               description: comment.subject.slice(0, 120),
             },
           },

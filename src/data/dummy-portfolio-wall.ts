@@ -17,7 +17,7 @@ const DUMMY_WALL: PortfolioWallPost[] = [
     id: "wall-ken-1",
     portfolioHandle: "ken",
     author: "ayu",
-    body: "採用〜支払いまでスムーズでした。締切後の追記コメントにも反応もらえて助かりました。また書けます。",
+    body: "選出〜褒賞の支払いまでスムーズでした。締切後の追記コメントにも反応もらえて助かりました。また書けます。",
     hoursAgo: 18,
   },
   {
@@ -46,7 +46,7 @@ const DUMMY_WALL: PortfolioWallPost[] = [
     id: "wall-tori-1",
     portfolioHandle: "tori",
     author: "neo",
-    body: "チップ着金まで見えました。スコアじゃなく件数の事実だけで十分信頼できます。",
+    body: "褒賞の着金まで見えました。スコアじゃなく件数の事実だけで十分信頼できます。",
     hoursAgo: 5,
   },
   {

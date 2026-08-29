@@ -50,7 +50,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         <p>
           VISCUMはそのあいだに置く
           <span className="font-medium">第三の道</span>
-          です。個人が作ったあと、少額でも「見てもらう・書いてもらう」にお金と手続きを乗せられる正規の出口。入場は無料で、払うのは出した側の任意。書く側にお金が回るのは、シーダーが採用・褒賞したあとです。
+          です。個人が作ったあと、少額でも「見てもらう・書いてもらう」にお金と手続きを乗せられる正規の出口。入場は無料で、払うのは出した側の任意。書く側にお金が回るのは、シーダーが選出・褒賞したあとです。
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
@@ -100,7 +100,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           <li>直依頼 → 指名した相手への有償オファー</li>
         </ul>
         <p>
-          VISCUMは「メンターが稼ぐ副業アプリ」が本丸ではありません。個人が小さな広告費を落とせる出口です。書く側にお金が回るのは、シーダーが採用・褒賞したあと。
+          VISCUMは「メンターが稼ぐ副業アプリ」が本丸ではありません。個人が小さな広告費を落とせる出口です。書く側にお金が回るのは、シーダーが選出・褒賞したあと。
           <span className="font-medium">
             払った履歴（支払い完了の事実）が本丸
           </span>
@@ -178,9 +178,9 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           代わりに次で濾します。
         </p>
         <ul className="list-disc space-y-2 pl-5">
-          <li>読んで選ぶのはシーダー本人（採用・褒賞は全員払いではない）</li>
+          <li>読んで選ぶのはシーダー本人（選出・褒賞は全員払いではない）</li>
           <li>おすすめ質問はあるが、範囲外の指摘も書いてよい</li>
-          <li>ただ悪く言うだけは、採用も褒賞も生まれにくい</li>
+          <li>ただ悪く言うだけは、選出も褒賞も生まれにくい</li>
           <li>
             公開ブーストは「やらせ・星の売買」を約束しない。正直な反応の募集
           </li>
@@ -236,7 +236,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         <ul className="list-disc space-y-2 pl-5">
           <li>シーダーは「見てほしいところ」を入口として書く</li>
           <li>メンターはおすすめ質問に沿っても、気づいた追加でもよい</li>
-          <li>どれを採るかはシーダーが選ぶ（採用・褒賞）</li>
+          <li>どれを採るかはシーダーが選ぶ（選出・褒賞）</li>
           <li>
             終わったあともコメントは書けるが、締切後は賞金対象外と明示するつもりです
           </li>
@@ -269,7 +269,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           </li>
           <li>
             <span className="font-medium">払う</span>
-            … シーダーが内容を見て、採用・褒賞するときだけ決済します。メンター側が先に課金される流れではありません。
+            … シーダーが内容を見て、選出・褒賞するときだけ決済します。メンター側が先に課金される流れではありません。
           </li>
         </ol>
         <p>
@@ -293,7 +293,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <span className="font-medium">棚（VISCUM内コンペ／公開ブースト）</span>
-            … 広く集める祭り。コメントと採用は公開が燃料です。
+            … 広く集める祭り。コメントと選出は公開が燃料です。
           </li>
           <li>
             <span className="font-medium">直依頼</span>
@@ -336,7 +336,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           </li>
         </ul>
         <p>
-          スコアや順位はありません。完了した支払いと採用の事実だけが看板です。
+          スコアや順位はありません。完了した支払いと選出の事実だけが看板です。
         </p>
       </>
     ),
@@ -387,7 +387,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <span className="font-medium">シーダー（払う側）</span>
-            … 褒賞を払うタイミングで Stripe Checkout（カード決済）が必要になります。VISCUM上で「採用して支払う」などを押したときです。
+            … 褒賞を払うタイミングで Stripe Checkout（カード決済）が必要になります。VISCUM上で「褒賞を渡す」などを押したときです。
           </li>
           <li>
             <span className="font-medium">メンター（受け取る側）</span>
