@@ -1,8 +1,17 @@
 import type { Metadata } from "next";
+import { Noto_Serif_JP } from "next/font/google";
 import { auth } from "@/auth";
 import { Providers } from "@/components/Providers";
 import { siteOrigin } from "@/lib/work-og";
 import "./globals.css";
+
+/** 入口一文など、UIゴシックと差をつける表示用 */
+const displaySerif = Noto_Serif_JP({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  variable: "--font-viscum-display",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin()),
@@ -35,7 +44,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const session = await auth();
   return (
-    <html lang="ja">
+    <html lang="ja" className={displaySerif.variable}>
       <body className="min-h-dvh antialiased">
         <Providers session={session}>{children}</Providers>
       </body>
