@@ -13,6 +13,7 @@ import { SeederNameText } from "@/components/SeederNameText";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
   loadClientShelfWorks,
+  rankClosingSoonWorks,
   rankHotOpenWorks,
 } from "@/lib/hot-open-ranking";
 import { countCommentAttitudes } from "@/lib/protocol-colors";
@@ -156,6 +157,33 @@ function HotSection({
   );
 }
 
+function ClosingSoonSection({
+  closing,
+  className = "",
+}: {
+  closing: Work[];
+  className?: string;
+}) {
+  if (closing.length === 0) return null;
+  return (
+    <section className={className} aria-label="終了間近">
+      <h2 className="text-[18px] font-bold leading-tight tracking-wide text-viscum-brand">
+        終了間近
+      </h2>
+      <p className="mt-1.5 text-[12px] leading-snug break-words text-viscum-muted">
+        あと少しで締切。いまなら間に合う
+      </p>
+      <ul className="mt-2 divide-y divide-viscum-line">
+        {closing.map((w) => (
+          <li key={w.id}>
+            <CompactWorkLink work={w} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function SkewSection({
   skewed,
   className = "",
@@ -187,9 +215,9 @@ function SkewSection({
 }
 
 /**
- * 発見コーナー（注目＋偏差）。
- * - bottom: TOP用。一覧の下に横2枠（右カラムにしない＝息苦しさ回避）
- * - sideDuo: 詳細用。右に注目｜偏差の二段カラム
+ * 発見コーナー（注目 → 終了間近 → 偏差）。
+ * - bottom: TOP用。左＝注目＋終了間近／右＝偏差
+ * - sideDuo: 詳細用。内側右＝注目＋終了間近／外側右＝偏差。携帯は縦に注目→終了→偏差
  */
 export function FeedShelfCorners({
   works: worksProp,
@@ -238,6 +266,17 @@ export function FeedShelfCorners({
     () => rankHotOpenWorks(works, { excludeId: excludeWorkId, limit: 5 }),
     [works, excludeWorkId],
   );
+
+  const closing = useMemo(
+    () =>
+      rankClosingSoonWorks(works, {
+        excludeId: excludeWorkId,
+        excludeIds: hot.map((w) => w.id),
+        limit: 5,
+      }),
+    [works, excludeWorkId, hot],
+  );
+
   // 偏差は「いま見ている作品」も候補に残す（除外するとTOPと件数がズレる）
   // ただしリスト先頭で自分自身は出さない
   const skewed = useMemo(() => {
@@ -247,7 +286,9 @@ export function FeedShelfCorners({
     return without.slice(0, 5);
   }, [works, excludeWorkId]);
 
-  if (hot.length === 0 && skewed.length === 0) return null;
+  if (hot.length === 0 && closing.length === 0 && skewed.length === 0) {
+    return null;
+  }
 
   if (layout === "sideDuo") {
     return (
@@ -255,9 +296,17 @@ export function FeedShelfCorners({
         className={`flex w-full min-w-0 flex-col overflow-hidden border-t border-viscum-line bg-viscum-paper-2/30 xl:w-auto xl:flex-row xl:self-start xl:border-l xl:border-t-0 xl:pr-4 ${className}`}
         aria-label="発見"
       >
+        {/* 内側右（携帯では上）：注目 → 終了間近 */}
         <div className="min-w-0 xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-viscum-line">
           <HotSection hot={hot} className="min-w-0 px-3 py-3" />
+          <ClosingSoonSection
+            closing={closing}
+            className={`min-w-0 px-3 py-3 ${
+              hot.length > 0 ? "border-t border-viscum-line" : ""
+            }`}
+          />
         </div>
+        {/* 外側右（携帯では下）：偏差 */}
         <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-t-0">
           <SkewSection skewed={skewed} className="min-w-0 px-3 py-3" />
         </div>
@@ -265,17 +314,22 @@ export function FeedShelfCorners({
     );
   }
 
-  // TOP: 一覧の下・横2枠
+  // TOP: 左＝注目＋終了間近／右＝偏差（携帯は縦：注目→終了→偏差）
   return (
     <aside
       className={`min-w-0 overflow-hidden border-t border-viscum-line bg-viscum-paper-2/25 ${className}`}
       aria-label="発見"
     >
       <div className="grid min-w-0 gap-0 md:grid-cols-2 md:divide-x md:divide-viscum-line">
-        <HotSection
-          hot={hot}
-          className="min-w-0 border-b border-viscum-line px-4 py-4 md:border-b-0"
-        />
+        <div className="min-w-0 border-b border-viscum-line md:border-b-0">
+          <HotSection hot={hot} className="min-w-0 px-4 py-4" />
+          <ClosingSoonSection
+            closing={closing}
+            className={`min-w-0 px-4 py-4 ${
+              hot.length > 0 ? "border-t border-viscum-line" : ""
+            }`}
+          />
+        </div>
         <SkewSection skewed={skewed} className="min-w-0 px-4 py-4" />
       </div>
     </aside>

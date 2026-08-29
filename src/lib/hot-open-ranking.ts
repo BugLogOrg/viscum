@@ -68,3 +68,43 @@ export function rankHotOpenWorks(
     .sort(compareHotOpen)
     .slice(0, limit);
 }
+
+/** 終了間近（見逃し救済）。締切が近い開催中。注目と被ったら除外 */
+export const CLOSING_SOON = {
+  /** この時間以内を「間近」 */
+  withinHours: 48,
+  defaultLimit: 5,
+} as const;
+
+export function rankClosingSoonWorks(
+  works: Work[],
+  opts?: {
+    excludeId?: string;
+    /** 注目などですでに出した id（重複回避） */
+    excludeIds?: Iterable<string>;
+    limit?: number;
+    withinHours?: number;
+  },
+): Work[] {
+  const limit = opts?.limit ?? CLOSING_SOON.defaultLimit;
+  const within = opts?.withinHours ?? CLOSING_SOON.withinHours;
+  const skip = new Set<string>(opts?.excludeIds ?? []);
+  if (opts?.excludeId) skip.add(opts.excludeId);
+
+  return works
+    .filter((w) => {
+      if (w.status !== "open") return false;
+      if (skip.has(w.id)) return false;
+      const h = w.closesInHours;
+      if (h == null || h <= 0) return false;
+      return h <= within;
+    })
+    .slice()
+    .sort((a, b) => {
+      const ca = a.closesInHours ?? Number.POSITIVE_INFINITY;
+      const cb = b.closesInHours ?? Number.POSITIVE_INFINITY;
+      if (ca !== cb) return ca - cb;
+      return a.hoursAgo - b.hoursAgo;
+    })
+    .slice(0, limit);
+}
