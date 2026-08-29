@@ -38,6 +38,8 @@ type Props = {
   prizeYen?: number;
   paymentsDone?: number;
   planLabel?: string | null;
+  /** 「この作品への○○を募集しています」— プランから自動 */
+  recruitPitch?: string | null;
   deadlineLine?: string | null;
   closesAtIso?: string | null;
   tags?: string[];
@@ -58,6 +60,7 @@ export function WorkEngage({
   prizeYen,
   paymentsDone,
   planLabel,
+  recruitPitch = null,
   deadlineLine = null,
   closesAtIso = null,
   tags = [],
@@ -412,6 +415,11 @@ export function WorkEngage({
     <div className="space-y-4">
       {showCompBand && (
         <div className="space-y-2 rounded-lg border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-3 text-sm">
+          {recruitPitch && !compClosed ? (
+            <p className="text-[14px] font-medium leading-snug text-viscum-ink">
+              {recruitPitch}
+            </p>
+          ) : null}
           <StatusBadge
             status={status}
             prizeYen={prizeYen}

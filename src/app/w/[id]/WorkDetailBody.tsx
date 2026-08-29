@@ -16,6 +16,7 @@ import {
   formatPostedLine,
   postedAtFromHoursAgo,
   planBadgeLabel,
+  planRecruitPitch,
   getWorkReactionCounts,
   type Work,
 } from "@/data/dummy-works";
@@ -280,6 +281,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   prizeYen={work.prizeYen}
                   paymentsDone={work.paymentsDone}
                   planLabel={planBadgeLabel(work.plan)}
+                  recruitPitch={planRecruitPitch(work.plan)}
                   deadlineLine={deadlineLine}
                   closesAtIso={closesAt?.toISOString() ?? null}
                   tags={work.tags}

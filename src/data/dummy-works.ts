@@ -78,6 +78,13 @@ export function planBadgeLabel(plan?: DemoSeedPlan): string | undefined {
   return undefined;
 }
 
+/** 詳細コンペ帯：参加CTA直前の一文（プラン名で自動） */
+export function planRecruitPitch(plan?: DemoSeedPlan): string | undefined {
+  const label = planBadgeLabel(plan);
+  if (!label) return undefined;
+  return `この作品への${label}を募集しています`;
+}
+
 /** スキ／気になるの他ユーザ込み件数（デモ）。自分の打刻はUI側で+1する */
 export function getWorkReactionCounts(work: Work): {
   suki: number;
