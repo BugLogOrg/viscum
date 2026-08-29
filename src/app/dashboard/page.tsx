@@ -235,35 +235,40 @@ export default function DashboardPage() {
               シードごとの届き方・成績はここに閉じます（キャンペーン単位）。
               公開プロフィールの信用欄には出しません。
             </p>
-            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
-              <Link
-                href={`/u/${encodeURIComponent(handle)}`}
-                className="text-[13px] font-medium text-viscum-brand underline"
-              >
-                プロフィールを見る
-              </Link>
-              <Link
-                href="/dashboard/messages"
-                className="text-[13px] font-medium text-viscum-brand underline"
-              >
-                ご依頼DM
-              </Link>
-              <a
-                href="#request-status"
-                className="text-[13px] font-medium text-viscum-brand underline"
-              >
-                直依頼の進捗
-              </a>
-              <a
-                href="#drafts"
-                className="text-[13px] font-medium text-viscum-brand underline"
-              >
-                下書き
-                {neonDrafts.length + drafts.length > 0
-                  ? `（${neonDrafts.length + drafts.length}）`
-                  : ""}
-              </a>
-            </p>
+            <nav
+              aria-label="ダッシュボード目次"
+              className="mt-3 rounded-lg border border-viscum-line bg-viscum-paper-2/50 px-3 py-1"
+            >
+              <ul className="divide-y divide-viscum-line text-[13px] font-medium text-viscum-brand">
+                <li>
+                  <Link
+                    href="/dashboard/messages"
+                    className="block py-2.5 underline-offset-2 hover:underline"
+                  >
+                    ご依頼DM
+                  </Link>
+                </li>
+                <li>
+                  <a
+                    href="#request-status"
+                    className="block py-2.5 underline-offset-2 hover:underline"
+                  >
+                    直依頼の進捗
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#drafts"
+                    className="block py-2.5 underline-offset-2 hover:underline"
+                  >
+                    下書き
+                    {neonDrafts.length + drafts.length > 0
+                      ? `（${neonDrafts.length + drafts.length}）`
+                      : ""}
+                  </a>
+                </li>
+              </ul>
+            </nav>
           </div>
           <button
             type="button"
@@ -273,6 +278,221 @@ export default function DashboardPage() {
             ログアウト
           </button>
         </div>
+
+        <section id="published" className="scroll-mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-[15px] font-semibold text-viscum-ink">
+              公開中のシード
+              {published.length > 0 ? (
+                <span className="ml-1.5 text-[13px] font-normal text-viscum-muted">
+                  {published.length}件
+                </span>
+              ) : null}
+            </h2>
+            <div className="flex items-center gap-3">
+              {demoOn ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    clearDemoSeeds(handle);
+                    refresh();
+                  }}
+                  className="text-[12px] text-viscum-muted underline"
+                >
+                  デモを消す
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    installDemoSeeds(handle);
+                    refresh();
+                  }}
+                  className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                >
+                  表示デモを入れる
+                </button>
+              )}
+            </div>
+          </div>
+          <p className="text-[11px] leading-relaxed text-viscum-muted">
+            {demoOn
+              ? "いまは見た目確認用のデモも混ざっています。カードを開くと成績シートへ。"
+              : "トップに載っているシードの成績です。「下書きに戻す」で棚から外せます。"}
+          </p>
+
+          {neonPublished.length === 0 && published.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-viscum-line px-4 py-6 text-center">
+              <p className="text-[13px] leading-relaxed text-viscum-muted">
+                公開中のシードはまだありません。
+              </p>
+              <Link
+                href="/new"
+                className="mt-4 inline-flex rounded-md bg-viscum-berry px-4 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+              >
+                シードする
+              </Link>
+            </div>
+          ) : (
+            <ul className="space-y-3">
+              {neonPublished.map((w) => (
+                <li
+                  key={w.id}
+                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge
+                      status={w.status}
+                      prizeYen={w.prizeYen}
+                      planLabel={planBadgeLabel(w.plan)}
+                      dense
+                    />
+                    <span className="rounded-full bg-viscum-leaf-soft px-2 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                      サーバ・公開中
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
+                    {w.title}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                    {origin ? (
+                      <ShareTextCopyButton
+                        getText={() => buildWorkShareText(w, origin)}
+                      />
+                    ) : null}
+                    <button
+                      type="button"
+                      className="rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
+                      onClick={() => {
+                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ listedOnShelf: false }),
+                        }).then((res) => {
+                          if (res.ok) refresh();
+                          else window.alert("下書きに戻せませんでした");
+                        });
+                      }}
+                    >
+                      下書きに戻す
+                    </button>
+                    <Link
+                      href={`/w/${encodeURIComponent(w.id)}`}
+                      className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                    >
+                      詳細
+                    </Link>
+                    <button
+                      type="button"
+                      className="rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            "このシードを削除しますか？トップからも消えます。",
+                          )
+                        ) {
+                          return;
+                        }
+                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                          method: "DELETE",
+                        }).then((res) => {
+                          if (res.ok) refresh();
+                          else window.alert("削除に失敗しました");
+                        });
+                      }}
+                    >
+                      削除
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {published.map((s) => (
+                <li
+                  key={s.id}
+                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
+                >
+                  <SeedCardChrome s={s} />
+                  {s.id.startsWith("local_") && !isDemoSeed(s.id) ? (
+                    <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                      <Link
+                        href={`/dashboard/${encodeURIComponent(s.id)}`}
+                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                      >
+                        成績を見る
+                      </Link>
+                      {origin ? (
+                        <ShareTextCopyButton
+                          getText={() =>
+                            buildWorkShareText(workFromLocalSeed(s), origin)
+                          }
+                        />
+                      ) : null}
+                      {isLocalSeedListed(s) ? (
+                        <button
+                          type="button"
+                          className="rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
+                          onClick={() => {
+                            const res = unlistLocalSeed(s.id, handle);
+                            if (res.ok) refresh();
+                            else window.alert(res.error);
+                          }}
+                        >
+                          下書きに戻す
+                        </button>
+                      ) : null}
+                      <Link
+                        href={`/w/${encodeURIComponent(s.id)}`}
+                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                      >
+                        詳細
+                      </Link>
+                      <button
+                        type="button"
+                        className="rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
+                        onClick={() => {
+                          if (
+                            !window.confirm(
+                              "このシードを削除しますか？成績の数字も一緒に消えます。",
+                            )
+                          ) {
+                            return;
+                          }
+                          const res = deleteLocalSeed(s.id, handle);
+                          if (res.ok) refresh();
+                          else window.alert(res.error);
+                        }}
+                      >
+                        削除
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                      <Link
+                        href={`/dashboard/${encodeURIComponent(s.id)}`}
+                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                      >
+                        成績を見る
+                      </Link>
+                      {origin ? (
+                        <ShareTextCopyButton
+                          getText={() =>
+                            buildWorkShareText(workFromLocalSeed(s), origin)
+                          }
+                        />
+                      ) : null}
+                      <Link
+                        href={`/w/${encodeURIComponent(s.id)}`}
+                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                      >
+                        詳細
+                      </Link>
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
 
         {handle ? <DashboardDirectRequestStatus handle={handle} /> : null}
 
@@ -523,220 +743,6 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section className="space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-[15px] font-semibold text-viscum-ink">
-              公開中のシード
-              {published.length > 0 ? (
-                <span className="ml-1.5 text-[13px] font-normal text-viscum-muted">
-                  {published.length}件
-                </span>
-              ) : null}
-            </h2>
-            <div className="flex items-center gap-3">
-              {demoOn ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    clearDemoSeeds(handle);
-                    refresh();
-                  }}
-                  className="text-[12px] text-viscum-muted underline"
-                >
-                  デモを消す
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    installDemoSeeds(handle);
-                    refresh();
-                  }}
-                  className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                >
-                  表示デモを入れる
-                </button>
-              )}
-            </div>
-          </div>
-          <p className="text-[11px] leading-relaxed text-viscum-muted">
-            {demoOn
-              ? "いまは見た目確認用のデモも混ざっています。カードを開くと成績シートへ。"
-              : "トップに載っているシードの成績です。「下書きに戻す」で棚から外せます。"}
-          </p>
-
-          {neonPublished.length === 0 && published.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-viscum-line px-4 py-6 text-center">
-              <p className="text-[13px] leading-relaxed text-viscum-muted">
-                公開中のシードはまだありません。
-              </p>
-              <Link
-                href="/new"
-                className="mt-4 inline-flex rounded-md bg-viscum-berry px-4 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
-              >
-                シードする
-              </Link>
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {neonPublished.map((w) => (
-                <li
-                  key={w.id}
-                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge
-                      status={w.status}
-                      prizeYen={w.prizeYen}
-                      planLabel={planBadgeLabel(w.plan)}
-                      dense
-                    />
-                    <span className="rounded-full bg-viscum-leaf-soft px-2 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
-                      サーバ・公開中
-                    </span>
-                  </div>
-                  <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
-                    {w.title}
-                  </p>
-                  <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
-                    {origin ? (
-                      <ShareTextCopyButton
-                        getText={() => buildWorkShareText(w, origin)}
-                      />
-                    ) : null}
-                    <button
-                      type="button"
-                      className="rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
-                      onClick={() => {
-                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ listedOnShelf: false }),
-                        }).then((res) => {
-                          if (res.ok) refresh();
-                          else window.alert("下書きに戻せませんでした");
-                        });
-                      }}
-                    >
-                      下書きに戻す
-                    </button>
-                    <Link
-                      href={`/w/${encodeURIComponent(w.id)}`}
-                      className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                    >
-                      詳細
-                    </Link>
-                    <button
-                      type="button"
-                      className="rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
-                      onClick={() => {
-                        if (
-                          !window.confirm(
-                            "このシードを削除しますか？トップからも消えます。",
-                          )
-                        ) {
-                          return;
-                        }
-                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
-                          method: "DELETE",
-                        }).then((res) => {
-                          if (res.ok) refresh();
-                          else window.alert("削除に失敗しました");
-                        });
-                      }}
-                    >
-                      削除
-                    </button>
-                  </div>
-                </li>
-              ))}
-              {published.map((s) => (
-                <li
-                  key={s.id}
-                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
-                >
-                  <SeedCardChrome s={s} />
-                  {s.id.startsWith("local_") && !isDemoSeed(s.id) ? (
-                    <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
-                      <Link
-                        href={`/dashboard/${encodeURIComponent(s.id)}`}
-                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                      >
-                        成績を見る
-                      </Link>
-                      {origin ? (
-                        <ShareTextCopyButton
-                          getText={() =>
-                            buildWorkShareText(workFromLocalSeed(s), origin)
-                          }
-                        />
-                      ) : null}
-                      {isLocalSeedListed(s) ? (
-                        <button
-                          type="button"
-                          className="rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
-                          onClick={() => {
-                            const res = unlistLocalSeed(s.id, handle);
-                            if (res.ok) refresh();
-                            else window.alert(res.error);
-                          }}
-                        >
-                          下書きに戻す
-                        </button>
-                      ) : null}
-                      <Link
-                        href={`/w/${encodeURIComponent(s.id)}`}
-                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                      >
-                        詳細
-                      </Link>
-                      <button
-                        type="button"
-                        className="rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
-                        onClick={() => {
-                          if (
-                            !window.confirm(
-                              "このシードを削除しますか？成績の数字も一緒に消えます。",
-                            )
-                          ) {
-                            return;
-                          }
-                          const res = deleteLocalSeed(s.id, handle);
-                          if (res.ok) refresh();
-                          else window.alert(res.error);
-                        }}
-                      >
-                        削除
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
-                      <Link
-                        href={`/dashboard/${encodeURIComponent(s.id)}`}
-                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                      >
-                        成績を見る
-                      </Link>
-                      {origin ? (
-                        <ShareTextCopyButton
-                          getText={() =>
-                            buildWorkShareText(workFromLocalSeed(s), origin)
-                          }
-                        />
-                      ) : null}
-                      <Link
-                        href={`/w/${encodeURIComponent(s.id)}`}
-                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                      >
-                        詳細
-                      </Link>
-                    </div>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
       </main>
     </BrowseChrome>
   );
