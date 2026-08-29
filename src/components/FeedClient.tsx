@@ -402,7 +402,10 @@ export function FeedClient({
             <button
               type="button"
               className="text-[12px] text-viscum-muted underline"
-              onClick={() => router.replace("/")}
+              onClick={() => {
+                setPublishedId(null);
+                clearJustPublished();
+              }}
             >
               この表示を消す
             </button>
