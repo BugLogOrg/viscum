@@ -1,7 +1,6 @@
 import { formatYen, planBadgeLabel, type Work } from "@/data/dummy-works";
 import { PUBLIC_BOOST } from "@/data/seed-courses";
 import { resolvePublicOrigin } from "@/lib/public-origin";
-import { OG_IMAGE_BUST } from "@/lib/work-og";
 
 const MENTOR_ASK_MAX = 100;
 
@@ -34,10 +33,10 @@ function mentorAskSnippet(work: Work): string | null {
 
 /** SNS貼り付け用の共有文（詳細・公開直後の正本）。聞くことは載せない */
 export function buildWorkShareText(work: Work, origin?: string): string {
-  // ?v= で X の「取得失敗キャッシュ」を切る（OG画像 bust と同期）
+  // 共有URLは正規のページURLのみ（?v= は OG画像側だけ。貼ると長く謎に見える）
   // vercel.app で開いていても共有URLは本番（viscum.org）
   const base = resolvePublicOrigin(origin);
-  const url = `${base}/w/${work.id}?v=${OG_IMAGE_BUST}`;
+  const url = `${base}/w/${work.id}`;
   const lines: string[] = [];
   const planLabel = planBadgeLabel(work.plan);
 
