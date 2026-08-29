@@ -60,14 +60,10 @@ export function SeededWorksPortfolio({ handle, initialWorks }: Props) {
     PORTFOLIO_PAGE_SIZE,
   );
 
-  const at = handle.replace(/^@/, "").trim() || handle;
-
   return (
-    <section className="border-b border-viscum-line" aria-label={`${at}がシードした作品`}>
+    <section className="border-b border-viscum-line" aria-label="シードした作品">
       <h2 className="border-b border-viscum-line bg-viscum-paper-2/40 px-4 py-3 text-[18px] font-bold leading-tight tracking-wide text-viscum-ink">
-        <span className="text-viscum-brand">@{at}</span>
-        {" "}
-        がシードした作品
+        シードした作品
         <span className="ml-1.5 text-[13px] font-medium tabular-nums text-viscum-muted">
           · {works.length}件
         </span>
