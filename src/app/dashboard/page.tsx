@@ -644,7 +644,7 @@ export default function DashboardPage() {
                       href={`/w/${encodeURIComponent(w.id)}`}
                       className="rounded-md border border-viscum-brand px-3 py-1.5 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
                     >
-                      詳細
+                      シード詳細
                     </Link>
                     <button
                       type="button"
@@ -696,7 +696,7 @@ export default function DashboardPage() {
                       href={`/w/${encodeURIComponent(s.id)}`}
                       className="rounded-md border border-viscum-brand px-3 py-1.5 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
                     >
-                      詳細
+                      シード詳細
                     </Link>
                     <button
                       type="button"
