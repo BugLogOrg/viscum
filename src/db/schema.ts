@@ -99,6 +99,8 @@ export const works = pgTable("works", {
   prizeYen: integer("prize_yen"),
   closesAt: timestamp("closes_at", { withTimezone: true }),
   thumbUrl: text("thumb_url"),
+  /** トップの「みんなの作品」に載せるか。false＝下書き */
+  listedOnShelf: boolean("listed_on_shelf").notNull().default(false),
   viewCount: integer("view_count").notNull().default(0),
   emoCount: integer("emo_count").notNull().default(0),
   bookmarkCount: integer("bookmark_count").notNull().default(0),

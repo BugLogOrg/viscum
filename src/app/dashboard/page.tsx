@@ -31,6 +31,8 @@ import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
 import { buildWorkShareText } from "@/lib/work-share-text";
 import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
+import type { Work } from "@/data/dummy-works";
+import { planBadgeLabel } from "@/data/dummy-works";
 
 function SeedMetrics({ s }: { s: LocalSeed }) {
   return (
@@ -113,6 +115,7 @@ function SeedCardChrome({ s }: { s: LocalSeed }) {
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [seeds, setSeeds] = useState<LocalSeed[]>([]);
+  const [neonWorks, setNeonWorks] = useState<Work[]>([]);
   const [demoOn, setDemoOn] = useState(false);
   const [origin, setOrigin] = useState("");
 
@@ -120,6 +123,16 @@ export default function DashboardPage() {
     const h = session?.user?.handle;
     setSeeds(readLocalSeeds());
     setDemoOn(h ? hasDemoSeeds(h) : false);
+    if (session?.user?.id) {
+      void fetch("/api/works?mine=1")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { works?: Work[] } | null) => {
+          setNeonWorks(data?.works ?? []);
+        })
+        .catch(() => setNeonWorks([]));
+    } else {
+      setNeonWorks([]);
+    }
   }
 
   useEffect(() => {
@@ -129,13 +142,22 @@ export default function DashboardPage() {
   useEffect(() => {
     refresh();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.handle]);
+  }, [session?.user?.handle, session?.user?.id]);
 
   const mine = useMemo(() => {
     const h = session?.user?.handle;
     if (!h) return [];
     return seeds.filter((s) => s.seederHandle === h);
   }, [seeds, session?.user?.handle]);
+
+  const neonDrafts = useMemo(
+    () => neonWorks.filter((w) => w.listedOnShelf === false),
+    [neonWorks],
+  );
+  const neonPublished = useMemo(
+    () => neonWorks.filter((w) => w.listedOnShelf === true),
+    [neonWorks],
+  );
 
   const drafts = useMemo(
     () =>
@@ -237,7 +259,9 @@ export default function DashboardPage() {
                 className="text-[13px] font-medium text-viscum-brand underline"
               >
                 下書き
-                {drafts.length > 0 ? `（${drafts.length}）` : ""}
+                {neonDrafts.length + drafts.length > 0
+                  ? `（${neonDrafts.length + drafts.length}）`
+                  : ""}
               </a>
             </p>
           </div>
@@ -256,9 +280,9 @@ export default function DashboardPage() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-[15px] font-semibold text-viscum-ink">
               下書き（未公開）
-              {drafts.length > 0 ? (
+              {neonDrafts.length + drafts.length > 0 ? (
                 <span className="ml-1.5 text-[13px] font-normal text-viscum-muted">
-                  {drafts.length}件
+                  {neonDrafts.length + drafts.length}件
                 </span>
               ) : null}
             </h2>
@@ -270,14 +294,103 @@ export default function DashboardPage() {
             </Link>
           </div>
           <p className="text-[11px] leading-relaxed text-viscum-muted">
-            棚レーンの未公開です。「公開する」でみんなの作品へ。指名依頼は下の「直依頼メモ」から。
+            ログイン中の新規シードはサーバ保存（共有可）。古い端末内下書きもここに残ります。
           </p>
-          {drafts.length === 0 ? (
+          {neonDrafts.length === 0 && drafts.length === 0 ? (
             <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">
               <p className="text-[13px] text-viscum-muted">下書きはありません。</p>
             </div>
           ) : (
             <ul className="space-y-3">
+              {neonDrafts.map((w) => (
+                <li
+                  key={w.id}
+                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge
+                      status={w.status}
+                      prizeYen={w.prizeYen}
+                      planLabel={planBadgeLabel(w.plan)}
+                      dense
+                    />
+                    <span className="rounded-full bg-viscum-leaf-soft px-2 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                      サーバ
+                    </span>
+                    <span className="rounded-full bg-viscum-paper-2 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
+                      下書き
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
+                    {w.title}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                    <button
+                      type="button"
+                      className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white hover:bg-viscum-berry-deep"
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            "トップの「みんなの作品」に公開しますか？",
+                          )
+                        ) {
+                          return;
+                        }
+                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ listedOnShelf: true }),
+                        }).then(async (res) => {
+                          if (!res.ok) {
+                            window.alert("公開に失敗しました");
+                            return;
+                          }
+                          const data = (await res.json()) as { work?: Work };
+                          if (data.work) {
+                            void announcePublishedSeedToX(data.work).then(
+                              (r) => {
+                                const msg = announceResultMessage(r);
+                                if (msg) window.alert(msg);
+                                refresh();
+                              },
+                            );
+                          } else refresh();
+                        });
+                      }}
+                    >
+                      公開する
+                    </button>
+                    {origin ? (
+                      <ShareTextCopyButton
+                        getText={() => buildWorkShareText(w, origin)}
+                      />
+                    ) : null}
+                    <Link
+                      href={`/w/${encodeURIComponent(w.id)}`}
+                      className="rounded-md border border-viscum-brand px-3 py-1.5 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                    >
+                      詳細
+                    </Link>
+                    <button
+                      type="button"
+                      className="px-1 py-1.5 text-[12px] text-viscum-berry-deep underline"
+                      onClick={() => {
+                        if (!window.confirm("この下書きを削除しますか？")) {
+                          return;
+                        }
+                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                          method: "DELETE",
+                        }).then((res) => {
+                          if (res.ok) refresh();
+                          else window.alert("削除に失敗しました");
+                        });
+                      }}
+                    >
+                      削除
+                    </button>
+                  </div>
+                </li>
+              ))}
               {drafts.map((s) => (
                 <li
                   key={s.id}
@@ -291,32 +404,19 @@ export default function DashboardPage() {
                       onClick={() => {
                         if (
                           !window.confirm(
-                            "トップの「みんなの作品」に公開しますか？",
+                            "この端末のトップ表示に出します（他端末には見えません）。共有したいときはログインして新規シードしてください。",
                           )
                         ) {
                           return;
                         }
                         const row = publishLocalSeedToShelf(s.id);
                         if (row) {
-                          void announcePublishedSeedToX(
-                            workFromLocalSeed(row),
-                          ).then((r) => {
-                            const msg = announceResultMessage(r);
-                            if (msg) window.alert(msg);
-                            refresh();
-                          });
+                          refresh();
                         } else window.alert("公開に失敗しました");
                       }}
                     >
-                      公開する
+                      この端末だけで公開
                     </button>
-                    {origin ? (
-                      <ShareTextCopyButton
-                        getText={() =>
-                          buildWorkShareText(workFromLocalSeed(s), origin)
-                        }
-                      />
-                    ) : null}
                     <Link
                       href={`/w/${encodeURIComponent(s.id)}`}
                       className="rounded-md border border-viscum-brand px-3 py-1.5 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
@@ -465,7 +565,7 @@ export default function DashboardPage() {
               : "トップに載っているシードの成績です。「下書きに戻す」で棚から外せます。"}
           </p>
 
-          {published.length === 0 ? (
+          {neonPublished.length === 0 && published.length === 0 ? (
             <div className="rounded-lg border border-dashed border-viscum-line px-4 py-6 text-center">
               <p className="text-[13px] leading-relaxed text-viscum-muted">
                 公開中のシードはまだありません。
@@ -479,6 +579,56 @@ export default function DashboardPage() {
             </div>
           ) : (
             <ul className="space-y-3">
+              {neonPublished.map((w) => (
+                <li
+                  key={w.id}
+                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <StatusBadge
+                      status={w.status}
+                      prizeYen={w.prizeYen}
+                      planLabel={planBadgeLabel(w.plan)}
+                      dense
+                    />
+                    <span className="rounded-full bg-viscum-leaf-soft px-2 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                      サーバ・公開中
+                    </span>
+                  </div>
+                  <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
+                    {w.title}
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                    {origin ? (
+                      <ShareTextCopyButton
+                        getText={() => buildWorkShareText(w, origin)}
+                      />
+                    ) : null}
+                    <Link
+                      href={`/w/${encodeURIComponent(w.id)}`}
+                      className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                    >
+                      詳細
+                    </Link>
+                    <button
+                      type="button"
+                      className="rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
+                      onClick={() => {
+                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ listedOnShelf: false }),
+                        }).then((res) => {
+                          if (res.ok) refresh();
+                          else window.alert("下書きに戻せませんでした");
+                        });
+                      }}
+                    >
+                      下書きに戻す
+                    </button>
+                  </div>
+                </li>
+              ))}
               {published.map((s) => (
                 <li
                   key={s.id}

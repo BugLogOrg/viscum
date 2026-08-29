@@ -57,9 +57,15 @@ export function workOgDescription(work: Work): string {
   return truncateForOg(`${workOgBadge(work)} — VISCUM`, 160);
 }
 
-/** サーバで解決できる作品（デモ棚）。端末内 local_ はクロール不可 */
-export function resolveWorkForOg(id: string): Work | null {
-  return getWork(id) ?? null;
+/** サーバで解決できる作品（デモ棚＋Neon公開）。端末内 local_ はクロール不可 */
+export async function resolveWorkForOg(id: string): Promise<Work | null> {
+  const demo = getWork(id);
+  if (demo) return demo;
+  const { getNeonWork } = await import("@/lib/neon-works");
+  const neon = await getNeonWork(id, null);
+  // OGは公開作品のみ（下書きは出さない）
+  if (neon && neon.listedOnShelf) return neon;
+  return null;
 }
 
 export function workPageMetadata(work: Work | null, id: string): Metadata {

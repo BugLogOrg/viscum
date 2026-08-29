@@ -285,6 +285,63 @@ export function PostForm() {
               /* ignore */
             }
           }
+          const payload = {
+            title: clampWorkTitle(title),
+            description: description.trim(),
+            focusNote: focusNote.trim() || null,
+            scaffoldLines: (() => {
+              if (compOn) return promptList.length ? promptList : undefined;
+              if (extReviewOn) {
+                const lines = boostCriteria
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                return lines.length ? lines : undefined;
+              }
+              return undefined;
+            })(),
+            externalUrl: externalUrl.trim(),
+            tags,
+            plan: seedPlan,
+            prizeYen: compOn
+              ? prizeYen
+              : extReviewOn
+                ? extPrizeYen
+                : null,
+            closesInDays: compOn ? closesInDays : null,
+            thumbUrl: thumbDataUrl ?? null,
+            listedOnShelf: false,
+          };
+
+          const userId = session?.user?.id?.trim();
+          if (userId && session?.user?.handle?.trim()) {
+            const res = await fetch("/api/works", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+              const err = (await res.json().catch(() => null)) as {
+                error?: string;
+              } | null;
+              window.alert(
+                err?.error === "login required"
+                  ? "ログインが必要です"
+                  : err?.error === "database unavailable"
+                    ? "データベースに接続できません。しばらくしてから再度お試しください。"
+                    : "保存に失敗しました",
+              );
+              return;
+            }
+            const data = (await res.json()) as { work?: { id: string } };
+            const id = data.work?.id;
+            if (!id) {
+              window.alert("保存に失敗しました");
+              return;
+            }
+            router.push(`/w/${encodeURIComponent(id)}?seeded=1`);
+            return;
+          }
+
           const seederHandle =
             session?.user?.handle?.replace(/^@/, "").trim() || "guest";
           const fromSession =
@@ -302,21 +359,12 @@ export function PostForm() {
               seederAccountName.toLowerCase() !== seederHandle.toLowerCase()
                 ? seederAccountName
                 : undefined,
-            title: clampWorkTitle(title),
-            description: description.trim(),
-            focusNote: focusNote.trim() || undefined,
-            scaffoldLines: (() => {
-              if (compOn) return promptList.length ? promptList : undefined;
-              if (extReviewOn) {
-                const lines = boostCriteria
-                  .map((s) => s.trim())
-                  .filter(Boolean);
-                return lines.length ? lines : undefined;
-              }
-              return undefined;
-            })(),
-            externalUrl: externalUrl.trim(),
-            tags,
+            title: payload.title,
+            description: payload.description,
+            focusNote: payload.focusNote ?? undefined,
+            scaffoldLines: payload.scaffoldLines,
+            externalUrl: payload.externalUrl,
+            tags: payload.tags,
             status: compOn ? "open" : "none",
             prizeYen: compOn ? prizeYen : undefined,
             closesInDays: compOn ? closesInDays : undefined,

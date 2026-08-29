@@ -23,6 +23,7 @@ import {
 } from "@/data/dummy-works";
 import { scaffoldForPlan } from "@/data/seed-courses";
 import { isClientSeedId, isLocalSeedListed, readLocalSeeds } from "@/lib/local-seeds";
+import { isNeonWorkId } from "@/lib/neon-works";
 
 const TONE: Record<Work["thumbTone"], string> = {
   leaf: "bg-viscum-leaf-deep",
@@ -50,17 +51,23 @@ export function WorkDetailBody({ work }: { work: Work }) {
 function WorkDetailBodyInner({ work }: { work: Work }) {
   const search = useSearchParams();
   const router = useRouter();
-  const [isDraft, setIsDraft] = useState(false);
+  const [isDraft, setIsDraft] = useState(() =>
+    work.persisted ? work.listedOnShelf === false : false,
+  );
   const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
+    if (work.persisted) {
+      setIsDraft(work.listedOnShelf === false);
+      return;
+    }
     if (!isClientSeedId(work.id)) {
       setIsDraft(false);
       return;
     }
     const seed = readLocalSeeds().find((s) => s.id === work.id);
     setIsDraft(Boolean(seed && !isLocalSeedListed(seed)));
-  }, [work.id]);
+  }, [work.id, work.persisted, work.listedOnShelf]);
 
   useEffect(() => {
     if (search.get("seeded") !== "1") return;
@@ -86,6 +93,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
     : (scaffold?.lines ?? []);
   const scaffoldLabel = scaffold?.label ?? null;
   const localDemo = isClientSeedId(work.id);
+  const neonPersisted = Boolean(work.persisted) || isNeonWorkId(work.id);
 
   return (
     <div className="xl:flex xl:items-start">
@@ -138,6 +146,24 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                 planLabel={planBadgeLabel(work.plan)}
               />
               {localDemo && <LocalSeedVisibilityNote workId={work.id} />}
+              {neonPersisted && !localDemo ? (
+                <p className="text-[11px] leading-relaxed text-viscum-muted">
+                  {isDraft ? (
+                    <>
+                      <strong className="font-medium text-viscum-berry-deep">
+                        未公開
+                      </strong>
+                      （Neonに保存済み・共有URLは作者のみ）。公開すると他の人も開けます。
+                    </>
+                  ) : (
+                    <>
+                      トップの棚に
+                      <strong className="font-medium text-viscum-ink">公開中</strong>
+                      です（サーバ保存）。URLを共有できます。
+                    </>
+                  )}
+                </p>
+              ) : null}
               <dl className="space-y-1 text-[14px] text-viscum-ink">
                 <div>
                   <dt className="inline text-viscum-muted">シーダー：</dt>
@@ -252,7 +278,11 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                 </p>
               )}
 
-            <OwnerSeedActions workId={work.id} seederHandle={work.seeder} />
+            <OwnerSeedActions
+              workId={work.id}
+              seederHandle={work.seeder}
+              work={work}
+            />
 
             {isDraft ? (
               <p className="rounded-md border border-dashed border-viscum-line px-3 py-3 text-[12px] leading-relaxed text-viscum-muted">

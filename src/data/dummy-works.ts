@@ -62,6 +62,12 @@ export type Work = {
   /** フィード人気表示用（他ユーザ含めたデモ集計。未指定時は合成） */
   sukiCount?: number;
   bookmarkCount?: number;
+  /**
+   * Neon 永続化作品か。
+   * listedOnShelf: false＝下書き（作者以外は見えない）
+   */
+  persisted?: boolean;
+  listedOnShelf?: boolean;
 };
 
 export function planBadgeLabel(plan?: DemoSeedPlan): string | undefined {

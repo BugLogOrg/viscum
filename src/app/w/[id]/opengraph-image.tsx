@@ -33,7 +33,7 @@ export default async function Image({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const work = resolveWorkForOg(id);
+  const work = await resolveWorkForOg(id);
   const fontData = await loadJpFont();
 
   const badge = work ? workOgBadge(work) : "VISCUM";

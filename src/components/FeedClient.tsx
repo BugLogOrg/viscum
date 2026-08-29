@@ -75,7 +75,18 @@ export function FeedClient() {
   const [shareCopied, setShareCopied] = useState(false);
 
   useEffect(() => {
-    const refresh = () => setShelf(loadClientShelfWorks());
+    const refresh = () => {
+      const localShelf = loadClientShelfWorks();
+      void fetch("/api/works?listed=1")
+        .then((r) => (r.ok ? r.json() : null))
+        .then((data: { works?: Work[] } | null) => {
+          const neon = data?.works ?? [];
+          const neonIds = new Set(neon.map((w) => w.id));
+          const rest = localShelf.filter((w) => !neonIds.has(w.id));
+          setShelf([...neon, ...rest]);
+        })
+        .catch(() => setShelf(localShelf));
+    };
     refresh();
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
