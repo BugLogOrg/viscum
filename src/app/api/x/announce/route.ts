@@ -113,7 +113,7 @@ export async function POST(req: Request) {
   const origin =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     process.env.AUTH_URL?.replace(/\/$/, "") ||
-    "https://viscum.vercel.app";
+    "https://viscum.org";
 
   const text = buildXAnnounceText(parsed.data, origin);
   const posted = await postTweetAsViscum(text);

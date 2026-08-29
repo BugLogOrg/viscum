@@ -31,7 +31,7 @@ export function buildXAnnounceText(
   },
   origin: string,
 ): string {
-  const base = origin.replace(/\/$/, "") || "https://viscum.vercel.app";
+  const base = origin.replace(/\/$/, "") || "https://viscum.org";
   const url = `${base}/w/${encodeURIComponent(input.id)}`;
   const planLabel = planBadgeLabel(input.plan);
   const head =

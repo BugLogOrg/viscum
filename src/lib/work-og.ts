@@ -20,7 +20,7 @@ export function siteOrigin(): string {
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL.replace(/\/$/, "")}`;
   }
-  return "https://viscum.vercel.app";
+  return "https://viscum.org";
 }
 
 /** OG画像URLのクエリ。見た目変更時に上げて X／CDN キャッシュを切る */

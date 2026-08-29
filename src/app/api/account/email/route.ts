@@ -132,7 +132,7 @@ export async function POST(req: Request) {
   const origin =
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     process.env.AUTH_URL?.replace(/\/$/, "") ||
-    "https://viscum.vercel.app";
+    "https://viscum.org";
   const confirmUrl = `${origin}/api/account/email/confirm?token=${encodeURIComponent(token)}`;
 
   const send = await fetch("https://api.resend.com/emails", {

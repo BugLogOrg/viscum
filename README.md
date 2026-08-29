@@ -2,8 +2,8 @@
 
 > Vault ドキュメントは親フォルダ。**この `app/` だけが Git デプロイ対象**（`_運用` 等は入れない）。
 
-- ブランド: Viscum / `viscum.org`（DNS未接続）
-- スタック: **Vercel ＋ Next.js**（ADR-011・仮決め）
+- ブランド: Viscum / **`https://viscum.org`**（本番本丸・2026-08-29移行着手）
+- スタック: **Vercel ＋ Next.js**（ADR-011）
 - 要件: 親の `_運用/2026-08-18_【要件】UI要件定義_Viscum.md`
 
 ## ローカル
@@ -35,13 +35,10 @@ npm run db:push
 - 未設定時: 端末内の圧縮 JPEG（data URL）でデモ
 - R2 との差: 同Vault `_knowledge/02_Architecture.md` の「画像ストレージ」節
 
-- **公開デモ（段階A・2026-08-19）**: https://viscum.vercel.app （別名 https://app-opal-xi-rw82xi0vc5.vercel.app ）
+- **本番本丸（2026-08-29〜）**: https://viscum.org （DNS Aレコード待ち・手順 `_運用/2026-08-29_【手順】viscum.org本番DNS.md`）
+- **仮URL**: https://viscum.vercel.app （互換維持）
 - **GitHub**: https://github.com/BugLogOrg/viscum （単独リポ。Vaultドキュメントは入れない）
-- `viscum.org` DNS は中身確認後（ADR-011）
-
-1. GitHub 等にこの `app/` リポジトリを push  
-2. Vercel で Import → Framework Preset: Next.js  
-3. 仮URLで確認してから `viscum.org` の DNS を接続  
+- DNS: お名前.com `dnsv.jp` のまま（`mail.viscum.org` Resend維持）。ルートに A `76.76.21.21`
 
 ## いまあるもの
 
