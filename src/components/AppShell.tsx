@@ -55,6 +55,10 @@ export function AppShell({
   }
 
   function goAll() {
+    if (onHome) {
+      onHome();
+      return;
+    }
     onFeedFilter?.("all");
     onSelectTag?.(null);
     onClearSearch?.();

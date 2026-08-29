@@ -22,6 +22,11 @@ import {
 import { fetchRemoteProfile } from "@/lib/local-profile";
 import { loadClientShelfWorks } from "@/lib/hot-open-ranking";
 import { buildWorkShareText, buildXIntentUrl } from "@/lib/work-share-text";
+import {
+  clearJustPublished,
+  markJustPublished,
+  peekJustPublished,
+} from "@/lib/just-published";
 import { WorkFeedRow } from "@/components/WorkFeedRow";
 import { AppShell } from "@/components/AppShell";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -79,8 +84,23 @@ export function FeedClient() {
   const [followingHandles, setFollowingHandles] = useState<string[]>([]);
   const [remotePeople, setRemotePeople] = useState<SuggestedSeeder[]>([]);
   const [shelf, setShelf] = useState<Work[]>(() => [...DUMMY_WORKS]);
-  const publishedId = searchParams.get("published");
+  const [publishedId, setPublishedId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
+
+  useEffect(() => {
+    // 旧 ?published= 互換 → sessionStorage へ移して URL から剥がす
+    const fromUrl = searchParams.get("published")?.trim() || null;
+    if (fromUrl) {
+      markJustPublished(fromUrl);
+      const params = new URLSearchParams(searchParams.toString());
+      params.delete("published");
+      const q = params.toString();
+      router.replace(q ? `/?${q}` : "/", { scroll: false });
+    }
+    const flash = peekJustPublished();
+    if (flash) setPublishedId(flash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- マウント時＋旧URL移行のみ
+  }, [searchParams.get("published")]);
 
   useEffect(() => {
     const refresh = () => {
@@ -176,10 +196,17 @@ export function FeedClient() {
   const selectTag = useCallback(
     (tag: string | null) => {
       setSpecialty(tag);
-      if (tag === null) setQuery("");
+      if (tag === null) {
+        setQuery("");
+        setPublishedId(null);
+        clearJustPublished();
+      }
       const params = new URLSearchParams(searchParams.toString());
       if (tag) params.set("tag", tag);
-      else params.delete("tag");
+      else {
+        params.delete("tag");
+        params.delete("published");
+      }
       const q = params.toString();
       router.replace(q ? `/?${q}` : "/");
     },
@@ -197,6 +224,8 @@ export function FeedClient() {
     setFilter("all");
     setQuery("");
     setSpecialty(null);
+    setPublishedId(null);
+    clearJustPublished();
     router.replace("/");
   }, [router]);
 

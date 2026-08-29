@@ -19,6 +19,7 @@ import {
 } from "@/lib/local-seeds";
 import { isNeonWorkId } from "@/lib/neon-works";
 import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
+import { markJustPublished } from "@/lib/just-published";
 import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
@@ -181,11 +182,13 @@ export function OwnerSeedActions({
                   return;
                 }
                 setSeed(row);
-                router.push(`/?published=${encodeURIComponent(workId)}`);
+                markJustPublished(workId);
+                router.push("/");
               }}
             >
               この端末だけで公開
             </button>
+
           )}
           <button
             type="button"
@@ -297,12 +300,12 @@ export function OwnerSeedActions({
                     void announcePublishedSeedToX(data.work).then((r) => {
                       const msg = announceResultMessage(r);
                       if (msg) window.alert(msg);
-                      router.push(
-                        `/?published=${encodeURIComponent(workId)}`,
-                      );
+                      markJustPublished(workId);
+                      router.push("/");
                     });
                   } else {
-                    router.push(`/?published=${encodeURIComponent(workId)}`);
+                    markJustPublished(workId);
+                    router.push("/");
                   }
                 } finally {
                   setBusy(false);
