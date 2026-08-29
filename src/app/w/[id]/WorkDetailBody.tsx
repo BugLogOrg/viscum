@@ -216,15 +216,14 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
               </a>
             ) : null}
 
-            {scaffoldLines.length > 0 && scaffoldLabel ? (
-              <div className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+            {/* 公開後はコメントフォーム内のみ（二重表示を避ける）。下書きは作者プレビュー用にここへ */}
+            {isDraft && scaffoldLines.length > 0 && scaffoldLabel ? (
+              <div className="rounded-lg border border-dashed border-viscum-line bg-white/70 px-3 py-3">
                 <p className="text-[13px] font-medium text-viscum-ink">
                   {scaffoldLabel}
-                  {isDraft ? (
-                    <span className="ml-1 text-[11px] font-normal text-viscum-muted">
-                      （公開後に相手へ見えます）
-                    </span>
-                  ) : null}
+                  <span className="ml-1 text-[11px] font-normal text-viscum-muted">
+                    （公開後はコメント画面に出ます）
+                  </span>
                 </p>
                 <p className="mt-0.5 text-[11px] text-viscum-muted">
                   {work.plan === "public_boost"
