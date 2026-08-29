@@ -216,7 +216,7 @@ function SkewSection({
 
 /**
  * 発見コーナー（注目 → 終了間近 → 偏差）。
- * - bottom: TOP用。左＝注目＋終了間近／右＝偏差
+ * - bottom: TOP用。横3枠（注目｜終了間近｜偏差）。携帯は縦積み
  * - sideDuo: 詳細用。内側右＝注目＋終了間近／外側右＝偏差。携帯は縦に注目→終了→偏差
  */
 export function FeedShelfCorners({
@@ -314,22 +314,21 @@ export function FeedShelfCorners({
     );
   }
 
-  // TOP: 左＝注目＋終了間近／右＝偏差（携帯は縦：注目→終了→偏差）
+  // TOP: 横3枠（注目｜終了間近｜偏差）。携帯は縦：注目→終了→偏差
   return (
     <aside
       className={`min-w-0 overflow-hidden border-t border-viscum-line bg-viscum-paper-2/25 ${className}`}
       aria-label="発見"
     >
-      <div className="grid min-w-0 gap-0 md:grid-cols-2 md:divide-x md:divide-viscum-line">
-        <div className="min-w-0 border-b border-viscum-line md:border-b-0">
-          <HotSection hot={hot} className="min-w-0 px-4 py-4" />
-          <ClosingSoonSection
-            closing={closing}
-            className={`min-w-0 px-4 py-4 ${
-              hot.length > 0 ? "border-t border-viscum-line" : ""
-            }`}
-          />
-        </div>
+      <div className="grid min-w-0 gap-0 md:grid-cols-3 md:divide-x md:divide-viscum-line">
+        <HotSection
+          hot={hot}
+          className="min-w-0 border-b border-viscum-line px-4 py-4 md:border-b-0"
+        />
+        <ClosingSoonSection
+          closing={closing}
+          className="min-w-0 border-b border-viscum-line px-4 py-4 md:border-b-0"
+        />
         <SkewSection skewed={skewed} className="min-w-0 px-4 py-4" />
       </div>
     </aside>
