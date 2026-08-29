@@ -274,6 +274,10 @@ export function FeedClient({
   const title =
     filter === "open" ? "開催中" : filter === "follow" ? "フォロー中" : "すべて";
 
+  /** Phase 2 最小: 入口一文はホーム（すべて・濾しなし）だけ */
+  const showEntranceLine =
+    filter === "all" && !specialty && !query.trim();
+
   const contextCrumbs: string[] = [
     filter === "follow"
       ? sessionPending
@@ -369,6 +373,13 @@ export function FeedClient({
               この表示を消す
             </button>
           </div>
+        </div>
+      ) : null}
+      {showEntranceLine ? (
+        <div className="border-b border-viscum-line px-4 py-3">
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            個人制作を見つけて、気軽に感想を残せる場所。
+          </p>
         </div>
       ) : null}
       <div className="border-b border-viscum-line px-4 py-3">
