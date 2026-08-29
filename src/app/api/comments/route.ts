@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { desc, eq, inArray, and } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
-import { comments, payments, users } from "@/db/schema";
+import { listFollowerUserIds } from "@/db/follows";
+import { createNotificationsForUsers } from "@/db/notifications";
+import { comments, payments, users, works } from "@/db/schema";
 import type { Comment } from "@/data/dummy-works";
+import { isNeonWorkId } from "@/lib/neon-works";
 import { isCommentAttitudeId } from "@/lib/protocol-colors";
 
 function hoursAgoFrom(date: Date): number {
@@ -224,6 +227,39 @@ export async function POST(req: Request) {
     handle,
     name: accountName,
   });
+
+  // フォロー中メンターの参加通知（自分のシードへの自コメントは除外）
+  try {
+    let isOwnSeed = false;
+    let workTitle = "";
+    if (isNeonWorkId(workId)) {
+      const wrows = await db
+        .select({ seederId: works.seederId, title: works.title })
+        .from(works)
+        .where(eq(works.id, workId))
+        .limit(1);
+      if (wrows[0]?.seederId === userId) isOwnSeed = true;
+      workTitle = wrows[0]?.title?.trim() ?? "";
+    }
+    if (!isOwnSeed) {
+      const followerIds = await listFollowerUserIds(userId);
+      const short =
+        workTitle.length > 36 ? `${workTitle.slice(0, 36)}…` : workTitle;
+      await createNotificationsForUsers(followerIds, {
+        kind: "comment",
+        title: "フォロー中の人がコメントしました",
+        body: short
+          ? `@${handle} が「${short}」に反応しました。`
+          : `@${handle} が作品に反応しました。`,
+        href: `/w/${encodeURIComponent(workId)}`,
+        audience: "mentor",
+        actorHandle: handle,
+        workId,
+      });
+    }
+  } catch (e) {
+    console.error("[POST /api/comments] mentor notify", e);
+  }
 
   return NextResponse.json({ comment, persisted: true });
 }

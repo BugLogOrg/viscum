@@ -75,7 +75,7 @@ export default function NotificationsPage() {
           <div>
             <h1 className="text-xl font-semibold text-viscum-ink">通知</h1>
             <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-              フォロー・フォロー中のシード公開など。オンオフは
+              フォロー・シード公開・フォロー中のコメントなど。オンオフは
               <Link href="/dashboard/settings" className="text-viscum-brand underline">
                 設定
               </Link>

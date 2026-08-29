@@ -10,7 +10,7 @@ import {
 
 /**
  * GET — 自分の通知一覧。
- * クエリ seeder=0 / mentor=1 で端末 prefs を反映（既定: シーダーON・メンターOFF）。
+ * クエリ seeder=0 / mentor=0 で端末 prefs を反映（既定: 両方ON）。
  * PATCH { all?: true, id?: string } — 既読
  */
 export async function GET(req: Request) {
@@ -29,7 +29,7 @@ export async function GET(req: Request) {
 
   const url = new URL(req.url);
   const seederAlerts = url.searchParams.get("seeder") !== "0";
-  const mentorParticipateAlerts = url.searchParams.get("mentor") === "1";
+  const mentorParticipateAlerts = url.searchParams.get("mentor") !== "0";
 
   const rows = await listNotificationsForUser(userId);
   const visible = rows.filter((n) => {

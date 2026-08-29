@@ -29,14 +29,14 @@ export type NotifyPrefs = {
   seederAlerts: boolean;
   /**
    * フォロー中メンターの「参加した作品」通知。
-   * 初期 false（賞金レーダー化を避ける）。本人がONにできる。
+   * 既定 ON（場を盛り上げる）。専業シーダーなど不要な人はOFF可。
    */
   mentorParticipateAlerts: boolean;
 };
 
 const DEFAULT_PREFS: NotifyPrefs = {
   seederAlerts: true,
-  mentorParticipateAlerts: false,
+  mentorParticipateAlerts: true,
 };
 
 export function readNotifyPrefs(): NotifyPrefs {

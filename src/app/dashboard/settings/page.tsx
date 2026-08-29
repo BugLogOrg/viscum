@@ -36,7 +36,7 @@ function SettingsPageInner() {
   const searchParams = useSearchParams();
   const [prefs, setPrefs] = useState<NotifyPrefs>({
     seederAlerts: true,
-    mentorParticipateAlerts: false,
+    mentorParticipateAlerts: true,
   });
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -266,7 +266,7 @@ function SettingsPageInner() {
           <div>
             <p className="text-[13px] font-semibold text-viscum-ink">通知</p>
             <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
-              初期はシーダー向けが主。メンター参加の追跡はオフが既定です。
+              場を盛り上げるため、メンター参加も既定で届けます。専業シーダーなど不要ならオフに。
             </p>
           </div>
           <label className="flex items-start gap-2.5 text-[13px] text-viscum-ink">
@@ -283,7 +283,7 @@ function SettingsPageInner() {
             <span>
               <span className="font-medium">シーダー向け</span>
               <span className="mt-0.5 block text-[11px] text-viscum-muted">
-                コメント・締切・フォロー・チップ受取など
+                コメント・締切・フォロー・チップ受取・フォロー中のシード公開など
               </span>
             </span>
           </label>
@@ -304,7 +304,7 @@ function SettingsPageInner() {
             <span>
               <span className="font-medium">メンター参加の通知</span>
               <span className="mt-0.5 block text-[11px] text-viscum-muted">
-                フォロー中メンターが別作品に参加したとき。賞金レーダーになりやすいので初期OFF。必要な人だけON。
+                フォロー中の人が別作品にコメントしたとき。ライバルが増えて場が動くので既定ON。いらない人だけオフ。
               </span>
             </span>
           </label>
