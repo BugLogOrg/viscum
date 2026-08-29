@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 import { ProtocolChipDemo } from "@/components/ProtocolChipRow";
@@ -6,10 +7,13 @@ import { ProtocolMark } from "@/components/ProtocolMark";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
 
+/** 本番は 404。Preview／ローカルだけ色見本を開ける */
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "色見本（プロトコル）",
   description:
-    "トンマナ（アース）と反応プロトコル（ビビッド）の並記見本。本番ナビには載せない仮ページ。",
+    "トンマナ（アース）と反応プロトコルの並記見本。本番では出さないラボページ。",
   robots: { index: false, follow: false },
 };
 
@@ -22,6 +26,9 @@ const EARTH = [
 ] as const;
 
 export default function ProtocolLabPage() {
+  // Vercel Production のみ遮断。preview / ローカルは開発用に残す
+  if (process.env.VERCEL_ENV === "production") notFound();
+
   return (
     <div className="mx-auto min-h-dvh max-w-lg bg-viscum-paper">
       <header className="flex h-12 items-center justify-between border-b border-viscum-line px-4">
@@ -32,7 +39,7 @@ export default function ProtocolLabPage() {
           <ViscumMark className="h-6 w-6" />
           VISCUM
         </Link>
-        <span className="text-[11px] text-viscum-muted">lab · noindex</span>
+        <span className="text-[11px] text-viscum-muted">lab · preview only</span>
       </header>
 
       <main className="space-y-8 px-4 py-6">
