@@ -318,14 +318,8 @@ export default function DashboardPage() {
                       />
                     ) : null}
                     <Link
-                      href={`/w/${encodeURIComponent(s.id)}?seeded=1`}
-                      className="rounded-md border border-viscum-brand px-3 py-1.5 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                    >
-                      公開画面へ
-                    </Link>
-                    <Link
                       href={`/w/${encodeURIComponent(s.id)}`}
-                      className="px-1 py-1.5 text-[12px] text-viscum-brand underline"
+                      className="rounded-md border border-viscum-brand px-3 py-1.5 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
                     >
                       詳細
                     </Link>

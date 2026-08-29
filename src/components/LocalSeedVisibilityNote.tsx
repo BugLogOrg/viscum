@@ -51,7 +51,7 @@ export function LocalSeedVisibilityNote({ workId }: { workId: string }) {
       ) : (
         <>
           <strong className="font-medium text-viscum-berry-deep">未公開</strong>
-          です。トップの「すべて」には出ていません。「公開する」で棚に出せます。指名依頼は{" "}
+          （この端末のデモ保存）。指名依頼は{" "}
           <Link href="/new/request" className="underline">
             直依頼レーン
           </Link>

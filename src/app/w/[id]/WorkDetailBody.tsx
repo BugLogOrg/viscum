@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { SeederLink } from "@/components/SeederLink";
-import { PostSaveNext } from "@/components/PostSaveNext";
 import { LocalSeedVisibilityNote } from "@/components/LocalSeedVisibilityNote";
 import { OwnerSeedActions } from "@/components/OwnerSeedActions";
 import { HotOpenRail } from "@/components/HotOpenRail";
@@ -33,7 +32,7 @@ const TONE: Record<Work["thumbTone"], string> = {
   trunk: "bg-viscum-trunk",
 };
 
-/** `/w/[id]` の本体。保存直後は次の一手専用、下書き詳細は参加・コメントを隠す */
+/** `/w/[id]` の本体。棚シードは常にフル詳細（省略版なし）。下書きは参加UIのみ隠す */
 export function WorkDetailBody({ work }: { work: Work }) {
   return (
     <Suspense
@@ -50,8 +49,9 @@ export function WorkDetailBody({ work }: { work: Work }) {
 
 function WorkDetailBodyInner({ work }: { work: Work }) {
   const search = useSearchParams();
-  const justSaved = search.get("seeded") === "1";
+  const router = useRouter();
   const [isDraft, setIsDraft] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
     if (!isClientSeedId(work.id)) {
@@ -62,9 +62,11 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
     setIsDraft(Boolean(seed && !isLocalSeedListed(seed)));
   }, [work.id]);
 
-  if (justSaved) {
-    return <PostSaveNext work={work} />;
-  }
+  useEffect(() => {
+    if (search.get("seeded") !== "1") return;
+    setJustSaved(true);
+    router.replace(`/w/${encodeURIComponent(work.id)}`, { scroll: false });
+  }, [search, work.id, router]);
 
   const postedAt = postedAtFromHoursAgo(work.hoursAgo);
   const postedLine = formatPostedLine(work.hoursAgo);
@@ -89,6 +91,29 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
     <div className="xl:flex xl:items-start">
       <div className="w-full max-w-lg shrink-0">
         <article>
+          {(justSaved || isDraft) && (
+            <div className="space-y-2 border-b border-viscum-berry/25 bg-viscum-berry/5 px-4 py-3">
+              {justSaved ? (
+                <p className="text-[14px] font-semibold text-viscum-berry-deep">
+                  一旦保存しました
+                </p>
+              ) : null}
+              {isDraft ? (
+                <p className="text-[13px] leading-relaxed text-viscum-ink">
+                  <span className="font-semibold text-viscum-berry-deep">
+                    下書き（未公開）
+                  </span>
+                  です。トップの「すべて」には出ていません。内容はこのまま確認できます。公開するときは下の「公開する」から。
+                </p>
+              ) : null}
+              {justSaved && !isDraft ? (
+                <p className="text-[13px] leading-relaxed text-viscum-ink">
+                  内容はこのまま確認できます。
+                </p>
+              ) : null}
+            </div>
+          )}
+
           <div
             className={`relative w-full overflow-hidden ${THUMB_ASPECT} ${TONE[work.thumbTone]}`}
             style={{ aspectRatio: "1280 / 670" }}
@@ -231,7 +256,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
 
             {isDraft ? (
               <p className="rounded-md border border-dashed border-viscum-line px-3 py-3 text-[12px] leading-relaxed text-viscum-muted">
-                下書きのため、気になる・コメント・参加はまだ出していません。公開すると作品詳細として使えるようになります。
+                下書きのため、気になる・コメント・参加はまだ出していません。公開すると使えるようになります。
               </p>
             ) : (
               <>
