@@ -498,7 +498,7 @@ export function FeedClient({
                 : "bg-viscum-paper-2 text-viscum-muted"
             }`}
           >
-            すべて
+            指定なし
           </button>
           {["アプリ", "小説", "動画", "デザイン", "ツール"].map((tag) => (
             <button

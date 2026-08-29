@@ -139,7 +139,7 @@ function HotSection({
           href="/?feed=open"
           className="shrink-0 text-[11px] text-viscum-brand underline-offset-2 hover:underline"
         >
-          すべて
+          開催中へ
         </Link>
       </div>
       <p className="mt-1 text-[11px] leading-snug break-words text-viscum-muted">

@@ -181,14 +181,14 @@ export function AppShell({
                         : "text-viscum-muted hover:bg-viscum-paper-2"
                     }`}
                   >
-                    すべて
+                    指定なし
                   </button>
                 ) : (
                   <Link
                     href="/"
                     className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-viscum-muted hover:bg-viscum-paper-2"
                   >
-                    すべて
+                    指定なし
                   </Link>
                 )}
               </li>
