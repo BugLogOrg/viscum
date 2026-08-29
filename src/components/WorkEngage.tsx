@@ -411,7 +411,6 @@ export function WorkEngage({
             {prizeYen
               ? `褒賞 ${formatYen(prizeYen)}（選んだ人へ）`
               : "褒賞なし"}
-            {deadlineLine ? ` · 締切 ${deadlineLine}` : ""}
             {status === "pay_soon" && " · 決済準備中"}
             {compClosed && " · 受付終了"}
             {typeof paymentsDone === "number" &&

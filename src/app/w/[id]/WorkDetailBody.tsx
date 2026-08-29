@@ -167,17 +167,6 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   preferredName={work.seederAccountName}
                 />
                 <time dateTime={postedAt.toISOString()}>{postedLine}</time>
-                {deadlineLine && work.status !== "closed" ? (
-                  <span className="font-medium text-viscum-berry-deep">
-                    {closesAt ? (
-                      <time dateTime={closesAt.toISOString()}>
-                        {deadlineLine}
-                      </time>
-                    ) : (
-                      deadlineLine
-                    )}
-                  </span>
-                ) : null}
               </p>
             </div>
 
