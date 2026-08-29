@@ -271,9 +271,6 @@ export function FeedClient({
     (w) => w.status === "open" || w.status === "pay_soon",
   ).length;
 
-  const title =
-    filter === "open" ? "開催中" : filter === "follow" ? "フォロー中" : "すべて";
-
   /** Phase 2 最小: 入口一文はホーム（すべて・濾しなし）だけ */
   const showEntranceLine =
     filter === "all" && !specialty && !query.trim();
@@ -380,12 +377,10 @@ export function FeedClient({
         </div>
       ) : null}
       <div className="border-b border-viscum-line px-4 py-3">
-        <h1 className="text-xl font-semibold text-viscum-ink">{title}</h1>
-
         <label className="sr-only" htmlFor="feed-search">
           キーワード検索
         </label>
-        <div className="relative mt-2">
+        <div className="relative">
           <input
             id="feed-search"
             type="search"
