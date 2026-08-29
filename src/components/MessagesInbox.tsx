@@ -10,7 +10,7 @@ import {
 import { displayRequestWorkTitle } from "@/lib/local-seeds";
 import { RequestDeliverableStatus } from "@/components/RequestDeliverableStatus";
 
-type Tab = "active" | "all" | "inbox" | "sent";
+type Tab = "active" | "inbox" | "sent";
 
 type Props = {
   handle: string;
@@ -54,14 +54,11 @@ export function MessagesInbox({
           r.toHandle.toLowerCase() === me,
       );
     }
-    if (tab === "sent") {
-      return rows.filter(
-        (r) =>
-          r.outboundUnassigned ||
-          r.fromHandle.toLowerCase() === me,
-      );
-    }
-    return rows;
+    return rows.filter(
+      (r) =>
+        r.outboundUnassigned ||
+        r.fromHandle.toLowerCase() === me,
+    );
   }, [requests, tab, me]);
 
   const counts = useMemo(() => {
@@ -82,12 +79,11 @@ export function MessagesInbox({
         sent += 1;
       }
     }
-    return { all: requests.length, active, inbox, sent };
+    return { active, inbox, sent };
   }, [requests, me]);
 
   const tabs: { id: Tab; label: string; count: number }[] = [
     { id: "active", label: "進行中", count: counts.active },
-    { id: "all", label: "すべて", count: counts.all },
     { id: "inbox", label: "依頼された", count: counts.inbox },
     { id: "sent", label: "依頼した", count: counts.sent },
   ];
@@ -121,9 +117,7 @@ export function MessagesInbox({
                     ? "bg-viscum-berry/15 text-viscum-berry-deep"
                     : t.id === "sent"
                       ? "bg-viscum-leaf-soft text-viscum-leaf-deep"
-                      : t.id === "active"
-                        ? "bg-viscum-bark-soft text-viscum-ink"
-                        : "bg-viscum-paper-2 text-viscum-ink"
+                      : "bg-viscum-bark-soft text-viscum-ink"
                   : "text-viscum-muted hover:text-viscum-ink"
               }`}
             >
@@ -225,9 +219,7 @@ export function MessagesInbox({
               ? "進行中のご依頼はありません"
               : tab === "inbox"
                 ? "まだ依頼されていません"
-                : tab === "sent"
-                  ? "まだ依頼していません"
-                  : emptyHint}
+                : emptyHint || "まだ依頼していません"}
           </li>
         )}
       </ul>
