@@ -281,6 +281,39 @@ export const follows = pgTable(
 );
 
 /**
+ * アプリ内通知（フォロー・フォロー先のシード公開など）。
+ * 端末 prefs（seederAlerts 等）はクライアントで濾す。
+ */
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** follow | follow_seed | comment | adopt_pay | tip_received | deadline | direct_request */
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    body: text("body").notNull(),
+    href: text("href").notNull(),
+    /** seeder | mentor */
+    audience: text("audience").notNull().default("seeder"),
+    actorHandle: text("actor_handle"),
+    workId: text("work_id"),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("notifications_user_idx").on(t.userId),
+    index("notifications_user_created_idx").on(t.userId, t.createdAt),
+  ],
+);
+
+/**
  * 未登録者向けの共有着地（URLを知っている人向け・鍵ではない）。
  * local_* でも Neon にスナップショットを残し、別端末で開ける。
  * 漏洩対策: revokedAt で無効化＋再発行。viewCount で異常閲覧の検知材料。
@@ -321,6 +354,7 @@ export type CommentRow = typeof comments.$inferSelect;
 export type PaymentRow = typeof payments.$inferSelect;
 export type RequestDmRow = typeof requestDms.$inferSelect;
 export type FollowRow = typeof follows.$inferSelect;
+export type NotificationRow = typeof notifications.$inferSelect;
 export type DmInviteRow = typeof dmInvites.$inferSelect;
 
 export type WorkPlan =

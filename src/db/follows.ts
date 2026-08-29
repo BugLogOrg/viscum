@@ -106,7 +106,14 @@ export async function isFollowingByHandles(
 }
 
 export type SetFollowResult =
-  | { ok: true; following: boolean; persisted: true }
+  | {
+      ok: true;
+      following: boolean;
+      persisted: true;
+      /** 新規フォローが成立したとき true（再フォローは false） */
+      created: boolean;
+      targetUserId: string;
+    }
   | {
       ok: false;
       error: string;
@@ -149,23 +156,64 @@ export async function setFollowByHandles(
   }
 
   if (next) {
-    await db
-      .insert(follows)
-      .values({
-        followerId: viewerUserId,
-        followingId: targetUser.id,
-      })
-      .onConflictDoNothing();
-  } else {
-    await db
-      .delete(follows)
+    const existing = await db
+      .select({ followerId: follows.followerId })
+      .from(follows)
       .where(
         and(
           eq(follows.followerId, viewerUserId),
           eq(follows.followingId, targetUser.id),
         ),
-      );
+      )
+      .limit(1);
+    if (existing[0]) {
+      return {
+        ok: true,
+        following: true,
+        persisted: true,
+        created: false,
+        targetUserId: targetUser.id,
+      };
+    }
+    await db.insert(follows).values({
+      followerId: viewerUserId,
+      followingId: targetUser.id,
+    });
+    return {
+      ok: true,
+      following: true,
+      persisted: true,
+      created: true,
+      targetUserId: targetUser.id,
+    };
   }
 
-  return { ok: true, following: next, persisted: true };
+  await db
+    .delete(follows)
+    .where(
+      and(
+        eq(follows.followerId, viewerUserId),
+        eq(follows.followingId, targetUser.id),
+      ),
+    );
+  return {
+    ok: true,
+    following: false,
+    persisted: true,
+    created: false,
+    targetUserId: targetUser.id,
+  };
+}
+
+/** 対象ユーザーをフォローしている userId 一覧（シード公開のファンアウト用） */
+export async function listFollowerUserIds(
+  targetUserId: string,
+): Promise<string[]> {
+  const db = getDb();
+  if (!db || !targetUserId) return [];
+  const rows = await db
+    .select({ id: follows.followerId })
+    .from(follows)
+    .where(eq(follows.followingId, targetUserId));
+  return rows.map((r) => r.id);
 }

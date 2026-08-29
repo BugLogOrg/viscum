@@ -5,6 +5,7 @@ export type NotifyKind =
   | "adopt_pay"
   | "tip_received"
   | "follow"
+  | "follow_seed"
   | "deadline"
   | "direct_request";
 

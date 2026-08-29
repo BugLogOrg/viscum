@@ -122,6 +122,24 @@ export async function POST(req: Request) {
     );
   }
 
+  if (result.following && result.created) {
+    const actor = normalizeHandle(meHandle);
+    try {
+      const { createNotification } = await import("@/db/notifications");
+      await createNotification({
+        userId: result.targetUserId,
+        kind: "follow",
+        title: "フォローされました",
+        body: `@${actor} があなたをフォローしました。`,
+        href: `/u/${encodeURIComponent(actor)}`,
+        audience: "seeder",
+        actorHandle: actor,
+      });
+    } catch (e) {
+      console.error("[POST /api/follows] notify", e);
+    }
+  }
+
   return NextResponse.json({
     ok: true,
     handle: target,

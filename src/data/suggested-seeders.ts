@@ -11,6 +11,8 @@ export type DemoSeederProfile = {
 
 export type SuggestedSeeder = DemoSeederProfile & {
   workCount: number;
+  /** Neon / 端末のアイコン（あれば検索行で優先） */
+  imageUrl?: string | null;
 };
 
 /** デモ棚の人物像（handle は dummy-works の seeder と揃える） */
@@ -192,10 +194,11 @@ export function searchDemoUsers(
     put({
       handle: key,
       displayName: lp.accountName?.trim() || demo?.displayName || key,
-      bio: lp.bio?.trim() || demo?.bio || "作品はまだありません",
+      bio: lp.bio?.trim() || demo?.bio || "",
       thumbTone: demo?.thumbTone ?? "leaf",
       glyph: demo?.glyph ?? (lp.accountName?.trim() || key).slice(0, 1),
       workCount: counts.get(key) ?? 0,
+      imageUrl: lp.avatarDataUrl ?? null,
     });
   }
 
@@ -206,7 +209,7 @@ export function searchDemoUsers(
     put({
       handle: key,
       displayName: demo?.displayName ?? key,
-      bio: demo?.bio ?? "作品はまだありません",
+      bio: demo?.bio ?? "",
       thumbTone: demo?.thumbTone ?? "leaf",
       glyph: demo?.glyph ?? key.slice(0, 1).toUpperCase(),
       workCount: counts.get(key) ?? 0,

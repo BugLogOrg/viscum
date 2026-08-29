@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
@@ -8,27 +8,35 @@ import { SiteHeader } from "@/components/SiteHeader";
 import {
   clearDemoNotifies,
   formatNotifyStamp,
-  markAllNotifiesRead,
-  markNotifyRead,
-  readNotifyPrefs,
-  visibleNotifies,
   type LocalNotify,
 } from "@/lib/local-notifies";
+import {
+  fetchRemoteNotifies,
+  markAllRemoteNotifiesRead,
+  markRemoteNotifyRead,
+} from "@/lib/remote-notifies";
 
 export default function NotificationsPage() {
   const { data: session, status } = useSession();
   const [rows, setRows] = useState<LocalNotify[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  function refresh() {
-    setRows(visibleNotifies(readNotifyPrefs()));
-  }
-
-  useEffect(() => {
+  const refresh = useCallback(async () => {
     clearDemoNotifies();
-    refresh();
+    const remote = await fetchRemoteNotifies();
+    setRows(remote.notifications);
+    setLoading(false);
   }, []);
 
-  if (status === "loading") {
+  useEffect(() => {
+    if (status === "authenticated") {
+      void refresh();
+    } else if (status === "unauthenticated") {
+      setLoading(false);
+    }
+  }, [status, refresh]);
+
+  if (status === "loading" || (status === "authenticated" && loading)) {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/" hideOnMd hidePostCta />
@@ -67,7 +75,7 @@ export default function NotificationsPage() {
           <div>
             <h1 className="text-xl font-semibold text-viscum-ink">通知</h1>
             <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-              初期はシーダー向け（自分のシードへの反応・締切など）が主です。通知のオンオフは
+              フォロー・フォロー中のシード公開など。オンオフは
               <Link href="/dashboard/settings" className="text-viscum-brand underline">
                 設定
               </Link>
@@ -77,8 +85,10 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => {
-              markAllNotifiesRead();
-              refresh();
+              void (async () => {
+                await markAllRemoteNotifiesRead();
+                await refresh();
+              })();
             }}
             className="shrink-0 text-[12px] text-viscum-brand underline"
           >
@@ -97,7 +107,7 @@ export default function NotificationsPage() {
 
         {rows.length === 0 ? (
           <p className="rounded-lg border border-dashed border-viscum-line px-4 py-8 text-center text-[13px] text-viscum-muted">
-            通知はありません。コメントやフォローなどが付くとここに並びます。
+            通知はありません。フォローや、フォロー中の人のシード公開がここに並びます。
           </p>
         ) : (
           <ul className="divide-y divide-viscum-line overflow-hidden rounded-lg border border-viscum-line bg-white/60">
@@ -106,8 +116,7 @@ export default function NotificationsPage() {
                 <Link
                   href={n.href}
                   onClick={() => {
-                    markNotifyRead(n.id);
-                    refresh();
+                    void markRemoteNotifyRead(n.id);
                   }}
                   className={`block px-3 py-3 transition hover:bg-viscum-paper-2/80 ${
                     n.read ? "opacity-75" : ""
@@ -129,9 +138,6 @@ export default function NotificationsPage() {
                   </div>
                   <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
                     {n.body}
-                  </p>
-                  <p className="mt-1 text-[10px] text-viscum-muted">
-                    {n.audience === "seeder" ? "シーダー向け" : "メンター参加"}
                   </p>
                 </Link>
               </li>

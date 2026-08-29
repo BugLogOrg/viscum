@@ -209,25 +209,27 @@ export function FeedClient({
       }
       const key = remote.handle.toLowerCase();
       const demo = getDemoSeederProfile(key);
+      const shelfCount = shelf.filter(
+        (w) => w.seeder.toLowerCase() === key,
+      ).length;
       setRemotePeople([
         {
           handle: key,
           displayName: remote.accountName?.trim() || demo?.displayName || key,
-          bio: remote.bio?.trim() || demo?.bio || "作品はまだありません",
-          thumbTone: demo?.thumbTone ?? "leaf",
+          bio: remote.bio?.trim() || demo?.bio || "",
+          thumbTone: demo?.thumbTone ?? "berry",
           glyph:
             demo?.glyph ??
             (remote.accountName?.trim() || key).slice(0, 1).toUpperCase(),
-          workCount: DUMMY_WORKS.filter(
-            (w) => w.seeder.toLowerCase() === key,
-          ).length,
+          workCount: shelfCount,
+          imageUrl: remote.image ?? null,
         },
       ]);
     })();
     return () => {
       cancelled = true;
     };
-  }, [query]);
+  }, [query, shelf]);
 
   const myHandle = viewerHandle;
   const sessionPending = status === "loading" && !myHandle;
@@ -359,14 +361,41 @@ export function FeedClient({
       ...followingHandles,
     ].filter(Boolean);
     const local = searchDemoUsers(query, 8, { handles: extras });
-    const seen = new Set(local.map((p) => p.handle.toLowerCase()));
-    const merged = [...local];
-    for (const p of remotePeople) {
-      if (seen.has(p.handle.toLowerCase())) continue;
-      merged.push(p);
-      seen.add(p.handle.toLowerCase());
+    const byHandle = new Map<string, SuggestedSeeder>();
+    for (const p of local) {
+      byHandle.set(p.handle.toLowerCase(), p);
     }
-    return merged.slice(0, 8);
+    // Neon プロフィール（自己紹介・アイコン）を優先して上書き
+    for (const p of remotePeople) {
+      const key = p.handle.toLowerCase();
+      const prev = byHandle.get(key);
+      byHandle.set(
+        key,
+        prev
+          ? {
+              ...prev,
+              displayName: p.displayName || prev.displayName,
+              bio: p.bio || prev.bio,
+              imageUrl: p.imageUrl ?? prev.imageUrl,
+              workCount: Math.max(prev.workCount, p.workCount),
+              glyph: p.imageUrl ? prev.glyph : p.glyph || prev.glyph,
+              thumbTone: p.thumbTone || prev.thumbTone,
+            }
+          : p,
+      );
+    }
+    return [...byHandle.values()]
+      .map((p) => {
+        const key = p.handle.toLowerCase();
+        const fromShelf = shelf.filter(
+          (w) => w.seeder.toLowerCase() === key,
+        ).length;
+        return {
+          ...p,
+          workCount: fromShelf > 0 ? fromShelf : p.workCount,
+        };
+      })
+      .slice(0, 8);
   })();
 
   return (
@@ -566,12 +595,21 @@ export function FeedClient({
                   href={`/u/${encodeURIComponent(p.handle)}`}
                   className="flex min-w-0 flex-1 items-center gap-2"
                 >
-                  <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${THUMB_TONE_CLASS[p.thumbTone]} ${p.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`}
-                    aria-hidden
-                  >
-                    {p.glyph}
-                  </span>
+                  {p.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={p.imageUrl}
+                      alt=""
+                      className="h-9 w-9 shrink-0 rounded-md object-cover"
+                    />
+                  ) : (
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${THUMB_TONE_CLASS[p.thumbTone]} ${p.thumbTone === "bark" ? "text-viscum-ink" : "text-white"}`}
+                      aria-hidden
+                    >
+                      {p.glyph}
+                    </span>
+                  )}
                   <span className="min-w-0">
                     <span className="flex min-w-0 items-baseline gap-1.5">
                       <span className="truncate text-[14px] font-medium text-viscum-ink">
@@ -587,11 +625,6 @@ export function FeedClient({
                         {p.bio}
                       </span>
                     ) : null}
-                    <span className="mt-0.5 block text-[11px] text-viscum-muted">
-                      {p.workCount > 0
-                        ? `作品 ${p.workCount}`
-                        : "作品はまだありません"}
-                    </span>
                   </span>
                 </Link>
                 <span className="shrink-0">

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import {
   clearDemoNotifies,
-  unreadNotifyCount,
 } from "@/lib/local-notifies";
+import { fetchRemoteNotifies } from "@/lib/remote-notifies";
 import {
   displayAccountName,
   readAvatarDataUrl,
@@ -37,11 +37,18 @@ export function HeaderAccountActions({
   useEffect(() => {
     // 旧デモ通知が端末に残っていれば掃除（自動投入はしない）
     clearDemoNotifies();
-    setUnread(unreadNotifyCount());
-    const onFocus = () => setUnread(unreadNotifyCount());
+    if (!session?.user?.id || session.user.id.startsWith("demo:")) {
+      setUnread(0);
+      return;
+    }
+    const syncUnread = () => {
+      void fetchRemoteNotifies().then((r) => setUnread(r.unread));
+    };
+    syncUnread();
+    const onFocus = () => syncUnread();
     window.addEventListener("focus", onFocus);
     return () => window.removeEventListener("focus", onFocus);
-  }, []);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     if (!handle) {
@@ -107,7 +114,9 @@ export function HeaderAccountActions({
         title="通知"
         aria-label="通知"
         className="relative rounded-md p-2 text-viscum-trunk transition hover:bg-viscum-paper-2 hover:text-viscum-brand"
-        onClick={() => setUnread(unreadNotifyCount())}
+        onClick={() => {
+          void fetchRemoteNotifies().then((r) => setUnread(r.unread));
+        }}
       >
         <BellIcon className="h-5 w-5" />
         {session?.user && unread > 0 && (

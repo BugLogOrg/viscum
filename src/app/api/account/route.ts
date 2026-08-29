@@ -6,6 +6,7 @@ import {
   accounts,
   comments,
   follows,
+  notifications,
   payments,
   requestDms,
   users,
@@ -49,6 +50,9 @@ export async function DELETE() {
   }
 
   try {
+    await db
+      .delete(notifications)
+      .where(eq(notifications.userId, userId));
     await db
       .delete(follows)
       .where(

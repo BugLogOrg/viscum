@@ -183,5 +183,28 @@ export async function POST(req: Request) {
     handle: me[0].handle,
     name: me[0].name,
   });
+
+  if (row.listedOnShelf && me[0].handle) {
+    try {
+      const { listFollowerUserIds } = await import("@/db/follows");
+      const { createNotificationsForUsers } = await import("@/db/notifications");
+      const followerIds = await listFollowerUserIds(userId);
+      const h = me[0].handle.replace(/^@/, "").trim();
+      const shortTitle =
+        row.title.length > 40 ? `${row.title.slice(0, 40)}…` : row.title;
+      await createNotificationsForUsers(followerIds, {
+        kind: "follow_seed",
+        title: "フォロー中の人がシードしました",
+        body: `@${h} が「${shortTitle}」を公開しました。`,
+        href: `/w/${encodeURIComponent(id)}`,
+        audience: "seeder",
+        actorHandle: h,
+        workId: id,
+      });
+    } catch (e) {
+      console.error("[POST /api/works] follow_seed notify", e);
+    }
+  }
+
   return NextResponse.json({ work, persisted: true }, { status: 201 });
 }

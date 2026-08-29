@@ -3,6 +3,8 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
+import { listFollowerUserIds } from "@/db/follows";
+import { createNotificationsForUsers } from "@/db/notifications";
 import { users, works } from "@/db/schema";
 import {
   getNeonWork,
@@ -72,10 +74,13 @@ export async function PATCH(req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "not found" }, { status: 404 });
   }
 
+  const wasListed = existing[0].listedOnShelf;
+  const nowListed = parsed.data.listedOnShelf;
+
   await db
     .update(works)
     .set({
-      listedOnShelf: parsed.data.listedOnShelf,
+      listedOnShelf: nowListed,
       updatedAt: new Date(),
     })
     .where(eq(works.id, id));
@@ -87,6 +92,28 @@ export async function PATCH(req: Request, ctx: Ctx) {
   if (!row || !me[0]) {
     return NextResponse.json({ error: "update failed" }, { status: 500 });
   }
+
+  // フォロー中の人がシード公開した → フォロワーへ通知（重要）
+  if (!wasListed && nowListed && me[0].handle) {
+    try {
+      const followerIds = await listFollowerUserIds(userId);
+      const handle = me[0].handle.replace(/^@/, "").trim();
+      const shortTitle =
+        row.title.length > 40 ? `${row.title.slice(0, 40)}…` : row.title;
+      await createNotificationsForUsers(followerIds, {
+        kind: "follow_seed",
+        title: "フォロー中の人がシードしました",
+        body: `@${handle} が「${shortTitle}」を公開しました。`,
+        href: `/w/${encodeURIComponent(id)}`,
+        audience: "seeder",
+        actorHandle: handle,
+        workId: id,
+      });
+    } catch (e) {
+      console.error("[PATCH /api/works] follow_seed notify", e);
+    }
+  }
+
   return NextResponse.json({
     work: workFromNeonRow(row, { handle: me[0].handle, name: me[0].name }),
     persisted: true,
