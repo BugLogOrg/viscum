@@ -10,7 +10,7 @@ import {
   FeedAttitudeCounts,
   FeedBookmarkButton,
 } from "@/components/FeedThumbReactions";
-import { SeederNameText } from "@/components/SeederNameText";
+import { SeederLink } from "@/components/SeederLink";
 
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1）。詳細・投稿プレビューでも参照 */
 export const THUMB_ASPECT = "aspect-[1280/670]";
@@ -156,23 +156,13 @@ export function WorkFeedRow({
           ) : null}
         </Link>
 
-        <div className="mt-auto pt-1.5">
-          <Link
-            href={`/w/${work.id}`}
-            className="block truncate text-[11px] text-viscum-trunk active:opacity-90"
-            title="シーダー"
-          >
-            <SeederNameText
-              handle={work.seeder}
-              preferredName={work.seederAccountName}
-            />
-          </Link>
-          <div className="mt-1 flex justify-end">
-            <FeedAttitudeCounts
-              workId={work.id}
-              comments={work.comments}
-            />
-          </div>
+        <div className="mt-auto flex flex-col items-end gap-1 pt-1.5">
+          <SeederLink
+            handle={work.seeder}
+            preferredName={work.seederAccountName}
+            className="max-w-full truncate text-right text-[11px] font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
+          />
+          <FeedAttitudeCounts workId={work.id} comments={work.comments} />
         </div>
       </div>
     </article>
