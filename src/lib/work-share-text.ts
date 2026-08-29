@@ -2,38 +2,12 @@ import { formatYen, planBadgeLabel, type Work } from "@/data/dummy-works";
 import { PUBLIC_BOOST } from "@/data/seed-courses";
 import { resolvePublicOrigin } from "@/lib/public-origin";
 
-const MENTOR_ASK_MAX = 100;
+/** 共有文のタイトル上限（OGと同寸。貼り付けが暴れないように） */
+const SHARE_TITLE_MAX = 100;
 
-/** 共有用にご挨拶だけ短く（聞くことリストは載せない） */
-function mentorAskSnippet(work: Work): string | null {
-  const greeting = work.focusNote?.trim();
-  if (greeting) {
-    if (greeting.length <= MENTOR_ASK_MAX) return greeting;
-    return `${greeting.slice(0, MENTOR_ASK_MAX)}…`;
-  }
-  const plan = work.plan;
-  // 有料コースの prompts は聞くこと → 共有に出さない
-  if (
-    plan === "first_impression" ||
-    plan === "brush_up" ||
-    plan === "public_boost"
-  ) {
-    return null;
-  }
-  // 旧無料: prompts にご挨拶相当が入っていた場合
-  const raw = (work.prompts ?? [])
-    .map((p) => p.trim())
-    .filter(Boolean)
-    .join("\n")
-    .trim();
-  if (!raw) return null;
-  if (raw.length <= MENTOR_ASK_MAX) return raw;
-  return `${raw.slice(0, MENTOR_ASK_MAX)}…`;
-}
-
-/** SNS貼り付け用の共有文（詳細・公開直後の正本）。聞くことは載せない */
+/** SNS貼り付け用の共有文（詳細・公開直後の正本）。ご挨拶・聞くことは載せない */
 export function buildWorkShareText(work: Work, origin?: string): string {
-  // 共有URLは正規のページURLのみ（?v= は OG画像側だけ。貼ると長く謎に見える）
+  // 共有URLは正規のページURLのみ（?v= は OG画像側だけ）
   // vercel.app で開いていても共有URLは本番（viscum.org）
   const base = resolvePublicOrigin(origin);
   const url = `${base}/w/${work.id}`;
@@ -52,10 +26,11 @@ export function buildWorkShareText(work: Work, origin?: string): string {
     lines.push(`【VISCUM】コメント歓迎`);
   }
 
-  lines.push(work.title.trim() || "（タイトル）");
-
-  const ask = mentorAskSnippet(work);
-  if (ask) lines.push(ask);
+  let title = (work.title || "（タイトル）").trim().replace(/\s+/g, " ");
+  if (title.length > SHARE_TITLE_MAX) {
+    title = `${title.slice(0, SHARE_TITLE_MAX - 1)}…`;
+  }
+  lines.push(title);
 
   lines.push(url);
   return lines.join("\n");
