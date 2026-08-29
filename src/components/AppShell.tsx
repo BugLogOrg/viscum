@@ -21,6 +21,8 @@ export function AppShell({
   onSelectTag,
   feedFilter = "all",
   onFeedFilter,
+  onClearSearch,
+  onHome,
   openCount,
   showSpecialty = true,
   variant = "feed",
@@ -30,6 +32,10 @@ export function AppShell({
   onSelectTag?: (tag: string | null) => void;
   feedFilter?: "all" | "open" | "follow";
   onFeedFilter?: (f: "all" | "open" | "follow") => void;
+  /** 検索欄を空にする（ロゴ／すべて用） */
+  onClearSearch?: () => void;
+  /** ロゴ：すべて＋検索クリア＋専門リセット */
+  onHome?: () => void;
   openCount?: number;
   showSpecialty?: boolean;
   variant?: "feed" | "chrome";
@@ -48,25 +54,43 @@ export function AppShell({
     return "text-viscum-ink hover:bg-viscum-paper-2";
   }
 
+  function goAll() {
+    onFeedFilter?.("all");
+    onSelectTag?.(null);
+    onClearSearch?.();
+  }
+
   return (
     <div className="mx-auto min-h-dvh max-w-7xl bg-viscum-paper md:flex">
       <aside className="hidden w-52 shrink-0 border-r border-viscum-line md:flex md:flex-col md:sticky md:top-0 md:h-dvh md:overflow-y-auto">
         <div className="flex h-12 shrink-0 items-center border-b border-viscum-line px-4">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-[15px] font-semibold tracking-[0.12em] text-viscum-brand"
-            title="VISCUM／ヤドリギ"
-          >
-            <ViscumMark className="h-6 w-6" />
-            VISCUM
-          </Link>
+          {interactive && onHome ? (
+            <button
+              type="button"
+              onClick={onHome}
+              className="flex items-center gap-2 text-[15px] font-semibold tracking-[0.12em] text-viscum-brand"
+              title="VISCUM／ヤドリギ"
+            >
+              <ViscumMark className="h-6 w-6" />
+              VISCUM
+            </button>
+          ) : (
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-[15px] font-semibold tracking-[0.12em] text-viscum-brand"
+              title="VISCUM／ヤドリギ"
+            >
+              <ViscumMark className="h-6 w-6" />
+              VISCUM
+            </Link>
+          )}
         </div>
         <nav className="flex flex-col gap-1 px-3 py-3 text-sm">
           {interactive ? (
             <>
               <button
                 type="button"
-                onClick={() => onFeedFilter("all")}
+                onClick={goAll}
                 className={`rounded-md px-2 py-1.5 text-left transition ${
                   shelfActive
                     ? "bg-viscum-leaf-soft font-medium text-viscum-leaf-deep"

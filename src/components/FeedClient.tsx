@@ -32,8 +32,15 @@ import { DemoBadge } from "@/components/DemoBadge";
 type Filter = "all" | "open" | "follow";
 
 function matchesQuery(w: Work, q: string): boolean {
-  const needle = q.trim().toLowerCase().replace(/^@/, "");
-  if (!needle) return true;
+  const raw = q.trim();
+  if (!raw) return true;
+  const needle = raw.toLowerCase().replace(/^@/, "");
+  // 作品URLやUUIDを貼ったときもヒットさせる
+  const idFromUrl = raw.match(
+    /\/w\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i,
+  )?.[1];
+  if (idFromUrl && w.id.toLowerCase() === idFromUrl.toLowerCase()) return true;
+  if (w.id.toLowerCase() === needle) return true;
   const demo = getDemoSeederProfile(w.seeder);
   const hay = [
     w.title,
@@ -42,6 +49,7 @@ function matchesQuery(w: Work, q: string): boolean {
     w.seederAccountName ?? "",
     demo?.displayName ?? "",
     w.description,
+    w.focusNote ?? "",
     ...w.tags,
   ]
     .join(" ")
@@ -168,6 +176,7 @@ export function FeedClient() {
   const selectTag = useCallback(
     (tag: string | null) => {
       setSpecialty(tag);
+      if (tag === null) setQuery("");
       const params = new URLSearchParams(searchParams.toString());
       if (tag) params.set("tag", tag);
       else params.delete("tag");
@@ -176,6 +185,20 @@ export function FeedClient() {
     },
     [router, searchParams],
   );
+
+  const setFeedFilter = useCallback((f: Filter) => {
+    setFilter(f);
+    if (f === "all") setQuery("");
+  }, []);
+
+  const clearSearch = useCallback(() => setQuery(""), []);
+
+  const goHomeFeed = useCallback(() => {
+    setFilter("all");
+    setQuery("");
+    setSpecialty(null);
+    router.replace("/");
+  }, [router]);
 
   const followSet = new Set(followingHandles);
 
@@ -251,7 +274,9 @@ export function FeedClient() {
       activeTag={specialty}
       onSelectTag={selectTag}
       feedFilter={filter}
-      onFeedFilter={setFilter}
+      onFeedFilter={setFeedFilter}
+      onClearSearch={clearSearch}
+      onHome={goHomeFeed}
       openCount={openCount}
     >
       <SiteHeader hideOnMd />
@@ -313,15 +338,25 @@ export function FeedClient() {
         <label className="sr-only" htmlFor="feed-search">
           キーワード検索
         </label>
-        <input
-          id="feed-search"
-          type="search"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="タイトル・ユーザー名・タグ"
-          className="mt-2 w-full rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-sm text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none focus:ring-1 focus:ring-viscum-brand"
-        />
-
+        <div className="relative mt-2">
+          <input
+            id="feed-search"
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="タイトル・ユーザー名・タグ"
+            className="w-full rounded-md border border-viscum-line bg-white/70 py-2 pl-3 pr-16 text-sm text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none focus:ring-1 focus:ring-viscum-brand"
+          />
+          {query.trim() ? (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+            >
+              クリア
+            </button>
+          ) : null}
+        </div>
         <div className="mt-2 flex gap-1.5 overflow-x-auto pb-1 md:hidden">
           <button
             type="button"
@@ -359,39 +394,39 @@ export function FeedClient() {
       </p>
 
       <div className="flex items-center gap-2 border-b border-viscum-line px-3 py-1.5 md:hidden">
-        <button
-          type="button"
-          onClick={() => setFilter("all")}
-          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-            filter === "all"
-              ? "bg-viscum-brand text-white"
-              : "bg-viscum-paper-2 text-viscum-muted"
-          }`}
-        >
-          すべて
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilter("follow")}
-          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-            filter === "follow"
-              ? "bg-viscum-brand text-white"
-              : "bg-viscum-paper-2 text-viscum-muted"
-          }`}
-        >
-          フォロー中
-        </button>
-        <button
-          type="button"
-          onClick={() => setFilter("open")}
-          className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
-            filter === "open"
-              ? "bg-viscum-berry text-white"
-              : "bg-viscum-paper-2 text-viscum-muted"
-          }`}
-        >
-          開催中 ({openCount})
-        </button>
+          <button
+            type="button"
+            onClick={() => setFeedFilter("all")}
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+              filter === "all"
+                ? "bg-viscum-brand text-white"
+                : "bg-viscum-paper-2 text-viscum-muted"
+            }`}
+          >
+            すべて
+          </button>
+          <button
+            type="button"
+            onClick={() => setFeedFilter("follow")}
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+              filter === "follow"
+                ? "bg-viscum-brand text-white"
+                : "bg-viscum-paper-2 text-viscum-muted"
+            }`}
+          >
+            フォロー中
+          </button>
+          <button
+            type="button"
+            onClick={() => setFeedFilter("open")}
+            className={`rounded-full px-2.5 py-0.5 text-[11px] font-medium ${
+              filter === "open"
+                ? "bg-viscum-berry text-white"
+                : "bg-viscum-paper-2 text-viscum-muted"
+            }`}
+          >
+            開催中 ({openCount})
+          </button>
         <span className="ml-auto text-[10px] text-viscum-muted">
           {peopleHits.length > 0
             ? `ユーザー${peopleHits.length} · 作品${rest.length}`
