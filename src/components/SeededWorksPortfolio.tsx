@@ -60,13 +60,20 @@ export function SeededWorksPortfolio({ handle, initialWorks }: Props) {
     PORTFOLIO_PAGE_SIZE,
   );
 
+  const at = handle.replace(/^@/, "").trim() || handle;
+
   return (
-    <section className="border-b border-viscum-line">
-      <p className="px-4 pt-4 text-[20px] font-bold text-viscum-ink">
-        シードした作品 · {works.length}件
-      </p>
-      <p className="px-4 pt-1 text-[11px] leading-snug text-viscum-muted">
-        棚に出した作品です（コンペ募集中・決済前も含む）。直依頼だけの作品や下書きはここには出ません。上の「払った件数」とは別の事実です。
+    <section className="border-b border-viscum-line" aria-label={`${at}がシードした作品`}>
+      <h2 className="px-4 pt-5 text-[18px] font-bold leading-tight tracking-wide text-viscum-ink">
+        <span className="text-viscum-brand">@{at}</span>
+        {" "}
+        がシードした作品
+        <span className="ml-1.5 text-[13px] font-medium tabular-nums text-viscum-muted">
+          · {works.length}件
+        </span>
+      </h2>
+      <p className="px-4 pt-1.5 text-[12px] leading-snug text-viscum-muted">
+        棚に出した作品です（コンペ募集中・決済前も含む）。直依頼だけの作品や下書きはここには出ません。
       </p>
       {works.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">

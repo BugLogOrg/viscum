@@ -188,13 +188,23 @@ export function MentoredWorksList({
     PORTFOLIO_PAGE_SIZE,
   );
 
+  const at = handle.replace(/^@/, "").trim() || handle;
+
   return (
-    <section className="border-b border-viscum-line">
-      <p className="px-4 pt-4 text-[20px] font-bold text-viscum-ink">
-        メンターとして参加した作品 · {participations.length}件
-      </p>
-      <p className="px-4 pt-1 text-[11px] text-viscum-muted">
-        コメントした棚です（選出・決済前も含む）。選出・褒賞はバッジで事実表示します。カードから自分のコメント位置へ飛べます。
+    <section
+      className="border-b border-viscum-line"
+      aria-label={`${at}が参加した作品`}
+    >
+      <h2 className="px-4 pt-5 text-[18px] font-bold leading-tight tracking-wide text-viscum-ink">
+        <span className="text-viscum-brand">@{at}</span>
+        {" "}
+        が参加した作品
+        <span className="ml-1.5 text-[13px] font-medium tabular-nums text-viscum-muted">
+          · {participations.length}件
+        </span>
+      </h2>
+      <p className="px-4 pt-1.5 text-[12px] leading-snug text-viscum-muted">
+        コメントして参加した棚です（選出・決済前も含む）。選出・褒賞はバッジで事実表示します。
       </p>
       {participations.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">
