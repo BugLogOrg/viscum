@@ -9,8 +9,7 @@ import { LocalSeedVisibilityNote } from "@/components/LocalSeedVisibilityNote";
 import { OwnerSeedActions } from "@/components/OwnerSeedActions";
 import { FeedShelfCorners } from "@/components/FeedShelfCorners";
 import { WorkEngage } from "@/components/WorkEngage";
-import { WorkReactionBar } from "@/components/WorkReactionBar";
-import { WorkShareBoost } from "@/components/WorkShareBoost";
+import { WorkDetailActionRow } from "@/components/WorkDetailActionRow";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import {
   closesAtFromHours,
@@ -94,6 +93,17 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
   const scaffoldLabel = scaffold?.label ?? null;
   const localDemo = isClientSeedId(work.id);
   const neonPersisted = Boolean(work.persisted) || isNeonWorkId(work.id);
+  const externalUrl = work.externalUrl?.trim();
+  const externalOk =
+    Boolean(externalUrl) && externalUrl !== "https://";
+  let externalHost = "";
+  if (externalOk && externalUrl) {
+    try {
+      externalHost = new URL(externalUrl).hostname.replace(/^www\./, "");
+    } catch {
+      externalHost = "";
+    }
+  }
 
   return (
     <div className="xl:flex xl:items-start">
@@ -137,123 +147,88 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
             ) : null}
           </div>
 
-          <div className="space-y-4 px-4 py-5">
-            <div className="space-y-2">
-              <StatusBadge
-                status={work.status}
-                prizeYen={work.prizeYen}
-                paymentsDone={work.paymentsDone}
-                planLabel={planBadgeLabel(work.plan)}
-              />
-              {localDemo && <LocalSeedVisibilityNote workId={work.id} />}
-              {neonPersisted && !localDemo ? (
-                <p className="text-[11px] leading-relaxed text-viscum-muted">
-                  {isDraft ? (
-                    <>
-                      <strong className="font-medium text-viscum-berry-deep">
-                        未公開
-                      </strong>
-                      （Neonに保存済み・共有URLは作者のみ）。公開すると他の人も開けます。
-                    </>
-                  ) : (
-                    <>
-                      トップの棚に
-                      <strong className="font-medium text-viscum-ink">公開中</strong>
-                      です（サーバ保存）。URLを共有できます。
-                    </>
-                  )}
-                </p>
-              ) : null}
-              <dl className="space-y-1 text-[14px] text-viscum-ink">
-                <div>
-                  <dt className="inline text-viscum-muted">シーダー：</dt>
-                  <dd className="inline">
-                    <SeederLink
-                      handle={work.seeder}
-                      preferredName={work.seederAccountName}
-                    />
-                  </dd>
-                </div>
-                <div>
-                  <dt className="inline text-viscum-muted">投稿：</dt>
-                  <dd className="inline">
-                    <time dateTime={postedAt.toISOString()}>{postedLine}</time>
-                  </dd>
-                </div>
-                {deadlineLine && (
-                  <div>
-                    <dt className="inline text-viscum-muted">締切：</dt>
-                    <dd
-                      className={
-                        work.status === "closed"
-                          ? "inline text-viscum-muted"
-                          : "inline"
-                      }
-                    >
-                      {closesAt && work.status !== "closed" ? (
-                        <>
-                          <time dateTime={closesAt.toISOString()}>
-                            {deadlineLine.replace(/（[^）]+）$/, "")}
-                          </time>
-                          <span className="font-medium text-viscum-berry-deep">
-                            {deadlineLine.match(/（[^）]+）$/)?.[0] ?? ""}
-                          </span>
-                        </>
-                      ) : (
-                        deadlineLine
-                      )}
-                    </dd>
-                  </div>
-                )}
-                {work.tags.length > 0 && (
-                  <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-                    <dt className="shrink-0 text-viscum-muted">タグ：</dt>
-                    <dd className="flex flex-wrap gap-1.5">
-                      {work.tags.map((tag) => (
-                        <Link
-                          key={tag}
-                          href={`/?tag=${encodeURIComponent(tag)}`}
-                          className="rounded-md border border-viscum-line bg-viscum-paper-2 px-2 py-0.5 text-[12px] text-viscum-trunk hover:border-viscum-brand hover:text-viscum-brand"
-                        >
-                          {tag}
-                        </Link>
-                      ))}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-            </div>
-
-            <div>
-              <p className="text-[15px] font-semibold leading-snug text-viscum-ink">
-                タイトル：
-              </p>
-              <h1 className="mt-1 text-xl font-semibold leading-snug text-viscum-ink">
+          <div className="space-y-5 px-4 py-5">
+            {/* A. 読む：タイトル → 上アクション → ご挨拶 → 説明 */}
+            <div className="space-y-3">
+              <h1 className="text-xl font-semibold leading-snug text-viscum-ink">
                 {work.title}
               </h1>
+              {!isDraft ? (
+                <WorkDetailActionRow
+                  work={work}
+                  bookmarkBase={rx.bookmark}
+                  isDraft={isDraft}
+                  variant="icons"
+                />
+              ) : null}
+              <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[13px] text-viscum-muted">
+                <SeederLink
+                  handle={work.seeder}
+                  preferredName={work.seederAccountName}
+                />
+                <time dateTime={postedAt.toISOString()}>{postedLine}</time>
+                {deadlineLine && work.status !== "closed" ? (
+                  <span className="font-medium text-viscum-berry-deep">
+                    {closesAt ? (
+                      <time dateTime={closesAt.toISOString()}>
+                        {deadlineLine}
+                      </time>
+                    ) : (
+                      deadlineLine
+                    )}
+                  </span>
+                ) : null}
+              </p>
             </div>
 
             {work.focusNote?.trim() ? (
               <div>
-                <p className="text-[15px] font-semibold leading-snug text-viscum-ink">
-                  ご挨拶：
+                <p className="text-[12px] font-medium tracking-wide text-viscum-muted">
+                  ご挨拶
                 </p>
-                <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
+                <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
                   {work.focusNote.trim()}
                 </p>
               </div>
             ) : null}
 
             <div>
-              <p className="text-[15px] font-semibold leading-snug text-viscum-ink">
-                説明：
-              </p>
-              <p className="mt-1 whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
+              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
                 {work.description}
               </p>
             </div>
 
-            {scaffoldLines.length > 0 && scaffoldLabel && (
+            {externalOk && externalUrl ? (
+              <a
+                href={externalUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 rounded-lg border border-viscum-brand/35 bg-viscum-leaf-soft/50 px-3.5 py-3 transition hover:border-viscum-brand hover:bg-viscum-leaf-soft"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/80 text-viscum-brand">
+                  <ExternalGlyph className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-semibold text-viscum-ink">
+                    作品を開く
+                  </span>
+                  {externalHost ? (
+                    <span className="mt-0.5 block truncate text-[12px] text-viscum-muted">
+                      {externalHost}
+                    </span>
+                  ) : (
+                    <span className="mt-0.5 block text-[12px] text-viscum-muted">
+                      外部サイトで見る
+                    </span>
+                  )}
+                </span>
+                <span className="shrink-0 text-viscum-brand" aria-hidden>
+                  →
+                </span>
+              </a>
+            ) : null}
+
+            {scaffoldLines.length > 0 && scaffoldLabel ? (
               <div className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
                 <p className="text-[13px] font-medium text-viscum-ink">
                   {scaffoldLabel}
@@ -274,21 +249,73 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   ))}
                 </ol>
               </div>
-            )}
+            ) : null}
 
-            {work.externalUrl?.trim() &&
-              work.externalUrl.trim() !== "https://" && (
-                <p>
-                  <a
-                    href={work.externalUrl}
-                    className="inline-flex text-[17px] font-semibold text-viscum-brand underline decoration-2 underline-offset-4 hover:text-viscum-berry-deep"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    作品を開く（外部）
-                  </a>
+            {/* B. コンペ一塊（第二の主役） */}
+            <div className="space-y-2 rounded-lg border border-viscum-line bg-white/60 px-3 py-3">
+              <StatusBadge
+                status={work.status}
+                prizeYen={work.prizeYen}
+                paymentsDone={work.paymentsDone}
+                planLabel={planBadgeLabel(work.plan)}
+              />
+              {deadlineLine ? (
+                <p
+                  className={
+                    work.status === "closed"
+                      ? "text-[13px] text-viscum-muted"
+                      : "text-[13px] text-viscum-ink"
+                  }
+                >
+                  <span className="text-viscum-muted">締切 </span>
+                  {closesAt && work.status !== "closed" ? (
+                    <>
+                      <time dateTime={closesAt.toISOString()}>
+                        {deadlineLine.replace(/（[^）]+）$/, "")}
+                      </time>
+                      <span className="font-medium text-viscum-berry-deep">
+                        {deadlineLine.match(/（[^）]+）$/)?.[0] ?? ""}
+                      </span>
+                    </>
+                  ) : (
+                    deadlineLine
+                  )}
                 </p>
-              )}
+              ) : null}
+              {work.tags.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {work.tags.map((tag) => (
+                    <Link
+                      key={tag}
+                      href={`/?tag=${encodeURIComponent(tag)}`}
+                      className="rounded-md border border-viscum-line bg-viscum-paper-2 px-2 py-0.5 text-[12px] text-viscum-trunk hover:border-viscum-brand hover:text-viscum-brand"
+                    >
+                      {tag}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+
+            {localDemo ? <LocalSeedVisibilityNote workId={work.id} /> : null}
+            {neonPersisted && !localDemo ? (
+              <p className="text-[11px] leading-relaxed text-viscum-muted">
+                {isDraft ? (
+                  <>
+                    <strong className="font-medium text-viscum-berry-deep">
+                      未公開
+                    </strong>
+                    （Neonに保存済み・共有URLは作者のみ）。公開すると他の人も開けます。
+                  </>
+                ) : (
+                  <>
+                    トップの棚に
+                    <strong className="font-medium text-viscum-ink">公開中</strong>
+                    です（サーバ保存）。URLを共有できます。
+                  </>
+                )}
+              </p>
+            ) : null}
 
             <OwnerSeedActions
               workId={work.id}
@@ -302,12 +329,13 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
               </p>
             ) : (
               <>
-                <WorkReactionBar
-                  workId={work.id}
-                  title={work.title}
+                {/* D. 下段アクション（見逃し防止）→ C. 書く */}
+                <WorkDetailActionRow
+                  work={work}
                   bookmarkBase={rx.bookmark}
+                  isDraft={isDraft}
+                  variant="row"
                 />
-                <WorkShareBoost work={work} isDraft={isDraft} />
                 <WorkEngage
                   workId={work.id}
                   seederHandle={work.seeder}
@@ -334,5 +362,24 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
 
       <FeedShelfCorners excludeWorkId={work.id} layout="sideDuo" />
     </div>
+  );
+}
+
+function ExternalGlyph({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={className}
+      aria-hidden
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M14 4h6v6" />
+      <path d="M10 14 20 4" />
+      <path d="M20 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h5" />
+    </svg>
   );
 }
