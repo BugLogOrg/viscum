@@ -373,7 +373,7 @@ export default function DashboardPage() {
                     </Link>
                     <button
                       type="button"
-                      className="px-1 py-1.5 text-[12px] text-viscum-berry-deep underline"
+                      className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
                       onClick={() => {
                         if (!window.confirm("この下書きを削除しますか？")) {
                           return;
@@ -425,7 +425,7 @@ export default function DashboardPage() {
                     </Link>
                     <button
                       type="button"
-                      className="px-1 py-1.5 text-[12px] text-viscum-berry-deep underline"
+                      className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
                       onClick={() => {
                         if (
                             !window.confirm(
@@ -506,7 +506,7 @@ export default function DashboardPage() {
                     ) : null}
                     <button
                       type="button"
-                      className="px-1 py-1.5 text-[12px] text-viscum-berry-deep underline"
+                      className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
                       onClick={() => {
                         if (!window.confirm("このメモを削除しますか？")) return;
                         const res = deleteLocalSeed(s.id, handle);
@@ -604,12 +604,6 @@ export default function DashboardPage() {
                         getText={() => buildWorkShareText(w, origin)}
                       />
                     ) : null}
-                    <Link
-                      href={`/w/${encodeURIComponent(w.id)}`}
-                      className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                    >
-                      詳細
-                    </Link>
                     <button
                       type="button"
                       className="rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
@@ -625,6 +619,33 @@ export default function DashboardPage() {
                       }}
                     >
                       下書きに戻す
+                    </button>
+                    <Link
+                      href={`/w/${encodeURIComponent(w.id)}`}
+                      className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                    >
+                      詳細
+                    </Link>
+                    <button
+                      type="button"
+                      className="rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            "このシードを削除しますか？トップからも消えます。",
+                          )
+                        ) {
+                          return;
+                        }
+                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                          method: "DELETE",
+                        }).then((res) => {
+                          if (res.ok) refresh();
+                          else window.alert("削除に失敗しました");
+                        });
+                      }}
+                    >
+                      削除
                     </button>
                   </div>
                 </li>
@@ -665,9 +686,15 @@ export default function DashboardPage() {
                           下書きに戻す
                         </button>
                       ) : null}
+                      <Link
+                        href={`/w/${encodeURIComponent(s.id)}`}
+                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                      >
+                        詳細
+                      </Link>
                       <button
                         type="button"
-                        className="text-[12px] text-viscum-berry-deep underline"
+                        className="rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
                         onClick={() => {
                           if (
                             !window.confirm(
@@ -683,12 +710,6 @@ export default function DashboardPage() {
                       >
                         削除
                       </button>
-                      <Link
-                        href={`/w/${encodeURIComponent(s.id)}`}
-                        className="text-[12px] text-viscum-brand underline"
-                      >
-                        詳細
-                      </Link>
                     </div>
                   ) : origin && (isDemoSeed(s.id) || !s.id.startsWith("local_")) ? (
                     <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
@@ -699,7 +720,7 @@ export default function DashboardPage() {
                       />
                       <Link
                         href={`/w/${encodeURIComponent(s.id)}`}
-                        className="text-[12px] text-viscum-brand underline"
+                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
                       >
                         詳細
                       </Link>
