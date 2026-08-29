@@ -254,32 +254,13 @@ export default function DashboardPage() {
                   </a>
                 </li>
                 <li>
-                  <Link
-                    href="/dashboard/messages"
-                    className="block py-2.5 underline-offset-2 hover:underline"
-                  >
-                    ご依頼DM
-                  </Link>
-                </li>
-                <li>
                   <a
                     href="#drafts"
                     className="block py-2.5 underline-offset-2 hover:underline"
                   >
                     下書き
-                    {neonDrafts.length + drafts.length > 0
-                      ? `（${neonDrafts.length + drafts.length}）`
-                      : ""}
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#direct-requests"
-                    className="block py-2.5 underline-offset-2 hover:underline"
-                  >
-                    直依頼の下書き
-                    {requestPacks.length > 0
-                      ? `（${requestPacks.length}）`
+                    {neonDrafts.length + drafts.length + requestPacks.length > 0
+                      ? `（${neonDrafts.length + drafts.length + requestPacks.length}）`
                       : ""}
                   </a>
                 </li>
@@ -510,29 +491,51 @@ export default function DashboardPage() {
           )}
         </section>
 
-        <section id="drafts" className="scroll-mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
+        <section id="drafts" className="scroll-mt-4 space-y-6">
+          <div>
             <h2 className="text-[15px] font-semibold text-viscum-ink">
-              下書き（未公開）
-              {neonDrafts.length + drafts.length > 0 ? (
+              下書き
+              {neonDrafts.length + drafts.length + requestPacks.length > 0 ? (
                 <span className="ml-1.5 text-[13px] font-normal text-viscum-muted">
-                  {neonDrafts.length + drafts.length}件
+                  {neonDrafts.length + drafts.length + requestPacks.length}件
                 </span>
               ) : null}
             </h2>
-            <Link
-              href="/new"
-              className="text-[13px] font-medium text-viscum-brand underline"
-            >
-              シードする
-            </Link>
+            <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
+              まだ外に出していないもの。棚用と直依頼用はボタンが違うので、下で分けています。進行中のやりとりは
+              <Link
+                href="/dashboard/messages"
+                className="mx-0.5 font-medium text-viscum-brand underline"
+              >
+                ご依頼DM
+              </Link>
+              へ。
+            </p>
           </div>
-          <p className="text-[11px] leading-relaxed text-viscum-muted">
-            ログイン中の新規シードはサーバ保存（共有可）。古い端末内下書きもここに残ります。
-          </p>
-          {neonDrafts.length === 0 && drafts.length === 0 ? (
+
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-[13px] font-semibold text-viscum-ink">
+                棚（未公開）
+                {neonDrafts.length + drafts.length > 0 ? (
+                  <span className="ml-1.5 text-[12px] font-normal text-viscum-muted">
+                    {neonDrafts.length + drafts.length}件
+                  </span>
+                ) : null}
+              </h3>
+              <Link
+                href="/new"
+                className="text-[13px] font-medium text-viscum-brand underline"
+              >
+                シードする
+              </Link>
+            </div>
+            <p className="text-[11px] leading-relaxed text-viscum-muted">
+              公開するとトップの棚へ。ログイン中の新規はサーバ保存（共有可）。
+            </p>
+            {neonDrafts.length === 0 && drafts.length === 0 ? (
             <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">
-              <p className="text-[13px] text-viscum-muted">下書きはありません。</p>
+              <p className="text-[13px] text-viscum-muted">棚の下書きはありません。</p>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -680,83 +683,84 @@ export default function DashboardPage() {
               ))}
             </ul>
           )}
-        </section>
-
-        <section id="direct-requests" className="scroll-mt-4 space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-[15px] font-semibold text-viscum-ink">
-              直依頼の下書き
-              {requestPacks.length > 0 ? (
-                <span className="ml-1.5 text-[13px] font-normal text-viscum-muted">
-                  {requestPacks.length}件
-                </span>
-              ) : null}
-            </h2>
-            <Link
-              href="/new/request"
-              className="text-[13px] font-medium text-viscum-brand underline"
-            >
-              直依頼を作る
-            </Link>
           </div>
-          <p className="text-[11px] leading-relaxed text-viscum-muted">
-            まだ相手に送る前の下書きです（棚に出ない drq_）。相手・金額を決めてご依頼DMへ進めます。進行中のやりとりはご依頼DMを見てください。
-          </p>
-          {requestPacks.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">
-              <p className="text-[13px] text-viscum-muted">まだありません。</p>
-            </div>
-          ) : (
-            <ul className="space-y-3">
-              {requestPacks.map((s) => (
-                <li
-                  key={s.id}
-                  className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
-                >
-                  <SeedCardChrome s={s} />
-                  <div className="mt-3 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
-                    <Link
-                      href={`/w/${encodeURIComponent(s.id)}/request`}
-                      className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white hover:bg-viscum-berry-deep"
-                    >
-                      直依頼を続ける
-                    </Link>
-                    {origin && handle ? (
-                      <ShareTextCopyButton
-                        label="案内文をコピー"
-                        emptyHint="先に直依頼画面でリンクを確定してください"
-                        getText={() =>
-                          buildCachedOutboundShareText({
-                            workId: s.id,
-                            workTitle: s.title,
-                            workExternalUrl: s.externalUrl,
-                            focusNote: s.focusNote,
-                            fromHandle: handle,
-                            fromLabel,
-                            origin,
-                          })
-                        }
-                      />
-                    ) : null}
-                    <button
-                      type="button"
-                      className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
-                      onClick={() => {
-                        if (!window.confirm("このメモを削除しますか？")) return;
-                        const res = deleteLocalSeed(s.id, handle);
-                        if (res.ok) refresh();
-                        else window.alert(res.error);
-                      }}
-                    >
-                      削除
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
 
+          <div id="direct-requests" className="scroll-mt-4 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h3 className="text-[13px] font-semibold text-viscum-ink">
+                直依頼（送る前）
+                {requestPacks.length > 0 ? (
+                  <span className="ml-1.5 text-[12px] font-normal text-viscum-muted">
+                    {requestPacks.length}件
+                  </span>
+                ) : null}
+              </h3>
+              <Link
+                href="/new/request"
+                className="text-[13px] font-medium text-viscum-brand underline"
+              >
+                直依頼を作る
+              </Link>
+            </div>
+            <p className="text-[11px] leading-relaxed text-viscum-muted">
+              棚には出ません。相手・金額を決めてご依頼DMへ進みます。
+            </p>
+            {requestPacks.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">
+                <p className="text-[13px] text-viscum-muted">まだありません。</p>
+              </div>
+            ) : (
+              <ul className="space-y-3">
+                {requestPacks.map((s) => (
+                  <li
+                    key={s.id}
+                    className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
+                  >
+                    <SeedCardChrome s={s} />
+                    <div className="mt-3 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                      <Link
+                        href={`/w/${encodeURIComponent(s.id)}/request`}
+                        className="rounded-md bg-viscum-berry px-3 py-1.5 text-[12px] font-medium text-white hover:bg-viscum-berry-deep"
+                      >
+                        直依頼を続ける
+                      </Link>
+                      {origin && handle ? (
+                        <ShareTextCopyButton
+                          label="案内文をコピー"
+                          emptyHint="先に直依頼画面でリンクを確定してください"
+                          getText={() =>
+                            buildCachedOutboundShareText({
+                              workId: s.id,
+                              workTitle: s.title,
+                              workExternalUrl: s.externalUrl,
+                              focusNote: s.focusNote,
+                              fromHandle: handle,
+                              fromLabel,
+                              origin,
+                            })
+                          }
+                        />
+                      ) : null}
+                      <button
+                        type="button"
+                        className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
+                        onClick={() => {
+                          if (!window.confirm("この下書きを削除しますか？"))
+                            return;
+                          const res = deleteLocalSeed(s.id, handle);
+                          if (res.ok) refresh();
+                          else window.alert(res.error);
+                        }}
+                      >
+                        削除
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
       </main>
     </BrowseChrome>
   );
