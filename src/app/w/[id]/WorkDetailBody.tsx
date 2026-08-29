@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { StatusBadge } from "@/components/StatusBadge";
 import { SeederLink } from "@/components/SeederLink";
 import { LocalSeedVisibilityNote } from "@/components/LocalSeedVisibilityNote";
 import { OwnerSeedActions } from "@/components/OwnerSeedActions";
@@ -240,52 +239,6 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
               </div>
             ) : null}
 
-            {/* B. コンペ一塊（第二の主役） */}
-            <div className="space-y-2 rounded-lg border border-viscum-line bg-white/60 px-3 py-3">
-              <StatusBadge
-                status={work.status}
-                prizeYen={work.prizeYen}
-                paymentsDone={work.paymentsDone}
-                planLabel={planBadgeLabel(work.plan)}
-              />
-              {deadlineLine ? (
-                <p
-                  className={
-                    work.status === "closed"
-                      ? "text-[13px] text-viscum-muted"
-                      : "text-[13px] text-viscum-ink"
-                  }
-                >
-                  <span className="text-viscum-muted">締切 </span>
-                  {closesAt && work.status !== "closed" ? (
-                    <>
-                      <time dateTime={closesAt.toISOString()}>
-                        {deadlineLine.replace(/（[^）]+）$/, "")}
-                      </time>
-                      <span className="font-medium text-viscum-berry-deep">
-                        {deadlineLine.match(/（[^）]+）$/)?.[0] ?? ""}
-                      </span>
-                    </>
-                  ) : (
-                    deadlineLine
-                  )}
-                </p>
-              ) : null}
-              {work.tags.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {work.tags.map((tag) => (
-                    <Link
-                      key={tag}
-                      href={`/?tag=${encodeURIComponent(tag)}`}
-                      className="rounded-md border border-viscum-line bg-viscum-paper-2 px-2 py-0.5 text-[12px] text-viscum-trunk hover:border-viscum-brand hover:text-viscum-brand"
-                    >
-                      {tag}
-                    </Link>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-
             {localDemo ? <LocalSeedVisibilityNote workId={work.id} /> : null}
             {neonPersisted && !localDemo ? (
               <p className="text-[11px] leading-relaxed text-viscum-muted">
@@ -331,6 +284,10 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   status={work.status}
                   prizeYen={work.prizeYen}
                   paymentsDone={work.paymentsDone}
+                  planLabel={planBadgeLabel(work.plan)}
+                  deadlineLine={deadlineLine}
+                  closesAtIso={closesAt?.toISOString() ?? null}
+                  tags={work.tags}
                   initialComments={work.comments}
                   hasAdoptedUntipped={hasAdoptedUntipped}
                   scaffoldLabel={scaffoldLabel ?? undefined}

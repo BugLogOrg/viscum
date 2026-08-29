@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { CommentList } from "@/components/CommentList";
 import { CommentAttitudePicker } from "@/components/CommentAttitudePicker";
+import { StatusBadge } from "@/components/StatusBadge";
 import { formatYen, type Comment, type CompStatus } from "@/data/dummy-works";
 import {
   addLocalComment,
@@ -36,6 +37,10 @@ type Props = {
   status: CompStatus;
   prizeYen?: number;
   paymentsDone?: number;
+  planLabel?: string | null;
+  deadlineLine?: string | null;
+  closesAtIso?: string | null;
+  tags?: string[];
   initialComments: Comment[];
   hasAdoptedUntipped: boolean;
   scaffoldLabel?: string;
@@ -43,9 +48,8 @@ type Props = {
 };
 
 /**
- * コンペ帯＋コメント投稿＋一覧。
+ * コンペ一塊（下に統合）＋コメント投稿＋一覧。
  * 投稿はログイン＋英語ID必須（ADR-027）。画像は文中ブロック。
- * 締切表示は親のコンペ一塊に一本化（二重にしない）。
  */
 export function WorkEngage({
   workId,
@@ -53,6 +57,10 @@ export function WorkEngage({
   status,
   prizeYen,
   paymentsDone,
+  planLabel,
+  deadlineLine = null,
+  closesAtIso = null,
+  tags = [],
   initialComments,
   hasAdoptedUntipped,
   scaffoldLabel,
@@ -398,26 +406,47 @@ export function WorkEngage({
   return (
     <div className="space-y-4">
       {showCompBand && (
-        <div className="rounded-lg border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-3 text-sm">
-          <p className="font-medium text-viscum-berry-deep">コンペ帯</p>
-          <p className="mt-1 text-viscum-ink">
-            {prizeYen
-              ? `褒賞 ${formatYen(prizeYen)}（選んだ人へ）`
-              : "褒賞なし"}
-            {status === "pay_soon" && " · 決済準備中"}
-            {compClosed && " · 受付終了"}
-            {typeof paymentsDone === "number" &&
-              paymentsDone > 0 &&
-              ` · 褒賞支払い完了 ${paymentsDone}件`}
-            {compActive &&
-              paymentsDone === 0 &&
-              hasAdoptedUntipped &&
-              " · 選出済み・褒賞の支払い待ち"}
-          </p>
-
-          {compClosed && (
+        <div className="space-y-2 rounded-lg border border-viscum-berry/30 bg-viscum-berry/5 px-3 py-3 text-sm">
+          <StatusBadge
+            status={status}
+            prizeYen={prizeYen}
+            paymentsDone={paymentsDone}
+            planLabel={planLabel ?? undefined}
+          />
+          {deadlineLine ? (
+            <p
+              className={
+                compClosed
+                  ? "text-[13px] text-viscum-muted"
+                  : "text-[13px] text-viscum-ink"
+              }
+            >
+              <span className="text-viscum-muted">締切 </span>
+              {closesAtIso && !compClosed ? (
+                <>
+                  <time dateTime={closesAtIso}>
+                    {deadlineLine.replace(/（[^）]+）$/, "")}
+                  </time>
+                  <span className="font-medium text-viscum-berry-deep">
+                    {deadlineLine.match(/（[^）]+）$/)?.[0] ?? ""}
+                  </span>
+                </>
+              ) : (
+                deadlineLine
+              )}
+            </p>
+          ) : null}
+          {prizeYen ? (
+            <p className="text-[13px] text-viscum-muted">
+              褒賞は選ばれた人へ
+            </p>
+          ) : null}
+          {status === "pay_soon" ? (
+            <p className="text-[12px] text-viscum-muted">決済準備中</p>
+          ) : null}
+          {compClosed ? (
             <div
-              className="mt-2 rounded-md border border-viscum-bark bg-viscum-paper px-2.5 py-2 text-[12px] leading-relaxed text-viscum-ink"
+              className="rounded-md border border-viscum-bark bg-viscum-paper px-2.5 py-2 text-[12px] leading-relaxed text-viscum-ink"
               role="status"
             >
               <p className="font-semibold text-viscum-berry-deep">
@@ -427,33 +456,61 @@ export function WorkEngage({
                 このラウンドの褒賞対象にはなりません。再コンペの希望や、追加の感想・指摘のコメントは歓迎です。
               </p>
             </div>
-          )}
-
-          {compClosed && (paymentsDone ?? 0) > 0 && (
-            <p className="mt-2 text-[12px] text-viscum-muted">
-              褒賞の支払いは完了済み。メンターはコメント展開先の「受け取る」から出金（デモ）。
+          ) : null}
+          {typeof paymentsDone === "number" && paymentsDone > 0 ? (
+            <p className="text-[12px] text-viscum-muted">
+              褒賞支払い完了 {paymentsDone}件
+              {compClosed
+                ? "。メンターはコメント展開先の「受け取る」から出金（デモ）。"
+                : null}
             </p>
-          )}
-          {compActive && hasAdoptedUntipped && (
-            <p className="mt-2 text-[12px] text-viscum-muted">
-              決済準備中の先: シーダー本人がコメントを展開 →「褒賞を渡す」で
+          ) : null}
+          {compActive && hasAdoptedUntipped ? (
+            <p className="text-[12px] text-viscum-muted">
+              選出済み・褒賞の支払い待ち。シーダー本人がコメントを展開 →「褒賞を渡す」で
               Checkout。
             </p>
-          )}
-
-          {!openForm && (
+          ) : null}
+          {tags.length > 0 ? (
+            <div className="flex flex-wrap gap-1.5 pt-0.5">
+              {tags.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/?tag=${encodeURIComponent(tag)}`}
+                  className="rounded-md border border-viscum-line bg-viscum-paper-2 px-2 py-0.5 text-[12px] text-viscum-trunk hover:border-viscum-brand hover:text-viscum-brand"
+                >
+                  {tag}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+          {!openForm ? (
             <button
               type="button"
               onClick={startCompose}
-              className="mt-3 w-full rounded-md bg-viscum-berry px-3 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+              className="mt-1 w-full rounded-md bg-viscum-berry px-3 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
             >
               {compClosed
                 ? "コメントする（コンペは終了）"
                 : "参加してコメント"}
             </button>
-          )}
+          ) : null}
         </div>
       )}
+
+      {!showCompBand && tags.length > 0 ? (
+        <div className="flex flex-wrap gap-1.5">
+          {tags.map((tag) => (
+            <Link
+              key={tag}
+              href={`/?tag=${encodeURIComponent(tag)}`}
+              className="rounded-md border border-viscum-line bg-viscum-paper-2 px-2 py-0.5 text-[12px] text-viscum-trunk hover:border-viscum-brand hover:text-viscum-brand"
+            >
+              {tag}
+            </Link>
+          ))}
+        </div>
+      ) : null}
 
       {status === "none" && !openForm && (
         <button
