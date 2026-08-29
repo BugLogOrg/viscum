@@ -10,7 +10,7 @@ import {
 import { displayRequestWorkTitle } from "@/lib/local-seeds";
 import { RequestDeliverableStatus } from "@/components/RequestDeliverableStatus";
 
-type Tab = "all" | "inbox" | "sent";
+type Tab = "active" | "all" | "inbox" | "sent";
 
 type Props = {
   handle: string;
@@ -23,19 +23,30 @@ function activityAt(r: RequestDm) {
   return r.updatedAt || r.createdAt;
 }
 
+function isActiveRequest(r: RequestDm) {
+  return (
+    r.status !== "paid" &&
+    r.status !== "declined" &&
+    r.status !== "closed"
+  );
+}
+
 export function MessagesInbox({
   handle,
   requests,
   invitePaths,
   emptyHint,
 }: Props) {
-  const [tab, setTab] = useState<Tab>("all");
+  const [tab, setTab] = useState<Tab>("active");
   const me = handle.toLowerCase();
 
   const filtered = useMemo(() => {
     const rows = [...requests].sort((a, b) =>
       activityAt(b).localeCompare(activityAt(a)),
     );
+    if (tab === "active") {
+      return rows.filter(isActiveRequest);
+    }
     if (tab === "inbox") {
       return rows.filter(
         (r) =>
@@ -56,7 +67,9 @@ export function MessagesInbox({
   const counts = useMemo(() => {
     let inbox = 0;
     let sent = 0;
+    let active = 0;
     for (const r of requests) {
+      if (isActiveRequest(r)) active += 1;
       if (
         !r.outboundUnassigned &&
         r.toHandle.toLowerCase() === me
@@ -69,10 +82,11 @@ export function MessagesInbox({
         sent += 1;
       }
     }
-    return { all: requests.length, inbox, sent };
+    return { all: requests.length, active, inbox, sent };
   }, [requests, me]);
 
   const tabs: { id: Tab; label: string; count: number }[] = [
+    { id: "active", label: "進行中", count: counts.active },
     { id: "all", label: "すべて", count: counts.all },
     { id: "inbox", label: "依頼された", count: counts.inbox },
     { id: "sent", label: "依頼した", count: counts.sent },
@@ -81,14 +95,16 @@ export function MessagesInbox({
   return (
     <section className="space-y-2">
       <div className="flex items-end justify-between gap-2">
-        <h2 className="text-[13px] font-semibold text-viscum-ink">やりとり</h2>
+        <h2 className="text-[13px] font-semibold text-viscum-ink">
+          やりとり・進捗
+        </h2>
         <p className="text-[11px] text-viscum-muted">最新の更新が上</p>
       </div>
 
       <div
-        className="flex rounded-lg border border-viscum-line bg-white/60 p-0.5"
+        className="flex flex-wrap rounded-lg border border-viscum-line bg-white/60 p-0.5"
         role="tablist"
-        aria-label="依頼した・依頼された"
+        aria-label="ご依頼DMの絞り込み"
       >
         {tabs.map((t) => {
           const on = tab === t.id;
@@ -99,13 +115,15 @@ export function MessagesInbox({
               role="tab"
               aria-selected={on}
               onClick={() => setTab(t.id)}
-              className={`flex-1 rounded-md px-2 py-2 text-[12px] font-medium transition ${
+              className={`min-w-[4.5rem] flex-1 rounded-md px-1.5 py-2 text-[11px] font-medium transition sm:text-[12px] ${
                 on
                   ? t.id === "inbox"
                     ? "bg-viscum-berry/15 text-viscum-berry-deep"
                     : t.id === "sent"
                       ? "bg-viscum-leaf-soft text-viscum-leaf-deep"
-                      : "bg-viscum-paper-2 text-viscum-ink"
+                      : t.id === "active"
+                        ? "bg-viscum-bark-soft text-viscum-ink"
+                        : "bg-viscum-paper-2 text-viscum-ink"
                   : "text-viscum-muted hover:text-viscum-ink"
               }`}
             >
@@ -203,11 +221,13 @@ export function MessagesInbox({
         })}
         {filtered.length === 0 && (
           <li className="px-3 py-8 text-center text-[13px] text-viscum-muted">
-            {tab === "inbox"
-              ? "まだ依頼されていません"
-              : tab === "sent"
-                ? "まだ依頼していません"
-                : emptyHint}
+            {tab === "active"
+              ? "進行中のご依頼はありません"
+              : tab === "inbox"
+                ? "まだ依頼されていません"
+                : tab === "sent"
+                  ? "まだ依頼していません"
+                  : emptyHint}
           </li>
         )}
       </ul>

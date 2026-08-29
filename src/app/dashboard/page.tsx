@@ -26,7 +26,6 @@ import {
   type LocalSeed,
 } from "@/lib/local-seeds";
 import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
-import { DashboardDirectRequestStatus } from "@/components/DashboardDirectRequestStatus";
 import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
 import { buildWorkShareText } from "@/lib/work-share-text";
 import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
@@ -510,8 +509,6 @@ export default function DashboardPage() {
             </ul>
           )}
         </section>
-
-        {handle ? <DashboardDirectRequestStatus handle={handle} /> : null}
 
         <section id="drafts" className="scroll-mt-4 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">

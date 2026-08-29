@@ -68,7 +68,7 @@ export default async function MessagesIndexPage() {
         <div>
           <h1 className="text-xl font-semibold text-viscum-ink">ご依頼DM</h1>
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-            直依頼ごとの薄いやりとりです。全ユーザーの受信箱ではありません。
+            直依頼ごとのやりとりと進捗です。ステータスは各スレに出ます（ダッシュボードには重ねません）。
             {persisted
               ? " サーバーに保存され、相手アカウントにも届きます。"
               : " （サーバー未接続時は端末のみ）"}
