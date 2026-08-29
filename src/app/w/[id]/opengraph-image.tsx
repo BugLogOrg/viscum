@@ -102,16 +102,17 @@ export default async function Image({
               marginTop: 22,
               background: "#a84b3a",
               color: "#fff",
-              fontSize: 26,
+              // ロゴ行(28)より大きく、タイトル(40)より小さく
+              fontSize: 34,
               fontWeight: 700,
               // JPフォントは見かけ下寄りなので上下パディングを非対称に
-              paddingTop: 8,
-              paddingBottom: 14,
-              paddingLeft: 18,
-              paddingRight: 18,
-              borderRadius: 10,
+              paddingTop: 10,
+              paddingBottom: 16,
+              paddingLeft: 22,
+              paddingRight: 22,
+              borderRadius: 12,
               lineHeight: 1,
-              height: 52,
+              height: 64,
             }}
           >
             {badge}

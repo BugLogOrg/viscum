@@ -27,7 +27,7 @@ export function siteOrigin(): string {
 }
 
 /** OG画像URLのクエリ（日付ではない）。見た目変更時に `ogN` を上げて X／CDN キャッシュを切る */
-export const OG_IMAGE_BUST = "og3";
+export const OG_IMAGE_BUST = "og4";
 
 /** カード画像内タイトル。作品タイトル上限（100）と同じ */
 export const OG_IMAGE_TITLE_MAX = 100;
