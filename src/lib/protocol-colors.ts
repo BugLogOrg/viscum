@@ -49,7 +49,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     attitude: "このまま通る・良いところとして推せる",
     emoji: "🔵",
     icon: "checkCircle",
-    iconWhy: "丸チェック＝通る・賛成。サムズは指線なしだと島に見えるため不採用",
+    iconWhy: "丸チェック＝通る・賛成（2026-08-29 確定。手アイコンは不採用）",
   },
   {
     id: "yellow",
@@ -71,7 +71,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     attitude: "引っかかった・ここは直した方がいい",
     emoji: "🔴",
     icon: "stopOctagon",
-    iconWhy: "止まれ標識。サムズダウンより記号として読める",
+    iconWhy: "止まれ標識（2026-08-29 確定。手アイコンは不採用）",
   },
 ];
 
