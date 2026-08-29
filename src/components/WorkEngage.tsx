@@ -36,7 +36,6 @@ type Props = {
   status: CompStatus;
   prizeYen?: number;
   paymentsDone?: number;
-  deadlineLine: string | null;
   initialComments: Comment[];
   hasAdoptedUntipped: boolean;
   scaffoldLabel?: string;
@@ -46,6 +45,7 @@ type Props = {
 /**
  * コンペ帯＋コメント投稿＋一覧。
  * 投稿はログイン＋英語ID必須（ADR-027）。画像は文中ブロック。
+ * 締切表示は親のコンペ一塊に一本化（二重にしない）。
  */
 export function WorkEngage({
   workId,
@@ -53,7 +53,6 @@ export function WorkEngage({
   status,
   prizeYen,
   paymentsDone,
-  deadlineLine,
   initialComments,
   hasAdoptedUntipped,
   scaffoldLabel,

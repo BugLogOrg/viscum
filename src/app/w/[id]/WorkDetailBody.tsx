@@ -331,7 +331,6 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   status={work.status}
                   prizeYen={work.prizeYen}
                   paymentsDone={work.paymentsDone}
-                  deadlineLine={deadlineLine}
                   initialComments={work.comments}
                   hasAdoptedUntipped={hasAdoptedUntipped}
                   scaffoldLabel={scaffoldLabel ?? undefined}
