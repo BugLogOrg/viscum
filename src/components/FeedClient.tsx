@@ -410,6 +410,11 @@ export function FeedClient({
       entranceLine={entranceLine}
     >
       <SiteHeader hideOnMd />
+      {entranceLine ? (
+        <p className="font-viscum-display border-b border-viscum-line px-4 py-2.5 text-[14px] font-semibold leading-snug tracking-[0.04em] text-viscum-trunk md:hidden">
+          {entranceLine}
+        </p>
+      ) : null}
       {publishedId ? (
         <div className="border-b border-viscum-leaf/40 bg-viscum-leaf-soft/50 px-4 py-3">
           <p className="text-[14px] font-medium text-viscum-leaf-deep">

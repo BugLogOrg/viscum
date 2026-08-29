@@ -88,6 +88,17 @@ body {
     sans-serif;
 }
 
+/** 入口一文・キャッチ — UIゴシックと混ぜない */
+.font-viscum-display {
+  font-family:
+    var(--font-viscum-display),
+    "Hiragino Mincho ProN",
+    "Yu Mincho",
+    "Noto Serif JP",
+    serif;
+  font-feature-settings: "palt" 1;
+}
+
 .badge-open {
   background: var(--viscum-berry);
   color: #fff;
