@@ -655,17 +655,15 @@ export default function DashboardPage() {
                   key={s.id}
                   className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
                 >
-                  <Link
-                    href={`/dashboard/${encodeURIComponent(s.id)}`}
-                    className="block transition-colors hover:opacity-90"
-                  >
-                    <SeedCardChrome s={s} />
-                    <p className="mt-2 text-right text-[11px] text-viscum-brand">
-                      成績を見る →
-                    </p>
-                  </Link>
+                  <SeedCardChrome s={s} />
                   {s.id.startsWith("local_") && !isDemoSeed(s.id) ? (
                     <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
+                      <Link
+                        href={`/dashboard/${encodeURIComponent(s.id)}`}
+                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                      >
+                        成績を見る
+                      </Link>
                       {origin ? (
                         <ShareTextCopyButton
                           getText={() =>
@@ -711,13 +709,21 @@ export default function DashboardPage() {
                         削除
                       </button>
                     </div>
-                  ) : origin && (isDemoSeed(s.id) || !s.id.startsWith("local_")) ? (
+                  ) : (
                     <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
-                      <ShareTextCopyButton
-                        getText={() =>
-                          buildWorkShareText(workFromLocalSeed(s), origin)
-                        }
-                      />
+                      <Link
+                        href={`/dashboard/${encodeURIComponent(s.id)}`}
+                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
+                      >
+                        成績を見る
+                      </Link>
+                      {origin ? (
+                        <ShareTextCopyButton
+                          getText={() =>
+                            buildWorkShareText(workFromLocalSeed(s), origin)
+                          }
+                        />
+                      ) : null}
                       <Link
                         href={`/w/${encodeURIComponent(s.id)}`}
                         className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
@@ -725,7 +731,7 @@ export default function DashboardPage() {
                         詳細
                       </Link>
                     </div>
-                  ) : null}
+                  )}
                 </li>
               ))}
             </ul>
