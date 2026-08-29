@@ -35,7 +35,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     softVar: "--viscum-protocol-green-soft",
     label: "別軸",
     labelStatus: "provisional",
-    attitude: "軸をずらす・別の見方",
+    attitude: "ちなみに。連想したこと・ジャストアイデア・別の見方",
     emoji: "🌱",
     icon: "sprout",
     iconWhy: "固定SVG（Apple🌱寄せ）。緑だけ光学上3px上げ（土の重心・2026-08-29確定）",

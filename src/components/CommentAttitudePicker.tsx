@@ -54,7 +54,7 @@ export function CommentAttitudePicker({
               title={c.attitude}
               aria-pressed={on}
               onClick={() => onChange(c.id as CommentAttitudeId)}
-              className={`grid h-full grid-cols-[2rem_1fr] grid-rows-[auto_1fr] gap-x-2 gap-y-1 rounded-md border px-2.5 py-2 text-left transition ${
+              className={`grid h-full grid-cols-[2rem_1fr] grid-rows-[auto_auto] gap-x-2 gap-y-1 rounded-md border px-2.5 py-2 text-left transition ${
                 on ? styles.on : styles.idle
               }`}
             >
@@ -65,7 +65,7 @@ export function CommentAttitudePicker({
               <span className="min-w-0 self-center text-[13px] font-medium leading-none text-viscum-ink">
                 {c.label}
               </span>
-              <span className="col-start-2 text-[11px] leading-snug text-viscum-muted">
+              <span className="col-span-2 text-[11px] leading-snug text-viscum-muted">
                 {c.attitude}
               </span>
             </button>
