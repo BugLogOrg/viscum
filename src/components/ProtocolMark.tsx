@@ -3,23 +3,20 @@ import type { ProtocolColorId, ProtocolIconId } from "@/lib/protocol-colors";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
 /**
- * 別軸：絵文字🌱をそのまま使う。
- * 自前SVGはY／Tに化けやすい。色塗り不可だが🌱自体が緑なのでプロトコル緑と両立する。
- * （👍系は色が乗らない＋誤読があるので絵文字不採用のまま）
+ * 別軸：固定アセット（Apple 🌱寄せ）。
+ * 絵文字直載せは機種で形が変わる。自前の単色線画はY/T化しやすかった。
  */
 function SproutGlyph({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" className={className} aria-hidden>
-      <text
-        x="12"
-        y="16.8"
-        textAnchor="middle"
-        fontSize="17"
-        style={{ userSelect: "none" }}
-      >
-        🌱
-      </text>
-    </svg>
+    // 色はアセット側（currentColorにしない）
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/icons/protocol-sprout.svg"
+      alt=""
+      aria-hidden
+      draggable={false}
+      className={className}
+    />
   );
 }
 

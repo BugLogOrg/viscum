@@ -38,7 +38,7 @@ export const PROTOCOL_COLORS: ProtocolColorDef[] = [
     attitude: "連想・別の使い方・持ち帰りの火種",
     emoji: "🌱",
     icon: "sprout",
-    iconWhy: "絵文字🌱をそのまま（自前SVGはY/T化。色塗り不要・2026-08-29）",
+    iconWhy: "固定SVG（Apple🌱寄せ）。絵文字機種差を避ける・2026-08-29",
   },
   {
     id: "blue",

@@ -2,7 +2,7 @@
 <html lang="ja">
   <head>
     <meta charset="utf-8" />
-    <title>芽＝🌱 preview</title>
+    <title>芽＝固定SVG preview</title>
     <style>
       body {
         margin: 0;
@@ -33,30 +33,31 @@
         font-size: 12px;
         opacity: 0.7;
       }
+      img {
+        display: block;
+      }
     </style>
   </head>
   <body>
     <div class="soft">
       <div class="row">
         <div class="cell">
-          <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden>
-            <text x="12" y="16.8" text-anchor="middle" font-size="17">🌱</text>
-          </svg>
+          <img src="/icons/protocol-sprout.svg" width="28" height="28" alt="" />
           <label>h-7</label>
         </div>
         <div class="cell">
-          <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden>
-            <text x="12" y="16.8" text-anchor="middle" font-size="17">🌱</text>
-          </svg>
+          <img src="/icons/protocol-sprout.svg" width="40" height="40" alt="" />
           <label>ピッカー</label>
         </div>
         <div class="cell">
-          <svg viewBox="0 0 24 24" width="96" height="96" aria-hidden>
-            <text x="12" y="16.8" text-anchor="middle" font-size="17">🌱</text>
-          </svg>
-          <label>拡大 🌱直載せ</label>
+          <img src="/icons/protocol-sprout.svg" width="96" height="96" alt="" />
+          <label>拡大・固定アセット</label>
         </div>
       </div>
+      <p style="margin: 1rem 0 0; font-size: 12px; opacity: 0.65; text-align: center">
+        ※このHTMLは本番パス前提。ローカルfile://だと画像が欠ける場合あり →
+        /lab/protocol を見てください
+      </p>
     </div>
   </body>
 </html>
