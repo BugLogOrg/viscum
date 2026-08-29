@@ -543,65 +543,78 @@ export function FeedClient({
         </section>
       ) : null}
 
-      <section
-        aria-label="一覧"
-        className="lg:grid lg:grid-cols-2 lg:divide-x lg:divide-viscum-line"
-      >
-        {rest.map((w) => (
-          <WorkFeedRow
-            key={w.id}
-            work={w}
-            className="lg:border-viscum-line"
+      <div className="flex flex-col xl:flex-row xl:items-start">
+        {filter === "all" && !specialty && !query.trim() ? (
+          <FeedShelfCorners
+            works={shelf}
+            className="order-first xl:order-last"
           />
-        ))}
-        {filter === "follow" && myHandle ? (
-          <div className="col-span-full px-4 pb-10 pt-4 text-sm text-viscum-muted">
-            {rest.length === 0 ? (
-              <p className="text-center">
-                {followingHandles.length === 0
-                  ? "まだ誰もフォローしていません。下から選ぶか、公開PFの「フォロー」でも追加できます。"
-                  : "フォロー中のユーザーに、条件に合う作品がまだありません。"}
-              </p>
-            ) : null}
-            <div className={rest.length === 0 ? "mx-auto max-w-lg px-2" : "mx-auto max-w-lg"}>
-              <SuggestFollows title="おすすめ（デモ棚）" />
-            </div>
-          </div>
         ) : null}
-        {rest.length === 0 && filter === "follow" && !myHandle && (
-          <div className="col-span-full px-4 py-10 text-center text-sm text-viscum-muted">
-            {sessionPending ? (
-              <p>フォロー中を読み込み中…</p>
-            ) : (
-              <p>
-                ログインすると、フォローしたユーザーの作品がここに並びます。{" "}
-                <Link
-                  href="/login?callbackUrl=%2F%3Ffeed%3Dfollow"
-                  className="font-medium text-viscum-brand underline-offset-2 hover:underline"
-                >
-                  ログイン
-                </Link>
+        <section
+          aria-label="一覧"
+          className="order-last min-w-0 flex-1 lg:grid lg:grid-cols-2 lg:divide-x lg:divide-viscum-line xl:order-first"
+        >
+          {rest.map((w) => (
+            <WorkFeedRow
+              key={w.id}
+              work={w}
+              className="lg:border-viscum-line"
+            />
+          ))}
+          {filter === "follow" && myHandle ? (
+            <div className="col-span-full px-4 pb-10 pt-4 text-sm text-viscum-muted">
+              {rest.length === 0 ? (
+                <p className="text-center">
+                  {followingHandles.length === 0
+                    ? "まだ誰もフォローしていません。下から選ぶか、公開PFの「フォロー」でも追加できます。"
+                    : "フォロー中のユーザーに、条件に合う作品がまだありません。"}
+                </p>
+              ) : null}
+              <div
+                className={
+                  rest.length === 0
+                    ? "mx-auto max-w-lg px-2"
+                    : "mx-auto max-w-lg"
+                }
+              >
+                <SuggestFollows title="おすすめ（デモ棚）" />
+              </div>
+            </div>
+          ) : null}
+          {rest.length === 0 && filter === "follow" && !myHandle && (
+            <div className="col-span-full px-4 py-10 text-center text-sm text-viscum-muted">
+              {sessionPending ? (
+                <p>フォロー中を読み込み中…</p>
+              ) : (
+                <p>
+                  ログインすると、フォローしたユーザーの作品がここに並びます。{" "}
+                  <Link
+                    href="/login?callbackUrl=%2F%3Ffeed%3Dfollow"
+                    className="font-medium text-viscum-brand underline-offset-2 hover:underline"
+                  >
+                    ログイン
+                  </Link>
+                </p>
+              )}
+            </div>
+          )}
+          {rest.length === 0 &&
+            filter !== "follow" &&
+            peopleHits.length === 0 && (
+              <p className="col-span-full px-4 py-8 text-center text-sm text-viscum-muted">
+                「{query.trim() || specialty || "条件"}」に合うユーザー・作品がありません
               </p>
             )}
-          </div>
-        )}
-        {rest.length === 0 && filter !== "follow" && peopleHits.length === 0 && (
-          <p className="col-span-full px-4 py-8 text-center text-sm text-viscum-muted">
-            「{query.trim() || specialty || "条件"}」に合うユーザー・作品がありません
-          </p>
-        )}
-        {rest.length === 0 &&
-          filter !== "follow" &&
-          peopleHits.length > 0 &&
-          query.trim() && (
-            <p className="col-span-full px-4 py-6 text-center text-sm text-viscum-muted">
-              作品のヒットはありません（上のユーザーからプロフィールへ）
-            </p>
-          )}
-      </section>
-      {filter === "all" && !specialty && !query.trim() ? (
-        <FeedShelfCorners works={shelf} />
-      ) : null}
+          {rest.length === 0 &&
+            filter !== "follow" &&
+            peopleHits.length > 0 &&
+            query.trim() && (
+              <p className="col-span-full px-4 py-6 text-center text-sm text-viscum-muted">
+                作品のヒットはありません（上のユーザーからプロフィールへ）
+              </p>
+            )}
+        </section>
+      </div>
     </AppShell>
   );
 }

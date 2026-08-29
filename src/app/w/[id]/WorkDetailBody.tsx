@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SeederLink } from "@/components/SeederLink";
 import { LocalSeedVisibilityNote } from "@/components/LocalSeedVisibilityNote";
 import { OwnerSeedActions } from "@/components/OwnerSeedActions";
-import { HotOpenRail } from "@/components/HotOpenRail";
+import { FeedShelfCorners } from "@/components/FeedShelfCorners";
 import { WorkEngage } from "@/components/WorkEngage";
 import { WorkReactionBar } from "@/components/WorkReactionBar";
 import { WorkShareBoost } from "@/components/WorkShareBoost";
@@ -332,7 +332,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
         </p>
       </div>
 
-      <HotOpenRail excludeWorkId={work.id} />
+      <FeedShelfCorners excludeWorkId={work.id} />
     </div>
   );
 }
