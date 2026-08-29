@@ -17,6 +17,8 @@ import {
   isDemoSeederHandle,
 } from "@/data/suggested-seeders";
 import { readLocalProfile } from "@/lib/local-profile";
+import { addLocalThanks, readLocalThanks } from "@/lib/local-thanks";
+import { postCommentThanks } from "@/lib/remote-comments";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
 const NEON_COMMENT_ID =
@@ -106,6 +108,15 @@ export function CommentList({
   );
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
+  const [thankedIds, setThankedIds] = useState<Set<string>>(() => new Set());
+  const [thankingId, setThankingId] = useState<string | null>(null);
+  const [thankError, setThankError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fromComments = comments.filter((c) => c.thanked).map((c) => c.id);
+    const local = readLocalThanks(workId);
+    setThankedIds(new Set([...fromComments, ...local]));
+  }, [comments, workId]);
 
   useEffect(() => {
     const newest = comments[0];
@@ -116,6 +127,25 @@ export function CommentList({
 
   const prizeLabel = prizeYen ? formatYen(prizeYen) : "¥5,000";
   const amountYen = prizeYen && prizeYen >= 5000 ? prizeYen : 5000;
+
+  async function startThanks(commentId: string) {
+    setThankError(null);
+    setThankingId(commentId);
+    addLocalThanks(workId, commentId);
+    setThankedIds((prev) => new Set([...prev, commentId]));
+    try {
+      const res = await postCommentThanks({
+        workId,
+        commentId,
+        seederHandle,
+      });
+      if (!res.ok) {
+        setThankError(res.error || "お礼に失敗しました");
+      }
+    } finally {
+      setThankingId(null);
+    }
+  }
 
   async function startCheckout(commentId: string) {
     setPayError(null);
@@ -158,6 +188,11 @@ export function CommentList({
           {payError}
         </p>
       )}
+      {thankError && (
+        <p className="mt-2 rounded-md border border-viscum-berry/40 bg-viscum-berry/10 px-3 py-2 text-[12px] text-viscum-berry-deep">
+          {thankError}
+        </p>
+      )}
 
       {comments.length === 0 && (
         <p className="mt-3 text-sm text-viscum-muted">
@@ -180,14 +215,18 @@ export function CommentList({
             !c.afterClose &&
             status !== "none" &&
             status !== "closed";
-          const showSeederThanks =
+          const isThanked = Boolean(c.thanked) || thankedIds.has(c.id);
+          /** シーダー専用：メンターコメントへ無料お礼 */
+          const canThank =
+            isSeeder && !isCommentAuthor && !isThanked;
+          const showSeederDemoPrize =
             isSeeder &&
             !isCommentAuthor &&
             !c.adopted &&
             !c.afterClose &&
-            !neon;
-          const showSeederDemoPrize =
-            showSeederThanks && status !== "none" && status !== "closed";
+            !neon &&
+            status !== "none" &&
+            status !== "closed";
           const showSeederDemoPayHint =
             isSeeder &&
             !isCommentAuthor &&
@@ -235,6 +274,11 @@ export function CommentList({
                     <span className="text-sm font-semibold leading-snug text-viscum-ink">
                       {c.subject}
                     </span>
+                    {isThanked && (
+                      <span className="rounded bg-viscum-moss/20 px-1.5 py-0.5 text-[10px] font-medium text-viscum-trunk">
+                        お礼済み
+                      </span>
+                    )}
                     {c.adopted && (
                       <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
                         選出
@@ -280,10 +324,23 @@ export function CommentList({
                       </span>
                     )}
 
-                    {/* シーダー専用：お礼・褒賞（見た目仮／本番は Checkout） */}
-                    {showSeederThanks && (
-                      <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
-                        ありがとう
+                    {/* シーダー専用：お礼（無料）・褒賞（Checkout） */}
+                    {canThank && (
+                      <button
+                        type="button"
+                        disabled={thankingId === c.id}
+                        className="rounded-md border border-viscum-moss bg-viscum-leaf-soft px-2.5 py-1 text-[11px] font-medium text-viscum-leaf-deep disabled:opacity-60"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void startThanks(c.id);
+                        }}
+                      >
+                        {thankingId === c.id ? "お礼中…" : "お礼をする"}
+                      </button>
+                    )}
+                    {isThanked && !canThank && (
+                      <span className="rounded border border-viscum-moss/40 bg-viscum-leaf-soft/60 px-2 py-0.5 text-[11px] font-medium text-viscum-leaf-deep">
+                        お礼済み
                       </span>
                     )}
                     {showSeederDemoPrize && (

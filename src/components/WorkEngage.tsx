@@ -10,6 +10,7 @@ import {
   addLocalComment,
   readLocalComments,
 } from "@/lib/local-comments";
+import { withLocalThanks } from "@/lib/local-thanks";
 import {
   fetchWorkComments,
   postWorkComment,
@@ -133,8 +134,8 @@ export function WorkEngage({
       seen.add(c.id);
       merged.push(c);
     }
-    return merged;
-  }, [remoteExtra, localExtra, initialComments]);
+    return withLocalThanks(workId, merged);
+  }, [remoteExtra, localExtra, initialComments, workId]);
 
   const showCompBand =
     status === "open" || status === "pay_soon" || status === "closed";

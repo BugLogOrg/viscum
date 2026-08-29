@@ -132,6 +132,8 @@ export const comments = pgTable(
     imageUrls: jsonb("image_urls").$type<string[]>().notNull().default([]),
     /** シーダーが採用した時刻。null＝未採用 */
     adoptedAt: timestamp("adopted_at", { withTimezone: true }),
+    /** シーダーがお礼した時刻。null＝未お礼（無料ワンタップ） */
+    thankedAt: timestamp("thanked_at", { withTimezone: true }),
     /** 締切後投稿（賞金対象外・ADR-015） */
     afterClose: boolean("after_close").notNull().default(false),
     /** コメント態度: green | blue | red（ADR-047） */

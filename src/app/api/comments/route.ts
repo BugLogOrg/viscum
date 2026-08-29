@@ -20,6 +20,7 @@ function toClientComment(
     body: string;
     imageUrls: string[] | null;
     adoptedAt: Date | null;
+    thankedAt: Date | null;
     afterClose: boolean;
     attitude: string | null;
     createdAt: Date;
@@ -40,6 +41,7 @@ function toClientComment(
     imageUrls: row.imageUrls?.length ? row.imageUrls : undefined,
     hoursAgo: hoursAgoFrom(row.createdAt),
     adopted: Boolean(row.adoptedAt) || Boolean(paid?.tipped),
+    thanked: Boolean(row.thankedAt) || undefined,
     tipped: paid?.tipped || undefined,
     tipYen: paid?.tipYen,
     afterClose: row.afterClose || undefined,
@@ -70,6 +72,7 @@ export async function GET(req: Request) {
       body: comments.body,
       imageUrls: comments.imageUrls,
       adoptedAt: comments.adoptedAt,
+      thankedAt: comments.thankedAt,
       afterClose: comments.afterClose,
       attitude: comments.attitude,
       createdAt: comments.createdAt,
@@ -203,6 +206,7 @@ export async function POST(req: Request) {
       body: comments.body,
       imageUrls: comments.imageUrls,
       adoptedAt: comments.adoptedAt,
+      thankedAt: comments.thankedAt,
       afterClose: comments.afterClose,
       attitude: comments.attitude,
       createdAt: comments.createdAt,

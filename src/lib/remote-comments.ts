@@ -56,3 +56,28 @@ export async function postWorkComment(input: {
     return { ok: false, error: "ネットワークエラー" };
   }
 }
+
+/** シーダー → メンターコメントへ無料お礼 */
+export async function postCommentThanks(input: {
+  workId: string;
+  commentId: string;
+  seederHandle: string;
+}): Promise<{ ok: boolean; error?: string; persisted?: boolean }> {
+  try {
+    const res = await fetch("/api/comments/thanks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      persisted?: boolean;
+    };
+    if (!res.ok) {
+      return { ok: false, error: data.error || `お礼に失敗（${res.status}）` };
+    }
+    return { ok: true, persisted: Boolean(data.persisted) };
+  } catch {
+    return { ok: false, error: "ネットワークエラー" };
+  }
+}

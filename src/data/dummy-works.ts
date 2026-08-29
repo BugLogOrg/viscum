@@ -21,6 +21,8 @@ export type Comment = {
   /** 指摘スクショ等（Blob URL またはデモ用URL） */
   imageUrls?: string[];
   adopted?: boolean;
+  /** シーダーがお礼済み（無料ワンタップ・全員に見える） */
+  thanked?: boolean;
   /** 採用後にチップ／賞金を支払済み */
   tipped?: boolean;
   tipYen?: number;
