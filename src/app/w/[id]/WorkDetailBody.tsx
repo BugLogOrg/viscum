@@ -170,21 +170,24 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
             </div>
 
             {work.focusNote?.trim() ? (
-              <div>
-                <p className="text-[12px] font-medium tracking-wide text-viscum-muted">
+              <section>
+                <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink">
                   ご挨拶
-                </p>
+                </h2>
                 <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
                   {work.focusNote.trim()}
                 </p>
-              </div>
+              </section>
             ) : null}
 
-            <div>
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
+            <section>
+              <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink">
+                説明
+              </h2>
+              <p className="mt-1.5 whitespace-pre-wrap text-[15px] leading-relaxed text-viscum-ink">
                 {work.description}
               </p>
-            </div>
+            </section>
 
             {externalOk && externalUrl ? (
               <a
@@ -218,13 +221,13 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
 
             {/* 公開後はコメントフォーム内のみ（二重表示を避ける）。下書きは作者プレビュー用にここへ */}
             {isDraft && scaffoldLines.length > 0 && scaffoldLabel ? (
-              <div className="rounded-lg border border-dashed border-viscum-line bg-white/70 px-3 py-3">
-                <p className="text-[13px] font-medium text-viscum-ink">
+              <section className="rounded-lg border border-dashed border-viscum-line bg-white/70 px-3 py-3">
+                <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink">
                   {scaffoldLabel}
                   <span className="ml-1 text-[11px] font-normal text-viscum-muted">
                     （公開後はコメント画面に出ます）
                   </span>
-                </p>
+                </h2>
                 <p className="mt-0.5 text-[11px] text-viscum-muted">
                   {work.plan === "public_boost"
                     ? "参加のときの目安です。報告コメントでは投稿URLなども含めてください。"
@@ -235,7 +238,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                     <li key={line}>{line}</li>
                   ))}
                 </ol>
-              </div>
+              </section>
             ) : null}
 
             {localDemo ? <LocalSeedVisibilityNote workId={work.id} /> : null}
