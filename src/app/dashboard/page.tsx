@@ -340,7 +340,7 @@ export default function DashboardPage() {
           <p className="text-[11px] leading-relaxed text-viscum-muted">
             {demoOn
               ? "いまは見た目確認用のデモも混ざっています。カードを開くと成績シートへ。"
-              : "トップに載っているシードの成績です。「下書きに戻す」で棚から外せます。"}
+              : "トップに載っているシードの成績です。「下書きに戻す」で公開を外せます。"}
           </p>
 
           {neonPublished.length === 0 && published.length === 0 ? (
@@ -553,7 +553,7 @@ export default function DashboardPage() {
               ) : null}
             </h2>
             <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
-              まだ外に出していないもの。棚用と直依頼用はボタンが違うので、下で分けています。進行中のやりとりは
+              まだ外に出していないもの。シード用と直依頼用はボタンが違うので、下で分けています。進行中のやりとりは
               <Link
                 href="/dashboard/messages"
                 className="mx-0.5 font-medium text-viscum-brand underline"
@@ -567,7 +567,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-[13px] font-semibold text-viscum-ink">
-                棚（未公開）
+                シード（未公開）
                 {neonDrafts.length + drafts.length > 0 ? (
                   <span className="ml-1.5 text-[12px] font-normal text-viscum-muted">
                     {neonDrafts.length + drafts.length}件
@@ -582,11 +582,11 @@ export default function DashboardPage() {
               </Link>
             </div>
             <p className="text-[11px] leading-relaxed text-viscum-muted">
-              公開するとトップの棚へ。ログイン中の新規はサーバ保存（共有可）。
+              公開するとトップの「反応を募集中」へ。ログイン中の新規はサーバ保存（共有可）。
             </p>
             {neonDrafts.length === 0 && drafts.length === 0 ? (
             <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">
-              <p className="text-[13px] text-viscum-muted">棚の下書きはありません。</p>
+              <p className="text-[13px] text-viscum-muted">未公開のシードはありません。</p>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -754,7 +754,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <p className="text-[11px] leading-relaxed text-viscum-muted">
-              棚には出ません。相手・金額を決めてご依頼DMへ進みます。
+              トップには出ません。相手・金額を決めてご依頼DMへ進みます。
             </p>
             {requestPacks.length === 0 ? (
               <div className="rounded-lg border border-dashed border-viscum-line px-4 py-5 text-center">
