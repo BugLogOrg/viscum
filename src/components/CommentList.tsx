@@ -106,9 +106,7 @@ export function CommentList({
   const me = normHandle(session?.user?.handle ?? "");
   const isSeeder = Boolean(me) && me === normHandle(seederHandle);
 
-  const [openId, setOpenId] = useState<string | null>(
-    comments.find((c) => c.adopted)?.id ?? comments[0]?.id ?? null,
-  );
+  const [openId, setOpenId] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
   const [thankedIds, setThankedIds] = useState<Set<string>>(() => new Set());
@@ -122,13 +120,6 @@ export function CommentList({
     const local = readLocalThanks(workId);
     setThankedIds(new Set([...fromComments, ...local]));
   }, [comments, workId]);
-
-  useEffect(() => {
-    const newest = comments[0];
-    if (newest?.id.startsWith("local_c_") || isNeonCommentId(newest?.id ?? "")) {
-      setOpenId(newest.id);
-    }
-  }, [comments]);
 
   const prizeLabel = prizeYen ? formatYen(prizeYen) : "¥5,000";
   const amountYen = prizeYen && prizeYen >= 5000 ? prizeYen : 5000;
