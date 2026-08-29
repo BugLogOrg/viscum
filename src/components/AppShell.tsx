@@ -232,7 +232,7 @@ export function AppShell({
         )}
       </aside>
 
-      <div className="min-w-0 flex-1 lg:pr-2">
+      <div className="min-w-0 flex-1 lg:border-r lg:border-viscum-line lg:pr-2">
         <div className="sticky top-0 z-10 hidden h-12 items-center gap-3 border-b border-viscum-line bg-viscum-paper/95 px-4 backdrop-blur-sm md:flex">
           {resolvedEntrance ? (
             <p className="font-viscum-display min-w-0 flex-1 truncate text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted">
