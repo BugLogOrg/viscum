@@ -1,19 +1,26 @@
 import type { CompStatus } from "@/data/dummy-works";
 import { formatYen } from "@/data/dummy-works";
 
-/** UIバッジ用。売る金額ではなく場に載せた褒賞として見せる */
+/** UIバッジ用。売る金額ではなく場に載せた褒賞。狭い帯でも折りにくいよう半角・無スペース */
 function prizePart(prize: number): string {
-  return `褒賞 ${formatYen(prize)}`;
+  return `褒賞${formatYen(prize)}`;
 }
 
 const LABELS: Record<
   CompStatus,
-  { text: (prize?: number, paymentsDone?: number, planLabel?: string) => string; className: string }
+  {
+    text: (
+      prize?: number,
+      paymentsDone?: number,
+      planLabel?: string,
+    ) => string;
+    className: string;
+  }
 > = {
   open: {
     text: (prize, _paymentsDone, planLabel) => {
-      if (planLabel && prize) return `${planLabel} · ${prizePart(prize)}`;
-      if (prize) return `開催中 · ${prizePart(prize)}`;
+      if (planLabel && prize) return `${planLabel}·${prizePart(prize)}`;
+      if (prize) return `開催中·${prizePart(prize)}`;
       return planLabel ?? "開催中";
     },
     className: "badge-open",
@@ -21,7 +28,7 @@ const LABELS: Record<
   pay_soon: {
     text: (prize, _paymentsDone, planLabel) => {
       const head = planLabel ?? "決済準備中";
-      return prize ? `${head} · ${prizePart(prize)}` : head;
+      return prize ? `${head}·${prizePart(prize)}` : head;
     },
     className: "bg-viscum-bark text-white",
   },
@@ -68,7 +75,7 @@ export function StatusBadge({
   const L = LABELS[status];
   return (
     <span
-      className={`inline-block rounded-full font-medium ${size} ${L.className} ${className}`}
+      className={`inline-block max-w-full rounded-full font-medium ${size} ${L.className} ${className}`}
     >
       {L.text(prizeYen, paymentsDone, planLabel)}
     </span>

@@ -112,23 +112,18 @@ export function WorkFeedRow({
         </Link>
 
         {status ? (
-          <div className="mt-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1">
-            <p className="text-[11px] leading-snug text-viscum-ink">
+          <div className="mt-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1 py-1">
+            <p className="text-[10px] leading-snug text-viscum-ink">
               <span className="font-medium">{status.title}</span>
               {status.prizeYen != null && status.prizeYen > 0 ? (
-                <>
-                  <span aria-hidden className="mx-1 text-viscum-muted">
-                    ·
-                  </span>
-                  <span className="tabular-nums font-medium text-viscum-berry-deep">
-                    褒賞 {formatYen(status.prizeYen)}
-                  </span>
-                </>
+                <span className="whitespace-nowrap tabular-nums font-medium text-viscum-berry-deep">
+                  ·褒賞{formatYen(status.prizeYen)}
+                </span>
               ) : null}
             </p>
             {status.deadline ? (
               <p
-                className="mt-0.5 break-words text-[11px] leading-snug text-viscum-muted"
+                className="mt-0.5 break-words text-[10px] leading-snug text-viscum-muted"
                 title={
                   work.closesInHours != null
                     ? `締切 ${status.deadline}`
