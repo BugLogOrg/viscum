@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { CommentList } from "@/components/CommentList";
 import { CommentAttitudePicker } from "@/components/CommentAttitudePicker";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatYen, type Comment, type CompStatus } from "@/data/dummy-works";
+import { type Comment, type CompStatus } from "@/data/dummy-works";
 import {
   addLocalComment,
   readLocalComments,
