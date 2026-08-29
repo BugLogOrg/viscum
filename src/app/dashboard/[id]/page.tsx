@@ -32,6 +32,7 @@ export default function SeedStatsPage() {
   const id = decodeURIComponent(rawId ?? "");
   const { data: session, status } = useSession();
   const [seed, setSeed] = useState<LocalSeed | null | undefined>(undefined);
+  const [serverOnly, setServerOnly] = useState(false);
   const [metric, setMetric] = useState<AnalyticsMetric>("views");
 
   useEffect(() => {
@@ -44,7 +45,59 @@ export default function SeedStatsPage() {
       return;
     }
     const found = readLocalSeeds().find((s) => s.id === id) ?? null;
-    setSeed(found);
+    if (found) {
+      setServerOnly(false);
+      setSeed(found);
+      return;
+    }
+    // サーバ公開シード：端末に無い場合は作品情報だけ拾って成績ページを開く
+    let cancelled = false;
+    setServerOnly(true);
+    void fetch(`/api/works/${encodeURIComponent(id)}`, { cache: "no-store" })
+      .then(async (res) => {
+        if (!res.ok) {
+          if (!cancelled) setSeed(null);
+          return;
+        }
+        const data = (await res.json()) as {
+          work?: {
+            id: string;
+            title: string;
+            status: LocalSeed["status"];
+            prizeYen?: number;
+            seeder: string;
+            comments?: unknown[];
+          };
+        };
+        const w = data.work;
+        if (!w || cancelled) {
+          if (!cancelled) setSeed(null);
+          return;
+        }
+        setSeed({
+          id: w.id,
+          title: w.title,
+          description: "",
+          externalUrl: "",
+          tags: [],
+          status: w.status,
+          prizeYen: w.prizeYen,
+          seederHandle: w.seeder,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          viewCount: 0,
+          bookmarkCount: 0,
+          commentCount: Array.isArray(w.comments) ? w.comments.length : 0,
+          emoCount: 0,
+          listedOnShelf: true,
+        });
+      })
+      .catch(() => {
+        if (!cancelled) setSeed(null);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   const series = useMemo(
@@ -178,6 +231,11 @@ export default function SeedStatsPage() {
           <h1 className="text-[17px] font-semibold leading-snug text-viscum-ink">
             {seed.title}
           </h1>
+          {serverOnly ? (
+            <p className="text-[12px] leading-relaxed text-viscum-muted">
+              サーバ作品の日次グラフはこれから整えます。いまはコメント件数など作品側の事実を確認する入口です。詳細は作品ページへ。
+            </p>
+          ) : null}
         </div>
 
         <section className="grid grid-cols-4 gap-1.5">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { BrowseChrome } from "@/components/BrowseChrome";
@@ -32,6 +32,31 @@ import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import type { Work } from "@/data/dummy-works";
 import { planBadgeLabel } from "@/data/dummy-works";
+
+const btnStatus =
+  "rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft";
+const btnEdit =
+  "rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2";
+const btnDanger =
+  "rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10";
+
+/** 左＝確認（成績・詳細・告知）／右＝編集（下書きに戻す・削除） */
+function SeedActionRow({
+  left,
+  right,
+}: {
+  left: ReactNode;
+  right?: ReactNode;
+}) {
+  return (
+    <div className="mt-2 flex flex-wrap items-start justify-between gap-x-3 gap-y-2 border-t border-viscum-line pt-2">
+      <div className="flex min-w-0 flex-wrap gap-2">{left}</div>
+      {right ? (
+        <div className="flex flex-wrap justify-end gap-2">{right}</div>
+      ) : null}
+    </div>
+  );
+}
 
 function SeedMetrics({ s }: { s: LocalSeed }) {
   return (
@@ -351,56 +376,70 @@ export default function DashboardPage() {
                   <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
                     {w.title}
                   </p>
-                  <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
-                    {origin ? (
-                      <ShareTextCopyButton
-                        getText={() => buildWorkShareText(w, origin)}
-                      />
-                    ) : null}
-                    <button
-                      type="button"
-                      className="rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
-                      onClick={() => {
-                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
-                          method: "PATCH",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ listedOnShelf: false }),
-                        }).then((res) => {
-                          if (res.ok) refresh();
-                          else window.alert("下書きに戻せませんでした");
-                        });
-                      }}
-                    >
-                      下書きに戻す
-                    </button>
-                    <Link
-                      href={`/w/${encodeURIComponent(w.id)}`}
-                      className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                    >
-                      詳細
-                    </Link>
-                    <button
-                      type="button"
-                      className="rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
-                      onClick={() => {
-                        if (
-                          !window.confirm(
-                            "このシードを削除しますか？トップからも消えます。",
-                          )
-                        ) {
-                          return;
-                        }
-                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
-                          method: "DELETE",
-                        }).then((res) => {
-                          if (res.ok) refresh();
-                          else window.alert("削除に失敗しました");
-                        });
-                      }}
-                    >
-                      削除
-                    </button>
-                  </div>
+                  <SeedActionRow
+                    left={
+                      <>
+                        <Link
+                          href={`/dashboard/${encodeURIComponent(w.id)}`}
+                          className={btnStatus}
+                        >
+                          成績を見る
+                        </Link>
+                        <Link
+                          href={`/w/${encodeURIComponent(w.id)}`}
+                          className={btnStatus}
+                        >
+                          詳細
+                        </Link>
+                        {origin ? (
+                          <ShareTextCopyButton
+                            getText={() => buildWorkShareText(w, origin)}
+                          />
+                        ) : null}
+                      </>
+                    }
+                    right={
+                      <>
+                        <button
+                          type="button"
+                          className={btnEdit}
+                          onClick={() => {
+                            void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                              method: "PATCH",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ listedOnShelf: false }),
+                            }).then((res) => {
+                              if (res.ok) refresh();
+                              else window.alert("下書きに戻せませんでした");
+                            });
+                          }}
+                        >
+                          下書きに戻す
+                        </button>
+                        <button
+                          type="button"
+                          className={btnDanger}
+                          onClick={() => {
+                            if (
+                              !window.confirm(
+                                "このシードを削除しますか？トップからも消えます。",
+                              )
+                            ) {
+                              return;
+                            }
+                            void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                              method: "DELETE",
+                            }).then((res) => {
+                              if (res.ok) refresh();
+                              else window.alert("削除に失敗しました");
+                            });
+                          }}
+                        >
+                          削除
+                        </button>
+                      </>
+                    }
+                  />
                 </li>
               ))}
               {published.map((s) => (
@@ -410,80 +449,92 @@ export default function DashboardPage() {
                 >
                   <SeedCardChrome s={s} />
                   {s.id.startsWith("local_") && !isDemoSeed(s.id) ? (
-                    <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
-                      <Link
-                        href={`/dashboard/${encodeURIComponent(s.id)}`}
-                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                      >
-                        成績を見る
-                      </Link>
-                      {origin ? (
-                        <ShareTextCopyButton
-                          getText={() =>
-                            buildWorkShareText(workFromLocalSeed(s), origin)
-                          }
-                        />
-                      ) : null}
-                      {isLocalSeedListed(s) ? (
-                        <button
-                          type="button"
-                          className="rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2"
-                          onClick={() => {
-                            const res = unlistLocalSeed(s.id, handle);
-                            if (res.ok) refresh();
-                            else window.alert(res.error);
-                          }}
-                        >
-                          下書きに戻す
-                        </button>
-                      ) : null}
-                      <Link
-                        href={`/w/${encodeURIComponent(s.id)}`}
-                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                      >
-                        詳細
-                      </Link>
-                      <button
-                        type="button"
-                        className="rounded-md border border-viscum-berry/40 px-2.5 py-1 text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
-                        onClick={() => {
-                          if (
-                            !window.confirm(
-                              "このシードを削除しますか？成績の数字も一緒に消えます。",
-                            )
-                          ) {
-                            return;
-                          }
-                          const res = deleteLocalSeed(s.id, handle);
-                          if (res.ok) refresh();
-                          else window.alert(res.error);
-                        }}
-                      >
-                        削除
-                      </button>
-                    </div>
+                    <SeedActionRow
+                      left={
+                        <>
+                          <Link
+                            href={`/dashboard/${encodeURIComponent(s.id)}`}
+                            className={btnStatus}
+                          >
+                            成績を見る
+                          </Link>
+                          <Link
+                            href={`/w/${encodeURIComponent(s.id)}`}
+                            className={btnStatus}
+                          >
+                            詳細
+                          </Link>
+                          {origin ? (
+                            <ShareTextCopyButton
+                              getText={() =>
+                                buildWorkShareText(workFromLocalSeed(s), origin)
+                              }
+                            />
+                          ) : null}
+                        </>
+                      }
+                      right={
+                        <>
+                          {isLocalSeedListed(s) ? (
+                            <button
+                              type="button"
+                              className={btnEdit}
+                              onClick={() => {
+                                const res = unlistLocalSeed(s.id, handle);
+                                if (res.ok) refresh();
+                                else window.alert(res.error);
+                              }}
+                            >
+                              下書きに戻す
+                            </button>
+                          ) : null}
+                          <button
+                            type="button"
+                            className={btnDanger}
+                            onClick={() => {
+                              if (
+                                !window.confirm(
+                                  "このシードを削除しますか？成績の数字も一緒に消えます。",
+                                )
+                              ) {
+                                return;
+                              }
+                              const res = deleteLocalSeed(s.id, handle);
+                              if (res.ok) refresh();
+                              else window.alert(res.error);
+                            }}
+                          >
+                            削除
+                          </button>
+                        </>
+                      }
+                    />
                   ) : (
-                    <div className="mt-2 flex flex-wrap gap-2 border-t border-viscum-line pt-2">
-                      <Link
-                        href={`/dashboard/${encodeURIComponent(s.id)}`}
-                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                      >
-                        成績を見る
-                      </Link>
-                      {origin ? (
-                        <ShareTextCopyButton
-                          getText={() =>
-                            buildWorkShareText(workFromLocalSeed(s), origin)
-                          }
-                        />
-                      ) : null}
-                      <Link
-                        href={`/w/${encodeURIComponent(s.id)}`}
-                        className="rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
-                      >
-                        詳細
-                      </Link>
-                    </div>
+                    <SeedActionRow
+                      left={
+                        <>
+                          <Link
+                            href={`/dashboard/${encodeURIComponent(s.id)}`}
+                            className={btnStatus}
+                          >
+                            成績を見る
+                          </Link>
+                          <Link
+                            href={`/w/${encodeURIComponent(s.id)}`}
+                            className={btnStatus}
+                          >
+                            詳細
+                          </Link>
+                          {origin ? (
+                            <ShareTextCopyButton
+                              getText={() =>
+                                buildWorkShareText(workFromLocalSeed(s), origin)
+                              }
+                            />
+                          ) : null}
+                        </>
+                      }
+                    />
                   )}
                 </li>
               ))}
