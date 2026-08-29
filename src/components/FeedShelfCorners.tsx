@@ -77,18 +77,19 @@ function CompactWorkLink({
       href={`/w/${work.id}`}
       className="block min-w-0 py-2 transition hover:bg-viscum-paper-2/80"
     >
-      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
         {work.status === "open" || work.status === "pay_soon" ? (
           <StatusBadge
             status={work.status}
             prizeYen={work.prizeYen}
             paymentsDone={work.paymentsDone}
             planLabel={planBadgeLabel(work.plan)}
-            className="shrink-0"
+            dense
+            className="max-w-full break-words"
           />
         ) : null}
         {countdown ? (
-          <span className="text-[11px] font-medium text-viscum-berry-deep">
+          <span className="shrink-0 text-[11px] font-medium text-viscum-berry-deep">
             {countdown}
           </span>
         ) : null}
@@ -109,14 +110,14 @@ function CompactWorkLink({
         {work.title}
       </p>
       <p className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 text-[11px] text-viscum-muted">
-        <span>
+        <span className="min-w-0 truncate">
           <SeederNameText
             handle={work.seeder}
             preferredName={work.seederAccountName}
           />
         </span>
-        <span>気になる {formatCount(rx.bookmark)}</span>
-        <span>コメント {formatCount(commentN)}</span>
+        <span className="shrink-0">気になる {formatCount(rx.bookmark)}</span>
+        <span className="shrink-0">コメント {formatCount(commentN)}</span>
       </p>
     </Link>
   );
@@ -293,11 +294,11 @@ export function FeedShelfCorners({
   if (layout === "sideDuo") {
     return (
       <aside
-        className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:w-auto xl:flex-row xl:self-start xl:border-l xl:border-t-0 xl:pr-4 ${className}`}
+        className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:min-w-0 xl:max-w-full xl:flex-1 xl:flex-row xl:self-start xl:border-l xl:border-t-0 ${className}`}
         aria-label="発見"
       >
-        {/* 内側右（携帯では上）：注目 → 終了間近。内側スクロールは付けない（ページと二重になる） */}
-        <div className="min-w-0 xl:sticky xl:top-12 xl:w-72 xl:shrink-0 xl:border-r xl:border-viscum-line">
+        {/* 内側右（携帯では上）：注目 → 終了間近。固定幅で親を押し出さない */}
+        <div className="min-w-0 xl:sticky xl:top-12 xl:w-[min(100%,16.5rem)] xl:max-w-[16.5rem] xl:shrink xl:border-r xl:border-viscum-line">
           <HotSection hot={hot} className="min-w-0 px-3 py-3" />
           <ClosingSoonSection
             closing={closing}
@@ -306,8 +307,8 @@ export function FeedShelfCorners({
             }`}
           />
         </div>
-        {/* 外側右（携帯では下）：偏差 */}
-        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:w-72 xl:shrink-0 xl:border-t-0">
+        {/* 外側右（携帯では下）：偏差。右端余白で切れ防止 */}
+        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:w-[min(100%,16.5rem)] xl:max-w-[16.5rem] xl:shrink xl:border-t-0 xl:pr-3">
           <SkewSection skewed={skewed} className="min-w-0 px-3 py-3" />
         </div>
       </aside>
