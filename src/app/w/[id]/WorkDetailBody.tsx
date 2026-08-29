@@ -332,7 +332,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
         </p>
       </div>
 
-      <FeedShelfCorners excludeWorkId={work.id} />
+      <FeedShelfCorners excludeWorkId={work.id} layout="sideDuo" />
     </div>
   );
 }
