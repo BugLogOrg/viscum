@@ -37,6 +37,9 @@ import { FeedShelfCorners } from "@/components/FeedShelfCorners";
 
 type Filter = "all" | "open" | "follow";
 
+/** TOP一覧の1ページ件数（雑誌型：本編を短くして下の発見へ） */
+const FEED_PAGE_SIZE = 16;
+
 function mergeShelf(neon: Work[], localShelf: Work[]): Work[] {
   const neonIds = new Set(neon.map((w) => w.id));
   const rest = localShelf.filter((w) => !neonIds.has(w.id));
@@ -218,16 +221,26 @@ export function FeedClient({
         params.delete("tag");
         params.delete("published");
       }
+      params.delete("page");
       const q = params.toString();
       router.replace(q ? `/?${q}` : "/");
     },
     [router, searchParams],
   );
 
-  const setFeedFilter = useCallback((f: Filter) => {
-    setFilter(f);
-    if (f === "all") setQuery("");
-  }, []);
+  const setFeedFilter = useCallback(
+    (f: Filter) => {
+      setFilter(f);
+      if (f === "all") setQuery("");
+      const params = new URLSearchParams(searchParams.toString());
+      if (f === "all") params.delete("feed");
+      else params.set("feed", f);
+      params.delete("page");
+      const q = params.toString();
+      router.replace(q ? `/?${q}` : "/");
+    },
+    [router, searchParams],
+  );
 
   const clearSearch = useCallback(() => setQuery(""), []);
 
@@ -266,6 +279,25 @@ export function FeedClient({
 
   if (filter === "open") {
     rest = rest.filter((w) => w.status === "open" || w.status === "pay_soon");
+  }
+
+  const totalCount = rest.length;
+  const pageCount = Math.max(1, Math.ceil(totalCount / FEED_PAGE_SIZE));
+  const pageRaw = Number.parseInt(searchParams.get("page") || "1", 10);
+  const page =
+    Number.isFinite(pageRaw) && pageRaw > 0
+      ? Math.min(pageRaw, pageCount)
+      : 1;
+  const pageStart = (page - 1) * FEED_PAGE_SIZE;
+  const pageItems = rest.slice(pageStart, pageStart + FEED_PAGE_SIZE);
+
+  function goToPage(next: number) {
+    const p = Math.max(1, Math.min(next, pageCount));
+    const params = new URLSearchParams(searchParams.toString());
+    if (p <= 1) params.delete("page");
+    else params.set("page", String(p));
+    const q = params.toString();
+    router.replace(q ? `/?${q}` : "/", { scroll: true });
   }
 
   const openCount = shelf.filter(
@@ -472,16 +504,20 @@ export function FeedClient({
           </button>
         <span className="ml-auto text-[10px] text-viscum-muted">
           {peopleHits.length > 0
-            ? `ユーザー${peopleHits.length} · 作品${rest.length}`
-            : `${rest.length}件`}
+            ? `ユーザー${peopleHits.length} · 作品${totalCount}`
+            : pageCount > 1
+              ? `${pageStart + 1}–${pageStart + pageItems.length} / ${totalCount}件`
+              : `${totalCount}件`}
         </span>
       </div>
 
       <div className="hidden items-center justify-end border-b border-viscum-line px-3 py-1.5 md:flex">
         <span className="text-[10px] text-viscum-muted">
           {peopleHits.length > 0
-            ? `ユーザー${peopleHits.length} · 作品${rest.length}`
-            : `${rest.length}件`}
+            ? `ユーザー${peopleHits.length} · 作品${totalCount}`
+            : pageCount > 1
+              ? `${pageStart + 1}–${pageStart + pageItems.length} / ${totalCount}件`
+              : `${totalCount}件`}
         </span>
       </div>
 
@@ -547,7 +583,7 @@ export function FeedClient({
         aria-label="一覧"
         className="lg:grid lg:grid-cols-2 lg:divide-x lg:divide-viscum-line"
       >
-        {rest.map((w) => (
+        {pageItems.map((w) => (
           <WorkFeedRow
             key={w.id}
             work={w}
@@ -556,7 +592,7 @@ export function FeedClient({
         ))}
         {filter === "follow" && myHandle ? (
           <div className="col-span-full px-4 pb-10 pt-4 text-sm text-viscum-muted">
-            {rest.length === 0 ? (
+            {pageItems.length === 0 ? (
               <p className="text-center">
                 {followingHandles.length === 0
                   ? "まだ誰もフォローしていません。下から選ぶか、公開PFの「フォロー」でも追加できます。"
@@ -565,7 +601,7 @@ export function FeedClient({
             ) : null}
             <div
               className={
-                rest.length === 0
+                pageItems.length === 0
                   ? "mx-auto max-w-lg px-2"
                   : "mx-auto max-w-lg"
               }
@@ -574,7 +610,7 @@ export function FeedClient({
             </div>
           </div>
         ) : null}
-        {rest.length === 0 && filter === "follow" && !myHandle && (
+        {pageItems.length === 0 && filter === "follow" && !myHandle && (
           <div className="col-span-full px-4 py-10 text-center text-sm text-viscum-muted">
             {sessionPending ? (
               <p>フォロー中を読み込み中…</p>
@@ -591,14 +627,14 @@ export function FeedClient({
             )}
           </div>
         )}
-        {rest.length === 0 &&
+        {pageItems.length === 0 &&
           filter !== "follow" &&
           peopleHits.length === 0 && (
             <p className="col-span-full px-4 py-8 text-center text-sm text-viscum-muted">
               「{query.trim() || specialty || "条件"}」に合うユーザー・作品がありません
             </p>
           )}
-        {rest.length === 0 &&
+        {pageItems.length === 0 &&
           filter !== "follow" &&
           peopleHits.length > 0 &&
           query.trim() && (
@@ -606,8 +642,37 @@ export function FeedClient({
               作品のヒットはありません（上のユーザーからプロフィールへ）
             </p>
           )}
+        {pageCount > 1 ? (
+          <nav
+            className="col-span-full flex items-center justify-center gap-3 border-t border-viscum-line px-4 py-4"
+            aria-label="ページ"
+          >
+            <button
+              type="button"
+              disabled={page <= 1}
+              onClick={() => goToPage(page - 1)}
+              className="rounded-md border border-viscum-line px-3 py-1.5 text-[13px] font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              前へ
+            </button>
+            <span className="text-[12px] tabular-nums text-viscum-muted">
+              {page} / {pageCount}
+            </span>
+            <button
+              type="button"
+              disabled={page >= pageCount}
+              onClick={() => goToPage(page + 1)}
+              className="rounded-md border border-viscum-line px-3 py-1.5 text-[13px] font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              次へ
+            </button>
+          </nav>
+        ) : null}
       </section>
-      {filter === "all" && !specialty && !query.trim() ? (
+      {filter === "all" &&
+      !specialty &&
+      !query.trim() &&
+      page <= 1 ? (
         <FeedShelfCorners works={shelf} layout="bottom" />
       ) : null}
     </AppShell>
