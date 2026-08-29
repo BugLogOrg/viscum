@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db";
 import { users, works, type WorkRow } from "@/db/schema";
 import type { CompStatus, DemoSeedPlan, Work } from "@/data/dummy-works";
@@ -9,6 +9,21 @@ export function isNeonWorkId(id: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
     id.trim(),
   );
+}
+
+/** data URL を JSON に載せないための公開パス */
+export function neonWorkThumbPath(id: string): string {
+  return `/api/works/${encodeURIComponent(id)}/thumb`;
+}
+
+function publicThumbUrl(
+  workId: string,
+  thumbUrl: string | null | undefined,
+): string | undefined {
+  const t = thumbUrl?.trim();
+  if (!t) return undefined;
+  if (t.startsWith("data:")) return neonWorkThumbPath(workId);
+  return t;
 }
 
 function hoursAgoFrom(date: Date): number {
@@ -71,7 +86,7 @@ export function workFromNeonRow(
       : undefined,
     externalUrl: row.externalUrl,
     thumbTone: "leaf",
-    thumbUrl: row.thumbUrl ?? undefined,
+    thumbUrl: publicThumbUrl(row.id, row.thumbUrl),
     comments: [],
     sukiCount: row.emoCount,
     bookmarkCount: row.bookmarkCount,
@@ -80,7 +95,7 @@ export function workFromNeonRow(
   };
 }
 
-/** 公開中の棚作品（フィード用） */
+/** 公開中の棚作品（フィード用）。thumb 本体は列を読まず有無だけ */
 export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
   if (!hasDatabase()) return [];
   const db = getDb();
@@ -88,7 +103,24 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
 
   const rows = await db
     .select({
-      work: works,
+      id: works.id,
+      seederId: works.seederId,
+      title: works.title,
+      description: works.description,
+      focusNote: works.focusNote,
+      scaffoldLines: works.scaffoldLines,
+      externalUrl: works.externalUrl,
+      tags: works.tags,
+      plan: works.plan,
+      status: works.status,
+      prizeYen: works.prizeYen,
+      closesAt: works.closesAt,
+      listedOnShelf: works.listedOnShelf,
+      emoCount: works.emoCount,
+      bookmarkCount: works.bookmarkCount,
+      createdAt: works.createdAt,
+      updatedAt: works.updatedAt,
+      hasThumb: sql<number>`case when ${works.thumbUrl} is not null and length(${works.thumbUrl}) > 0 then 1 else 0 end`,
       handle: users.handle,
       name: users.name,
     })
@@ -98,9 +130,32 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
     .orderBy(desc(works.createdAt))
     .limit(limit);
 
-  return rows.map((r) =>
-    workFromNeonRow(r.work, { handle: r.handle, name: r.name }),
-  );
+  return rows.map((r) => {
+    // data: スタブ → publicThumbUrl が /api/works/.../thumb に置換
+    const stub = {
+      id: r.id,
+      seederId: r.seederId,
+      title: r.title,
+      description: r.description,
+      focusNote: r.focusNote,
+      scaffoldLines: r.scaffoldLines,
+      externalUrl: r.externalUrl,
+      tags: r.tags,
+      plan: r.plan,
+      status: r.status,
+      prizeYen: r.prizeYen,
+      closesAt: r.closesAt,
+      thumbUrl: r.hasThumb ? "data:image/jpeg;base64,x" : null,
+      listedOnShelf: r.listedOnShelf,
+      viewCount: 0,
+      emoCount: r.emoCount,
+      bookmarkCount: r.bookmarkCount,
+      commentCount: 0,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    } satisfies WorkRow;
+    return workFromNeonRow(stub, { handle: r.handle, name: r.name });
+  });
 }
 
 /**

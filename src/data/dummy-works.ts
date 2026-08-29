@@ -1141,9 +1141,13 @@ export function formatClosesIn(
   if (status === "closed") return "終了";
   if (closesInHours == null) return null;
   if (closesInHours <= 0) return "まもなく";
-  if (closesInHours < 24) return `あと${closesInHours}時間`;
-  const d = Math.floor(closesInHours / 24);
-  const h = closesInHours % 24;
+  // Neon 由来は小数時間。表示は整数に揃える
+  if (closesInHours < 24) {
+    return `あと${Math.max(1, Math.ceil(closesInHours))}時間`;
+  }
+  const total = Math.floor(closesInHours);
+  const d = Math.floor(total / 24);
+  const h = total % 24;
   if (h === 0) return `あと${d}日`;
   return `あと${d}日${h}時間`;
 }
