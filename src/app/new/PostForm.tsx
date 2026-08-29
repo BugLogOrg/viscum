@@ -386,7 +386,7 @@ export function PostForm() {
           onChange={(e) => setTitle(e.target.value.slice(0, WORK_TITLE_MAX))}
           rows={2}
           maxLength={WORK_TITLE_MAX}
-          placeholder="例: 少額コンペ＝少額広告の顔は伝わるか"
+          placeholder="例: Viscumの入口、「個人作品×気軽な感想」は伝わるか？"
           className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[15px] leading-snug text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none"
         />
         <p className="mt-1 text-right text-[11px] tabular-nums text-viscum-muted">
