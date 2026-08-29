@@ -334,7 +334,7 @@ export function FeedClient({
   const showEntranceLine =
     filter === "all" && !specialty && !query.trim();
   const entranceLine = showEntranceLine
-    ? "個人作品を見つけて、気軽に感想を残せる場所。"
+    ? "作ったものに、知らない人の反応を。"
     : null;
 
   const contextCrumbs: string[] = [
@@ -348,7 +348,7 @@ export function FeedClient({
           : "ログインするとフォロー中が表示されます"
       : filter === "open"
         ? "VISCUM内コンペ開催中 · 反応を募集"
-        : "みんなの作品",
+        : "反応を募集中",
   ];
   if (specialty) contextCrumbs.push(specialty);
   if (query.trim()) contextCrumbs.push(`「${query.trim()}」`);

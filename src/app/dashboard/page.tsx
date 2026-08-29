@@ -331,7 +331,7 @@ export default function DashboardPage() {
                       onClick={() => {
                         if (
                           !window.confirm(
-                            "トップの「みんなの作品」に公開しますか？",
+                            "トップの「反応を募集中」に公開しますか？",
                           )
                         ) {
                           return;
