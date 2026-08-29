@@ -1,22 +1,91 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { useId } from "react";
 import type { ProtocolColorId, ProtocolIconId } from "@/lib/protocol-colors";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
 
-/**
- * 別軸：固定アセット（Apple 🌱寄せ）。
- * 絵文字直載せは機種で形が変わる。自前の単色線画はY/T化しやすかった。
- */
+/** Apple seedling-like fixed asset (not OS emoji). Gradients use useId to avoid collisions. */
 function SproutGlyph({ className }: { className?: string }) {
+  const uid = useId().replace(/:/g, "");
+  const soil = `ps-soil-${uid}`;
+  const leafL = `ps-leaf-l-${uid}`;
+  const leafR = `ps-leaf-r-${uid}`;
   return (
-    // 色はアセット側（currentColorにしない）
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src="/icons/protocol-sprout.svg"
-      alt=""
-      aria-hidden
-      draggable={false}
-      className={className}
-    />
+    <svg viewBox="0 0 24 24" className={className} aria-hidden fill="none">
+      <defs>
+        <linearGradient
+          id={soil}
+          x1="5"
+          y1="17"
+          x2="19"
+          y2="22"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#C9A36E" />
+          <stop offset="1" stopColor="#A67C45" />
+        </linearGradient>
+        <linearGradient
+          id={leafL}
+          x1="4"
+          y1="6"
+          x2="11"
+          y2="14"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#9CCC65" />
+          <stop offset="1" stopColor="#689F38" />
+        </linearGradient>
+        <linearGradient
+          id={leafR}
+          x1="12"
+          y1="4"
+          x2="20"
+          y2="13"
+          gradientUnits="userSpaceOnUse"
+        >
+          <stop stopColor="#AED581" />
+          <stop offset="1" stopColor="#7CB342" />
+        </linearGradient>
+      </defs>
+      <ellipse cx="12" cy="19.6" rx="7.2" ry="2.55" fill={`url(#${soil})`} />
+      <ellipse
+        cx="12"
+        cy="18.85"
+        rx="5.4"
+        ry="1.55"
+        fill="#D7B688"
+        opacity="0.85"
+      />
+      <path
+        d="M11.85 18.4c.05-2.2.35-4.4.85-6.15"
+        stroke="#8BC34A"
+        strokeWidth="1.55"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12.3 12.6c-1.55-.15-4.2-1.1-5.85-2.95-1.55-1.75-.35-3.85 1.85-3.55 1.9.25 3.55 2.55 4.35 5.35.15.55.05 1.05-.35 1.15z"
+        fill={`url(#${leafL})`}
+      />
+      <path
+        d="M12.55 12.15c1.35-.85 3.95-2.55 5.55-3.05 2.05-.65 3.05 1.35 1.55 3.15-1.35 1.6-3.85 2.85-5.95 3.15-.7.1-1.2-.35-1.15-1.25z"
+        fill={`url(#${leafR})`}
+      />
+      <path
+        d="M8.2 8.35c.85.15 1.85.95 2.45 1.95"
+        stroke="#E8F5C8"
+        strokeWidth="0.7"
+        strokeLinecap="round"
+        opacity="0.65"
+      />
+      <path
+        d="M14.1 10.1c1.05-.35 2.35-.55 3.25-.45"
+        stroke="#F1F8E0"
+        strokeWidth="0.7"
+        strokeLinecap="round"
+        opacity="0.55"
+      />
+    </svg>
   );
 }
 
