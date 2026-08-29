@@ -326,7 +326,7 @@ export function FeedClient({
       openCount={openCount}
       entranceLine={entranceLine}
     >
-      <SiteHeader hideOnMd entranceLine={entranceLine} />
+      <SiteHeader hideOnMd />
       {publishedId ? (
         <div className="border-b border-viscum-leaf/40 bg-viscum-leaf-soft/50 px-4 py-3">
           <p className="text-[14px] font-medium text-viscum-leaf-deep">
