@@ -60,9 +60,9 @@ function CompactWorkLink({
   return (
     <Link
       href={`/w/${work.id}`}
-      className="block py-2 transition hover:bg-viscum-paper-2/80"
+      className="block min-w-0 py-2 transition hover:bg-viscum-paper-2/80"
     >
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center gap-1.5">
         {work.status === "open" || work.status === "pay_soon" ? (
           <StatusBadge
             status={work.status}
@@ -90,10 +90,10 @@ function CompactWorkLink({
           </span>
         ) : null}
       </div>
-      <p className="mt-1 line-clamp-2 text-[13px] font-medium leading-snug text-viscum-ink">
+      <p className="mt-1 line-clamp-2 break-words text-[13px] font-medium leading-snug text-viscum-ink">
         {work.title}
       </p>
-      <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 text-[11px] text-viscum-muted">
+      <p className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 text-[11px] text-viscum-muted">
         <span>
           <SeederNameText
             handle={work.seeder}
@@ -128,7 +128,7 @@ function HotSection({
           すべて
         </Link>
       </div>
-      <p className="mt-1 text-[11px] leading-snug text-viscum-muted">
+      <p className="mt-1 text-[11px] leading-snug break-words text-viscum-muted">
         反応が集まっている開催中
       </p>
       <ul className="mt-1.5 divide-y divide-viscum-line">
@@ -155,8 +155,8 @@ function SkewSection({
       <h2 className="text-[13px] font-medium tracking-wide text-viscum-brand">
         偏差
       </h2>
-      <p className="mt-1 text-[11px] leading-snug text-viscum-muted">
-        賛成か止まれに寄っている開催中。逆張りコメントの余地
+      <p className="mt-1 text-[11px] leading-snug break-words text-viscum-muted">
+        賛成／止まれに寄っている開催中。逆張りの余地
       </p>
       <ul className="mt-1.5 divide-y divide-viscum-line">
         {skewed.map(({ work, lean, blue, red }) => (
@@ -213,14 +213,14 @@ export function FeedShelfCorners({
   if (layout === "sideDuo") {
     return (
       <aside
-        className={`flex w-full flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:w-auto xl:flex-row xl:self-start xl:border-l xl:border-t-0 ${className}`}
+        className={`flex w-full min-w-0 flex-col overflow-hidden border-t border-viscum-line bg-viscum-paper-2/30 xl:w-auto xl:flex-row xl:self-start xl:border-l xl:border-t-0 ${className}`}
         aria-label="発見"
       >
-        <div className="xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-viscum-line">
-          <HotSection hot={hot} className="px-3 py-3" />
+        <div className="min-w-0 xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-r xl:border-viscum-line">
+          <HotSection hot={hot} className="min-w-0 px-3 py-3" />
         </div>
-        <div className="border-t border-viscum-line xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-t-0">
-          <SkewSection skewed={skewed} className="px-3 py-3" />
+        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:max-h-[calc(100dvh-3rem)] xl:w-72 xl:shrink-0 xl:overflow-y-auto xl:border-t-0">
+          <SkewSection skewed={skewed} className="min-w-0 px-3 py-3" />
         </div>
       </aside>
     );
@@ -229,15 +229,15 @@ export function FeedShelfCorners({
   // TOP: 一覧の下・横2枠
   return (
     <aside
-      className={`border-t border-viscum-line bg-viscum-paper-2/25 ${className}`}
+      className={`min-w-0 overflow-hidden border-t border-viscum-line bg-viscum-paper-2/25 ${className}`}
       aria-label="発見"
     >
-      <div className="grid gap-0 md:grid-cols-2 md:divide-x md:divide-viscum-line">
+      <div className="grid min-w-0 gap-0 md:grid-cols-2 md:divide-x md:divide-viscum-line">
         <HotSection
           hot={hot}
-          className="border-b border-viscum-line px-4 py-4 md:border-b-0"
+          className="min-w-0 border-b border-viscum-line px-4 py-4 md:border-b-0"
         />
-        <SkewSection skewed={skewed} className="px-4 py-4" />
+        <SkewSection skewed={skewed} className="min-w-0 px-4 py-4" />
       </div>
     </aside>
   );
