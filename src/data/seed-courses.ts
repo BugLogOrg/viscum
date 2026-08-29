@@ -60,26 +60,29 @@ export const PUBLIC_BOOST = {
   criteria: [
     "指定した公開場所（ストア／拡張／SNS等）へ正直な反応・投稿を残す",
     "実利用したうえで書く（触っていない評価は除外の目安）",
-    "シーダー指定の観点に触れる",
+    "指定された観点に触れる",
     "やらせ・星の売買保証は不可。必要な開示があれば付ける",
-    "記入後に投稿URL等を報告する。褒賞はシーダーが選ぶ（全員払いではない）",
+    "記入後に投稿URL等を報告する。褒賞は全員払いではなく、選ばれた人へ",
   ],
 } as const;
 
-/** 投稿フォームと同じ聞くこと文言（デモ作品・詳細表示用） */
+/**
+ * 作品詳細・コメントUI向け（メンターが読む表札）。
+ * 投稿フォーム（シーダー）は PostForm 側の「聞くこと／募集の目安」を使う。
+ */
 export function scaffoldForPlan(plan: SeedPlanId): {
   label: string;
   lines: string[];
 } | null {
   if (plan === "first_impression" || plan === "brush_up") {
     return {
-      label: "聞くこと",
+      label: "聞かれていること",
       lines: [...courseById(plan).questions],
     };
   }
   if (plan === "public_boost") {
     return {
-      label: "募集の目安",
+      label: "参加の目安",
       lines: [...PUBLIC_BOOST.criteria],
     };
   }

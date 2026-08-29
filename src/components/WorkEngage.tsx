@@ -153,6 +153,8 @@ export function WorkEngage({
     status === "pay_soon" ||
     status === "closed" ||
     status === "none";
+  const seederNorm = seederHandle.replace(/^@/, "").trim().toLowerCase();
+  const isSeederViewer = Boolean(handle && handle.toLowerCase() === seederNorm);
 
   const loginHref = `/login?callbackUrl=${encodeURIComponent(`/w/${workId}`)}`;
 
@@ -467,8 +469,9 @@ export function WorkEngage({
           ) : null}
           {compActive && hasAdoptedUntipped ? (
             <p className="text-[12px] text-viscum-muted">
-              選出済み・褒賞の支払い待ち。シーダー本人がコメントを展開 →「褒賞を渡す」で
-              Checkout。
+              {isSeederViewer
+                ? "選出済み・褒賞の支払い待ち。コメントを展開 →「褒賞を渡す」で Checkout。"
+                : "選出済み・褒賞の支払い待ちです。"}
             </p>
           ) : null}
           {tags.length > 0 ? (
@@ -579,7 +582,7 @@ export function WorkEngage({
                     </ol>
                   </div>
                   <p className="text-[13px] leading-relaxed text-viscum-muted">
-                    見てほしいところは入口です。ここに書かれていないことでも、気づいたら書いて大丈夫です。
+                    入口として聞かれていることです。ここに書かれていないことでも、気づいたら書いて大丈夫です。
                   </p>
                 </div>
               )}

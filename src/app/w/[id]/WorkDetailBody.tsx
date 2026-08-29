@@ -228,8 +228,8 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                 </p>
                 <p className="mt-0.5 text-[11px] text-viscum-muted">
                   {work.plan === "public_boost"
-                    ? "おすすめの目安です。報告コメントでは投稿URLなども含めてください。"
-                    : "おすすめ質問です。そのまま答えても、アレンジしても構いません。"}
+                    ? "参加のときの目安です。報告コメントでは投稿URLなども含めてください。"
+                    : "おすすめの質問です。そのまま答えても、アレンジしても構いません。"}
                 </p>
                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-[14px] leading-relaxed text-viscum-ink">
                   {scaffoldLines.map((line) => (
