@@ -22,6 +22,7 @@ import {
   readLocalProfile,
 } from "@/lib/local-profile";
 import { WORK_TITLE_MAX, WORK_DESCRIPTION_MAX, clampWorkTitle } from "@/lib/work-title";
+import { resolveWorkThumbForSave } from "@/lib/resolve-work-thumb";
 
 const RECOMMENDED_TAGS = [
   "アプリ",
@@ -268,23 +269,9 @@ export function PostForm() {
         void (async () => {
           setSaving(true);
           try {
-          let thumbDataUrl: string | undefined;
+          let thumbStored: string | null = null;
           if (thumbUrl) {
-            try {
-              const res = await fetch(thumbUrl);
-              const blob = await res.blob();
-              // localStorage 上限対策：大きすぎるサムネは捨てる
-              if (blob.size <= 450_000) {
-                thumbDataUrl = await new Promise<string>((resolve, reject) => {
-                  const r = new FileReader();
-                  r.onload = () => resolve(String(r.result));
-                  r.onerror = () => reject(new Error("read"));
-                  r.readAsDataURL(blob);
-                });
-              }
-            } catch {
-              /* ignore */
-            }
+            thumbStored = await resolveWorkThumbForSave(thumbUrl);
           }
           const payload = {
             title: clampWorkTitle(title),
@@ -309,7 +296,7 @@ export function PostForm() {
                 ? extPrizeYen
                 : null,
             closesInDays: compOn ? closesInDays : null,
-            thumbUrl: thumbDataUrl ?? null,
+            thumbUrl: thumbStored,
             listedOnShelf: false,
           };
 
@@ -377,7 +364,7 @@ export function PostForm() {
               : compOn
                 ? course.name
                 : "無料コメント",
-            thumbDataUrl,
+            thumbDataUrl: thumbStored ?? undefined,
           });
           // 棚レーン: 保存後は公開ステップ（直依頼二択なし）
           router.push(`/w/${row.id}?seeded=1`);

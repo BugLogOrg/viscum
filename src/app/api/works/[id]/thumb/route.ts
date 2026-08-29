@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { put } from "@vercel/blob";
 import { auth } from "@/auth";
+import { getDb } from "@/db";
+import { works } from "@/db/schema";
 import { getNeonWorkRow, isNeonWorkId } from "@/lib/neon-works";
 
 type Ctx = { params: Promise<{ id: string }> };
@@ -23,8 +27,8 @@ function parseDataUrl(
 }
 
 /**
- * Neon 作品サムネ。data URL を DB に置いているため、
- * フィード JSON には乗せずここから配信する。
+ * Neon 作品サムネ。
+ * https ならリダイレクト。data URL なら一度 Blob へ移してから配信（次回から軽い）。
  */
 export async function GET(_req: Request, ctx: Ctx) {
   const { id: raw } = await ctx.params;
@@ -55,11 +59,38 @@ export async function GET(_req: Request, ctx: Ctx) {
     return NextResponse.json({ error: "invalid thumb" }, { status: 404 });
   }
 
+  // 既存の巨大 data URL を Blob へ退避（1回だけ重い）
+  if (process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
+    try {
+      const uploaded = await put(
+        `works/migrated/${id}.jpg`,
+        parsed.body,
+        {
+          access: "public",
+          contentType: parsed.mime.startsWith("image/")
+            ? parsed.mime
+            : "image/jpeg",
+          addRandomSuffix: true,
+        },
+      );
+      const db = getDb();
+      if (db) {
+        await db
+          .update(works)
+          .set({ thumbUrl: uploaded.url, updatedAt: new Date() })
+          .where(eq(works.id, id));
+      }
+      return NextResponse.redirect(uploaded.url, 302);
+    } catch {
+      /* 配信は続行 */
+    }
+  }
+
   return new NextResponse(new Uint8Array(parsed.body), {
     status: 200,
     headers: {
       "Content-Type": parsed.mime,
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
       "Content-Length": String(parsed.body.length),
     },
   });

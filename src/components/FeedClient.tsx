@@ -36,6 +36,12 @@ import { DemoBadge } from "@/components/DemoBadge";
 
 type Filter = "all" | "open" | "follow";
 
+function mergeShelf(neon: Work[], localShelf: Work[]): Work[] {
+  const neonIds = new Set(neon.map((w) => w.id));
+  const rest = localShelf.filter((w) => !neonIds.has(w.id));
+  return [...neon, ...rest];
+}
+
 function matchesQuery(w: Work, q: string): boolean {
   const raw = q.trim();
   if (!raw) return true;
@@ -68,7 +74,11 @@ function initialFilter(searchParams: URLSearchParams): Filter {
   return "all";
 }
 
-export function FeedClient() {
+export function FeedClient({
+  initialNeonWorks = [],
+}: {
+  initialNeonWorks?: Work[];
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -83,7 +93,9 @@ export function FeedClient() {
   const [viewerHandle, setViewerHandle] = useState("");
   const [followingHandles, setFollowingHandles] = useState<string[]>([]);
   const [remotePeople, setRemotePeople] = useState<SuggestedSeeder[]>([]);
-  const [shelf, setShelf] = useState<Work[]>(() => [...DUMMY_WORKS]);
+  const [shelf, setShelf] = useState<Work[]>(() =>
+    mergeShelf(initialNeonWorks, [...DUMMY_WORKS]),
+  );
   const [publishedId, setPublishedId] = useState<string | null>(null);
   const [shareCopied, setShareCopied] = useState(false);
 
@@ -108,17 +120,15 @@ export function FeedClient() {
       void fetch("/api/works?listed=1")
         .then((r) => (r.ok ? r.json() : null))
         .then((data: { works?: Work[] } | null) => {
-          const neon = data?.works ?? [];
-          const neonIds = new Set(neon.map((w) => w.id));
-          const rest = localShelf.filter((w) => !neonIds.has(w.id));
-          setShelf([...neon, ...rest]);
+          const neon = data?.works ?? initialNeonWorks;
+          setShelf(mergeShelf(neon, localShelf));
         })
-        .catch(() => setShelf(localShelf));
+        .catch(() => setShelf(mergeShelf(initialNeonWorks, localShelf)));
     };
     refresh();
     window.addEventListener("focus", refresh);
     return () => window.removeEventListener("focus", refresh);
-  }, [publishedId]);
+  }, [publishedId, initialNeonWorks]);
 
   useEffect(() => {
     setSpecialty(searchParams.get("tag"));

@@ -121,6 +121,8 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
       createdAt: works.createdAt,
       updatedAt: works.updatedAt,
       hasThumb: sql<number>`case when ${works.thumbUrl} is not null and length(${works.thumbUrl}) > 0 then 1 else 0 end`,
+      /** https だけ本文を取る（data URL は巨大なので取らない） */
+      httpThumb: sql<string | null>`case when ${works.thumbUrl} like 'http%' then ${works.thumbUrl} else null end`,
       handle: users.handle,
       name: users.name,
     })
@@ -131,7 +133,9 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
     .limit(limit);
 
   return rows.map((r) => {
-    // data: スタブ → publicThumbUrl が /api/works/.../thumb に置換
+    const thumbStored =
+      r.httpThumb?.trim() ||
+      (r.hasThumb ? "data:image/jpeg;base64,x" : null);
     const stub = {
       id: r.id,
       seederId: r.seederId,
@@ -145,7 +149,7 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
       status: r.status,
       prizeYen: r.prizeYen,
       closesAt: r.closesAt,
-      thumbUrl: r.hasThumb ? "data:image/jpeg;base64,x" : null,
+      thumbUrl: thumbStored,
       listedOnShelf: r.listedOnShelf,
       viewCount: 0,
       emoCount: r.emoCount,

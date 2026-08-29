@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 /** フィード／詳細と同じ note 系比率 */
 export const THUMB_CROP_ASPECT = 1280 / 670;
-const OUT_W = 1280;
-const OUT_H = 670;
+/** フィード表示幅の約2倍。1280だと JPEG が重く Neon/配信が遅くなる */
+const OUT_W = 640;
+const OUT_H = 335;
 
 type Props = {
   /** 元画像（object URL や data URL） */
@@ -192,7 +193,7 @@ export function ImageCropDialog({
         canvas.toBlob(
           (b) => (b ? resolve(b) : reject(new Error("toBlob"))),
           "image/jpeg",
-          0.92,
+          0.82,
         );
       });
       onApply(blob);

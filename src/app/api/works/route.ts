@@ -24,7 +24,19 @@ const CreateBody = z.object({
   ]),
   prizeYen: z.number().int().nonnegative().nullable().optional(),
   closesInDays: z.number().int().positive().max(90).nullable().optional(),
-  thumbUrl: z.string().max(900_000).optional().nullable(),
+  thumbUrl: z
+    .string()
+    .max(900_000)
+    .optional()
+    .nullable()
+    .refine(
+      (v) =>
+        v == null ||
+        v.startsWith("https://") ||
+        v.startsWith("http://") ||
+        (v.startsWith("data:image/") && v.length <= 380_000),
+      { message: "thumb too large or invalid" },
+    ),
   /** 作成直後に棚へ出すか。既定は下書き */
   listedOnShelf: z.boolean().optional().default(false),
 });

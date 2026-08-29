@@ -1,7 +1,10 @@
 import { Suspense } from "react";
 import { FeedClient } from "@/components/FeedClient";
+import { listListedNeonWorks } from "@/lib/neon-works";
 
-export default function Home() {
+export default async function Home() {
+  const initialNeonWorks = await listListedNeonWorks().catch(() => []);
+
   return (
     <Suspense
       fallback={
@@ -10,7 +13,7 @@ export default function Home() {
         </div>
       }
     >
-      <FeedClient />
+      <FeedClient initialNeonWorks={initialNeonWorks} />
     </Suspense>
   );
 }
