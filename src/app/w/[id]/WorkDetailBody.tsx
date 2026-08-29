@@ -147,19 +147,11 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
           </div>
 
           <div className="space-y-5 px-4 py-5">
-            {/* A. 読む：タイトル → 上アクション → ご挨拶 → 説明 */}
+            {/* A. 読む：タイトル → メタ → 気になる／共有（ラベル付き）→ ご挨拶 → 説明 */}
             <div className="space-y-3">
               <h1 className="text-xl font-semibold leading-snug text-viscum-ink">
                 {work.title}
               </h1>
-              {!isDraft ? (
-                <WorkDetailActionRow
-                  work={work}
-                  bookmarkBase={rx.bookmark}
-                  isDraft={isDraft}
-                  variant="icons"
-                />
-              ) : null}
               <p className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[13px] text-viscum-muted">
                 <SeederLink
                   handle={work.seeder}
@@ -167,6 +159,14 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                 />
                 <time dateTime={postedAt.toISOString()}>{postedLine}</time>
               </p>
+              {!isDraft ? (
+                <WorkDetailActionRow
+                  work={work}
+                  bookmarkBase={rx.bookmark}
+                  isDraft={isDraft}
+                  variant="row"
+                />
+              ) : null}
             </div>
 
             {work.focusNote?.trim() ? (
@@ -270,13 +270,6 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
               </p>
             ) : (
               <>
-                {/* D. 下段アクション（見逃し防止）→ C. 書く */}
-                <WorkDetailActionRow
-                  work={work}
-                  bookmarkBase={rx.bookmark}
-                  isDraft={isDraft}
-                  variant="row"
-                />
                 <WorkEngage
                   workId={work.id}
                   seederHandle={work.seeder}
