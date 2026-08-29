@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { requestDms, users, dmInvites } from "@/db/schema";
@@ -14,13 +14,14 @@ type Ctx = { params: Promise<{ id: string }> };
 async function loadParty(id: string, userId: string) {
   const db = getDb();
   if (!db) return null;
+  const thumbExpr = sql<string | null>`case when ${requestDms.workThumbUrl} like 'data:%' then null else ${requestDms.workThumbUrl} end`;
   const rows = await db
     .select({
       id: requestDms.id,
       workId: requestDms.workId,
       workTitle: requestDms.workTitle,
       workExternalUrl: requestDms.workExternalUrl,
-      workThumbUrl: requestDms.workThumbUrl,
+      workThumbUrl: thumbExpr,
       workSummary: requestDms.workSummary,
       fromUserId: requestDms.fromUserId,
       toUserId: requestDms.toUserId,

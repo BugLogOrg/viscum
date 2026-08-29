@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { dmInvites, requestDms, users } from "@/db/schema";
@@ -172,9 +172,11 @@ export async function POST(req: Request) {
   });
 }
 
-/** 公開読取（URLを知っている人向け）。無効化済みは 410 */
+/** 公開読取（URLを知っている人向け）。無効化済みは 410。?lean=1 は閲覧数＋httpsサムネのみ */
 export async function GET(req: Request) {
-  const id = new URL(req.url).searchParams.get("id")?.trim();
+  const url = new URL(req.url);
+  const id = url.searchParams.get("id")?.trim();
+  const lean = url.searchParams.get("lean") === "1";
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
   }
@@ -186,13 +188,51 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
   }
 
+  // data: サムネは SELECT 時点で落とす（転送・JSON化を避ける）
+  const thumbExpr = sql<string | null>`case when ${dmInvites.workThumbUrl} like 'data:%' then null else ${dmInvites.workThumbUrl} end`;
+
+  if (lean) {
+    const leanRows = await db
+      .select({
+        id: dmInvites.id,
+        fromUserId: dmInvites.fromUserId,
+        revokedAt: dmInvites.revokedAt,
+        viewCount: dmInvites.viewCount,
+        workThumbUrl: thumbExpr,
+      })
+      .from(dmInvites)
+      .where(eq(dmInvites.id, id))
+      .limit(1);
+    const leanRow = leanRows[0];
+    if (!leanRow) {
+      return NextResponse.json({ error: "not found" }, { status: 404 });
+    }
+    if (leanRow.revokedAt) {
+      return NextResponse.json(
+        { error: "revoked", revoked: true },
+        { status: 410 },
+      );
+    }
+    const session = await auth();
+    const isOwner = session?.user?.id === leanRow.fromUserId;
+    return NextResponse.json({
+      reveal: "lean" as const,
+      invite: {
+        id: leanRow.id,
+        workThumbUrl: sanitizeInviteThumbUrl(leanRow.workThumbUrl),
+        ...(isOwner ? { viewCount: leanRow.viewCount ?? 0 } : {}),
+      },
+      persisted: true,
+    });
+  }
+
   const rows = await db
     .select({
       id: dmInvites.id,
       workId: dmInvites.workId,
       workTitle: dmInvites.workTitle,
       workExternalUrl: dmInvites.workExternalUrl,
-      workThumbUrl: dmInvites.workThumbUrl,
+      workThumbUrl: thumbExpr,
       workSummary: dmInvites.workSummary,
       amountYen: dmInvites.amountYen,
       pitch: dmInvites.pitch,

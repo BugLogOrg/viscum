@@ -1,10 +1,10 @@
-import { desc, eq, inArray, or } from "drizzle-orm";
+import { desc, eq, inArray, or, sql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db";
 import { requestDms, users } from "@/db/schema";
 import type { RequestDm } from "@/lib/local-request-dms";
 import { requestDmToClient } from "@/lib/request-dm-serialize";
 
-/** 自分関連の直依頼一覧（messages / thumb 列は読まない） */
+/** 自分関連の直依頼一覧（messages / thumb 列は読まない。summary は先頭160字） */
 export async function listMyRequestDms(userId: string): Promise<{
   requests: RequestDm[];
   persisted: boolean;
@@ -23,7 +23,7 @@ export async function listMyRequestDms(userId: string): Promise<{
       workId: requestDms.workId,
       workTitle: requestDms.workTitle,
       workExternalUrl: requestDms.workExternalUrl,
-      workSummary: requestDms.workSummary,
+      workSummary: sql<string | null>`left(${requestDms.workSummary}, 160)`,
       fromUserId: requestDms.fromUserId,
       toUserId: requestDms.toUserId,
       inviteId: requestDms.inviteId,

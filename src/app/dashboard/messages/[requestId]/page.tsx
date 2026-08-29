@@ -60,28 +60,38 @@ export default function RequestDmThreadPage() {
     setOrigin(window.location.origin);
   }, []);
 
-  // シーダー: 招待閲覧数（転送疑い）
+  // シーダー: 招待閲覧数＋httpsサムネ補完（lean。data URL は引かない）
   useEffect(() => {
     if (!row?.inviteId || !handle) {
       setInviteViewCount(null);
+      setInviteThumb(null);
       return;
     }
-    if (row.fromHandle.replace(/^@/, "").toLowerCase() !== handle.toLowerCase()) {
+    const isOwner =
+      row.fromHandle.replace(/^@/, "").toLowerCase() === handle.toLowerCase();
+    const needThumb = !row.workThumbUrl?.trim();
+    if (!isOwner && !needThumb) {
       setInviteViewCount(null);
+      setInviteThumb(null);
       return;
     }
     let cancelled = false;
     const pull = () => {
-      void fetch(`/api/dm-invites?id=${encodeURIComponent(row.inviteId!)}`, {
-        cache: "no-store",
-      })
+      void fetch(
+        `/api/dm-invites?id=${encodeURIComponent(row.inviteId!)}&lean=1`,
+        { cache: "no-store" },
+      )
         .then(async (res) => {
           const data = (await res.json().catch(() => ({}))) as {
-            invite?: { viewCount?: number };
+            invite?: { viewCount?: number; workThumbUrl?: string };
           };
           if (cancelled) return;
-          if (typeof data.invite?.viewCount === "number") {
+          if (isOwner && typeof data.invite?.viewCount === "number") {
             setInviteViewCount(data.invite.viewCount);
+          }
+          if (needThumb) {
+            const t = data.invite?.workThumbUrl?.trim();
+            setInviteThumb(t && /^https?:\/\//i.test(t) ? t : null);
           }
         })
         .catch(() => {
@@ -89,12 +99,12 @@ export default function RequestDmThreadPage() {
         });
     };
     pull();
-    const t = window.setInterval(pull, 20_000);
+    const t = isOwner ? window.setInterval(pull, 30_000) : 0;
     return () => {
       cancelled = true;
-      window.clearInterval(t);
+      if (t) window.clearInterval(t);
     };
-  }, [row?.inviteId, row?.fromHandle, handle]);
+  }, [row?.inviteId, row?.fromHandle, row?.workThumbUrl, handle]);
 
   useEffect(() => {
     if (!handle) {
@@ -126,31 +136,6 @@ export default function RequestDmThreadPage() {
       cancelled = true;
     };
   }, [handle, requestId]);
-
-  useEffect(() => {
-    if (!row?.inviteId || row.workThumbUrl?.trim()) {
-      setInviteThumb(null);
-      return;
-    }
-    let cancelled = false;
-    void fetch(`/api/dm-invites?id=${encodeURIComponent(row.inviteId)}`, {
-      cache: "no-store",
-    })
-      .then(async (res) => {
-        const data = (await res.json().catch(() => ({}))) as {
-          invite?: { workThumbUrl?: string };
-        };
-        if (cancelled) return;
-        const t = data.invite?.workThumbUrl?.trim();
-        setInviteThumb(t && /^https?:\/\//i.test(t) ? t : null);
-      })
-      .catch(() => {
-        if (!cancelled) setInviteThumb(null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [row?.inviteId, row?.workThumbUrl]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !handle) return;
@@ -410,12 +395,31 @@ export default function RequestDmThreadPage() {
   }
 
   async function respond(next: "accepted" | "declined") {
-    if (responding) return;
+    if (responding || !row) return;
     setResponding(true);
+    const prev = row;
+    const note =
+      next === "accepted" ? "やる、と返しました。" : "いまは無理、と返しました。";
+    setRow({
+      ...row,
+      status: next,
+      messages: [
+        ...row.messages,
+        {
+          id: `local_${Date.now()}`,
+          fromHandle: handle!,
+          body: note,
+          createdAt: new Date().toISOString(),
+        },
+      ],
+      updatedAt: new Date().toISOString(),
+    });
     try {
       const res = await patchRequestDm(requestId, { status: next });
       if (res.request) setRow(res.request);
-      else await refresh();
+      else if (!res.ok) setRow(prev);
+    } catch {
+      setRow(prev);
     } finally {
       setResponding(false);
     }
@@ -880,6 +884,15 @@ export default function RequestDmThreadPage() {
             {sending ? "送信中…" : "送る"}
           </button>
         </form>
+
+        <p className="mt-8 text-center">
+          <Link
+            href="/dashboard/messages"
+            className="inline-flex rounded-md border border-viscum-line bg-white/70 px-4 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2"
+          >
+            DM一覧に戻る
+          </Link>
+        </p>
         </div>
       </main>
     </BrowseChrome>

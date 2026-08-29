@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
 import { ViscumMark } from "@/components/ViscumMark";
@@ -20,6 +21,23 @@ export function SiteHeader({
   hidePostCta?: boolean;
   hideAccountActions?: boolean;
 }) {
+  // hideOnMd 時、md以上は AppShell 側の HeaderAccountActions だけにする（二重 fetch 防止）
+  const [showMobileAccount, setShowMobileAccount] = useState(!hideOnMd);
+
+  useEffect(() => {
+    if (!hideOnMd) {
+      setShowMobileAccount(true);
+      return;
+    }
+    const mq = window.matchMedia("(min-width: 768px)");
+    const sync = () => setShowMobileAccount(!mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, [hideOnMd]);
+
+  const accountVisible = !hideAccountActions && showMobileAccount;
+
   return (
     <header
       className={`sticky top-0 z-10 border-b border-viscum-line bg-viscum-paper/95 backdrop-blur-sm ${
@@ -46,9 +64,9 @@ export function SiteHeader({
             </Link>
           )}
         </div>
-        {!hideAccountActions || !hidePostCta ? (
+        {accountVisible || !hidePostCta ? (
           <div className="flex shrink-0 items-center gap-1">
-            {!hideAccountActions ? <HeaderAccountActions /> : null}
+            {accountVisible ? <HeaderAccountActions /> : null}
             {!hidePostCta && (
               <Link
                 href="/new"

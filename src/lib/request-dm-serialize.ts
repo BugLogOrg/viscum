@@ -15,17 +15,13 @@ export function sanitizeWorkThumbUrl(
 }
 
 /**
- * 招待着地用。別端末でサムネを見せるため、小さめ data URL も許可。
- * （一覧APIには使わない）
+ * 招待着地用サムネ。https（Blob）のみ。
+ * data URL は Neon 往復で DM 画面を殺すので禁止（2026-08-29）。
  */
 export function sanitizeInviteThumbUrl(
   url: string | null | undefined,
 ): string | undefined {
-  const t = url?.trim();
-  if (!t) return undefined;
-  if (/^https?:\/\//i.test(t) && t.length <= 2000) return t;
-  if (t.startsWith("data:image/") && t.length <= 500_000) return t;
-  return undefined;
+  return sanitizeWorkThumbUrl(url);
 }
 
 export function requestDmToClient(

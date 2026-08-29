@@ -72,9 +72,10 @@ export default function RequestSeedDetailPage() {
       return;
     }
     let cancelled = false;
-    void fetch(`/api/dm-invites?id=${encodeURIComponent(row.inviteId)}`, {
-      cache: "no-store",
-    })
+    void fetch(
+      `/api/dm-invites?id=${encodeURIComponent(row.inviteId)}&lean=1`,
+      { cache: "no-store" },
+    )
       .then(async (res) => {
         const data = (await res.json().catch(() => ({}))) as {
           invite?: { workThumbUrl?: string };
