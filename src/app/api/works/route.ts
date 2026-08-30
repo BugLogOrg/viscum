@@ -13,7 +13,7 @@ const CreateBody = z.object({
   title: z.string().trim().min(1).max(100),
   description: z.string().trim().min(1).max(1000),
   focusNote: z.string().trim().max(4000).optional().nullable(),
-  scaffoldLines: z.array(z.string().trim().min(1).max(500)).max(12).optional(),
+  scaffoldLines: z.array(z.string().trim().min(1).max(500)).max(10).optional(),
   externalUrl: z.string().trim().min(8).max(2000),
   /** 公開ブースト必須（サーバでも plan と突き合わせ） */
   boostWriteUrl: z.string().trim().min(8).max(2000).optional().nullable(),

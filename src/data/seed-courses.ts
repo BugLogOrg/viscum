@@ -54,6 +54,9 @@ export const SEED_COURSES: SeedCourse[] = [
 
 export const MAX_COURSE_QUESTIONS = 6;
 
+/** 公開ブースト「募集の目安」の最大行数 */
+export const MAX_BOOST_CRITERIA = 10;
+
 export function courseById(id: SeedCourseId): SeedCourse {
   return SEED_COURSES.find((c) => c.id === id) ?? SEED_COURSES[0];
 }
@@ -76,7 +79,7 @@ export const PUBLIC_BOOST = {
   criteria: [
     "上記の「書いてほしい場所」へ正直な反応・投稿を残す",
     "実利用したうえで書く（触っていない評価は除外の目安）",
-    "見てほしい観点：（ここに書く。例：権限は怖くないか／何が片付くか）",
+    "見てほしい観点：",
     "やらせ・星の売買保証は不可。必要な開示があれば付ける",
     "記入後に投稿URL等を報告する。褒賞は全員払いではなく、選ばれた人へ",
   ],

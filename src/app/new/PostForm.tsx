@@ -10,6 +10,7 @@ import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import { formatYen, type CompStatus } from "@/data/dummy-works";
 import {
   FREE_COMMENT,
+  MAX_BOOST_CRITERIA,
   MAX_COURSE_QUESTIONS,
   PUBLIC_BOOST,
   courseById,
@@ -226,6 +227,14 @@ export function PostForm() {
     ? externalUrl.trim()
     : boostWriteUrl.trim();
 
+  const boostCriteriaList = useMemo(() => {
+    if (!extReviewOn) return [] as string[];
+    return boostCriteria
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, MAX_BOOST_CRITERIA);
+  }, [extReviewOn, boostCriteria]);
+
   const canSave =
     title.trim().length > 0 &&
     title.trim().length <= WORK_TITLE_MAX &&
@@ -235,7 +244,8 @@ export function PostForm() {
     (!compOn || (prizeYen >= 5000 && promptList.length >= 1)) &&
     (!extReviewOn ||
       (extPrizeYen === PUBLIC_BOOST.yen &&
-        isUsableHttpUrl(effectiveBoostWriteUrl)));
+        isUsableHttpUrl(effectiveBoostWriteUrl) &&
+        boostCriteriaList.length >= 1));
 
   useEffect(() => {
     if (boostWriteSameAsWork) {
@@ -275,6 +285,18 @@ export function PostForm() {
     });
   }
 
+  function addCriterion() {
+    setBoostCriteria((prev) =>
+      prev.length >= MAX_BOOST_CRITERIA ? prev : [...prev, "見てほしい観点："],
+    );
+  }
+
+  function removeCriterion(index: number) {
+    setBoostCriteria((prev) =>
+      prev.length <= 1 ? prev : prev.filter((_, i) => i !== index),
+    );
+  }
+
   function resetBoostCriteria() {
     setBoostCriteria([...PUBLIC_BOOST.criteria]);
   }
@@ -312,10 +334,7 @@ export function PostForm() {
             scaffoldLines: (() => {
               if (compOn) return promptList.length ? promptList : undefined;
               if (extReviewOn) {
-                const lines = boostCriteria
-                  .map((s) => s.trim())
-                  .filter(Boolean);
-                return lines.length ? lines : undefined;
+                return boostCriteriaList.length ? boostCriteriaList : undefined;
               }
               return undefined;
             })(),
@@ -845,7 +864,8 @@ export function PostForm() {
                 </button>
               </div>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
-                見てほしい観点はここに書きます（3行目の記入枠）。ルール行はそのまま／観点の追記・差し替えどちらでも可。
+                ルールと見てほしい観点を並べます。観点は行を追加して複数書けます（最大
+                {MAX_BOOST_CRITERIA}行）。例：権限は怖くないか／何が片付くか。
               </p>
               <ul className="mt-2 space-y-2">
                 {boostCriteria.map((line, i) => (
@@ -859,9 +879,32 @@ export function PostForm() {
                       onChange={(e) => setCriterionAt(i, e.target.value)}
                       className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[13px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
                     />
+                    <button
+                      type="button"
+                      onClick={() => removeCriterion(i)}
+                      disabled={boostCriteria.length <= 1}
+                      className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
+                      aria-label={`目安${i + 1}を削除`}
+                    >
+                      削除
+                    </button>
                   </li>
                 ))}
               </ul>
+              {boostCriteria.length < MAX_BOOST_CRITERIA && (
+                <button
+                  type="button"
+                  onClick={addCriterion}
+                  className="mt-2 text-[13px] font-medium text-viscum-brand underline"
+                >
+                  ＋目安／観点を追加
+                </button>
+              )}
+              {boostCriteriaList.length === 0 && (
+                <p className="mt-2 text-[12px] text-viscum-berry-deep">
+                  1行以上入れてください（空だとシードできません）。
+                </p>
+              )}
               <p className="mt-1.5 text-[11px] text-viscum-muted">
                 全員払いではありません。虚偽・未使用・禁止違反は除外の目安。お支払いは褒賞額＋約10%（決済込み・シーダー負担）。人数保証・星の売買はしません。
               </p>
