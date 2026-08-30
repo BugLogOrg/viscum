@@ -22,7 +22,8 @@
   --viscum-paper-2: #ebe3d6;
   --viscum-ink: #2a2420;
   --viscum-ink-muted: #6b635c;
-  --viscum-line: #e8e0d4;
+  /* 枠線 — 紙に対して感じる程度。2026-08-30: 薄くしすぎたので中間へ */
+  --viscum-line: #dfd6c9;
 
   --viscum-bg: var(--viscum-paper);
   --viscum-fg: var(--viscum-ink);
