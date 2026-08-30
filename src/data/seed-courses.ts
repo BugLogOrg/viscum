@@ -1,4 +1,6 @@
-/** ADR-031/033: 4コースフラット（無料／初見／改善／公開ブースト） */
+/** ADR-031/033: 4コースフラット（無料／初見／改善／公開ブースト）
+ * ADR-059: シードUIは「何が知りたい？」を主、商品名は副
+ */
 
 export type SeedCourseId = "first_impression" | "brush_up";
 
@@ -8,15 +10,25 @@ export type SeedCourse = {
   id: SeedCourseId;
   name: string;
   yen: 5000 | 10000;
+  /** シーダー向け：欲しい結果（UIの主行） */
+  want: string;
   purpose: string;
   questions: string[];
 };
+
+export const FREE_COMMENT = {
+  name: "無料コメント",
+  yen: 0 as const,
+  want: "とりあえず感想が欲しい",
+  purpose: "コメント歓迎。お金は使いません",
+} as const;
 
 export const SEED_COURSES: SeedCourse[] = [
   {
     id: "first_impression",
     name: "初見レビュー",
     yen: 5000,
+    want: "初めて見た人の反応が知りたい",
     purpose: "初めて見た人に「どう見えたか」を聞く",
     questions: [
       "何の作品／サービスだと思いましたか？",
@@ -29,6 +41,7 @@ export const SEED_COURSES: SeedCourse[] = [
     id: "brush_up",
     name: "改善提案",
     yen: 10000,
+    want: "もっと良くする方法が欲しい",
     purpose: "どこを直せば伝わるかを聞く",
     questions: [
       "良かったところは？",
@@ -56,6 +69,7 @@ export function isFieldCourse(id: SeedPlanId): id is SeedCourseId {
 export const PUBLIC_BOOST = {
   name: "公開ブースト",
   yen: 30000 as const,
+  want: "とにかく人に見てもらいたい",
   purpose: "ストアやSNSなど、自分の公開場所へ正直な反応・投稿を募り、初動を押し上げる",
   criteria: [
     "指定した公開場所（ストア／拡張／SNS等）へ正直な反応・投稿を残す",

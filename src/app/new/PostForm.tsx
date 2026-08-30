@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import { formatYen, type CompStatus } from "@/data/dummy-works";
 import {
+  FREE_COMMENT,
   MAX_COURSE_QUESTIONS,
   PUBLIC_BOOST,
   courseById,
@@ -555,11 +556,11 @@ export function PostForm() {
       <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/40 px-4 py-4 space-y-4">
         <div>
           <p className="text-[14px] font-medium text-viscum-ink">
-            コース（どれか一つ）
+            何が知りたい？（どれか一つ）
           </p>
           <p className="mt-0.5 text-[12px] leading-relaxed text-viscum-muted">
-            価格は ¥0／¥5,000／¥10,000／¥30,000
-            だけ。褒賞は稀少（記入後に選んで払う）。同じ投稿ではコースを重ねません。
+            欲しい反応から選びます。商品名は副。価格は ¥0／¥5,000／¥10,000／¥30,000
+            だけ。褒賞は稀少（記入後に選んで払う）。同じ投稿では重ねません。
           </p>
         </div>
 
@@ -568,27 +569,27 @@ export function PostForm() {
             [
               {
                 id: "free_comment" as const,
-                title: "無料コメント",
+                want: FREE_COMMENT.want,
+                title: FREE_COMMENT.name,
                 yenLabel: "¥0",
-                body: "コメント歓迎。お金は使いません。",
               },
               {
                 id: "first_impression" as const,
-                title: "初見レビュー",
-                yenLabel: formatYen(5000),
-                body: "初めて見た人に「どう見えたか」を聞く",
+                want: courseById("first_impression").want,
+                title: courseById("first_impression").name,
+                yenLabel: formatYen(courseById("first_impression").yen),
               },
               {
                 id: "brush_up" as const,
-                title: "改善提案",
-                yenLabel: formatYen(10000),
-                body: "どこを直せば伝わるかを聞く",
+                want: courseById("brush_up").want,
+                title: courseById("brush_up").name,
+                yenLabel: formatYen(courseById("brush_up").yen),
               },
               {
                 id: "public_boost" as const,
-                title: "公開ブースト",
+                want: PUBLIC_BOOST.want,
+                title: PUBLIC_BOOST.name,
                 yenLabel: formatYen(PUBLIC_BOOST.yen),
-                body: "外に書いて報告→あなたが選んで褒賞",
               },
             ] as const
           ).map((opt) => {
@@ -604,16 +605,13 @@ export function PostForm() {
                     : "border-viscum-line bg-white/70 text-viscum-ink hover:border-viscum-berry"
                 }`}
               >
-                <span className="block text-[13px] font-medium">{opt.title}</span>
-                <span
-                  className={`mt-0.5 block text-[12px] ${on ? "text-white/90" : "text-viscum-muted"}`}
-                >
-                  {opt.yenLabel}
+                <span className="block text-[13px] font-medium leading-snug">
+                  {opt.want}
                 </span>
                 <span
-                  className={`mt-1 block text-[11px] leading-snug ${on ? "text-white/85" : "text-viscum-muted"}`}
+                  className={`mt-1.5 block text-[12px] ${on ? "text-white/90" : "text-viscum-muted"}`}
                 >
-                  {opt.body}
+                  {opt.title} · {opt.yenLabel}
                 </span>
               </button>
             );

@@ -14,7 +14,7 @@ export default function NewShelfPage() {
           シードする（棚）
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-          コースは4つから一つ（無料コメント／初見レビュー／改善提案／公開ブースト）。保存後に公開すると作品一覧へ。指名依頼は入口の別レーンです。
+          「何が知りたい？」から一つ選びます（感想／初見の反応／改善／広めたい）。保存後に公開すると作品一覧へ。指名依頼は入口の別レーンです。
         </p>
         <p className="mt-2 text-[12px]">
           <Link href="/new" className="text-viscum-brand underline">
