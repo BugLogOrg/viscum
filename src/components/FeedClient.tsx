@@ -340,7 +340,7 @@ export function FeedClient({
             : "まだ誰もフォローしていません"
           : "ログインするとフォロー中が表示されます"
       : filter === "open"
-        ? "VISCUM内コンペ開催中 · 反応を募集"
+        ? "反応募集中（締切あり・終了間近含む）"
         : "反応を募集中",
   ];
   if (specialty) contextCrumbs.push(specialty);
@@ -548,7 +548,7 @@ export function FeedClient({
                 : "bg-viscum-paper-2 text-viscum-muted"
             }`}
           >
-            開催中 ({openCount})
+            反応募集中 ({openCount})
           </button>
         <span className="ml-auto text-[10px] text-viscum-muted">
           {peopleHits.length > 0

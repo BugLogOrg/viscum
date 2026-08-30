@@ -126,7 +126,7 @@ export function AppShell({
                 onClick={() => onFeedFilter("open")}
                 className={`rounded-md px-2 py-1.5 text-left transition ${navClass(openActive, "berry")}`}
               >
-                開催中
+                反応募集中
                 {typeof openCount === "number" && (
                   <span className="ml-1 text-xs text-viscum-muted">
                     ({openCount})
@@ -152,7 +152,7 @@ export function AppShell({
                 href="/?feed=open"
                 className="rounded-md px-2 py-1.5 text-viscum-ink hover:bg-viscum-paper-2"
               >
-                開催中
+                反応募集中
                 {typeof openCount === "number" && (
                   <span className="ml-1 text-xs text-viscum-muted">
                     ({openCount})
@@ -226,7 +226,7 @@ export function AppShell({
               ))}
             </ul>
             <p className="mt-3 text-[10px] leading-relaxed text-viscum-muted">
-              加入時に登録 → 一致する開催中を通知（準備中）
+              加入時に登録 → 一致する反応募集中を通知（準備中）
             </p>
           </div>
         )}

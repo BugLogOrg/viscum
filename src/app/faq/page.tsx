@@ -151,7 +151,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
             … 共有文・URLを SNS／Discord／友人に貼る
           </li>
           <li>
-            <span className="font-medium">VISCUM内の開催中を覗く人</span>
+            <span className="font-medium">VISCUM内の反応募集中を覗く人</span>
             … 入場無料なので、「いま何が熱いか」を見に来る層
           </li>
           <li>

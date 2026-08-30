@@ -132,20 +132,20 @@ function HotSection({
 }) {
   if (hot.length === 0) return null;
   return (
-    <section className={className} aria-label="注目の開催中">
+    <section className={className} aria-label="注目の反応募集">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-[18px] font-bold leading-tight tracking-wide text-viscum-brand">
-          注目の開催中
+          注目の反応募集
         </h2>
         <Link
           href="/?feed=open"
           className="shrink-0 text-[12px] font-medium text-viscum-brand underline-offset-2 hover:underline"
         >
-          開催中へ
+          反応募集中へ
         </Link>
       </div>
       <p className="mt-1.5 text-[12px] leading-snug break-words text-viscum-muted">
-        反応が集まっている開催中
+        反応が集まっている募集中
       </p>
       <ul className="mt-2 divide-y divide-viscum-line">
         {hot.map((w) => (
@@ -199,7 +199,7 @@ function SkewSection({
         偏差
       </h2>
       <p className="mt-1.5 text-[12px] leading-snug break-words text-viscum-muted">
-        賛同／止まれに寄っている開催中。逆張りの余地
+        賛同／止まれに寄っている反応募集。逆張りの余地
       </p>
       <ul className="mt-2 divide-y divide-viscum-line">
         {skewed.map(({ work, lean, green, blue, red }) => (

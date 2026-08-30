@@ -63,10 +63,10 @@ export function HotOpenRail({
   return (
     <aside
       className={`@container border-t border-viscum-line px-3 py-3 xl:sticky xl:top-12 xl:w-80 xl:shrink-0 xl:self-start xl:border-l xl:border-t-0 xl:px-3 xl:pt-2 xl:pb-3 ${className}`}
-      aria-label="開催中"
+      aria-label="反応募集中"
     >
       <h2 className="text-[13px] font-medium leading-none tracking-wide text-viscum-brand">
-        開催中
+        反応募集中
       </h2>
       <ul className="mt-1.5 divide-y divide-viscum-line">
         {items.map((w) => {
@@ -132,7 +132,7 @@ export function HotOpenRail({
           href="/?feed=open"
           className="text-viscum-brand underline-offset-2 hover:underline"
         >
-          開催中をすべて見る
+          反応募集中をすべて見る
         </Link>
       </p>
     </aside>
