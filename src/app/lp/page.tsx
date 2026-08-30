@@ -186,6 +186,15 @@ export default function LandingPage() {
             >
               Stripeの登録はいつ必要？
             </Link>
+            <span className="text-viscum-muted"> ／ </span>
+            <Link
+              href="/faq#prize-flow"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-viscum-brand underline"
+            >
+              褒賞の入金と受け取り
+            </Link>
             <span className="text-viscum-muted">（FAQ）</span>
           </p>
         </section>
