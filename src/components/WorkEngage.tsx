@@ -428,13 +428,14 @@ export function WorkEngage({
             prizeYen={prizeYen}
             paymentsDone={paymentsDone}
             planLabel={planLabel ?? undefined}
+            size="lg"
           />
           {deadlineLine ? (
             <p
               className={
                 compClosed
-                  ? "text-[13px] text-viscum-muted"
-                  : "text-[13px] text-viscum-ink"
+                  ? "text-sm text-viscum-muted"
+                  : "text-sm text-viscum-ink"
               }
             >
               <span className="text-viscum-muted">締切 </span>

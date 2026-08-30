@@ -50,6 +50,8 @@ export function StatusBadge({
   planLabel,
   className = "",
   dense = false,
+  /** 詳細コンペ帯など CTA（参加してコメント）と揃える */
+  size: sizeProp = "md",
 }: {
   status: CompStatus;
   prizeYen?: number;
@@ -58,10 +60,13 @@ export function StatusBadge({
   planLabel?: string;
   className?: string;
   dense?: boolean;
+  size?: "sm" | "md" | "lg";
 }) {
   const size = dense
     ? "px-1.5 py-0 text-[10px]"
-    : "px-2.5 py-0.5 text-xs";
+    : sizeProp === "lg"
+      ? "px-3 py-1.5 text-sm leading-snug"
+      : "px-2.5 py-0.5 text-xs";
 
   if (status === "none") {
     return (
