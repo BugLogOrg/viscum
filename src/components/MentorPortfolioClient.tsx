@@ -200,7 +200,7 @@ export function MentoredWorksList({
         </span>
       </h2>
       <p className="px-4 pt-2 text-[12px] leading-snug text-viscum-muted">
-        コメントして参加した棚です（選出・決済前も含む）。選出・褒賞はバッジで事実表示します。
+        コメントして参加した作品です（選出・決済前も含む）。選出・褒賞はバッジで事実表示します。
       </p>
       {participations.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">

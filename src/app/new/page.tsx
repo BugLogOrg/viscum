@@ -2,7 +2,7 @@ import Link from "next/link";
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 
-/** ADR-038: 棚シードと直依頼は入り口で分ける */
+/** ADR-038: シード棚と直依頼は入り口で分ける */
 export default function SeedIntentPage() {
   return (
     <BrowseChrome>
@@ -14,7 +14,7 @@ export default function SeedIntentPage() {
             今日はどうする？
           </h1>
           <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-            棚に出して広く集めるのと、指名して頼むのは別物です（別ID）。あとから同じものを兼用しません。
+            シード棚に出して広く集めるのと、指名して頼むのは別物です（別ID）。あとから同じものを兼用しません。
           </p>
         </div>
 
@@ -25,13 +25,13 @@ export default function SeedIntentPage() {
               className="block rounded-lg border-2 border-viscum-berry/40 bg-viscum-berry/5 px-4 py-4 transition hover:border-viscum-berry hover:bg-viscum-berry/10"
             >
               <p className="text-[15px] font-semibold text-viscum-berry-deep">
-                広く集める（棚に出す）
+                広く集める（シード棚に出す）
               </p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-ink">
-                欲しい反応から選んで棚に出します（感想／初見／改善／広めたい）。人を集めるのは告知文のコピーが本線です（直依頼で参加を頼まない）。有料（¥5k／¥10k／¥30k）は公式X紹介つき（リーチ非保証）。
+                欲しい反応から選んでシード棚に出します（感想／初見／改善／広めたい）。人を集めるのは告知文のコピーが本線です（直依頼で参加を頼まない）。有料（¥5k／¥10k／¥30k）は公式X紹介つき（リーチ非保証）。
               </p>
               <p className="mt-2 text-[12px] font-medium text-viscum-brand">
-                棚レーンへ →
+                シード棚へ →
               </p>
             </Link>
           </li>
@@ -44,7 +44,7 @@ export default function SeedIntentPage() {
                 指名して頼む（直依頼）
               </p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-ink">
-                特定の人への有償オファー。棚には出ません。売りは支払い実績が見える取引の器です（公式Xブーストは付きません）。コンペの代わりにはしません。
+                特定の人への有償オファー。シード棚には出ません。売りは支払い実績が見える取引の器です（公式Xブーストは付きません）。コンペの代わりにはしません。
               </p>
               <p className="mt-2 text-[12px] font-medium text-viscum-brand">
                 直依頼レーンへ →
@@ -58,7 +58,7 @@ export default function SeedIntentPage() {
             href="/faq#shelf-vs-request"
             className="underline hover:text-viscum-brand"
           >
-            棚コンペと直依頼のちがい（FAQ）
+            シード棚と直依頼のちがい（FAQ）
           </Link>
         </p>
       </main>

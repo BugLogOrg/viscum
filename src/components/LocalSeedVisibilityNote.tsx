@@ -33,7 +33,7 @@ export function LocalSeedVisibilityNote({ workId }: { workId: string }) {
     return (
       <p className="text-[11px] leading-relaxed text-viscum-muted">
         <strong className="font-medium text-viscum-leaf-deep">直依頼用メモ</strong>
-        です（別ID・棚には出ません）。
+        です（別ID・シード棚には出ません）。
         <Link href={`/w/${encodeURIComponent(workId)}/request`} className="ml-1 underline">
           直依頼へ
         </Link>
@@ -45,7 +45,7 @@ export function LocalSeedVisibilityNote({ workId }: { workId: string }) {
     <p className="text-[11px] leading-relaxed text-viscum-muted">
       {mode === "listed" ? (
         <>
-          トップの棚に<strong className="font-medium text-viscum-ink">公開中</strong>
+          トップのシード棚に<strong className="font-medium text-viscum-ink">公開中</strong>
           です（この端末のデモ保存）。他の端末では見えない場合があります。
         </>
       ) : (

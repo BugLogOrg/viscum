@@ -273,7 +273,7 @@ export default function NewDirectRequestPage() {
             直依頼（一枚で設定）
           </h1>
           <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-            棚には出ません（別ID）。見てほしいもの・金額・相手・連絡文までこの画面で揃えます。
+            シード棚には出ません（別ID）。見てほしいもの・金額・相手・連絡文までこの画面で揃えます。
           </p>
           <p className="mt-2 text-[12px]">
             <Link href="/new" className="text-viscum-brand underline">
@@ -408,7 +408,7 @@ export default function NewDirectRequestPage() {
         </section>
 
         <p className="text-center text-[11px] text-viscum-muted">
-          このメモは棚に公開されません。IDも棚シードとは別です。
+          このメモはシード棚に公開されません。IDも棚シードとは別です。
         </p>
 
         {cropSrc && (

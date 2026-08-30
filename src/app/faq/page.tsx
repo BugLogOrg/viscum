@@ -7,7 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const metadata: Metadata = {
   title: "よくある質問",
   description:
-    "なぜこういう場が要るか、棚と直依頼のちがい、プロフィール公開範囲、手数料約10%、他サービスやサクラとの違い。",
+    "なぜこういう場が要るか、シード棚と直依頼のちがい、プロフィール公開範囲、手数料約10%、他サービスやサクラとの違い。",
 };
 
 const FAQS: { id?: string; q: string; body: ReactNode }[] = [
@@ -16,7 +16,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
     body: (
       <>
         <p>
-          個人が作ったもの（まずアプリ／ツール、のち動画・小説など）を棚に並べて、
+          個人が作ったもの（まずアプリ／ツール、のち動画・小説など）をシード棚に並べて、
           <span className="font-medium">最初の反応</span>
           を集める場所です。日本語候補は「ヤドリギ」。作品を出す人を
           <span className="font-medium">シーダー</span>
@@ -284,7 +284,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
   },
   {
     id: "shelf-vs-request",
-    q: "棚コンペと直依頼のちがいは？人を集めるときは？",
+    q: "シード棚と直依頼のちがいは？人を集めるときは？",
     body: (
       <>
         <p>
@@ -292,12 +292,12 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            <span className="font-medium">棚（VISCUM内コンペ／公開ブースト）</span>
+            <span className="font-medium">シード棚（VISCUM内コンペ／公開ブースト）</span>
             … 広く集める祭り。コメントと選出は公開が燃料です。
           </li>
           <li>
             <span className="font-medium">直依頼</span>
-            … この人の反応が欲しいときの指名オファー。中身は棚に出ません。
+            … この人の反応が欲しいときの指名オファー。中身はシード棚に出ません。
           </li>
         </ul>
         <p>
@@ -441,7 +441,7 @@ export default function FaqPage() {
               LP
             </Link>
             <Link href="/" className="text-viscum-muted hover:text-viscum-brand">
-              棚を見る
+              シード棚を見る
             </Link>
           </nav>
         </div>
@@ -455,7 +455,7 @@ export default function FaqPage() {
           よくある質問
         </h1>
         <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-viscum-muted">
-          なぜこういう場が要るか、棚と直依頼のちがい、プロフィールに何が出るか、手数料、他サービスとの違い——最初に聞かれやすいところです。
+          なぜこういう場が要るか、シード棚と直依頼のちがい、プロフィールに何が出るか、手数料、他サービスとの違い——最初に聞かれやすいところです。
         </p>
 
         <div className="mt-10 space-y-3">

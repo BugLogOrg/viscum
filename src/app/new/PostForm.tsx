@@ -416,7 +416,7 @@ export function PostForm() {
           タイトル： <span className="text-[13px] font-medium text-viscum-berry">必須</span>
         </label>
         <p className="mt-0.5 text-[12px] text-viscum-muted">
-          棚・Xカードに出る短いヘッドライン（最大{WORK_TITLE_MAX}字）。長く書きたい背景は下の説明へ。
+          シード棚・Xカードに出る短いヘッドライン（最大{WORK_TITLE_MAX}字）。長く書きたい背景は下の説明へ。
         </p>
         <textarea
           value={title}
@@ -723,7 +723,7 @@ export function PostForm() {
               </label>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
                 {freeOn
-                  ? "無料でも募集期間を決めます。終わると終了間近→終了へ。棚に埋もれにくくなります。"
+                  ? "無料でも募集期間を決めます。終わると終了間近→終了へ。シード棚に埋もれにくくなります。"
                   : "よく使う長さから選びます。細かい日時は後からでも変えられる想定です。"}
               </p>
               <select
@@ -883,7 +883,7 @@ export function PostForm() {
         {saving ? "保存中…" : "一旦保存する"}
       </button>
       <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
-        まだ棚には出しません。次の画面で公開できます。
+        まだシード棚には出しません。次の画面で公開できます。
         <br />
         あとから確認するときは{" "}
         <Link href="/dashboard" className="text-viscum-brand underline">

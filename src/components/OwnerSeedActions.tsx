@@ -102,7 +102,7 @@ export function OwnerSeedActions({
       return (
         <div className="rounded-lg border border-viscum-line bg-white/60 px-3 py-3 space-y-2">
           <p className="text-[12px] font-medium text-viscum-ink">
-            直依頼用メモ（棚には出ません・本人のみ）
+            直依頼用メモ（シード棚には出ません・本人のみ）
           </p>
           <div className="flex flex-wrap gap-2">
             <Link
@@ -158,7 +158,7 @@ export function OwnerSeedActions({
                 setSeed(res.seed);
               }}
             >
-              下書きに戻す（棚から外す）
+              下書きに戻す（シード棚から外す）
             </button>
           ) : (
             <button
@@ -263,7 +263,7 @@ export function OwnerSeedActions({
               })();
             }}
           >
-            下書きに戻す（棚から外す）
+            下書きに戻す（シード棚から外す）
           </button>
         ) : (
           <button

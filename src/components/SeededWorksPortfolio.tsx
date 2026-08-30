@@ -69,7 +69,7 @@ export function SeededWorksPortfolio({ handle, initialWorks }: Props) {
         </span>
       </h2>
       <p className="px-4 pt-2 text-[12px] leading-snug text-viscum-muted">
-        棚に出した作品です（コンペ募集中・決済前も含む）。直依頼だけの作品や下書きはここには出ません。
+        シード棚に出した作品です（コンペ募集中・決済前も含む）。直依頼だけの作品や下書きはここには出ません。
       </p>
       {works.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">

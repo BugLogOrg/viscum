@@ -80,7 +80,7 @@ export function SiteHeader({
             {!hidePostCta && (
               <Link
                 href="/new"
-                title="作品をシードする（棚に並べる）"
+                title="作品をシードする（シード棚に並べる）"
                 className="ml-1 rounded-md bg-viscum-berry px-2.5 py-1.5 text-xs font-medium text-white hover:bg-viscum-berry-deep"
               >
                 シードする

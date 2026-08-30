@@ -22,7 +22,7 @@ export default async function DirectRequestPage({ params }: Props) {
           この人に頼む
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-          直依頼は<strong>非公開</strong>の指名オファーです（棚には出ません）。公開コンペのあとに特定の人へ届ける本線は、告知文のコピーです。
+          直依頼は<strong>非公開</strong>の指名オファーです（シード棚には出ません）。公開コンペのあとに特定の人へ届ける本線は、告知文のコピーです。
         </p>
         <div className="mt-6">
           <DirectRequestGate workId={id} initialWork={initialWork} />

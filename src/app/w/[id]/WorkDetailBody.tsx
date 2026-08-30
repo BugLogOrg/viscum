@@ -297,7 +297,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   </>
                 ) : (
                   <>
-                    トップの棚に
+                    トップのシード棚に
                     <strong className="font-medium text-viscum-ink">公開中</strong>
                     です（サーバ保存）。URLを共有できます。
                   </>
