@@ -15,68 +15,32 @@ import {
   isLocalSeedListed,
   isDirectRequestLane,
   isClientSeedId,
-  deleteLocalSeed,
-  unlistLocalSeed,
   publishLocalSeedToShelf,
-  workFromLocalSeed,
   formatLocalSeedStamp,
   localSeedSavedAt,
   localSeedClosesAt,
   type LocalSeed,
 } from "@/lib/local-seeds";
 import { announcePublishedSeedToX, announceResultMessage } from "@/lib/announce-published-seed";
-import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
-import { buildWorkShareText } from "@/lib/work-share-text";
-import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
-import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import type { Work } from "@/data/dummy-works";
 import { planBadgeLabel } from "@/data/dummy-works";
 
-/** 主アクション（成績） */
+/** 主アクション（成績／公開） */
 const btnPrimary =
   "rounded-md bg-viscum-berry px-2.5 py-1 text-[12px] font-medium text-white hover:bg-viscum-berry-deep";
 /** 主の次（詳細） */
 const btnStatus =
   "rounded-md border border-viscum-brand px-2.5 py-1 text-[12px] font-medium text-viscum-brand hover:bg-viscum-leaf-soft";
-/** 「その他」内の通常操作 */
-const btnMoreItem =
-  "w-full rounded-md border border-viscum-line px-2.5 py-1.5 text-left text-[12px] font-medium text-viscum-ink hover:bg-viscum-paper-2";
-/** 「その他」内の危険操作（削除） */
-const btnMoreDanger =
-  "w-full rounded-md border border-viscum-berry/40 px-2.5 py-1.5 text-left text-[12px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10";
 
-/** 副操作・削除を折りたたむ（モバイルで主＝成績／詳細だけ見せる） */
-function SeedMoreMenu({ children }: { children: ReactNode }) {
+/**
+ * ダッシュカードの表操作。
+ * 告知・下書き戻し・削除は詳細の「シーダー操作」へ（重複・押し間違い防止）。
+ * 公開だけは一覧からも残す。
+ */
+function SeedActionRow({ children }: { children: ReactNode }) {
   return (
-    <details className="group w-full sm:w-auto">
-      <summary className="cursor-pointer list-none rounded-md border border-viscum-line px-2.5 py-1 text-[12px] font-medium text-viscum-muted hover:bg-viscum-paper-2 marker:content-none [&::-webkit-details-marker]:hidden">
-        その他
-        <span
-          aria-hidden
-          className="ml-0.5 inline-block text-[10px] opacity-70 transition-transform group-open:rotate-180"
-        >
-          ▾
-        </span>
-      </summary>
-      <div className="mt-2 flex flex-col gap-1.5 border-t border-dashed border-viscum-line pt-2 sm:min-w-[11rem]">
-        {children}
-      </div>
-    </details>
-  );
-}
-
-/** 主＝成績／詳細。告知・下書き戻し・削除は「その他」へ */
-function SeedActionRow({
-  primary,
-  more,
-}: {
-  primary: ReactNode;
-  more?: ReactNode;
-}) {
-  return (
-    <div className="mt-2 space-y-2 border-t border-viscum-line pt-2">
-      <div className="flex flex-wrap items-center gap-2">{primary}</div>
-      {more ? <SeedMoreMenu>{more}</SeedMoreMenu> : null}
+    <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-viscum-line pt-2">
+      {children}
     </div>
   );
 }
@@ -159,7 +123,6 @@ export default function DashboardPage() {
   const [seeds, setSeeds] = useState<LocalSeed[]>([]);
   const [neonWorks, setNeonWorks] = useState<Work[]>([]);
   const [demoOn, setDemoOn] = useState(false);
-  const [origin, setOrigin] = useState("");
 
   function refresh() {
     const h = session?.user?.handle;
@@ -176,10 +139,6 @@ export default function DashboardPage() {
       setNeonWorks([]);
     }
   }
-
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
 
   useEffect(() => {
     refresh();
@@ -258,9 +217,6 @@ export default function DashboardPage() {
   }
 
   const handle = session.user.handle;
-  const fromLabel = handle
-    ? displayAccountName(handle, readLocalProfile(handle))
-    : "";
 
   return (
     <BrowseChrome>
@@ -358,7 +314,7 @@ export default function DashboardPage() {
           <p className="text-[11px] leading-relaxed text-viscum-muted">
             {demoOn
               ? "いまは見た目確認用のデモも混ざっています。カードを開くと成績シートへ。"
-              : "トップに載っているシードの成績です。「下書きに戻す」で公開を外せます。"}
+              : "トップに載っているシードの成績です。告知・下書き戻し・削除はシード詳細の「シーダー操作」から。"}
           </p>
 
           {neonPublished.length === 0 && published.length === 0 ? (
@@ -394,71 +350,20 @@ export default function DashboardPage() {
                   <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
                     {w.title}
                   </p>
-                  <SeedActionRow
-                    primary={
-                      <>
-                        <Link
-                          href={`/dashboard/${encodeURIComponent(w.id)}`}
-                          className={btnPrimary}
-                        >
-                          成績を見る
-                        </Link>
-                        <Link
-                          href={`/w/${encodeURIComponent(w.id)}`}
-                          className={btnStatus}
-                        >
-                          シード詳細
-                        </Link>
-                      </>
-                    }
-                    more={
-                      <>
-                        {origin ? (
-                          <ShareTextCopyButton
-                            className={btnMoreItem}
-                            getText={() => buildWorkShareText(w, origin)}
-                          />
-                        ) : null}
-                        <button
-                          type="button"
-                          className={btnMoreItem}
-                          onClick={() => {
-                            void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
-                              method: "PATCH",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ listedOnShelf: false }),
-                            }).then((res) => {
-                              if (res.ok) refresh();
-                              else window.alert("下書きに戻せませんでした");
-                            });
-                          }}
-                        >
-                          下書きに戻す
-                        </button>
-                        <button
-                          type="button"
-                          className={btnMoreDanger}
-                          onClick={() => {
-                            if (
-                              !window.confirm(
-                                "このシードを削除しますか？トップからも消えます。",
-                              )
-                            ) {
-                              return;
-                            }
-                            void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
-                              method: "DELETE",
-                            }).then((res) => {
-                              if (res.ok) refresh();
-                              else window.alert("削除に失敗しました");
-                            });
-                          }}
-                        >
-                          削除する
-                        </button>
-                      </>
-                    }
-                  />
+                  <SeedActionRow>
+                    <Link
+                      href={`/dashboard/${encodeURIComponent(w.id)}`}
+                      className={btnPrimary}
+                    >
+                      成績を見る
+                    </Link>
+                    <Link
+                      href={`/w/${encodeURIComponent(w.id)}`}
+                      className={btnStatus}
+                    >
+                      シード詳細
+                    </Link>
+                  </SeedActionRow>
                 </li>
               ))}
               {published.map((s) => (
@@ -467,82 +372,20 @@ export default function DashboardPage() {
                   className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
                 >
                   <SeedCardChrome s={s} />
-                  <SeedActionRow
-                    primary={
-                      <>
-                        <Link
-                          href={`/dashboard/${encodeURIComponent(s.id)}`}
-                          className={btnPrimary}
-                        >
-                          成績を見る
-                        </Link>
-                        <Link
-                          href={`/w/${encodeURIComponent(s.id)}`}
-                          className={btnStatus}
-                        >
-                          シード詳細
-                        </Link>
-                      </>
-                    }
-                    more={
-                      <>
-                        {origin ? (
-                          <ShareTextCopyButton
-                            className={btnMoreItem}
-                            getText={() =>
-                              buildWorkShareText(workFromLocalSeed(s), origin)
-                            }
-                          />
-                        ) : null}
-                        <button
-                          type="button"
-                          className={btnMoreItem}
-                          onClick={() => {
-                            if (isDemoSeed(s.id)) {
-                              // デモは「未公開」に戻す先がないので一覧から外す
-                              if (
-                                !window.confirm(
-                                  "この表示デモを公開一覧から外しますか？",
-                                )
-                              ) {
-                                return;
-                              }
-                              const del = deleteLocalSeed(s.id, handle);
-                              if (del.ok) refresh();
-                              else window.alert(del.error);
-                              return;
-                            }
-                            if (!isLocalSeedListed(s)) return;
-                            const res = unlistLocalSeed(s.id, handle);
-                            if (res.ok) refresh();
-                            else window.alert(res.error);
-                          }}
-                        >
-                          下書きに戻す
-                        </button>
-                        <button
-                          type="button"
-                          className={btnMoreDanger}
-                          onClick={() => {
-                            if (
-                              !window.confirm(
-                                isDemoSeed(s.id)
-                                  ? "この表示デモを一覧から外しますか？（まとめて消すなら上の「デモを消す」）"
-                                  : "このシードを削除しますか？成績の数字も一緒に消えます。",
-                              )
-                            ) {
-                              return;
-                            }
-                            const res = deleteLocalSeed(s.id, handle);
-                            if (res.ok) refresh();
-                            else window.alert(res.error);
-                          }}
-                        >
-                          削除する
-                        </button>
-                      </>
-                    }
-                  />
+                  <SeedActionRow>
+                    <Link
+                      href={`/dashboard/${encodeURIComponent(s.id)}`}
+                      className={btnPrimary}
+                    >
+                      成績を見る
+                    </Link>
+                    <Link
+                      href={`/w/${encodeURIComponent(s.id)}`}
+                      className={btnStatus}
+                    >
+                      シード詳細
+                    </Link>
+                  </SeedActionRow>
                 </li>
               ))}
             </ul>
@@ -560,7 +403,7 @@ export default function DashboardPage() {
               ) : null}
             </h2>
             <p className="mt-1 text-[11px] leading-relaxed text-viscum-muted">
-              まだ外に出していないもの。シード棚用と直依頼用はボタンが違うので、下で分けています。進行中のやりとりは
+              まだ外に出していないもの。公開はここか詳細から。告知・削除はシード詳細の「シーダー操作」へ。進行中のやりとりは
               <Link
                 href="/dashboard/messages"
                 className="mx-0.5 font-medium text-viscum-brand underline"
@@ -619,76 +462,49 @@ export default function DashboardPage() {
                   <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
                     {w.title}
                   </p>
-                  <div className="mt-3 space-y-2 border-t border-viscum-line pt-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        className={btnPrimary}
-                        onClick={() => {
-                          if (
-                            !window.confirm(
-                              "トップの「反応を募集中」に公開しますか？",
-                            )
-                          ) {
+                  <SeedActionRow>
+                    <button
+                      type="button"
+                      className={btnPrimary}
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            "トップの「反応を募集中」に公開しますか？",
+                          )
+                        ) {
+                          return;
+                        }
+                        void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
+                          method: "PATCH",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ listedOnShelf: true }),
+                        }).then(async (res) => {
+                          if (!res.ok) {
+                            window.alert("公開に失敗しました");
                             return;
                           }
-                          void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
-                            method: "PATCH",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ listedOnShelf: true }),
-                          }).then(async (res) => {
-                            if (!res.ok) {
-                              window.alert("公開に失敗しました");
-                              return;
-                            }
-                            const data = (await res.json()) as { work?: Work };
-                            if (data.work) {
-                              void announcePublishedSeedToX(data.work).then(
-                                (r) => {
-                                  const msg = announceResultMessage(r);
-                                  if (msg) window.alert(msg);
-                                  refresh();
-                                },
-                              );
-                            } else refresh();
-                          });
-                        }}
-                      >
-                        公開する
-                      </button>
-                      <Link
-                        href={`/w/${encodeURIComponent(w.id)}`}
-                        className={btnStatus}
-                      >
-                        シード詳細
-                      </Link>
-                    </div>
-                    <SeedMoreMenu>
-                      {origin ? (
-                        <ShareTextCopyButton
-                          className={btnMoreItem}
-                          getText={() => buildWorkShareText(w, origin)}
-                        />
-                      ) : null}
-                      <button
-                        type="button"
-                        className={btnMoreDanger}
-                        onClick={() => {
-                          if (!window.confirm("この下書きを削除しますか？")) {
-                            return;
-                          }
-                          void fetch(`/api/works/${encodeURIComponent(w.id)}`, {
-                            method: "DELETE",
-                          }).then((res) => {
-                            if (res.ok) refresh();
-                            else window.alert("削除に失敗しました");
-                          });
-                        }}
-                      >
-                        削除する
-                      </button>
-                    </SeedMoreMenu>
-                  </div>
+                          const data = (await res.json()) as { work?: Work };
+                          if (data.work) {
+                            void announcePublishedSeedToX(data.work).then(
+                              (r) => {
+                                const msg = announceResultMessage(r);
+                                if (msg) window.alert(msg);
+                                refresh();
+                              },
+                            );
+                          } else refresh();
+                        });
+                      }}
+                    >
+                      公開する
+                    </button>
+                    <Link
+                      href={`/w/${encodeURIComponent(w.id)}`}
+                      className={btnStatus}
+                    >
+                      シード詳細
+                    </Link>
+                  </SeedActionRow>
                 </li>
               ))}
               {drafts.map((s) => (
@@ -697,55 +513,33 @@ export default function DashboardPage() {
                   className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
                 >
                   <SeedCardChrome s={s} />
-                  <div className="mt-3 space-y-2 border-t border-viscum-line pt-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        className={btnPrimary}
-                        onClick={() => {
-                          if (
-                            !window.confirm(
-                              "この端末のトップ表示に出します（他端末には見えません）。共有したいときはログインして新規シードしてください。",
-                            )
-                          ) {
-                            return;
-                          }
-                          const row = publishLocalSeedToShelf(s.id);
-                          if (row) {
-                            refresh();
-                          } else window.alert("公開に失敗しました");
-                        }}
-                      >
-                        この端末だけで公開
-                      </button>
-                      <Link
-                        href={`/w/${encodeURIComponent(s.id)}`}
-                        className={btnStatus}
-                      >
-                        シード詳細
-                      </Link>
-                    </div>
-                    <SeedMoreMenu>
-                      <button
-                        type="button"
-                        className={btnMoreDanger}
-                        onClick={() => {
-                          if (
-                            !window.confirm(
-                              "この下書きを削除しますか？成績の数字も一緒に消えます。",
-                            )
-                          ) {
-                            return;
-                          }
-                          const res = deleteLocalSeed(s.id, handle);
-                          if (res.ok) refresh();
-                          else window.alert(res.error);
-                        }}
-                      >
-                        削除する
-                      </button>
-                    </SeedMoreMenu>
-                  </div>
+                  <SeedActionRow>
+                    <button
+                      type="button"
+                      className={btnPrimary}
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            "この端末のトップ表示に出します（他端末には見えません）。共有したいときはログインして新規シードしてください。",
+                          )
+                        ) {
+                          return;
+                        }
+                        const row = publishLocalSeedToShelf(s.id);
+                        if (row) {
+                          refresh();
+                        } else window.alert("公開に失敗しました");
+                      }}
+                    >
+                      この端末だけで公開
+                    </button>
+                    <Link
+                      href={`/w/${encodeURIComponent(s.id)}`}
+                      className={btnStatus}
+                    >
+                      シード詳細
+                    </Link>
+                  </SeedActionRow>
                 </li>
               ))}
             </ul>
@@ -784,49 +578,14 @@ export default function DashboardPage() {
                     className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
                   >
                     <SeedCardChrome s={s} />
-                    <div className="mt-3 space-y-2 border-t border-viscum-line pt-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={`/w/${encodeURIComponent(s.id)}/request`}
-                          className={btnPrimary}
-                        >
-                          直依頼を続ける
-                        </Link>
-                        {origin && handle ? (
-                          <ShareTextCopyButton
-                            label="案内文をコピー"
-                            emptyHint="先に直依頼画面でリンクを確定してください"
-                            className={btnStatus}
-                            getText={() =>
-                              buildCachedOutboundShareText({
-                                workId: s.id,
-                                workTitle: s.title,
-                                workExternalUrl: s.externalUrl,
-                                focusNote: s.focusNote,
-                                fromHandle: handle,
-                                fromLabel,
-                                origin,
-                              })
-                            }
-                          />
-                        ) : null}
-                      </div>
-                      <SeedMoreMenu>
-                        <button
-                          type="button"
-                          className={btnMoreDanger}
-                          onClick={() => {
-                            if (!window.confirm("この下書きを削除しますか？"))
-                              return;
-                            const res = deleteLocalSeed(s.id, handle);
-                            if (res.ok) refresh();
-                            else window.alert(res.error);
-                          }}
-                        >
-                          削除する
-                        </button>
-                      </SeedMoreMenu>
-                    </div>
+                    <SeedActionRow>
+                      <Link
+                        href={`/w/${encodeURIComponent(s.id)}/request`}
+                        className={btnPrimary}
+                      >
+                        直依頼を続ける
+                      </Link>
+                    </SeedActionRow>
                   </li>
                 ))}
               </ul>
