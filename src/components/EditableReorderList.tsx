@@ -89,21 +89,24 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-1.5 sm:gap-2 ${isDragging ? "rounded-md bg-viscum-leaf-soft/40" : ""}`}
+      className={`flex items-center gap-1 ${isDragging ? "rounded-md bg-viscum-leaf-soft/40" : ""}`}
     >
-      <button
-        type="button"
-        className="flex h-9 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-viscum-muted hover:bg-viscum-paper-2 hover:text-viscum-ink active:cursor-grabbing"
-        aria-label={`${index + 1}行目を並べ替え`}
-        title="ドラッグして並べ替え"
-        {...attributes}
-        {...listeners}
-      >
-        <GripIcon className="h-4 w-4" />
-      </button>
-      <span className="w-5 shrink-0 text-center text-[12px] leading-none text-viscum-muted">
-        {index + 1}.
-      </span>
+      <div className="flex shrink-0 items-center gap-0.5">
+        <button
+          type="button"
+          className="flex h-9 w-6 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-viscum-muted hover:bg-viscum-paper-2 hover:text-viscum-ink active:cursor-grabbing"
+          aria-label={`${index + 1}行目を並べ替え`}
+          title="ドラッグして並べ替え"
+          {...attributes}
+          {...listeners}
+        >
+          {/* 光学補正: 携帯でやや下／PCでやや上に見えるのを相殺 */}
+          <GripIcon className="h-4 w-4 -translate-y-px md:translate-y-px" />
+        </button>
+        <span className="w-4 shrink-0 text-[12px] leading-none text-viscum-muted">
+          {index + 1}.
+        </span>
+      </div>
       <input
         type="text"
         value={line.text}
