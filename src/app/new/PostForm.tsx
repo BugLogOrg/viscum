@@ -97,6 +97,8 @@ export function PostForm() {
 
   const compOn = isFieldCourse(seedPlan);
   const extReviewOn = seedPlan === "public_boost";
+  const freeOn = seedPlan === "free_comment";
+  const needsDeadline = compOn || freeOn;
   const courseId: SeedCourseId = isFieldCourse(seedPlan)
     ? seedPlan
     : "first_impression";
@@ -118,7 +120,7 @@ export function PostForm() {
     if (compOn) {
       return `${course.name} · 褒賞 ${formatYen(prizeYen)} · 締切 あと約${closesInDays}日`;
     }
-    return "無料コメント · コメント歓迎";
+    return `無料コメント · コメント歓迎 · 締切 あと約${closesInDays}日`;
   })();
 
   useEffect(() => {
@@ -205,7 +207,8 @@ export function PostForm() {
     setCropOpen(true);
   }
 
-  const status: CompStatus = compOn || extReviewOn ? "open" : "none";
+  const status: CompStatus =
+    compOn || extReviewOn || freeOn ? "open" : "none";
   const badgePlanLabel = extReviewOn
     ? PUBLIC_BOOST.name
     : compOn
@@ -316,7 +319,11 @@ export function PostForm() {
               : extReviewOn
                 ? extPrizeYen
                 : null,
-            closesInDays: compOn ? closesInDays : null,
+            closesInDays: needsDeadline
+              ? closesInDays
+              : extReviewOn
+                ? 7
+                : null,
             thumbUrl: thumbStored,
             listedOnShelf: false,
           };
@@ -375,13 +382,13 @@ export function PostForm() {
             externalUrl: payload.externalUrl,
             boostWriteUrl: payload.boostWriteUrl ?? undefined,
             tags: payload.tags,
-            status: compOn || extReviewOn ? "open" : "none",
+            status: compOn || extReviewOn || freeOn ? "open" : "none",
             prizeYen: compOn
               ? prizeYen
               : extReviewOn
                 ? extPrizeYen
                 : undefined,
-            closesInDays: compOn
+            closesInDays: needsDeadline
               ? closesInDays
               : extReviewOn
                 ? 7
@@ -699,13 +706,25 @@ export function PostForm() {
                 emptyError="1問以上入れてください（空だとシードできません）。"
               />
             </div>
+          </div>
+        )}
 
+        {needsDeadline && (
+          <div
+            className={`space-y-3 ${
+              compOn
+                ? "mt-4"
+                : "border-t border-viscum-line pt-4"
+            }`}
+          >
             <div>
               <label className="text-[13px] font-medium text-viscum-ink">
-                締切
+                締切 <span className="text-viscum-berry">必須</span>
               </label>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
-                よく使う長さから選びます。細かい日時は後からでも変えられる想定です。
+                {freeOn
+                  ? "無料でも募集期間を決めます。終わると終了間近→終了へ。棚に埋もれにくくなります。"
+                  : "よく使う長さから選びます。細かい日時は後からでも変えられる想定です。"}
               </p>
               <select
                 value={closesInDays}
@@ -730,9 +749,11 @@ export function PostForm() {
                 ごろ
               </p>
             </div>
-            <p className="text-[11px] text-viscum-muted">
-              払うのは選出・褒賞のあと（デモでは決済しません）。広げて候補を集め、刺さった人を選ぶのがシーダーの仕事です。
-            </p>
+            {compOn ? (
+              <p className="text-[11px] text-viscum-muted">
+                払うのは選出・褒賞のあと（デモでは決済しません）。広げて候補を集め、刺さった人を選ぶのがシーダーの仕事です。
+              </p>
+            ) : null}
           </div>
         )}
 

@@ -274,13 +274,15 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
         "表示デモ用。無料コメント。ほぼ届いていない例。",
       externalUrl: "https://example.com/recipe",
       tags: ["Web"],
-      status: "none",
+      status: "open",
       planLabel: "無料コメント",
+      seedPlan: "free_comment",
+      closesInDays: 2,
       viewCount: 14,
       emoCount: 0,
       bookmarkCount: 1,
       commentCount: 0,
-      createdAt: new Date(Date.now() - 9 * 86400000).toISOString(),
+      createdAt: new Date(Date.now() - 1 * 86400000).toISOString(),
     },
     {
       id: "chrome-ext-store",
@@ -406,8 +408,11 @@ export function workFromLocalSeed(seed: LocalSeed): Work {
     plan,
     prizeYen: seed.prizeYen,
     hoursAgo,
-    closesInHours:
-      seed.closesInDays != null ? seed.closesInDays * 24 : undefined,
+    closesInHours: (() => {
+      const at = localSeedClosesAt(seed);
+      if (!at) return undefined;
+      return Math.max(0, (at.getTime() - Date.now()) / 3_600_000);
+    })(),
     description: seed.description,
     focusNote: (() => {
       const note = seed.focusNote?.trim();

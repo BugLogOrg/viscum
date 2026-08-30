@@ -133,6 +133,7 @@ export async function POST(req: Request) {
   const isComp =
     body.plan === "first_impression" || body.plan === "brush_up";
   const isBoost = body.plan === "public_boost";
+  const isFree = body.plan === "free_comment";
   const boostWriteUrl =
     isBoost && body.boostWriteUrl && body.boostWriteUrl.trim().length > 8
       ? body.boostWriteUrl.trim()
@@ -143,7 +144,13 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  const status = isComp || isBoost ? "open" : "none";
+  if ((isComp || isFree) && (body.closesInDays == null || body.closesInDays <= 0)) {
+    return NextResponse.json(
+      { error: "closesInDays required" },
+      { status: 400 },
+    );
+  }
+  const status = isComp || isBoost || isFree ? "open" : "none";
   const prizeYen =
     isComp || isBoost
       ? (body.prizeYen ??
@@ -154,7 +161,7 @@ export async function POST(req: Request) {
               : 30000))
       : null;
   const closesAt =
-    isComp && body.closesInDays
+    (isComp || isFree) && body.closesInDays
       ? new Date(Date.now() + body.closesInDays * 86_400_000)
       : isBoost
         ? new Date(Date.now() + 7 * 86_400_000)
