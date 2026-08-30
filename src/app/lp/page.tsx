@@ -135,7 +135,7 @@ export default function LandingPage() {
             </figcaption>
           </figure>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
+            VISCUM（ヴィスカム）は日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
           </p>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             推しを応援する感覚でいい。ただし推す先は有名人ではなく、自分の作品——「ちゃんと聞きたい」からお金が動く、という考え方です。
