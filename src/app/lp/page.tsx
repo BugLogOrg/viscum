@@ -156,35 +156,14 @@ export default function LandingPage() {
           <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
             お金の話が出てくると、「この人、ちゃんと払ってくれるのかな」は気になりますよね。かといって、点数や星で人を並べたくはありません。なので、プロフィールには「支払いが終わった件数」と「これまでの合計金額」という事実だけを出します。スコアではないので、上げるためにがんばるようなものでもありません。
           </p>
-          <p className="mt-3 text-[13px] text-viscum-muted">
-            画面の見本（デモ）:
-          </p>
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
-            <Link
-              href="/dm/promo-15s"
-              className="text-[13px] font-medium text-viscum-brand underline"
-            >
-              外部の人へのお願いページ
-            </Link>
-            <Link
-              href="/w/promo-15s"
-              className="text-[13px] font-medium text-viscum-brand underline"
-            >
-              公開コンペの作品ページ
-            </Link>
-            <Link
-              href="/w/promo-15s/request"
-              className="text-[13px] font-medium text-viscum-brand underline"
-            >
-              サイト内の人への直依頼
-            </Link>
+          <p className="mt-3 text-[13px]">
             <Link
               href="/u/ayu"
-              className="text-[13px] font-medium text-viscum-brand underline"
+              className="font-medium text-viscum-brand underline"
             >
               支払い実績の例
             </Link>
-          </div>
+          </p>
         </section>
 
         <section className="mt-10 space-y-4">
