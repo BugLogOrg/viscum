@@ -97,6 +97,8 @@ export default function LandingPage() {
           <p className="text-[13px]">
             <Link
               href="/faq#writing"
+              target="_blank"
+              rel="noopener noreferrer"
               className="font-medium text-viscum-brand underline"
             >
               書くときの目安は？（FAQ）
@@ -150,6 +152,8 @@ export default function LandingPage() {
           <p className="mt-3 text-[13px]">
             <Link
               href="/u/ayu"
+              target="_blank"
+              rel="noopener noreferrer"
               className="font-medium text-viscum-brand underline"
             >
               支払い実績の例
@@ -167,6 +171,8 @@ export default function LandingPage() {
           <p className="text-[13px] leading-relaxed">
             <Link
               href="/faq#fees"
+              target="_blank"
+              rel="noopener noreferrer"
               className="font-medium text-viscum-brand underline"
             >
               手数料はいくつ？
@@ -174,6 +180,8 @@ export default function LandingPage() {
             <span className="text-viscum-muted"> ／ </span>
             <Link
               href="/faq#stripe"
+              target="_blank"
+              rel="noopener noreferrer"
               className="font-medium text-viscum-brand underline"
             >
               Stripeの登録はいつ必要？
@@ -191,6 +199,8 @@ export default function LandingPage() {
           </p>
           <Link
             href="/faq"
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex rounded-md border border-viscum-brand px-5 py-2.5 text-sm font-medium text-viscum-brand transition hover:bg-viscum-leaf-soft"
           >
             FAQを読む
