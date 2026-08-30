@@ -462,7 +462,7 @@ export default function FaqPage() {
           </Link>
           <nav className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
             <Link href="/lp" className="text-viscum-muted hover:text-viscum-brand">
-              LP
+              はじめに
             </Link>
             <Link href="/" className="text-viscum-muted hover:text-viscum-brand">
               シード棚を見る

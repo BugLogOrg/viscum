@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
+import { EntranceHelpLinks } from "@/components/EntranceHelpLinks";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
 import { DEMO_SPECIALTIES } from "@/data/specialties";
@@ -241,6 +242,7 @@ export function AppShell({
           ) : (
             <span className="min-w-0 flex-1" aria-hidden />
           )}
+          {resolvedEntrance ? <EntranceHelpLinks /> : null}
           <HeaderAccountActions />
         </div>
         {children}

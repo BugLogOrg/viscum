@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { HeaderAccountActions } from "@/components/HeaderAccountActions";
+import { EntranceHelpLinks } from "@/components/EntranceHelpLinks";
 import { ViscumMark } from "@/components/ViscumMark";
 import { VISCUM_ENTRANCE_LINE } from "@/lib/brand-copy";
 
@@ -92,9 +93,12 @@ export function SiteHeader({
         )}
       </div>
       {resolvedEntrance ? (
-        <p className="font-viscum-display border-t border-viscum-line px-4 py-2 text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted">
-          {resolvedEntrance}
-        </p>
+        <div className="flex items-center gap-3 border-t border-viscum-line px-4 py-2">
+          <p className="font-viscum-display min-w-0 flex-1 text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted">
+            {resolvedEntrance}
+          </p>
+          <EntranceHelpLinks />
+        </div>
       ) : null}
     </header>
   );
