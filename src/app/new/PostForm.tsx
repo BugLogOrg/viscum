@@ -572,24 +572,28 @@ export function PostForm() {
                 want: FREE_COMMENT.want,
                 title: FREE_COMMENT.name,
                 yenLabel: "¥0",
+                hint: null as string | null,
               },
               {
                 id: "first_impression" as const,
                 want: courseById("first_impression").want,
                 title: courseById("first_impression").name,
                 yenLabel: formatYen(courseById("first_impression").yen),
+                hint: null as string | null,
               },
               {
                 id: "brush_up" as const,
                 want: courseById("brush_up").want,
                 title: courseById("brush_up").name,
                 yenLabel: formatYen(courseById("brush_up").yen),
+                hint: null as string | null,
               },
               {
                 id: "public_boost" as const,
                 want: PUBLIC_BOOST.want,
                 title: PUBLIC_BOOST.name,
                 yenLabel: formatYen(PUBLIC_BOOST.yen),
+                hint: PUBLIC_BOOST.seedHint,
               },
             ] as const
           ).map((opt) => {
@@ -613,6 +617,15 @@ export function PostForm() {
                 >
                   {opt.title} · {opt.yenLabel}
                 </span>
+                {opt.hint ? (
+                  <span
+                    className={`mt-1.5 block text-[11px] font-medium leading-snug ${
+                      on ? "text-white" : "text-viscum-berry-deep"
+                    }`}
+                  >
+                    {opt.hint}
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -724,8 +737,12 @@ export function PostForm() {
 
         {extReviewOn && (
           <div className="space-y-4 border-t border-viscum-line pt-4">
-            <p className="text-[12px] leading-relaxed text-viscum-muted">
-              依頼して書かせるのではなく、募集します。メンターが外に書いて報告→あなたが誰に上げるか選ぶ。星や好意は保証しません。
+            <p className="text-[13px] font-medium leading-relaxed text-viscum-berry-deep">
+              肝はここです。メンターがストア／SNSなど
+              <span className="underline decoration-viscum-berry/40 underline-offset-2">
+                外に書いて報告
+              </span>
+              → あなたが誰に褒賞を上げるか選ぶ。依頼して書かせるのではなく募集します。星や好意は保証しません。
             </p>
 
             <ol className="list-decimal space-y-1 pl-5 text-[12px] leading-relaxed text-viscum-ink">
