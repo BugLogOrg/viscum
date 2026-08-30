@@ -85,7 +85,7 @@ function CompactWorkLink({
             paymentsDone={work.paymentsDone}
             planLabel={planBadgeLabel(work.plan)}
             dense
-            className="max-w-full break-words"
+            className="max-w-full whitespace-normal break-words"
           />
         ) : null}
         {countdown ? (
@@ -106,7 +106,7 @@ function CompactWorkLink({
           </span>
         ) : null}
       </div>
-      <p className="mt-1 line-clamp-2 break-words text-[13px] font-medium leading-snug text-viscum-ink">
+      <p className="mt-1 line-clamp-3 break-words text-[13px] font-medium leading-snug text-viscum-ink">
         {work.title}
       </p>
       <p className="mt-0.5 flex min-w-0 flex-wrap items-baseline gap-x-2 text-[11px] text-viscum-muted">
@@ -294,22 +294,22 @@ export function FeedShelfCorners({
   if (layout === "sideDuo") {
     return (
       <aside
-        className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:min-w-0 xl:max-w-full xl:flex-1 xl:flex-row xl:self-start xl:border-l xl:border-t-0 ${className}`}
+        className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:min-w-0 xl:flex-1 xl:flex-row xl:self-stretch xl:border-l xl:border-t-0 ${className}`}
         aria-label="発見"
       >
-        {/* 内側右（携帯では上）：注目 → 終了間近。固定幅で親を押し出さない */}
-        <div className="min-w-0 xl:sticky xl:top-12 xl:w-[min(100%,16.5rem)] xl:max-w-[16.5rem] xl:shrink xl:border-r xl:border-viscum-line">
-          <HotSection hot={hot} className="min-w-0 px-3 py-3" />
+        {/* 内側右（携帯では上）：注目 → 終了間近。余り幅を両カラムで分け合う */}
+        <div className="min-w-0 xl:sticky xl:top-12 xl:flex-1 xl:basis-0 xl:border-r xl:border-viscum-line">
+          <HotSection hot={hot} className="min-w-0 px-2.5 py-3 xl:px-3" />
           <ClosingSoonSection
             closing={closing}
-            className={`min-w-0 px-3 py-3 ${
+            className={`min-w-0 px-2.5 py-3 xl:px-3 ${
               hot.length > 0 ? "border-t border-viscum-line" : ""
             }`}
           />
         </div>
-        {/* 外側右（携帯では下）：偏差。右端余白で切れ防止 */}
-        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:w-[min(100%,16.5rem)] xl:max-w-[16.5rem] xl:shrink xl:border-t-0 xl:pr-3">
-          <SkewSection skewed={skewed} className="min-w-0 px-3 py-3" />
+        {/* 外側右（携帯では下）：偏差。右端まで伸ばす */}
+        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:flex-1 xl:basis-0 xl:border-t-0">
+          <SkewSection skewed={skewed} className="min-w-0 px-2.5 py-3 xl:px-3" />
         </div>
       </aside>
     );

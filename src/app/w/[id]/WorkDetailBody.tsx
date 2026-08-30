@@ -120,7 +120,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
   }
 
   return (
-    <div className="xl:flex xl:min-w-0 xl:items-start">
+    <div className="xl:flex xl:w-full xl:min-w-0 xl:items-start">
       <div className="w-full max-w-lg shrink-0">
         <article>
           {(justSaved || isDraft) && (
