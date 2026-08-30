@@ -87,7 +87,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
       <>
         <p>
           <span className="font-medium">
-            払うのは、原則シーダー（出した人・コンペ主催者）だけ
+            払うのは、今のところシーダー（出した人・コンペ主催者）だけ
           </span>
           です。
         </p>
