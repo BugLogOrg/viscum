@@ -844,6 +844,9 @@ export function PostForm() {
                   おすすめに戻す
                 </button>
               </div>
+              <p className="mt-0.5 text-[12px] text-viscum-muted">
+                見てほしい観点はここに書きます（3行目の記入枠）。ルール行はそのまま／観点の追記・差し替えどちらでも可。
+              </p>
               <ul className="mt-2 space-y-2">
                 {boostCriteria.map((line, i) => (
                   <li key={i} className="flex gap-2">
