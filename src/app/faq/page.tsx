@@ -513,7 +513,7 @@ export default function FaqPage() {
             href="/lp"
             className="inline-flex rounded-md border border-viscum-brand px-5 py-2.5 text-sm font-medium text-viscum-brand transition hover:bg-viscum-leaf-soft"
           >
-            はじめにに戻る
+            「はじめに」に戻る
           </Link>
           <Link
             href="/"
