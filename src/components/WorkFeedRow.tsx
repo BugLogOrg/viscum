@@ -15,8 +15,11 @@ import { SeederLink } from "@/components/SeederLink";
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1）。詳細・投稿プレビューでも参照 */
 export const THUMB_ASPECT = "aspect-[1280/670]";
 
-/** モバイルは狭め・md以上は旧幅に戻す */
-const FEED_THUMB_W = "w-[10.25rem] md:w-[11.4rem]";
+/**
+ * 左カラム幅。褒賞帯の最長想定「公開ブースト・褒賞¥30,000」と
+ * 締切「M/D（あとDD日HH時間）」が 12〜13px で収まるようデスクトップを広げる。
+ */
+const FEED_THUMB_W = "w-[11rem] md:w-[13.75rem]";
 
 const TONE: Record<Work["thumbTone"], string> = {
   leaf: "bg-viscum-leaf-deep",
@@ -116,18 +119,18 @@ export function WorkFeedRow({
         </Link>
 
         {status ? (
-          <div className="mt-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1 py-1">
-            <p className="text-[10px] leading-snug text-viscum-ink">
-              <span className="font-medium">{status.title}</span>
+          <div className="mt-1.5 rounded-md border border-viscum-line bg-viscum-paper-2 px-1.5 py-1.5">
+            <p className="text-[11px] font-medium leading-snug tracking-tight text-viscum-ink md:text-[13px]">
+              <span>{status.title}</span>
               {status.prizeYen != null && status.prizeYen > 0 ? (
-                <span className="whitespace-nowrap tabular-nums font-medium text-viscum-berry-deep">
+                <span className="whitespace-nowrap tabular-nums text-viscum-berry-deep">
                   ·褒賞{formatYen(status.prizeYen)}
                 </span>
               ) : null}
             </p>
             {status.deadline ? (
               <p
-                className="mt-0.5 break-words text-[10px] leading-snug text-viscum-muted"
+                className="mt-0.5 break-words text-[11px] leading-snug text-viscum-muted md:text-[12px]"
                 title={
                   work.closesInHours != null
                     ? `締切 ${status.deadline}`
@@ -151,7 +154,7 @@ export function WorkFeedRow({
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Link href={workHref} className="min-w-0 active:opacity-90">
-          <h2 className="text-[15px] font-semibold leading-snug text-viscum-ink">
+          <h2 className="text-[14px] font-semibold leading-snug text-viscum-ink md:text-[15px]">
             {work.title}
           </h2>
           {media ? (
