@@ -19,7 +19,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         <p>
           個人が作ったもの（まずアプリ／ツール、のち動画・小説など）をシード棚に並べて、
           <span className="font-medium">最初の反応</span>
-          を集める場所です。日本語候補は「ヤドリギ」。作品を出す人を
+          を集める場所です。日本語に訳すと「ヤドリギ」。作品を出す人を
           <span className="font-medium">シーダー</span>
           、見て書いてくれる人を
           <span className="font-medium">メンター</span>
