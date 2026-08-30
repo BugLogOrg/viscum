@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ImageCropDialog } from "@/components/ImageCropDialog";
+import {
+  EditableReorderList,
+  linesFromTexts,
+  textsFromLines,
+  type ReorderLine,
+} from "@/components/EditableReorderList";
 import { StatusBadge } from "@/components/StatusBadge";
 import { THUMB_ASPECT } from "@/components/WorkFeedRow";
 import { formatYen, type CompStatus } from "@/data/dummy-works";
@@ -70,12 +76,12 @@ export function PostForm() {
   const [tags, setTags] = useState<string[]>([]);
   const [customTag, setCustomTag] = useState("");
   const [seedPlan, setSeedPlan] = useState<SeedPlanId>("free_comment");
-  const [questions, setQuestions] = useState<string[]>(() => [
-    ...courseById("first_impression").questions,
-  ]);
-  const [boostCriteria, setBoostCriteria] = useState<string[]>(() => [
-    ...PUBLIC_BOOST.criteria,
-  ]);
+  const [questions, setQuestions] = useState<ReorderLine[]>(() =>
+    linesFromTexts([...courseById("first_impression").questions]),
+  );
+  const [boostCriteria, setBoostCriteria] = useState<ReorderLine[]>(() =>
+    linesFromTexts([...PUBLIC_BOOST.criteria]),
+  );
   const [closesInDays, setClosesInDays] = useState(7);
   const [saving, setSaving] = useState(false);
   /** 切り抜き後（プレビュー／保存に使う） */
@@ -101,7 +107,7 @@ export function PostForm() {
   function selectPlan(next: SeedPlanId) {
     setSeedPlan(next);
     if (isFieldCourse(next)) {
-      setQuestions([...courseById(next).questions]);
+      setQuestions(linesFromTexts([...courseById(next).questions]));
     }
   }
 
@@ -220,7 +226,10 @@ export function PostForm() {
   /** コンペON時：編集済み質問リスト（空行は落とす） */
   const promptList = useMemo(() => {
     if (!compOn) return [] as string[];
-    return questions.map((q) => q.trim()).filter(Boolean).slice(0, MAX_COURSE_QUESTIONS);
+    return textsFromLines(questions)
+      .map((q) => q.trim())
+      .filter(Boolean)
+      .slice(0, MAX_COURSE_QUESTIONS);
   }, [compOn, questions]);
 
   const effectiveBoostWriteUrl = boostWriteSameAsWork
@@ -229,7 +238,7 @@ export function PostForm() {
 
   const boostCriteriaList = useMemo(() => {
     if (!extReviewOn) return [] as string[];
-    return boostCriteria
+    return textsFromLines(boostCriteria)
       .map((s) => s.trim())
       .filter(Boolean)
       .slice(0, MAX_BOOST_CRITERIA);
@@ -253,52 +262,12 @@ export function PostForm() {
     }
   }, [boostWriteSameAsWork, externalUrl]);
 
-  function setQuestionAt(index: number, value: string) {
-    setQuestions((prev) => {
-      const copy = [...prev];
-      copy[index] = value;
-      return copy;
-    });
-  }
-
-  function addQuestion() {
-    setQuestions((prev) =>
-      prev.length >= MAX_COURSE_QUESTIONS ? prev : [...prev, ""],
-    );
-  }
-
-  function removeQuestion(index: number) {
-    setQuestions((prev) =>
-      prev.length <= 1 ? prev : prev.filter((_, i) => i !== index),
-    );
-  }
-
   function resetQuestionsToTemplate() {
-    setQuestions([...course.questions]);
-  }
-
-  function setCriterionAt(index: number, value: string) {
-    setBoostCriteria((prev) => {
-      const copy = [...prev];
-      copy[index] = value;
-      return copy;
-    });
-  }
-
-  function addCriterion() {
-    setBoostCriteria((prev) =>
-      prev.length >= MAX_BOOST_CRITERIA ? prev : [...prev, "見てほしい観点："],
-    );
-  }
-
-  function removeCriterion(index: number) {
-    setBoostCriteria((prev) =>
-      prev.length <= 1 ? prev : prev.filter((_, i) => i !== index),
-    );
+    setQuestions(linesFromTexts([...course.questions]));
   }
 
   function resetBoostCriteria() {
-    setBoostCriteria([...PUBLIC_BOOST.criteria]);
+    setBoostCriteria(linesFromTexts([...PUBLIC_BOOST.criteria]));
   }
 
   function toggleTag(tag: string) {
@@ -717,47 +686,18 @@ export function PostForm() {
                 </button>
               </div>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
-                おすすめ質問です。編集・追加・削除できます。メンターはそのまま答えても、アレンジしても構いません（最大
+                おすすめ質問です。編集・追加・削除・並べ替えできます。左のつまみをドラッグ。メンターはそのまま答えても、アレンジしても構いません（最大
                 {MAX_COURSE_QUESTIONS}問）。
               </p>
-              <ul className="mt-2 space-y-2">
-                {questions.map((q, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
-                      {i + 1}.
-                    </span>
-                    <input
-                      type="text"
-                      value={q}
-                      onChange={(e) => setQuestionAt(i, e.target.value)}
-                      className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeQuestion(i)}
-                      disabled={questions.length <= 1}
-                      className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
-                      aria-label={`質問${i + 1}を削除`}
-                    >
-                      削除
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              {questions.length < MAX_COURSE_QUESTIONS && (
-                <button
-                  type="button"
-                  onClick={addQuestion}
-                  className="mt-2 text-[13px] font-medium text-viscum-brand underline"
-                >
-                  ＋質問を自由に追加
-                </button>
-              )}
-              {promptList.length === 0 && (
-                <p className="mt-2 text-[12px] text-viscum-berry-deep">
-                  1問以上入れてください（空だとシードできません）。
-                </p>
-              )}
+              <EditableReorderList
+                items={questions}
+                onChange={setQuestions}
+                max={MAX_COURSE_QUESTIONS}
+                addLabel="＋質問を自由に追加"
+                newItemText=""
+                inputClassName="text-[14px]"
+                emptyError="1問以上入れてください（空だとシードできません）。"
+              />
             </div>
 
             <div>
@@ -864,47 +804,18 @@ export function PostForm() {
                 </button>
               </div>
               <p className="mt-0.5 text-[12px] text-viscum-muted">
-                ルールと見てほしい観点を並べます。観点は行を追加して複数書けます（最大
+                ルールと見てほしい観点を並べます。左のつまみで順番を入れ替え、行の追加もできます（最大
                 {MAX_BOOST_CRITERIA}行）。例：権限は怖くないか／何が片付くか。
               </p>
-              <ul className="mt-2 space-y-2">
-                {boostCriteria.map((line, i) => (
-                  <li key={i} className="flex gap-2">
-                    <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
-                      {i + 1}.
-                    </span>
-                    <input
-                      type="text"
-                      value={line}
-                      onChange={(e) => setCriterionAt(i, e.target.value)}
-                      className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[13px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeCriterion(i)}
-                      disabled={boostCriteria.length <= 1}
-                      className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
-                      aria-label={`目安${i + 1}を削除`}
-                    >
-                      削除
-                    </button>
-                  </li>
-                ))}
-              </ul>
-              {boostCriteria.length < MAX_BOOST_CRITERIA && (
-                <button
-                  type="button"
-                  onClick={addCriterion}
-                  className="mt-2 text-[13px] font-medium text-viscum-brand underline"
-                >
-                  ＋目安／観点を追加
-                </button>
-              )}
-              {boostCriteriaList.length === 0 && (
-                <p className="mt-2 text-[12px] text-viscum-berry-deep">
-                  1行以上入れてください（空だとシードできません）。
-                </p>
-              )}
+              <EditableReorderList
+                items={boostCriteria}
+                onChange={setBoostCriteria}
+                max={MAX_BOOST_CRITERIA}
+                addLabel="＋目安／観点を追加"
+                newItemText="見てほしい観点："
+                inputClassName="text-[13px]"
+                emptyError="1行以上入れてください（空だとシードできません）。"
+              />
               <p className="mt-1.5 text-[11px] text-viscum-muted">
                 全員払いではありません。虚偽・未使用・禁止違反は除外の目安。お支払いは褒賞額＋約10%（決済込み・シーダー負担）。人数保証・星の売買はしません。
               </p>
