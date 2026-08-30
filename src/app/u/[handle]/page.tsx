@@ -40,14 +40,7 @@ export default async function SeederPortfolioPage({ params }: Props) {
         />
       </header>
 
-      {/* プロフィール直下＝シード棚（何が並ぶかを先に見せる） */}
-      <SeededWorksPortfolio handle={display} initialWorks={works} />
-
-      <MentoredWorksList
-        handle={display}
-        initialParticipations={mentored}
-      />
-
+      {/* プロフィール直下＝実績（信用の看板。棚より先） */}
       <section className="border-b border-viscum-line px-4 py-5">
         <div className="grid gap-2 sm:grid-cols-2 max-w-lg">
           <div className="rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3">
@@ -96,6 +89,13 @@ export default async function SeederPortfolioPage({ params }: Props) {
           </p>
         </details>
       </section>
+
+      <SeededWorksPortfolio handle={display} initialWorks={works} />
+
+      <MentoredWorksList
+        handle={display}
+        initialParticipations={mentored}
+      />
 
       <PortfolioWall handle={display} />
 
