@@ -77,7 +77,7 @@ export function AppShell({
 
   return (
     <div className="mx-auto min-h-dvh max-w-7xl bg-viscum-paper md:flex">
-      <aside className="hidden w-52 shrink-0 border-r border-viscum-line md:flex md:flex-col md:sticky md:top-0 md:h-dvh md:overflow-y-auto">
+      <aside className="hidden w-52 shrink-0 border-r border-viscum-line/35 md:flex md:flex-col md:sticky md:top-0 md:h-dvh md:overflow-y-auto">
         <div className="flex h-12 shrink-0 items-center border-b border-viscum-line px-4">
           {interactive && onHome ? (
             <button
@@ -232,7 +232,7 @@ export function AppShell({
         )}
       </aside>
 
-      <div className="min-w-0 flex-1 lg:border-r lg:border-viscum-line lg:pr-2">
+      <div className="min-w-0 flex-1 lg:border-r lg:border-viscum-line/35 lg:pr-2">
         <div className="sticky top-0 z-10 hidden h-12 items-center gap-3 border-b border-viscum-line bg-viscum-paper/95 px-4 backdrop-blur-sm md:flex">
           {resolvedEntrance ? (
             <p className="font-viscum-display min-w-0 flex-1 truncate text-[13px] font-normal leading-snug tracking-[0.02em] text-viscum-muted">

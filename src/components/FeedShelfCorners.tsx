@@ -294,11 +294,11 @@ export function FeedShelfCorners({
   if (layout === "sideDuo") {
     return (
       <aside
-        className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:min-w-0 xl:max-w-full xl:flex-1 xl:flex-row xl:self-start xl:border-l xl:border-t-0 ${className}`}
+        className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:min-w-0 xl:max-w-full xl:flex-1 xl:flex-row xl:self-start xl:border-l xl:border-viscum-line/35 xl:border-t-0 ${className}`}
         aria-label="発見"
       >
         {/* 内側右（携帯では上）：注目 → 終了間近。固定幅で親を押し出さない */}
-        <div className="min-w-0 xl:sticky xl:top-12 xl:w-[min(100%,16.5rem)] xl:max-w-[16.5rem] xl:shrink xl:border-r xl:border-viscum-line">
+        <div className="min-w-0 xl:sticky xl:top-12 xl:w-[min(100%,16.5rem)] xl:max-w-[16.5rem] xl:shrink xl:border-r xl:border-viscum-line/35">
           <HotSection hot={hot} className="min-w-0 px-3 py-3" />
           <ClosingSoonSection
             closing={closing}
@@ -321,7 +321,7 @@ export function FeedShelfCorners({
       className={`min-w-0 overflow-hidden border-t border-viscum-line bg-viscum-paper-2/25 ${className}`}
       aria-label="発見"
     >
-      <div className="grid min-w-0 gap-0 md:grid-cols-3 md:divide-x md:divide-viscum-line">
+      <div className="grid min-w-0 gap-0 md:grid-cols-3 md:divide-x md:divide-viscum-line/35">
         <HotSection
           hot={hot}
           className="min-w-0 border-b border-viscum-line px-4 py-4 md:border-b-0"
