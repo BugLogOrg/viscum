@@ -161,49 +161,34 @@ export default function LandingPage() {
           </p>
         </section>
 
-        <details className="group mt-10 rounded-xl border border-viscum-line bg-viscum-paper-2/40 open:bg-viscum-paper-2/60">
-          <summary className="cursor-pointer list-none px-5 py-4 marker:content-none [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center justify-between gap-3">
-              <span className="text-lg font-semibold text-viscum-brand">
-                お金のやり取りについて
-              </span>
-              <span
-                className="shrink-0 text-viscum-muted transition group-open:rotate-45"
-                aria-hidden
-              >
-                +
-              </span>
-            </span>
-            <span className="mt-1 block text-[13px] font-normal text-viscum-muted">
-              決済はStripe。カード・口座情報はVISCUMが持ちません（詳細は開く）
-            </span>
-          </summary>
-          <div className="space-y-3 border-t border-viscum-line px-5 py-4">
-            <p className="text-[15px] leading-relaxed text-viscum-ink">
-              決済はStripeを利用します。カード情報や振込先をVISCUMが保持することはありません。コメントするだけなら口座登録も不要です。
-            </p>
-            <p className="text-[13px] leading-relaxed">
-              <Link
-                href="/faq#fees"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-viscum-brand underline"
-              >
-                手数料はいくつ？
-              </Link>
-              <span className="text-viscum-muted"> ／ </span>
-              <Link
-                href="/faq#stripe"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-viscum-brand underline"
-              >
-                Stripeの登録はいつ必要？
-              </Link>
-              <span className="text-viscum-muted">（FAQ）</span>
-            </p>
-          </div>
-        </details>
+        <section className="mt-10 space-y-3">
+          <h2 className="text-lg font-semibold text-viscum-brand">
+            お金のやり取りについて
+          </h2>
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            決済はStripeを利用します。カード情報や振込先をVISCUMが保持することはありません。コメントするだけなら口座登録も不要です。
+          </p>
+          <p className="text-[13px] leading-relaxed">
+            <Link
+              href="/faq#fees"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-viscum-brand underline"
+            >
+              手数料はいくつ？
+            </Link>
+            <span className="text-viscum-muted"> ／ </span>
+            <Link
+              href="/faq#stripe"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-viscum-brand underline"
+            >
+              Stripeの登録はいつ必要？
+            </Link>
+            <span className="text-viscum-muted">（FAQ）</span>
+          </p>
+        </section>
 
         <section className="mt-14 space-y-4">
           <h2 className="text-lg font-semibold text-viscum-brand">
