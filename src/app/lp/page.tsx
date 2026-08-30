@@ -92,7 +92,7 @@ export default function LandingPage() {
             見る人・書く人へ
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            見る人も、書く人も歓迎です。専門家でなくても、率直な第一印象だけで参加できます。コメントするだけなら口座登録は不要です。
+            見る人も、書く人も歓迎です。専門家でなくても、率直な第一印象だけで参加できます。コメントにはログインが必要ですが、受け取り用の口座登録は褒賞をもらうときまで不要です。
           </p>
           <p className="text-[13px]">
             <Link
@@ -166,7 +166,7 @@ export default function LandingPage() {
             お金のやり取りについて
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            決済はStripeを利用します。カード情報や振込先をVISCUMが保持することはありません。コメントするだけなら口座登録も不要です。
+            決済はStripeを利用します。カード情報や振込先をVISCUMが保持することはありません。コメントにはログインが必要ですが、口座登録は褒賞を受け取るときだけで大丈夫です。
           </p>
           <p className="text-[13px] leading-relaxed">
             <Link
