@@ -229,6 +229,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
     ),
   },
   {
+    id: "writing",
     q: "聞きたいことと違うことばかり書かれたら？",
     body: (
       <>
@@ -377,6 +378,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
     ),
   },
   {
+    id: "stripe",
     q: "Stripeの登録はいつ必要？口座とか面倒では？",
     body: (
       <>

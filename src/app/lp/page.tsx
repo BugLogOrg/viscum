@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ViscumMark } from "@/components/ViscumMark";
 import { SiteFooter } from "@/components/SiteFooter";
 
-/** LP。機能 → 役名一言 → 詳細 → 世界観、の順 */
+/** LP。30秒理解 → コース → 感情／信用。細則は FAQ へ */
 export default function LandingPage() {
   return (
     <div className="min-h-dvh bg-viscum-paper text-viscum-ink">
@@ -26,7 +26,7 @@ export default function LandingPage() {
             最初の反応を集める場所。
           </h1>
           <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-white/92">
-            VISCUMの中で反応を集める。必要なら、ストアやSNSなど自分の公開場所でも正直な反応を試せる。見るだけならお金はかからない。お金が動くのは、つくった側が「ちゃんと聞きたい」「外でも試したい」と思ったときだけです。
+            VISCUMの中で反応を集める。必要なら、ストアやSNSなど自分の公開場所でも正直な反応を試せる。見るだけならお金はかからない。お金が動くのは、つくった側が「ちゃんと聞きたい」と思ったときだけです。
           </p>
           <div className="mt-8">
             <Link
@@ -45,10 +45,7 @@ export default function LandingPage() {
             何ができるの？
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            つくった作品を出して、反応を集められます。訪れた人は見て、コメントできます。必要なら有料で反応を募ったり、特定の人に頼んだりもできます。
-          </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            見るだけなら無料です。お金が動くのは、出した人が「ちゃんと聞きたい」と決めたときだけです。
+            つくった作品を出して反応を集められます。訪れた人は見て、コメントできます。必要なら有料で反応を募ったり、特定の人に頼んだりもできます。
           </p>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             作品を出す側を
@@ -64,7 +61,7 @@ export default function LandingPage() {
             シーダーができること
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            シーダーは、作品を出して「ここを見てほしい」と書けます。棚で選べるコースは次の4つです（同じ投稿では重ねません）。広く声を集めたいときはVISCUM内コンペや公開ブースト。特定の人の反応が欲しいときは、別レーンの直依頼です。
+            作品を出して「ここを見てほしい」と書けます。棚のコースは次の4つです（同じ投稿では重ねません）。
           </p>
           <ul className="list-disc space-y-3 pl-5 text-[15px] leading-relaxed text-viscum-ink">
             <li>
@@ -73,61 +70,37 @@ export default function LandingPage() {
             </li>
             <li>
               <span className="font-medium">初見レビュー ¥5,000</span>
-              … VISCUM内で、初めて見た人に「どう見えたか」を聞く。褒賞は選ばれたコメントや上位に寄せます。
+              … VISCUM内で、初めて見た人に「どう見えたか」を聞く。
             </li>
             <li>
               <span className="font-medium">改善提案 ¥10,000</span>
-              … VISCUM内で、どこを直せば伝わるかを聞く。褒賞は選ばれたコメントや上位に寄せます。
+              … VISCUM内で、どこを直せば伝わるかを聞く。
             </li>
             <li>
               <span className="font-medium">公開ブースト ¥30,000</span>
-              … ストアやSNSなど、自分の公開場所へ正直な反応・投稿を募る。書いてもらったあと報告を受け、誰に褒賞を渡すか選びます。外注で書かせる管理型ではありません。
+              … ストアやSNSなど、自分の公開場所へ正直な反応を募る。
             </li>
           </ul>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             <span className="font-medium">直依頼</span>
-            は上の4つとは別ものです。「この人の反応・言葉が欲しい」ときの有償オファーで、金額は関係やお願いの重さで決めます（目安¥5,000〜¥50,000）。シードしたあとにできます。
-          </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            棚の価格は¥0／¥5,000／¥10,000／¥30,000だけです。候補が集まるかどうかは、URLを広げられるかにもよります。おすすめ質問を用意したら、あとはメンターに書いてもらう番です。
+            は上の4つとは別ものです。「この人の反応が欲しい」ときの有償オファー（目安¥5,000〜¥50,000）。シードしたあとにできます。
           </p>
         </section>
 
-        <section className="mt-14 space-y-4">
+        <section className="mt-14 space-y-3">
           <h2 className="text-lg font-semibold text-viscum-brand">
-            メンターのみなさんへ
+            見る人・書く人へ
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            メンターは、専門家だけの役ではありません。同じようにものをつくっている人、ちょっと詳しい人、素直な第一印象をくれる人。そのくらいの幅で大丈夫です。書いてくれる人を歓迎しています。
+            見る人も、書く人も歓迎です。専門家でなくても、率直な第一印象だけで参加できます。コメントするだけなら口座登録は不要です。
           </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            書いてみるときの目安は、こんな感じです。
-          </p>
-          <ul className="list-disc space-y-3 pl-5 text-[15px] leading-relaxed text-viscum-ink">
-            <li>
-              シーダーが聞いていることは入口です。短くても具体的に返してもらえると助かります。
-            </li>
-            <li>
-              おすすめ質問はそのままでも大丈夫です。気づいたことがあれば、足したりアレンジしても構いません。そちらの方がいちばん参考になることもあります。
-            </li>
-            <li>
-              点をつけたり順位を決めたりはしません。「ここは伝わった」「ここで迷った」で十分です。
-            </li>
-            <li>
-              読んで選ぶのはシーダー本人です。厳しい指摘は歓迎ですが、ただ悪く言うだけのコメントは、選出も褒賞も生まれにくいです。
-            </li>
-            <li>
-              公開ブーストに参加するときは、外に書いたあと投稿URLなどを報告してください。褒賞は全員ではなく、シーダーが選びます。
-            </li>
-            <li>
-              直依頼が来たら、「やる」「いまは無理」だけ返してもらえれば大丈夫です。断ってもまったく問題ありません。
-            </li>
-          </ul>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            こちらから営業して回る必要はありません。「募集に応えて書く」「頼まれたら書く」側で大丈夫です。コメントするだけなら口座の登録もいりません。まずは、いま出ているものから書いてみてください。
-          </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            書いたあとに返ってくるのは、お礼や、選出された記録、ときどき褒賞です。しっくりきたら登録してみてください。登録すると、褒賞を受け取れるようになったり、自分でも作品を出してお願いできるようになります。
+          <p className="text-[13px]">
+            <Link
+              href="/faq#writing"
+              className="font-medium text-viscum-brand underline"
+            >
+              書くときの目安（FAQ）
+            </Link>
           </p>
         </section>
 
@@ -136,14 +109,17 @@ export default function LandingPage() {
             どんな場所なの？
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            つくったあと、「誰かに見てもらいたい」のに投稿しても流れていく感じ、ありませんか。SNSでは既読スルーだったり、友人に頼むのは気後れしたり。あの少し寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。見るだけの人は、お金を払わずに、いま何が盛り上がっているかを眺めていられます。
+            つくったあと、「誰かに見てもらいたい」のに投稿しても流れていく感じ、ありませんか。SNSでは既読スルーだったり、友人に頼むのは気後れしたり。あの少し寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。
           </p>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            いまは、誰でもつくれる時代です。コンテンツは溢れかえっている。つくることは大事だけど、それだけでは終わらない。どう守り、どう育てるか。ブーストのかけ方が大事になる、と思っています。
+            いまは誰でもつくれる時代です。つくることは大事だけど、それだけでは終わらない。どう守り、どう育てるか——ブーストのかけ方が大事になる、と思っています。
           </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            推しにスパチャする感覚でいい。ただし落とす先は有名人ではなく、あなたの作品。VISCUMは、そのための場所です。
-          </p>
+        </section>
+
+        <section className="mt-14 space-y-4">
+          <h2 className="text-lg font-semibold text-viscum-brand">
+            VISCUMという名前について
+          </h2>
           <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
             <img
               src="/lp-worldview.jpg"
@@ -157,10 +133,10 @@ export default function LandingPage() {
             </figcaption>
           </figure>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            VISCUM（ヴィスカム）は、個人でつくったものを置いておける、小さな掲示板のようなサービスです。日本語の呼び名としては「ヤドリギ」を考えています。鳥が実をくわえて運び、種を落としていく——つくった人が種を撒いて、反応をもらって、また次をつくる。そんなふうに回っていくといいな、と思っています。
+            日本語の呼び名としては「ヤドリギ」を考えています。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
           </p>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人。名前の由来は、このイメージから来ています。
+            推しにスパチャする感覚でいい。ただし落とす先は有名人ではなく、あなたの作品——反応そのものに値段が乗る、という考え方です。
           </p>
         </section>
 
@@ -169,7 +145,7 @@ export default function LandingPage() {
             「ちゃんと払う人？」について
           </h2>
           <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
-            お金の話が出てくると、「この人、ちゃんと払ってくれるのかな」は気になりますよね。かといって、点数や星で人を並べたくはありません。なのでプロフィールには、「支払いが終わった件数」と「これまでの合計金額」という事実だけを出します。スコアではないので、上げるために頑張るものでもありません。
+            お金の話が出ると、「ちゃんと払ってくれるのかな」は気になりますよね。点数や星で人を並べず、プロフィールには「支払いが終わった件数」と「これまでの合計金額」という事実だけを出します。スコアではありません。
           </p>
           <p className="mt-3 text-[13px]">
             <Link
@@ -181,21 +157,20 @@ export default function LandingPage() {
           </p>
         </section>
 
-        <section className="mt-10 space-y-4">
+        <section className="mt-10 space-y-3">
           <h2 className="text-lg font-semibold text-viscum-brand">
             お金のやり取りについて
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            VISCUMは、いまは個人でつくっているサービスです。褒賞のやり取りには、Stripe（ストライプ）という外部の決済サービスを使います。買い物サイトなどの裏側に入っていることが多い仕組みで、カード決済や振込先の管理を専門にやってくれます。VISCUMは「誰が誰に、いくら払ったか」を記録してつなぐだけで、カード番号や口座番号そのものはStripe側が持ちます。
+            決済はStripeを利用します。カード情報や振込先をVISCUMが保持することはありません。コメントするだけなら口座登録も不要です。
           </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            払うときは、カード情報はStripeの画面に入力します。その番号がVISCUMのサーバーに残ることはありません。
-          </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            受け取る側も、登録したらすぐ振り込まれる、という形ではありません。まずシーダーが選出や褒賞を決めて、そのあとで受け取りの手続きに進みます。そこで本人確認と振込先（ふつうは銀行口座）をStripeに登録します。口座番号もVISCUMは持たず、Stripeから入金される形です。
-          </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            コメントを書くだけなら、口座の登録もStripeの手続きもいりません。もらう段になってからで大丈夫です。
+          <p className="text-[13px]">
+            <Link
+              href="/faq#stripe"
+              className="font-medium text-viscum-brand underline"
+            >
+              手数料・Stripeの詳細（FAQ）
+            </Link>
           </p>
         </section>
 
@@ -204,7 +179,7 @@ export default function LandingPage() {
             よくある質問
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            誰が払うのか、書いてくれる人はどこから来るのか、力量やフィードバックのズレなど、最初に聞かれやすいことは別ページにまとめました。
+            誰が払うのか、書いてくれる人はどこから来るのか、直依頼の流れなど——細かいことはFAQにまとめました。
           </p>
           <Link
             href="/faq"
@@ -216,13 +191,7 @@ export default function LandingPage() {
 
         <section className="mt-14 border-t border-viscum-line pt-10">
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            誰でも作れる時代だからこそ、育て方が問われる。つくったものをちゃんと見てもらって、「ここが良かった」と言ってもらう。それが嬉しい。そして、その一言にちゃんとお金が乗ることも、嬉しいことです。褒賞はおまけではありません。反応に値段をつけること自体が、この場所の大事な一部です。
-          </p>
-          <p className="mt-4 text-[15px] leading-relaxed text-viscum-ink">
-            お金は嫌うものではありません。払うことも、もらうこともできます。コメントひとつで、誰かの次の一手の助けになれるかもしれません。気持ちよく回していきましょう。
-          </p>
-          <p className="mt-4 text-[15px] leading-relaxed text-viscum-ink">
-            シードして、眺めて、書いて、ときに払い、ときに受け取る。出しても、書いても、VISCUMを楽しんでもらえたら嬉しいです。
+            シードして、眺めて、書いて、ときに払い、ときに受け取る。出しても書いても、VISCUMを楽しんでもらえたら嬉しいです。
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
