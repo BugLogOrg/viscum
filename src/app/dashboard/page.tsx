@@ -45,26 +45,60 @@ function SeedActionRow({ children }: { children: ReactNode }) {
   );
 }
 
-function SeedMetrics({ s }: { s: LocalSeed }) {
+/** 閲覧／気になる／コメント。無い値は 0 で枠を揃える */
+function SeedMetricsBlock({
+  viewCount,
+  bookmarkCount,
+  commentCount,
+}: {
+  viewCount: number;
+  bookmarkCount: number;
+  commentCount: number;
+}) {
   return (
     <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-viscum-line pt-3 text-center">
       <div>
         <dt className="text-[10px] text-viscum-muted">閲覧</dt>
-        <dd className="text-[15px] font-semibold text-viscum-ink">{s.viewCount}</dd>
+        <dd className="text-[15px] font-semibold tabular-nums text-viscum-ink">
+          {viewCount}
+        </dd>
       </div>
       <div>
         <dt className="text-[10px] text-viscum-muted">気になる</dt>
-        <dd className="text-[15px] font-semibold text-viscum-ink">
-          {s.bookmarkCount}
+        <dd className="text-[15px] font-semibold tabular-nums text-viscum-ink">
+          {bookmarkCount}
         </dd>
       </div>
       <div>
         <dt className="text-[10px] text-viscum-muted">コメント</dt>
-        <dd className="text-[15px] font-semibold text-viscum-ink">
-          {s.commentCount}
+        <dd className="text-[15px] font-semibold tabular-nums text-viscum-ink">
+          {commentCount}
         </dd>
       </div>
     </dl>
+  );
+}
+
+/** 作成／保存／締切。締切が無いときも行を残す */
+function SeedStampBlock({
+  createdLabel,
+  savedLabel,
+  closesLabel,
+}: {
+  createdLabel: string;
+  savedLabel: string;
+  closesLabel: string | null;
+}) {
+  return (
+    <p className="mt-1.5 space-y-0.5 text-[11px] tabular-nums leading-relaxed text-viscum-muted">
+      <span className="block">作成 {createdLabel}</span>
+      <span className="block">保存 {savedLabel}</span>
+      <span
+        className={`block ${closesLabel ? "text-viscum-berry-deep" : ""}`}
+      >
+        締切 {closesLabel ?? "—"}
+      </span>
+    </p>
   );
 }
 
@@ -100,20 +134,71 @@ function SeedCardChrome({ s }: { s: LocalSeed }) {
       <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
         {s.title}
       </p>
-      <p className="mt-1.5 space-y-0.5 text-[11px] tabular-nums leading-relaxed text-viscum-muted">
-        <span className="block">
-          作成 {formatLocalSeedStamp(s.createdAt)}
-        </span>
-        <span className="block">
-          保存 {formatLocalSeedStamp(savedAt)}
-        </span>
-        {closesAt ? (
-          <span className="block text-viscum-berry-deep">
-            締切 {formatLocalSeedStamp(closesAt.toISOString())}
-          </span>
-        ) : null}
+      <SeedStampBlock
+        createdLabel={formatLocalSeedStamp(s.createdAt)}
+        savedLabel={formatLocalSeedStamp(savedAt)}
+        closesLabel={
+          closesAt ? formatLocalSeedStamp(closesAt.toISOString()) : null
+        }
+      />
+      <SeedMetricsBlock
+        viewCount={s.viewCount ?? 0}
+        bookmarkCount={s.bookmarkCount ?? 0}
+        commentCount={s.commentCount ?? 0}
+      />
+    </>
+  );
+}
+
+function NeonWorkCardChrome({
+  w,
+  badges,
+}: {
+  w: Work;
+  badges: ReactNode;
+}) {
+  const created =
+    w.createdAtIso != null
+      ? formatLocalSeedStamp(w.createdAtIso)
+      : formatLocalSeedStamp(
+          new Date(Date.now() - w.hoursAgo * 3_600_000).toISOString(),
+        );
+  const saved =
+    w.updatedAtIso != null
+      ? formatLocalSeedStamp(w.updatedAtIso)
+      : created;
+  const closes =
+    w.closesAtIso != null
+      ? formatLocalSeedStamp(w.closesAtIso)
+      : w.closesInHours != null
+        ? formatLocalSeedStamp(
+            new Date(Date.now() + w.closesInHours * 3_600_000).toISOString(),
+          )
+        : null;
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-2">
+        <StatusBadge
+          status={w.status}
+          prizeYen={w.prizeYen}
+          planLabel={planBadgeLabel(w.plan)}
+          dense
+        />
+        {badges}
+      </div>
+      <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
+        {w.title}
       </p>
-      <SeedMetrics s={s} />
+      <SeedStampBlock
+        createdLabel={created}
+        savedLabel={saved}
+        closesLabel={closes}
+      />
+      <SeedMetricsBlock
+        viewCount={w.viewCount ?? 0}
+        bookmarkCount={w.bookmarkCount ?? 0}
+        commentCount={w.commentCount ?? 0}
+      />
     </>
   );
 }
@@ -336,20 +421,14 @@ export default function DashboardPage() {
                   key={w.id}
                   className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge
-                      status={w.status}
-                      prizeYen={w.prizeYen}
-                      planLabel={planBadgeLabel(w.plan)}
-                      dense
-                    />
-                    <span className="rounded-full bg-viscum-leaf-soft px-2 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
-                      サーバ・公開中
-                    </span>
-                  </div>
-                  <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
-                    {w.title}
-                  </p>
+                  <NeonWorkCardChrome
+                    w={w}
+                    badges={
+                      <span className="rounded-full bg-viscum-leaf-soft px-2 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                        サーバ・公開中
+                      </span>
+                    }
+                  />
                   <SeedActionRow>
                     <Link
                       href={`/dashboard/${encodeURIComponent(w.id)}`}
@@ -445,23 +524,19 @@ export default function DashboardPage() {
                   key={w.id}
                   className="rounded-lg border border-viscum-line bg-white/50 px-3 py-3"
                 >
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge
-                      status={w.status}
-                      prizeYen={w.prizeYen}
-                      planLabel={planBadgeLabel(w.plan)}
-                      dense
-                    />
-                    <span className="rounded-full bg-viscum-leaf-soft px-2 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
-                      サーバ
-                    </span>
-                    <span className="rounded-full bg-viscum-paper-2 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
-                      下書き
-                    </span>
-                  </div>
-                  <p className="mt-1.5 text-[14px] font-medium leading-snug text-viscum-ink line-clamp-2">
-                    {w.title}
-                  </p>
+                  <NeonWorkCardChrome
+                    w={w}
+                    badges={
+                      <>
+                        <span className="rounded-full bg-viscum-leaf-soft px-2 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                          サーバ
+                        </span>
+                        <span className="rounded-full bg-viscum-paper-2 px-2 py-0.5 text-[10px] font-medium text-viscum-muted">
+                          下書き
+                        </span>
+                      </>
+                    }
+                  />
                   <SeedActionRow>
                     <button
                       type="button"

@@ -66,6 +66,13 @@ export type Work = {
   /** フィード人気表示用（他ユーザ含めたデモ集計。未指定時は合成） */
   sukiCount?: number;
   bookmarkCount?: number;
+  /** ダッシュボード等の実数（Neon）。未指定は 0 扱い */
+  viewCount?: number;
+  commentCount?: number;
+  /** 絶対時刻 ISO（Neon／ローカルのダッシュ表示用） */
+  createdAtIso?: string;
+  updatedAtIso?: string;
+  closesAtIso?: string;
   /**
    * Neon 永続化作品か。
    * listedOnShelf: false＝下書き（作者以外は見えない）
