@@ -49,6 +49,10 @@ function feedStatus(work: Work): {
   if (work.plan === "free_comment" || work.status === "none") {
     return {
       title: planBadgeLabel(work.plan) ?? "コメント歓迎",
+      deadline:
+        work.status === "open" || work.status === "pay_soon"
+          ? formatDeadlineFeed(work.closesInHours, work.status)
+          : null,
     };
   }
   if (
