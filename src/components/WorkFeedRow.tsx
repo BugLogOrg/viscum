@@ -168,7 +168,7 @@ export function WorkFeedRow({
           <SeederLink
             handle={work.seeder}
             preferredName={work.seederAccountName}
-            className="max-w-full truncate text-right text-[11px] font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
+            className="max-w-full truncate text-right text-[11px] font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand md:text-[13px]"
           />
           <FeedAttitudeCounts workId={work.id} comments={work.comments} />
         </div>
