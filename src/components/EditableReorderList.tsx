@@ -89,11 +89,11 @@ function SortableRow({
     <li
       ref={setNodeRef}
       style={style}
-      className={`flex gap-1.5 sm:gap-2 ${isDragging ? "rounded-md bg-viscum-leaf-soft/40" : ""}`}
+      className={`flex items-center gap-1.5 sm:gap-2 ${isDragging ? "rounded-md bg-viscum-leaf-soft/40" : ""}`}
     >
       <button
         type="button"
-        className="mt-1.5 flex h-8 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-viscum-muted hover:bg-viscum-paper-2 hover:text-viscum-ink active:cursor-grabbing"
+        className="flex h-9 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-viscum-muted hover:bg-viscum-paper-2 hover:text-viscum-ink active:cursor-grabbing"
         aria-label={`${index + 1}行目を並べ替え`}
         title="ドラッグして並べ替え"
         {...attributes}
@@ -101,7 +101,7 @@ function SortableRow({
       >
         <GripIcon className="h-4 w-4" />
       </button>
-      <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
+      <span className="w-5 shrink-0 text-center text-[12px] leading-none text-viscum-muted">
         {index + 1}.
       </span>
       <input
@@ -114,7 +114,7 @@ function SortableRow({
         type="button"
         onClick={() => onRemove(line.id)}
         disabled={!canDelete}
-        className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
+        className="shrink-0 self-center rounded-md border border-viscum-line px-2 py-1.5 text-[12px] leading-none text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
         aria-label={`${index + 1}行目を削除`}
       >
         削除
