@@ -178,6 +178,15 @@ export default function SeedStatsPage() {
           ? seed.bookmarkCount
           : seed.commentCount;
 
+  const funnelViews = totals?.views ?? seed.viewCount;
+  const funnelBookmark = totals?.bookmark ?? seed.bookmarkCount;
+  const funnelComment = totals?.comment ?? seed.commentCount;
+  const funnelEmpty =
+    funnelViews === 0 && funnelBookmark === 0 && funnelComment === 0;
+  const funnelLine = funnelEmpty
+    ? "まだ反応の流れは見えていません"
+    : `${funnelViews}人が見た → ${funnelBookmark}人が気になった → ${funnelComment}人が言葉を残した`;
+
   const metricCards: {
     key: AnalyticsMetric;
     period: number;
@@ -269,9 +278,14 @@ export default function SeedStatsPage() {
             );
           })}
         </section>
-        <p className="-mt-4 text-[11px] text-viscum-muted">
-          指標をタップすると下の折れ線が切り替わります。
-        </p>
+        <div className="-mt-4 space-y-1">
+          <p className="text-[13px] leading-relaxed text-viscum-ink">
+            {funnelLine}
+          </p>
+          <p className="text-[11px] text-viscum-muted">
+            上の3指標（直近14日）の流れです。指標をタップすると下の折れ線が切り替わります。
+          </p>
+        </div>
 
         <section className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
           <div className="flex items-baseline justify-between gap-2">
@@ -280,7 +294,7 @@ export default function SeedStatsPage() {
                 {metricLabel}（日次）
               </h2>
               <p className="text-[11px] text-viscum-muted">
-                直近14日 · YouTubeアナリティクス風
+                直近14日
               </p>
             </div>
             <p className="text-right">
