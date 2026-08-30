@@ -47,6 +47,8 @@ type Props = {
   hasAdoptedUntipped: boolean;
   scaffoldLabel?: string;
   scaffoldLines?: string[];
+  /** 公開ブースト: 書いて報告する場所 */
+  boostWriteUrl?: string;
 };
 
 /**
@@ -68,6 +70,7 @@ export function WorkEngage({
   hasAdoptedUntipped,
   scaffoldLabel,
   scaffoldLines = [],
+  boostWriteUrl,
 }: Props) {
   const { data: session, status: authStatus } = useSession();
   const handle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
@@ -579,6 +582,22 @@ export function WorkEngage({
               </label>
 
               <CommentAttitudePicker value={attitude} onChange={setAttitude} />
+
+              {boostWriteUrl ? (
+                <a
+                  href={boostWriteUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block rounded-md border border-viscum-berry/35 bg-viscum-berry/5 px-2.5 py-2 text-[12px] leading-snug text-viscum-ink transition hover:border-viscum-berry"
+                >
+                  <span className="font-medium text-viscum-berry-deep">
+                    書いてほしい場所
+                  </span>
+                  <span className="mt-0.5 block truncate text-viscum-muted">
+                    {boostWriteUrl}
+                  </span>
+                </a>
+              ) : null}
 
               {scaffoldLabel && scaffoldLines.length > 0 && (
                 <div className="space-y-2">

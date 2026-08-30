@@ -15,6 +15,8 @@ const CreateBody = z.object({
   focusNote: z.string().trim().max(4000).optional().nullable(),
   scaffoldLines: z.array(z.string().trim().min(1).max(500)).max(12).optional(),
   externalUrl: z.string().trim().min(8).max(2000),
+  /** 公開ブースト必須（サーバでも plan と突き合わせ） */
+  boostWriteUrl: z.string().trim().min(8).max(2000).optional().nullable(),
   tags: z.array(z.string().trim().min(1).max(40)).max(20).default([]),
   plan: z.enum([
     "free_comment",
@@ -131,6 +133,16 @@ export async function POST(req: Request) {
   const isComp =
     body.plan === "first_impression" || body.plan === "brush_up";
   const isBoost = body.plan === "public_boost";
+  const boostWriteUrl =
+    isBoost && body.boostWriteUrl && body.boostWriteUrl.trim().length > 8
+      ? body.boostWriteUrl.trim()
+      : null;
+  if (isBoost && !boostWriteUrl) {
+    return NextResponse.json(
+      { error: "boostWriteUrl required for public_boost" },
+      { status: 400 },
+    );
+  }
   const status = isComp || isBoost ? "open" : "none";
   const prizeYen =
     isComp || isBoost
@@ -161,6 +173,7 @@ export async function POST(req: Request) {
     focusNote: body.focusNote?.trim() || null,
     scaffoldLines: body.scaffoldLines?.length ? body.scaffoldLines : null,
     externalUrl: body.externalUrl,
+    boostWriteUrl,
     tags: body.tags,
     plan: body.plan,
     status,

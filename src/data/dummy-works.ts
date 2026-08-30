@@ -53,6 +53,10 @@ export type Work = {
   focusNote?: string;
   prompts?: string[];
   externalUrl: string;
+  /**
+   * 公開ブースト: 書いて報告してほしい場所のURL（作品URLと別でも可）
+   */
+  boostWriteUrl?: string;
   /** サムネ用の葉〜実の色キー */
   thumbTone: "leaf" | "moss" | "berry" | "bark" | "trunk";
   /** 任意サムネ（data URL や https）。無いとき色面 */
@@ -731,6 +735,7 @@ const DUMMY_WORKS_RAW: Work[] = [
     description:
       "タブ整理Chrome拡張の公開ブーストです。Chromeウェブストア（またはX）へ正直な反応・投稿を残したあと、投稿URLを報告してください。権限ダイアログが怖く見えないか、何が片付く拡張か分かるか。褒賞は全員払いではなく、報告を見てシーダーが選びます。星の指定・やらせは不可。実利用したうえで書いてください。\n\n公開ブースト見本。外に書いてから報告。褒賞はシーダーが選ぶ（褒賞枠¥30,000）。",
     externalUrl: "https://example.com/ext",
+    boostWriteUrl: "https://example.com/ext",
     thumbUrl: "/thumbs/chrome-ext-store.jpg",
     thumbTone: "leaf",
     sukiCount: 28,

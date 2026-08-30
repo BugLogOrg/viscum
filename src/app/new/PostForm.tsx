@@ -61,6 +61,9 @@ export function PostForm() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [externalUrl, setExternalUrl] = useState("https://");
+  /** 公開ブースト: 書いてほしい場所。初期は作品URLと同期 */
+  const [boostWriteUrl, setBoostWriteUrl] = useState("https://");
+  const [boostWriteSameAsWork, setBoostWriteSameAsWork] = useState(true);
   const [description, setDescription] = useState("");
   const [focusNote, setFocusNote] = useState("");
   const [tags, setTags] = useState<string[]>([]);
@@ -195,7 +198,23 @@ export function PostForm() {
     setCropOpen(true);
   }
 
-  const status: CompStatus = compOn ? "open" : "none";
+  const status: CompStatus = compOn || extReviewOn ? "open" : "none";
+  const badgePlanLabel = extReviewOn
+    ? PUBLIC_BOOST.name
+    : compOn
+      ? course.name
+      : "無料コメント";
+
+  function isUsableHttpUrl(raw: string): boolean {
+    const t = raw.trim();
+    if (t.length < 12) return false;
+    try {
+      const u = new URL(t);
+      return u.protocol === "http:" || u.protocol === "https:";
+    } catch {
+      return false;
+    }
+  }
 
   /** コンペON時：編集済み質問リスト（空行は落とす） */
   const promptList = useMemo(() => {
@@ -203,14 +222,26 @@ export function PostForm() {
     return questions.map((q) => q.trim()).filter(Boolean).slice(0, MAX_COURSE_QUESTIONS);
   }, [compOn, questions]);
 
+  const effectiveBoostWriteUrl = boostWriteSameAsWork
+    ? externalUrl.trim()
+    : boostWriteUrl.trim();
+
   const canSave =
     title.trim().length > 0 &&
     title.trim().length <= WORK_TITLE_MAX &&
-    externalUrl.trim().length > 8 &&
+    isUsableHttpUrl(externalUrl) &&
     description.trim().length > 0 &&
     description.trim().length <= WORK_DESCRIPTION_MAX &&
     (!compOn || (prizeYen >= 5000 && promptList.length >= 1)) &&
-    (!extReviewOn || extPrizeYen === PUBLIC_BOOST.yen);
+    (!extReviewOn ||
+      (extPrizeYen === PUBLIC_BOOST.yen &&
+        isUsableHttpUrl(effectiveBoostWriteUrl)));
+
+  useEffect(() => {
+    if (boostWriteSameAsWork) {
+      setBoostWriteUrl(externalUrl);
+    }
+  }, [boostWriteSameAsWork, externalUrl]);
 
   function setQuestionAt(index: number, value: string) {
     setQuestions((prev) => {
@@ -289,6 +320,7 @@ export function PostForm() {
               return undefined;
             })(),
             externalUrl: externalUrl.trim(),
+            boostWriteUrl: extReviewOn ? effectiveBoostWriteUrl : null,
             tags,
             plan: seedPlan,
             prizeYen: compOn
@@ -353,10 +385,19 @@ export function PostForm() {
             focusNote: payload.focusNote ?? undefined,
             scaffoldLines: payload.scaffoldLines,
             externalUrl: payload.externalUrl,
+            boostWriteUrl: payload.boostWriteUrl ?? undefined,
             tags: payload.tags,
-            status: compOn ? "open" : "none",
-            prizeYen: compOn ? prizeYen : undefined,
-            closesInDays: compOn ? closesInDays : undefined,
+            status: compOn || extReviewOn ? "open" : "none",
+            prizeYen: compOn
+              ? prizeYen
+              : extReviewOn
+                ? extPrizeYen
+                : undefined,
+            closesInDays: compOn
+              ? closesInDays
+              : extReviewOn
+                ? 7
+                : undefined,
             extReviewOn: extReviewOn || undefined,
             extPrizeYen: extReviewOn ? extPrizeYen : undefined,
             seedPlan,
@@ -635,7 +676,8 @@ export function PostForm() {
           <span className="text-[12px] text-viscum-muted">いまの見え方：</span>
           <StatusBadge
             status={status}
-            prizeYen={compOn ? prizeYen : undefined}
+            prizeYen={compOn || extReviewOn ? (compOn ? prizeYen : extPrizeYen) : undefined}
+            planLabel={badgePlanLabel}
           />
           <span className="text-[12px] text-viscum-ink">{previewMeta}</span>
         </div>
@@ -737,6 +779,43 @@ export function PostForm() {
 
         {extReviewOn && (
           <div className="space-y-4 border-t border-viscum-line pt-4">
+            <div>
+              <label className="block text-[13px] font-medium text-viscum-ink">
+                書いてほしい場所（URL）{" "}
+                <span className="text-viscum-berry">必須</span>
+              </label>
+              <p className="mt-0.5 text-[12px] text-viscum-muted">
+                メンターが投稿・短評を残して報告する先（ストア／X／note など）。作品を触るURLと別にできます。
+              </p>
+              <label className="mt-2 flex cursor-pointer items-center gap-2 text-[12px] text-viscum-ink">
+                <input
+                  type="checkbox"
+                  checked={boostWriteSameAsWork}
+                  onChange={(e) => setBoostWriteSameAsWork(e.target.checked)}
+                  className="rounded border-viscum-line"
+                />
+                作品のURLと同じ
+              </label>
+              <input
+                type="url"
+                value={boostWriteSameAsWork ? externalUrl : boostWriteUrl}
+                onChange={(e) => {
+                  setBoostWriteSameAsWork(false);
+                  setBoostWriteUrl(e.target.value);
+                }}
+                readOnly={boostWriteSameAsWork}
+                placeholder="https://"
+                className={`mt-1.5 w-full rounded-md border border-viscum-line px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none ${
+                  boostWriteSameAsWork ? "bg-viscum-paper-2/80" : "bg-white/80"
+                }`}
+              />
+              {!isUsableHttpUrl(effectiveBoostWriteUrl) ? (
+                <p className="mt-1 text-[11px] text-viscum-berry-deep">
+                  https:// から始まるURLを入れてください。
+                </p>
+              ) : null}
+            </div>
+
             <p className="text-[13px] font-medium leading-relaxed text-viscum-berry-deep">
               肝はここです。メンターがストア／SNSなど
               <span className="underline decoration-viscum-berry/40 underline-offset-2">
@@ -747,7 +826,7 @@ export function PostForm() {
 
             <ol className="list-decimal space-y-1 pl-5 text-[12px] leading-relaxed text-viscum-ink">
               <li>募集を出す（この画面）</li>
-              <li>参加者が外に正直な反応・投稿を残す</li>
+              <li>参加者が「書いてほしい場所」へ正直な反応・投稿を残す</li>
               <li>記入後に投稿URLなどを報告</li>
               <li>あなたが報告を見て、褒賞を上げる相手を選ぶ</li>
             </ol>

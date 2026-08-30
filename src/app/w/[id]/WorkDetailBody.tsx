@@ -105,6 +105,20 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
     }
   }
 
+  const boostWriteUrl = work.boostWriteUrl?.trim();
+  const boostWriteOk =
+    work.plan === "public_boost" &&
+    Boolean(boostWriteUrl) &&
+    boostWriteUrl !== "https://";
+  let boostWriteHost = "";
+  if (boostWriteOk && boostWriteUrl) {
+    try {
+      boostWriteHost = new URL(boostWriteUrl).hostname.replace(/^www\./, "");
+    } catch {
+      boostWriteHost = "";
+    }
+  }
+
   return (
     <div className="xl:flex xl:min-w-0 xl:items-start">
       <div className="w-full max-w-lg shrink-0">
@@ -220,6 +234,35 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
               </a>
             ) : null}
 
+            {boostWriteOk && boostWriteUrl ? (
+              <a
+                href={boostWriteUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-3 rounded-lg border border-viscum-berry/40 bg-viscum-berry/5 px-3.5 py-3 transition hover:border-viscum-berry hover:bg-viscum-berry/10"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-white/80 text-viscum-berry-deep">
+                  <ExternalGlyph className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[15px] font-semibold text-viscum-ink">
+                    書いてほしい場所
+                  </span>
+                  <span className="mt-0.5 block text-[12px] text-viscum-berry-deep">
+                    ここに正直な反応・投稿を残して報告
+                  </span>
+                  {boostWriteHost ? (
+                    <span className="mt-0.5 block truncate text-[12px] text-viscum-muted">
+                      {boostWriteHost}
+                    </span>
+                  ) : null}
+                </span>
+                <span className="shrink-0 text-viscum-berry-deep" aria-hidden>
+                  →
+                </span>
+              </a>
+            ) : null}
+
             {/* 公開後はコメントフォーム内のみ（二重表示を避ける）。下書きは作者プレビュー用にここへ */}
             {isDraft && scaffoldLines.length > 0 && scaffoldLabel ? (
               <section className="rounded-lg border border-dashed border-viscum-line bg-white/70 px-3 py-3">
@@ -289,6 +332,9 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   hasAdoptedUntipped={hasAdoptedUntipped}
                   scaffoldLabel={scaffoldLabel ?? undefined}
                   scaffoldLines={scaffoldLines}
+                  boostWriteUrl={
+                    boostWriteOk && boostWriteUrl ? boostWriteUrl : undefined
+                  }
                 />
               </>
             )}

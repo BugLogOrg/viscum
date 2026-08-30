@@ -85,6 +85,7 @@ export function workFromNeonRow(
       ? row.scaffoldLines.map((s) => s.trim()).filter(Boolean)
       : undefined,
     externalUrl: row.externalUrl,
+    boostWriteUrl: row.boostWriteUrl?.trim() || undefined,
     thumbTone: "leaf",
     thumbUrl: publicThumbUrl(row.id, row.thumbUrl),
     comments: [],
@@ -110,6 +111,7 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
       focusNote: works.focusNote,
       scaffoldLines: works.scaffoldLines,
       externalUrl: works.externalUrl,
+      boostWriteUrl: works.boostWriteUrl,
       tags: works.tags,
       plan: works.plan,
       status: works.status,
@@ -144,6 +146,7 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
       focusNote: r.focusNote,
       scaffoldLines: r.scaffoldLines,
       externalUrl: r.externalUrl,
+      boostWriteUrl: r.boostWriteUrl,
       tags: r.tags,
       plan: r.plan,
       status: r.status,

@@ -14,6 +14,8 @@ export type LocalSeed = {
   /** 聞くこと／募集の目安（コース用。ご挨拶とは別） */
   scaffoldLines?: string[];
   externalUrl: string;
+  /** 公開ブースト: 書いて報告してほしい場所 */
+  boostWriteUrl?: string;
   tags: string[];
   status: "none" | "open" | "pay_soon" | "closed";
   prizeYen?: number;
@@ -290,6 +292,7 @@ export function installDemoSeeds(seederHandle: string): LocalSeed[] {
       focusNote: "ストア／SNSへの正直な反応を募集します。権限の怖さと何が片付くかを見てほしいです。",
       scaffoldLines: [...PUBLIC_BOOST.criteria],
       externalUrl: "https://example.com/ext",
+      boostWriteUrl: "https://example.com/ext",
       tags: ["アプリ"],
       status: "open",
       planLabel: "公開ブースト",
@@ -437,6 +440,7 @@ export function workFromLocalSeed(seed: LocalSeed): Work {
       return undefined;
     })(),
     externalUrl: seed.externalUrl,
+    boostWriteUrl: seed.boostWriteUrl?.trim() || undefined,
     thumbTone: "leaf",
     thumbUrl: seed.thumbDataUrl,
     comments: [],

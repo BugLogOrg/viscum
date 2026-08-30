@@ -89,6 +89,11 @@ export const works = pgTable("works", {
   /** 聞くこと／募集の目安（おすすめ質問） */
   scaffoldLines: jsonb("scaffold_lines").$type<string[]>(),
   externalUrl: text("external_url").notNull(),
+  /**
+   * 公開ブースト: メンターが書いて報告する場所のURL（作品URLと別可）
+   * ADR-060
+   */
+  boostWriteUrl: text("boost_write_url"),
   tags: jsonb("tags").$type<string[]>().notNull().default([]),
   /**
    * free_comment | first_impression | brush_up | public_boost
