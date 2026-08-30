@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { ViscumMark } from "@/components/ViscumMark";
 import { SiteFooter } from "@/components/SiteFooter";
+import { FaqOpenOnHash } from "./FaqOpenOnHash";
 
 export const metadata: Metadata = {
   title: "よくある質問",
@@ -110,6 +111,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
     ),
   },
   {
+    id: "fees",
     q: "手数料はいくつ？Stripeの分は別？",
     body: (
       <>
@@ -230,6 +232,26 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
   },
   {
     id: "writing",
+    q: "書くときの目安は？",
+    body: (
+      <>
+        <p>
+          専門家でなくても大丈夫です。率直な第一印象で十分。点をつけたり順位を決めたりはしません。「ここは伝わった」「ここで迷った」で書けます。
+        </p>
+        <ul className="list-disc space-y-2 pl-5">
+          <li>シーダーが聞いていることは入口。短くても具体的に返してもらえると助かります</li>
+          <li>おすすめ質問はそのままでも、気づいた追加・アレンジでもよい</li>
+          <li>読んで選ぶのはシーダー本人。厳しい指摘は歓迎ですが、ただ悪く言うだけは選出・褒賞が生まれにくいです</li>
+          <li>公開ブーストに参加するときは、外に書いたあと投稿URLなどを報告してください</li>
+          <li>直依頼が来たら、「やる」「いまは無理」だけで大丈夫。断っても問題ありません</li>
+        </ul>
+        <p>
+          「ほしい答えだけ強制」はしません。ズレた声も、次のシードの材料になります。コメントするだけなら口座登録は不要です。
+        </p>
+      </>
+    ),
+  },
+  {
     q: "聞きたいことと違うことばかり書かれたら？",
     body: (
       <>
@@ -461,6 +483,7 @@ export default function FaqPage() {
         </p>
 
         <div className="mt-10 space-y-3">
+          <FaqOpenOnHash />
           {FAQS.map((item) => (
             <details
               key={item.q}

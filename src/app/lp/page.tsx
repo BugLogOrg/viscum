@@ -99,7 +99,7 @@ export default function LandingPage() {
               href="/faq#writing"
               className="font-medium text-viscum-brand underline"
             >
-              書くときの目安（FAQ）
+              書くときの目安は？（FAQ）
             </Link>
           </p>
         </section>
@@ -164,13 +164,21 @@ export default function LandingPage() {
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             決済はStripeを利用します。カード情報や振込先をVISCUMが保持することはありません。コメントするだけなら口座登録も不要です。
           </p>
-          <p className="text-[13px]">
+          <p className="text-[13px] leading-relaxed">
+            <Link
+              href="/faq#fees"
+              className="font-medium text-viscum-brand underline"
+            >
+              手数料はいくつ？
+            </Link>
+            <span className="text-viscum-muted"> ／ </span>
             <Link
               href="/faq#stripe"
               className="font-medium text-viscum-brand underline"
             >
-              手数料・Stripeの詳細（FAQ）
+              Stripeの登録はいつ必要？
             </Link>
+            <span className="text-viscum-muted">（FAQ）</span>
           </p>
         </section>
 
