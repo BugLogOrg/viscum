@@ -5,6 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import type { Work } from "@/data/dummy-works";
+import {
+  EditableReorderList,
+  linesFromTexts,
+  textsFromLines,
+  type ReorderLine,
+} from "@/components/EditableReorderList";
 import { createRequestDm, formatRequestAmountLabel, coerceDirectRequestAmountYen, DIRECT_REQUEST_AMOUNT_PRESETS, DIRECT_REQUEST_DEADLINE_PRESETS, estimateSeederPaysYen } from "@/lib/local-request-dms";
 import { postRequestDm } from "@/lib/remote-requests";
 import {
@@ -66,6 +72,11 @@ function normalizeChecklist(rows: string[] | undefined): string[] {
   return cleaned.length ? cleaned.slice(0, MAX_DR_CHECKLIST) : [];
 }
 
+function samePromptTexts(a: string[], b: string[]) {
+  if (a.length !== b.length) return false;
+  return a.every((t, i) => t === b[i]);
+}
+
 type PitchFieldsMode = "all" | "greeting" | "prompts";
 
 /** ご挨拶＋聞きたいこと（compose親／フォーム内の両方で使う） */
@@ -83,9 +94,26 @@ export function DirectRequestPitchFields({
   /** all=両方／greeting=ご挨拶のみ／prompts=聞きたいことのみ（composeでタイトル直下に分ける用） */
   mode?: PitchFieldsMode;
 }) {
-  const rows = prompts.length > 0 ? prompts : [""];
   const showGreeting = mode === "all" || mode === "greeting";
   const showPrompts = mode === "all" || mode === "prompts";
+  const [promptLines, setPromptLines] = useState<ReorderLine[]>(() =>
+    linesFromTexts(prompts.length > 0 ? prompts : [""]),
+  );
+
+  useEffect(() => {
+    const incoming = prompts.length > 0 ? prompts : [""];
+    if (samePromptTexts(textsFromLines(promptLines), incoming)) return;
+    setPromptLines(linesFromTexts(incoming));
+    // promptLines は意図的に deps 外（自分の onChange で親が同じ配列を返す循環を避ける）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prompts]);
+
+  function handlePromptLinesChange(next: ReorderLine[]) {
+    setPromptLines(next);
+    const texts = textsFromLines(next);
+    onPromptsChange(texts.length ? texts : [""]);
+  }
+
   return (
     <div className="space-y-4">
       {showGreeting ? (
@@ -121,52 +149,18 @@ export function DirectRequestPitchFields({
             <span className="font-normal text-viscum-muted">任意・リスト</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            コンペの「聞くこと」と同じおすすめ質問です。ログイン後の着地に載ります（案内文のコピペには入れません）。
+            コンペの「聞くこと」と同じ足場です。編集・追加・削除・並べ替えできます。左のつまみをドラッグ。ログイン後の着地に載ります（案内文のコピペには入れません・最大
+            {MAX_DR_CHECKLIST}）。
           </p>
-          <ul className="mt-2 space-y-2">
-            {rows.map((q, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
-                  {i + 1}.
-                </span>
-                <input
-                  type="text"
-                  value={q}
-                  onChange={(e) => {
-                    const next = [...rows];
-                    next[i] = e.target.value;
-                    onPromptsChange(next);
-                  }}
-                  className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
-                  placeholder="例: 初見で迷う導線はあるか"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (rows.length <= 1) {
-                      onPromptsChange([""]);
-                      return;
-                    }
-                    onPromptsChange(rows.filter((_, j) => j !== i));
-                  }}
-                  disabled={rows.length <= 1 && !rows[0]?.trim()}
-                  className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
-                  aria-label={`項目${i + 1}を削除`}
-                >
-                  削除
-                </button>
-              </li>
-            ))}
-          </ul>
-          {rows.length < MAX_DR_CHECKLIST ? (
-            <button
-              type="button"
-              onClick={() => onPromptsChange([...rows, ""])}
-              className="mt-2 text-[13px] font-medium text-viscum-brand underline"
-            >
-              ＋項目を追加
-            </button>
-          ) : null}
+          <EditableReorderList
+            items={promptLines}
+            onChange={handlePromptLinesChange}
+            max={MAX_DR_CHECKLIST}
+            addLabel="＋項目を追加"
+            newItemText=""
+            inputClassName="text-[14px]"
+            placeholder="例: 初見で迷う導線はあるか"
+          />
         </div>
       ) : null}
     </div>
@@ -1297,26 +1291,18 @@ export function DirectRequestForm({
             >
               {sending ? "送信中…" : "直依頼を送る"}
             </button>
-          ) : (
+          ) : !inviteFixed ? (
             <button
               type="button"
               disabled={inviteBusy || !canCopyOutbound}
               onClick={() => {
-                if (!inviteFixed) {
-                  void fixOutboundInvite();
-                  return;
-                }
-                void copyShareText();
+                void fixOutboundInvite();
               }}
               className="rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white disabled:opacity-50 sm:flex-[1.4]"
             >
-              {inviteBusy
-                ? "確定中…"
-                : inviteFixed
-                  ? "案内文を再コピー"
-                  : "リンクを確定"}
+              {inviteBusy ? "確定中…" : "リンクを確定"}
             </button>
-          )}
+          ) : null}
         </div>
       </form>
     </div>

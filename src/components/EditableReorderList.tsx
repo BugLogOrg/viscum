@@ -59,6 +59,7 @@ function SortableRow({
   index,
   canDelete,
   inputClassName,
+  placeholder,
   onTextChange,
   onRemove,
 }: {
@@ -66,6 +67,7 @@ function SortableRow({
   index: number;
   canDelete: boolean;
   inputClassName: string;
+  placeholder?: string;
   onTextChange: (id: string, value: string) => void;
   onRemove: (id: string) => void;
 }) {
@@ -110,8 +112,9 @@ function SortableRow({
       <input
         type="text"
         value={line.text}
+        placeholder={placeholder}
         onChange={(e) => onTextChange(line.id, e.target.value)}
-        className={`min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-viscum-ink focus:border-viscum-brand focus:outline-none ${inputClassName}`}
+        className={`min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none ${inputClassName}`}
       />
       <button
         type="button"
@@ -134,6 +137,7 @@ type Props = {
   /** 追加時の初期テキスト */
   newItemText?: string;
   inputClassName?: string;
+  placeholder?: string;
   emptyError?: string | null;
 };
 
@@ -145,6 +149,7 @@ export function EditableReorderList({
   addLabel,
   newItemText = "",
   inputClassName = "text-[13px]",
+  placeholder,
   emptyError = null,
 }: Props) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -208,6 +213,7 @@ export function EditableReorderList({
                 index={i}
                 canDelete={items.length > 1}
                 inputClassName={inputClassName}
+                placeholder={placeholder}
                 onTextChange={setText}
                 onRemove={remove}
               />

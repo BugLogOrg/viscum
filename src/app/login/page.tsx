@@ -5,6 +5,7 @@ import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
+import { rememberPendingLoginEmail } from "@/lib/pending-login-email";
 
 function safeCallback(raw: string | null): string {
   if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
@@ -63,9 +64,11 @@ export default function LoginPage() {
     setError(null);
     const callbackUrl = readCallback();
     rememberPostOnboarding(callbackUrl);
+    const to = email.trim();
+    rememberPendingLoginEmail(to);
     // 着地は必ずウェルカム（英語ID）。済みの人は handle ページ側で飛ばす
     const res = await signIn("resend", {
-      email: email.trim(),
+      email: to,
       redirect: false,
       callbackUrl: "/onboarding/handle",
     });
@@ -76,7 +79,7 @@ export default function LoginPage() {
       );
       return;
     }
-    const q = new URLSearchParams({ email: email.trim() });
+    const q = new URLSearchParams({ email: to });
     window.location.href = `/login/check-email?${q.toString()}`;
   }
 

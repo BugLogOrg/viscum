@@ -124,6 +124,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             from: `VISCUM <${emailFrom}>`,
             async sendVerificationRequest({ identifier, url }) {
               const { host } = new URL(url);
+              const to = identifier.trim();
               const res = await fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: {
@@ -132,10 +133,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 },
                 body: JSON.stringify({
                   from: `VISCUM <${emailFrom}>`,
-                  to: [identifier],
+                  to: [to],
                   subject: "【VISCUM】ログイン用リンク",
                   text: [
                     "VISCUM へのログインリンクです。",
+                    "",
+                    `宛先: ${to}`,
                     "",
                     url,
                     "",
@@ -144,6 +147,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                   ].join("\n"),
                   html: `
                     <p>VISCUM へのログインリンクです。</p>
+                    <p style="color:#444;font-size:14px">このメールの宛先: <strong>${to.replace(/</g, "&lt;")}</strong></p>
                     <p><a href="${url}">ログインする</a></p>
                     <p style="color:#666;font-size:12px">リンクが開けない場合は次のURLをブラウザに貼ってください。<br/>${url}</p>
                     <p style="color:#666;font-size:12px">有効期限が過ぎた場合は、もう一度ログイン画面から送ってください。</p>
