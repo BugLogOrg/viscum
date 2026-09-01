@@ -53,7 +53,7 @@ export function buildOutboundInviteShareText(input: {
     `■ 作品（タイトルのみ）\n` +
     `${input.workTitle.trim() || "（タイトル）"}\n` +
     `\n` +
-    `■ 謝礼\n` +
+    `■ 褒賞\n` +
     `${input.amountLabel}\n` +
     `\n` +
     `詳細・作品URL・希望日は、下記リンク先でログイン後にご覧いただけます。\n` +

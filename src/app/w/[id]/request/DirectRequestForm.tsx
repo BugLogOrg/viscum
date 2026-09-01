@@ -694,7 +694,7 @@ export function DirectRequestForm({
     const ensured = await ensureInvitePath();
     if (!ensured) return;
     setCopyNote(
-      "リンクを確定しました。謝礼額はこの招待に固定されています。案内文をコピーして相手に送ってください（この画面は開きっぱなしで大丈夫です）。",
+      "リンクを確定しました。褒賞額はこの招待に固定されています。案内文をコピーして相手に送ってください（この画面は開きっぱなしで大丈夫です）。",
     );
   }
 
@@ -892,7 +892,7 @@ export function DirectRequestForm({
       >
         <div>
           <p className="text-[13px] font-medium text-viscum-ink">
-            謝礼（相手に見える褒賞）{" "}
+            褒賞（相手に見える額）{" "}
             <span className="text-viscum-berry">必須</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
@@ -1171,8 +1171,8 @@ export function DirectRequestForm({
           <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
             {delivery === "outbound"
               ? inviteFixed
-                ? "リンク確定済み。案内文はタイトル・謝礼・招待URLだけ（作品URLや詳細は載せません）。相手は未ログインだと概要まで、ログイン後に詳細・作品URL・希望日が見えます。"
-                : "まだ未確定です。下の「リンクを確定」で招待URLが案内文末尾に入り、謝礼も固定されます。"
+                ? "リンク確定済み。案内文はタイトル・褒賞・招待URLだけ（作品URLや詳細は載せません）。相手は未ログインだと概要まで、ログイン後に詳細・作品URL・希望日が見えます。"
+                : "まだ未確定です。下の「リンクを確定」で招待URLが案内文末尾に入り、褒賞も固定されます。"
               : "届け方に合わせて内部用（短い）の文面です。呼び出しのあと、念押し用に送れます（任意）。"}
           </p>
           <textarea
