@@ -277,10 +277,11 @@ export async function GET(req: Request) {
   const from = fromRows[0];
 
   const requestRows = await db
-    .select({ id: requestDms.id })
+    .select({ id: requestDms.id, status: requestDms.status })
     .from(requestDms)
     .where(eq(requestDms.inviteId, id))
     .limit(1);
+  const requestRow = requestRows[0];
 
   const session = await auth();
   const isLoggedIn = Boolean(session?.user?.id);
@@ -306,6 +307,9 @@ export async function GET(req: Request) {
         teaserSummary: teaser,
         ...(thumbPublic ? { workThumbUrl: thumbPublic } : {}),
         ...(pitchPublic ? { pitch: pitchPublic } : {}),
+        ...(requestRow
+          ? { requestId: requestRow.id, requestStatus: requestRow.status }
+          : {}),
       },
       persisted: true,
     });
@@ -326,7 +330,8 @@ export async function GET(req: Request) {
       fromAccountName,
       createdAt: row.createdAt.toISOString(),
       closesAt: row.closesAt ? row.closesAt.toISOString() : undefined,
-      requestId: requestRows[0]?.id,
+      requestId: requestRow?.id,
+      requestStatus: requestRow?.status,
       ...(isOwner ? { viewCount: row.viewCount ?? 0 } : {}),
     },
     persisted: true,

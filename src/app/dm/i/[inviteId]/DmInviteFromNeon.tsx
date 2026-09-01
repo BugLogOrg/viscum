@@ -25,6 +25,7 @@ export type PublicDmInvite = {
   createdAt?: string;
   closesAt?: string;
   requestId?: string;
+  requestStatus?: string;
 };
 
 /**
@@ -55,6 +56,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const [declining, setDeclining] = useState(false);
   const [declinedOk, setDeclinedOk] = useState(false);
   const [declineError, setDeclineError] = useState<string | null>(null);
+  const [accepting, setAccepting] = useState(false);
 
   useEffect(() => {
     if (authStatus === "loading") return;
@@ -229,6 +231,10 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
     Boolean(handle) &&
     handle.toLowerCase() === invite.fromHandle.replace(/^@/, "").toLowerCase();
   const depth = reveal === "full" && isLoggedIn ? "full" : "teaser";
+  const requestPending =
+    !invite.requestStatus || invite.requestStatus === "pending";
+  const showDecide =
+    !isOwnInvite && requestPending && !declinedOk && !sentOk;
 
   async function declineWithoutLogin() {
     if (declining || isOwnInvite || !invite) return;
@@ -258,6 +264,40 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       setDeclineError("ネットワークエラー");
     } finally {
       setDeclining(false);
+    }
+  }
+
+  async function acceptWhenReady() {
+    if (accepting || isOwnInvite || !invite) return;
+    if (!canWrite) {
+      router.push(acceptHref);
+      return;
+    }
+    setAccepting(true);
+    setIntentNote("引き受けを確定しています…");
+    try {
+      const res = await fetch("/api/dm-invites/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inviteId: invite.id,
+          status: "accepted",
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        path?: string;
+        error?: string;
+      };
+      if (res.ok && data.ok && data.path) {
+        router.replace(data.path);
+        return;
+      }
+      setIntentNote(data.error || "引き受けを確定できませんでした");
+    } catch {
+      setIntentNote("ネットワークエラー");
+    } finally {
+      setAccepting(false);
     }
   }
 
@@ -346,11 +386,40 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
               <>
                 <SeederCredibilityLink handle={invite.fromHandle} />
 
+                {showDecide ? (
+                  <section className="space-y-2 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+                    <p className="text-[13px] font-medium text-viscum-ink">
+                      このお願いへの返事
+                    </p>
+                    <p className="text-[12px] leading-relaxed text-viscum-muted">
+                      「いまは無理」はログイン不要です。お礼を伝えて案内を閉じ、依頼主に通知します。
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={accepting || declining}
+                        onClick={() => void acceptWhenReady()}
+                        className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                      >
+                        {accepting ? "確定中…" : "やる"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={accepting || declining}
+                        onClick={() => void declineWithoutLogin()}
+                        className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+                      >
+                        {declining ? "閉じています…" : "いまは無理（辞退）"}
+                      </button>
+                    </div>
+                  </section>
+                ) : null}
+
                 <section className="rounded-xl border border-viscum-brand/30 bg-white/70 px-4 py-4">
                   <p className="text-[13px] font-medium text-viscum-ink">
                     {isOwnInvite
                       ? "このお願いのやりとり"
-                      : "依頼主へ返事する"}
+                      : "依頼主へメッセージを送る"}
                   </p>
                   <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
                     {isOwnInvite ? (
@@ -359,10 +428,15 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                         <strong>ご依頼DM</strong>
                         に入ります（相手への返事待ちでも、あとから追記できます）。
                       </>
+                    ) : canWrite ? (
+                      <>
+                        ここに書いた内容は、依頼主の<strong>ご依頼DM</strong>
+                        に届きます（作品の公開コメント欄には残りません）。
+                      </>
                     ) : (
                       <>
                         ここに書いた内容は、依頼主の<strong>ご依頼DM</strong>
-                        に届きます（作品の公開コメント欄には残りません）。ログインが必要です（無料）。
+                        に届きます（作品の公開コメント欄には残りません）。英語IDの設定が必要です（無料）。
                       </>
                     )}
                   </p>
