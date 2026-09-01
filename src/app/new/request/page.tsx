@@ -122,8 +122,8 @@ export default function NewDirectRequestPage() {
   const draftWork: Work = useMemo(
     () => ({
       id: persistedId ?? DRAFT_WORK_ID,
-      title: title.trim() || "（タイトル未入力）",
-      tagline: (title.trim() || "直依頼").slice(0, 100),
+      title: title.trim().slice(0, 100) || "（タイトル未入力）",
+      tagline: (title.trim().slice(0, 100) || "直依頼").slice(0, 100),
       seeder: handle || "anon",
       tags: [],
       status: "none",
@@ -162,7 +162,7 @@ export default function NewDirectRequestPage() {
       if (i >= 0) {
         seeds[i] = {
           ...seeds[i],
-          title: title.trim(),
+          title: title.trim().slice(0, 100),
           description: description.trim(),
           externalUrl: externalUrl.trim(),
           focusNote,
@@ -174,7 +174,7 @@ export default function NewDirectRequestPage() {
       return {
         ...draftWork,
         id: persistedId,
-        title: title.trim(),
+        title: title.trim().slice(0, 100),
         description: description.trim(),
         externalUrl: externalUrl.trim(),
         prompts: checklistClean.length ? checklistClean : undefined,
@@ -200,7 +200,7 @@ export default function NewDirectRequestPage() {
             seederAccountName.toLowerCase() !== seederHandle.toLowerCase()
               ? seederAccountName
               : undefined,
-          title: title.trim(),
+          title: title.trim().slice(0, 100),
           description: description.trim(),
           externalUrl: externalUrl.trim(),
           focusNote,
@@ -270,10 +270,10 @@ export default function NewDirectRequestPage() {
         <div>
           <p className="text-xs text-viscum-muted">指名して頼む</p>
           <h1 className="mt-1 text-xl font-semibold text-viscum-ink">
-            直依頼（一枚で設定）
+            特定の人に頼む
           </h1>
           <p className="mt-2 text-[13px] leading-relaxed text-viscum-muted">
-            シード棚には出ません（別ID）。見てほしいもの・金額・相手・連絡文までこの画面で揃えます。
+            シード棚には出ません。相手への案内文までこの画面で揃えます。
           </p>
           <p className="mt-2 text-[12px]">
             <Link href="/new" className="text-viscum-brand underline">
@@ -290,14 +290,29 @@ export default function NewDirectRequestPage() {
             <label className="block text-[13px] font-medium text-viscum-ink">
               タイトル <span className="text-viscum-berry">必須</span>
             </label>
+            <p className="mt-0.5 text-[12px] text-viscum-muted">
+              相手に渡すヘッドライン。案内文と着地の先頭に出ます。
+            </p>
             <textarea
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              rows={3}
-              placeholder="何を見てほしいか。相手に渡すヘッドライン"
+              onChange={(e) => setTitle(e.target.value.slice(0, 100))}
+              rows={2}
+              maxLength={100}
+              placeholder="何を見てほしいか"
               className="mt-1.5 w-full rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[15px] leading-snug text-viscum-ink placeholder:text-viscum-muted focus:border-viscum-brand focus:outline-none"
             />
+            <p className="mt-1 text-right text-[11px] text-viscum-muted">
+              {title.length}/100
+            </p>
           </div>
+
+          <DirectRequestPitchFields
+            mode="greeting"
+            message={pitch}
+            onMessageChange={setPitch}
+            prompts={checklist}
+            onPromptsChange={setChecklist}
+          />
 
           <div>
             <p className="text-[13px] font-medium text-viscum-ink">
@@ -370,7 +385,7 @@ export default function NewDirectRequestPage() {
               見てほしいURL <span className="text-viscum-berry">必須</span>
             </label>
             <p className="mt-0.5 text-[12px] text-viscum-muted">
-              相手に開いてほしいページ・作品・デモのURLです。
+              相手に開いてほしいページ・作品・デモのURLです（ログイン後に表示）。
             </p>
             <input
               type="url"
@@ -383,6 +398,7 @@ export default function NewDirectRequestPage() {
           </div>
 
           <DirectRequestPitchFields
+            mode="prompts"
             message={pitch}
             onMessageChange={setPitch}
             prompts={checklist}
@@ -408,7 +424,7 @@ export default function NewDirectRequestPage() {
         </section>
 
         <p className="text-center text-[11px] text-viscum-muted">
-          このメモはシード棚に公開されません。IDも棚シードとは別です。
+          この内容はシード棚に公開されません。
         </p>
 
         {cropSrc && (

@@ -66,98 +66,109 @@ function normalizeChecklist(rows: string[] | undefined): string[] {
   return cleaned.length ? cleaned.slice(0, MAX_DR_CHECKLIST) : [];
 }
 
+type PitchFieldsMode = "all" | "greeting" | "prompts";
+
 /** ご挨拶＋聞きたいこと（compose親／フォーム内の両方で使う） */
 export function DirectRequestPitchFields({
   message,
   onMessageChange,
   prompts,
   onPromptsChange,
+  mode = "all",
 }: {
   message: string;
   onMessageChange: (v: string) => void;
   prompts: string[];
   onPromptsChange: (v: string[]) => void;
+  /** all=両方／greeting=ご挨拶のみ／prompts=聞きたいことのみ（composeでタイトル直下に分ける用） */
+  mode?: PitchFieldsMode;
 }) {
   const rows = prompts.length > 0 ? prompts : [""];
+  const showGreeting = mode === "all" || mode === "greeting";
+  const showPrompts = mode === "all" || mode === "prompts";
   return (
     <div className="space-y-4">
-      <div>
-        <label
-          htmlFor="request-message"
-          className="text-[13px] font-medium text-viscum-ink"
-        >
-          ご挨拶{" "}
-          <span className="font-normal text-viscum-muted">任意</span>
-        </label>
-        <p className="mt-0.5 text-[12px] text-viscum-muted">
-          自己紹介や「なぜ頼むか」など。空でも進めます。未ログインの着地にも出ます（最大1000字・http(s)のURL可）。
-        </p>
-        <textarea
-          id="request-message"
-          rows={4}
-          maxLength={1000}
-          value={message}
-          onChange={(e) => onMessageChange(e.target.value)}
-          className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
-          placeholder="例: ○○です。実績→ https://…／初見だけ見てほしいです"
-        />
-        <p className="mt-1 text-right text-[11px] text-viscum-muted">
-          {message.length}/1000
-        </p>
-      </div>
-      <div>
-        <p className="text-[13px] font-medium text-viscum-ink">
-          聞きたいこと{" "}
-          <span className="font-normal text-viscum-muted">任意・リスト</span>
-        </p>
-        <p className="mt-0.5 text-[12px] text-viscum-muted">
-          コンペの「聞くこと」と同じおすすめ質問です。案内文は箇条書き、リンク先にも載ります（概要の長文はコピペには入れません）。
-        </p>
-        <ul className="mt-2 space-y-2">
-          {rows.map((q, i) => (
-            <li key={i} className="flex gap-2">
-              <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
-                {i + 1}.
-              </span>
-              <input
-                type="text"
-                value={q}
-                onChange={(e) => {
-                  const next = [...rows];
-                  next[i] = e.target.value;
-                  onPromptsChange(next);
-                }}
-                className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
-                placeholder="例: 初見で迷う導線はあるか"
-              />
-              <button
-                type="button"
-                onClick={() => {
-                  if (rows.length <= 1) {
-                    onPromptsChange([""]);
-                    return;
-                  }
-                  onPromptsChange(rows.filter((_, j) => j !== i));
-                }}
-                disabled={rows.length <= 1 && !rows[0]?.trim()}
-                className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
-                aria-label={`項目${i + 1}を削除`}
-              >
-                削除
-              </button>
-            </li>
-          ))}
-        </ul>
-        {rows.length < MAX_DR_CHECKLIST ? (
-          <button
-            type="button"
-            onClick={() => onPromptsChange([...rows, ""])}
-            className="mt-2 text-[13px] font-medium text-viscum-brand underline"
+      {showGreeting ? (
+        <div>
+          <label
+            htmlFor="request-message"
+            className="text-[13px] font-medium text-viscum-ink"
           >
-            ＋項目を追加
-          </button>
-        ) : null}
-      </div>
+            ご挨拶{" "}
+            <span className="font-normal text-viscum-muted">任意</span>
+          </label>
+          <p className="mt-0.5 text-[12px] text-viscum-muted">
+            なぜ頼むか・自己紹介など。空でも可。相手の着地にも出ます（最大1000字・URL可）。
+          </p>
+          <textarea
+            id="request-message"
+            rows={4}
+            maxLength={1000}
+            value={message}
+            onChange={(e) => onMessageChange(e.target.value)}
+            className="mt-1.5 w-full resize-y rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[14px] text-viscum-ink placeholder:text-viscum-muted"
+            placeholder="例: ○○です。実績→ https://…／初見だけ見てほしいです"
+          />
+          <p className="mt-1 text-right text-[11px] text-viscum-muted">
+            {message.length}/1000
+          </p>
+        </div>
+      ) : null}
+      {showPrompts ? (
+        <div>
+          <p className="text-[13px] font-medium text-viscum-ink">
+            聞きたいこと{" "}
+            <span className="font-normal text-viscum-muted">任意・リスト</span>
+          </p>
+          <p className="mt-0.5 text-[12px] text-viscum-muted">
+            コンペの「聞くこと」と同じおすすめ質問です。ログイン後の着地に載ります（案内文のコピペには入れません）。
+          </p>
+          <ul className="mt-2 space-y-2">
+            {rows.map((q, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="mt-2 w-5 shrink-0 text-[12px] text-viscum-muted">
+                  {i + 1}.
+                </span>
+                <input
+                  type="text"
+                  value={q}
+                  onChange={(e) => {
+                    const next = [...rows];
+                    next[i] = e.target.value;
+                    onPromptsChange(next);
+                  }}
+                  className="min-w-0 flex-1 rounded-md border border-viscum-line bg-white/80 px-3 py-2 text-[14px] text-viscum-ink focus:border-viscum-brand focus:outline-none"
+                  placeholder="例: 初見で迷う導線はあるか"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (rows.length <= 1) {
+                      onPromptsChange([""]);
+                      return;
+                    }
+                    onPromptsChange(rows.filter((_, j) => j !== i));
+                  }}
+                  disabled={rows.length <= 1 && !rows[0]?.trim()}
+                  className="shrink-0 rounded-md border border-viscum-line px-2 py-1 text-[12px] text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry disabled:opacity-40"
+                  aria-label={`項目${i + 1}を削除`}
+                >
+                  削除
+                </button>
+              </li>
+            ))}
+          </ul>
+          {rows.length < MAX_DR_CHECKLIST ? (
+            <button
+              type="button"
+              onClick={() => onPromptsChange([...rows, ""])}
+              className="mt-2 text-[13px] font-medium text-viscum-brand underline"
+            >
+              ＋項目を追加
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -891,7 +902,7 @@ export function DirectRequestForm({
             <span className="text-viscum-berry">必須</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            ここに入れた額が、そのままメンターに見える褒賞です。手数料はメンターから引きません。完了時のカード支払いでシーダー側に約10%（決済込み）を上乗せします（送った時点ではカード不要）。近い相手は無料も可。
+            相手に見える額です。手数料はあなた負担（約10%・完了時）。送った時点ではカード不要。近い相手は無料も可。
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIRECT_REQUEST_AMOUNT_PRESETS.map((yen) => {
@@ -958,11 +969,11 @@ export function DirectRequestForm({
             </div>
           ) : null}
           <p className="mt-1.5 text-[12px] text-viscum-ink">
-            褒賞（メンター向け）: {formatRequestAmountLabel(amountYen)}
+            褒賞（相手に渡す額）: {formatRequestAmountLabel(amountYen)}
           </p>
           {seederPayHint ? (
             <p className="mt-0.5 text-[12px] text-viscum-muted">
-              完了時のシーダー支払い目安: 約{" "}
+              完了時のあなたのお支払い目安: 約{" "}
               {formatRequestAmountLabel(seederPayHint.seederPaysYen)}
               （褒賞の約10%・決済込み）
             </p>
@@ -1147,14 +1158,11 @@ export function DirectRequestForm({
           <div className="rounded-lg border border-dashed border-viscum-line bg-white/40 px-3 py-3 text-[12px] leading-relaxed text-viscum-muted">
             <p className="font-medium text-viscum-ink">VISCUM外への届け方</p>
             <p className="mt-1">
-              相手をViscum上で選ぶ必要はありません。流れは{" "}
+              相手をViscum上で選ぶ必要はありません。{" "}
               <strong className="font-medium text-viscum-ink">
-                ①下の「リンクを確定」→ ②案内文をコピーして外へ貼る
+                ①リンクを確定 → ②案内文をコピーして送る
               </strong>
-              。確定のときに招待URLとやりとりスレ（返事待ち）が発行されます。
-            </p>
-            <p className="mt-1">
-              謝礼額は確定時にスレへ固定（この時点ではカード不要。完了時払い）。メール欄からの直送はまだありません。
+              。この時点ではカード不要です。
             </p>
           </div>
         )}

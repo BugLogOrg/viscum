@@ -93,7 +93,7 @@ export function DirectRequestOfferCard({
           ) : null}
           {depth === "teaser" ? (
             <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
-              直依頼です。詳細・作品URL・希望日はログイン後に表示します。
+              指名でのお願いです。詳細・作品URL・希望日はログイン後に表示します。
               <span className="mt-1 block text-viscum-ink">
                 見る・返事するだけで、あなたから課金されることはありません（手数料は依頼主負担）。
               </span>
@@ -138,7 +138,7 @@ export function DirectRequestOfferCard({
 
             <div className="space-y-2">
               <p className="text-[12px] text-viscum-muted">
-                お願いしたいことの概要
+                お願いの概要
               </p>
               <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
                 {teaserBody}
@@ -154,8 +154,7 @@ export function DirectRequestOfferCard({
                 VISCUMって何？
               </p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-ink">
-                個人の作品を出して、必要なときだけフィードバックをお願いする場です。
-                入場無料。稼ぐ副業アプリではなく、小さな広告費の出口として使います。
+                個人の作品に、必要なときだけ反応をお願いする場です。見るだけ無料。返事する側に課金はありません。
               </p>
               <p className="mt-2 text-[12px] leading-relaxed text-viscum-muted">
                 初めての方は、ログイン前にサービス説明と流れを確認できます。

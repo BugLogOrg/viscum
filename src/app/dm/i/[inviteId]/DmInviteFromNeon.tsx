@@ -291,7 +291,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                     VISCUMって何？
                   </p>
                   <p className="mt-1.5 text-[12px] leading-relaxed text-viscum-muted">
-                    シーダー（種を撒く人）が作品を出し、必要なときだけコメントをお願いする場。入場無料。稼ぐ副業アプリではなく、小さな広告費の出口です。
+                    個人の作品に、必要なときだけ反応をお願いする場です。見るだけ無料。返事する側に課金はありません。
                   </p>
                   <Link
                     href="/lp"
