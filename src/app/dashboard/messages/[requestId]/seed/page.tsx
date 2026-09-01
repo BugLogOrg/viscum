@@ -172,6 +172,9 @@ export default function RequestSeedDetailPage() {
   const fromDisplay =
     row.fromAccountName?.trim() ||
     displayAccountName(row.fromHandle, readLocalProfile(row.fromHandle));
+  const isSeeder =
+    Boolean(handle) &&
+    row.fromHandle.replace(/^@/, "").toLowerCase() === handle!.toLowerCase();
   const inviteHref = row.inviteId
     ? `/dm/i/${encodeURIComponent(row.inviteId)}`
     : null;
@@ -181,18 +184,24 @@ export default function RequestSeedDetailPage() {
       <SiteHeader backHref={threadHref} hideOnMd hidePostCta />
       <main className="mx-auto max-w-lg pb-10">
         <p className="px-4 pt-4 text-[12px] text-viscum-muted">
-          ご依頼内容の控え（相手に渡す案内ページと同型・下書きではありません）
-          {inviteHref ? (
+          {isSeeder ? (
             <>
-              {" · "}
-              <Link
-                href={inviteHref}
-                className="font-medium text-viscum-brand underline"
-              >
-                案内ページを開く
-              </Link>
+              ご依頼内容の控え（相手に渡す案内ページと同型・下書きではありません）
+              {inviteHref ? (
+                <>
+                  {" · "}
+                  <Link
+                    href={inviteHref}
+                    className="font-medium text-viscum-brand underline"
+                  >
+                    案内ページを開く
+                  </Link>
+                </>
+              ) : null}
             </>
-          ) : null}
+          ) : (
+            "ご依頼内容"
+          )}
         </p>
         <DirectRequestOfferCard
           snapshot={{

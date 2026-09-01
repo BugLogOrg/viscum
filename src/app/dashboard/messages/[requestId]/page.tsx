@@ -544,7 +544,7 @@ export default function RequestDmThreadPage() {
             ) : null}
           </h1>
           <p className="text-[12px] text-viscum-muted">
-            {inviteHref && inviteShareOpen ? (
+            {isSeeder && inviteHref && inviteShareOpen ? (
               <>
                 <Link
                   href={inviteHref}
@@ -557,7 +557,7 @@ export default function RequestDmThreadPage() {
               "ご依頼ごとのやりとり"
             )}
           </p>
-          {row.outboundUnassigned && inviteShareOpen ? (
+          {isSeeder && row.outboundUnassigned && inviteShareOpen ? (
             <p className="mt-2 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
               相手はまだ返事待ちです。LINEやメールに貼るのは「案内ページ」のリンク（案内文の末尾）です。下のカードはその案内の中身の控えで、下書きではありません。このタブは返事が来たあとに使うやりとり画面です。
             </p>
