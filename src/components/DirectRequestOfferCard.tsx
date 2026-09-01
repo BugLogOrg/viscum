@@ -24,6 +24,8 @@ export function DirectRequestOfferCard({
   afterBody,
   depth = "full",
   loginHref,
+  loginAcceptHref,
+  loginDeclineHref,
 }: {
   snapshot: DirectRequestOfferSnapshot;
   /** 省略時: 「{名前} から、あなた宛てのお願いです」 */
@@ -32,8 +34,12 @@ export function DirectRequestOfferCard({
   belowReward?: ReactNode;
   afterBody?: ReactNode;
   depth?: "teaser" | "full";
-  /** teaser 時のログインCTA先 */
+  /** teaser 時のログインCTA先（詳細用・任意） */
   loginHref?: string;
+  /** teaser: 「やる」→ログイン後に引き受け */
+  loginAcceptHref?: string;
+  /** teaser: 「いまは無理」→ログイン後に辞退 */
+  loginDeclineHref?: string;
 }) {
   const { description, prompts } = splitRequestSummary(snapshot.workSummary);
   const thumbUrl = snapshot.workThumbUrl?.trim() || "";
@@ -60,6 +66,9 @@ export function DirectRequestOfferCard({
       <span className="block">あなた宛てのお願いです</span>
     </>
   );
+
+  const showTeaserReply =
+    depth === "teaser" && Boolean(loginAcceptHref && loginDeclineHref);
 
   return (
     <div className="overflow-hidden bg-viscum-paper text-viscum-ink">
@@ -137,9 +146,7 @@ export function DirectRequestOfferCard({
             ) : null}
 
             <div className="space-y-2">
-              <p className="text-[12px] text-viscum-muted">
-                お願いの概要
-              </p>
+              <p className="text-[12px] text-viscum-muted">お願いの概要</p>
               <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
                 {teaserBody}
               </p>
@@ -148,6 +155,46 @@ export function DirectRequestOfferCard({
             <p className="rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
               ※このリンクは特定の方へのご案内です。転送・SNS等での公開はご遠慮ください。
             </p>
+
+            {showTeaserReply ? (
+              <div className="space-y-2 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+                <p className="text-[13px] font-medium text-viscum-ink">
+                  このお願いへの返事
+                </p>
+                <p className="text-[12px] leading-relaxed text-viscum-muted">
+                  ログイン（無料）のあと、引き受けか辞退を確定します。「いまは無理」で辞退するとスレは閉じ、案内リンクも無効になります。あなたから課金はありません。
+                </p>
+                <div className="flex gap-2">
+                  <a
+                    href={loginAcceptHref}
+                    className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep"
+                  >
+                    やる
+                  </a>
+                  <a
+                    href={loginDeclineHref}
+                    className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
+                  >
+                    いまは無理（辞退）
+                  </a>
+                </div>
+                <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
+                  作品URL・お願いの詳細・希望日はログイン後に表示します。身に覚えがない場合は閉じて大丈夫です。
+                </p>
+              </div>
+            ) : loginHref ? (
+              <div className="space-y-2">
+                <a
+                  href={loginHref}
+                  className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+                >
+                  ログインして詳細を見る
+                </a>
+                <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
+                  アカウント作成も同じ画面からできます（無料）。身に覚えがない場合は閉じて大丈夫です。
+                </p>
+              </div>
+            ) : null}
 
             <section className="rounded-xl border border-viscum-leaf/40 bg-viscum-leaf-soft/30 px-4 py-4">
               <p className="text-[13px] font-medium text-viscum-leaf-deep">
@@ -178,20 +225,6 @@ export function DirectRequestOfferCard({
                 </Link>
               </div>
             </section>
-
-            {loginHref ? (
-              <div className="space-y-2">
-                <a
-                  href={loginHref}
-                  className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
-                >
-                  ログインして詳細を見る
-                </a>
-                <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
-                  アカウント作成も同じ画面からできます（無料）。身に覚えがない場合は閉じて大丈夫です。
-                </p>
-              </div>
-            ) : null}
           </section>
         ) : (
           <section className="space-y-4">

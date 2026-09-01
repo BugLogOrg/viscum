@@ -153,9 +153,11 @@ export default function LoginPage() {
           <button
             type="button"
             className="mt-4 w-full rounded-md border border-viscum-line px-4 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2"
-            onClick={() =>
-              signIn("github", { callbackUrl: "/onboarding/handle" })
-            }
+            onClick={() => {
+              const callbackUrl = readCallback();
+              rememberPostOnboarding(callbackUrl);
+              void signIn("github", { callbackUrl: "/onboarding/handle" });
+            }}
           >
             GitHubでログイン
           </button>

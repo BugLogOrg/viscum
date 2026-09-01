@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { ViscumMark } from "@/components/ViscumMark";
@@ -23,21 +24,29 @@ export type PublicDmInvite = {
   fromAccountName?: string;
   createdAt?: string;
   closesAt?: string;
+  requestId?: string;
 };
 
 /**
  * Neon 招待スナップショット着地。local_* でも別端末で開ける。
- * 未ログインは teaser（タイトル・概要・金額）。詳細はログイン後。
+ * 未ログインは teaser（サムネ・タイトル・概要・金額・返事の選択肢）。詳細はログイン後。
  */
 export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status: authStatus } = useSession();
   const handle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
   const canWrite = Boolean(session?.user?.id && handle);
   const isLoggedIn = Boolean(session?.user?.id);
+  const intentRaw = searchParams.get("intent")?.trim().toLowerCase() ?? "";
+  const intent =
+    intentRaw === "accept" || intentRaw === "decline" ? intentRaw : null;
+  const intentRan = useRef(false);
 
   const [invite, setInvite] = useState<PublicDmInvite | null>(null);
   const [reveal, setReveal] = useState<"teaser" | "full">("teaser");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [intentNote, setIntentNote] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
   const [sending, setSending] = useState(false);
@@ -107,6 +116,48 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
     });
   }, [invite?.id]);
 
+  // teaser で選んだ「やる／辞退」を、ログイン＋英語ID後に確定
+  useEffect(() => {
+    if (!intent || !canWrite || !invite?.id) return;
+    const own =
+      Boolean(handle) &&
+      handle.toLowerCase() ===
+        invite.fromHandle.replace(/^@/, "").toLowerCase();
+    if (own) return;
+    if (intentRan.current) return;
+    intentRan.current = true;
+    setIntentNote(
+      intent === "accept"
+        ? "引き受けを確定しています…"
+        : "辞退を確定しています…",
+    );
+    void fetch("/api/dm-invites/respond", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        inviteId: invite.id,
+        status: intent === "accept" ? "accepted" : "declined",
+      }),
+    })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          path?: string;
+          error?: string;
+        };
+        if (res.ok && data.ok && data.path) {
+          router.replace(data.path);
+          return;
+        }
+        setIntentNote(data.error || "返事を確定できませんでした");
+        intentRan.current = false;
+      })
+      .catch(() => {
+        setIntentNote("ネットワークエラー");
+        intentRan.current = false;
+      });
+  }, [intent, canWrite, invite?.id, invite?.fromHandle, handle, router]);
+
   if (loading || authStatus === "loading") {
     return (
       <div className="min-h-dvh bg-viscum-paper px-4 py-10 text-viscum-muted">
@@ -135,6 +186,13 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const displayName =
     invite.fromAccountName?.trim() || seederLabel.line;
   const loginHref = `/login?callbackUrl=${encodeURIComponent(`/dm/i/${invite.id}`)}`;
+  /** ログイン済みなら着地に戻すだけ（intent を付けて確定）。未ログインは login 経由 */
+  const acceptHref = isLoggedIn
+    ? `/dm/i/${invite.id}?intent=accept`
+    : `/login?callbackUrl=${encodeURIComponent(`/dm/i/${invite.id}?intent=accept`)}`;
+  const declineHref = isLoggedIn
+    ? `/dm/i/${invite.id}?intent=decline`
+    : `/login?callbackUrl=${encodeURIComponent(`/dm/i/${invite.id}?intent=decline`)}`;
   const isOwnInvite =
     Boolean(handle) &&
     handle.toLowerCase() === invite.fromHandle.replace(/^@/, "").toLowerCase();
@@ -183,9 +241,20 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       </header>
 
       <main className="mx-auto max-w-lg pb-8">
+        {intentNote ? (
+          <p className="border-b border-viscum-line px-4 py-3 text-[13px] text-viscum-muted">
+            {intentNote}
+          </p>
+        ) : null}
         <DirectRequestOfferCard
           depth={depth}
           loginHref={depth === "teaser" ? loginHref : undefined}
+          loginAcceptHref={
+            depth === "teaser" && !isOwnInvite ? acceptHref : undefined
+          }
+          loginDeclineHref={
+            depth === "teaser" && !isOwnInvite ? declineHref : undefined
+          }
           snapshot={{
             fromDisplayName: displayName,
             fromHandle: invite.fromHandle,
