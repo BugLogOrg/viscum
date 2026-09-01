@@ -947,7 +947,7 @@ export default function RequestDmThreadPage() {
               rows={3}
               maxLength={2000}
               disabled={sending}
-              placeholder="続きのすり合わせ（このご依頼だけ）"
+              placeholder="すり合わせや提出の本文"
               className="w-full resize-y rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand disabled:opacity-60"
             />
             <button
