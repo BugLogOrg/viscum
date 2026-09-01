@@ -141,7 +141,7 @@ export function DirectRequestOfferCard({
                 <p className="text-[11px] font-medium text-viscum-muted">
                   ご挨拶
                 </p>
-                <p className="mt-1 text-[14px] leading-relaxed text-viscum-ink">
+                <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
                   <LinkifiedText text={pitch} />
                 </p>
               </div>
@@ -157,48 +157,6 @@ export function DirectRequestOfferCard({
             <p className="rounded-md border border-viscum-line bg-white/60 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
               ※このリンクは特定の方へのご案内です。転送・SNS等での公開はご遠慮ください。
             </p>
-
-            {showTeaserReply ? (
-              <div className="space-y-2 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
-                <p className="text-[13px] font-medium text-viscum-ink">
-                  このお願いへの返事
-                </p>
-                <p className="text-[12px] leading-relaxed text-viscum-muted">
-                  「やる」はログイン（無料）のあと確定します。「いまは無理」はログイン不要です。お礼を伝えて案内を閉じ、依頼主に通知します。あなたから課金はありません。
-                </p>
-                <div className="flex gap-2">
-                  <a
-                    href={loginAcceptHref}
-                    className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep"
-                  >
-                    やる
-                  </a>
-                  <button
-                    type="button"
-                    disabled={declining}
-                    onClick={() => onDecline?.()}
-                    className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
-                  >
-                    {declining ? "閉じています…" : "いまは無理（辞退）"}
-                  </button>
-                </div>
-                <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
-                  作品URL・お願いの詳細・希望日は「やる」でログインしたあとに表示します。身に覚えがない場合は閉じて大丈夫です。
-                </p>
-              </div>
-            ) : loginHref ? (
-              <div className="space-y-2">
-                <a
-                  href={loginHref}
-                  className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
-                >
-                  ログインして詳細を見る
-                </a>
-                <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
-                  アカウント作成も同じ画面からできます（無料）。身に覚えがない場合は閉じて大丈夫です。
-                </p>
-              </div>
-            ) : null}
 
             <section className="rounded-xl border border-viscum-leaf/40 bg-viscum-leaf-soft/30 px-4 py-4">
               <p className="text-[13px] font-medium text-viscum-leaf-deep">
@@ -237,7 +195,7 @@ export function DirectRequestOfferCard({
                 <p className="text-[11px] font-medium text-viscum-muted">
                   ご挨拶
                 </p>
-                <p className="mt-1 text-[14px] leading-relaxed text-viscum-ink">
+                <p className="mt-1 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
                   <LinkifiedText text={pitch} />
                 </p>
               </div>
@@ -289,6 +247,49 @@ export function DirectRequestOfferCard({
         ) : null}
 
         {afterBody}
+
+        {/* 未ログイン着地: 中身を読んでから決めるので返事は最下部 */}
+        {showTeaserReply ? (
+          <div className="space-y-2 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+            <p className="text-[13px] font-medium text-viscum-ink">
+              このお願いへの返事
+            </p>
+            <p className="text-[12px] leading-relaxed text-viscum-muted">
+              「やる」はログイン（無料）のあと確定します。「いまは無理」はログイン不要です。お礼を伝えて案内を閉じ、依頼主に通知します。あなたから課金はありません。
+            </p>
+            <div className="flex gap-2">
+              <a
+                href={loginAcceptHref}
+                className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep"
+              >
+                やる
+              </a>
+              <button
+                type="button"
+                disabled={declining}
+                onClick={() => onDecline?.()}
+                className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+              >
+                {declining ? "閉じています…" : "いまは無理（辞退）"}
+              </button>
+            </div>
+            <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
+              作品URL・お願いの詳細・希望日は「やる」でログインしたあとに表示します。身に覚えがない場合は閉じて大丈夫です。
+            </p>
+          </div>
+        ) : depth === "teaser" && loginHref ? (
+          <div className="space-y-2">
+            <a
+              href={loginHref}
+              className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep"
+            >
+              ログインして詳細を見る
+            </a>
+            <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
+              アカウント作成も同じ画面からできます（無料）。身に覚えがない場合は閉じて大丈夫です。
+            </p>
+          </div>
+        ) : null}
       </div>
     </div>
   );

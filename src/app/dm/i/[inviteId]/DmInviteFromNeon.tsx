@@ -530,16 +530,20 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                 <SiteFooter />
               </>
             ) : (
-              <div className="space-y-4 pb-8">
+              <div className="space-y-4">
                 <SeederCredibilityLink handle={invite.fromHandle} />
                 <p className="text-[12px] leading-relaxed text-viscum-muted">
                   依頼主が誰か・ちゃんと払ってきたかは、上のプロフィールから確認できます（直依頼の中身は公開されません）。
                 </p>
-                <SiteFooter />
               </div>
             )
           }
         />
+        {depth === "teaser" ? (
+          <div className="px-4 pb-8">
+            <SiteFooter />
+          </div>
+        ) : null}
       </main>
     </div>
   );

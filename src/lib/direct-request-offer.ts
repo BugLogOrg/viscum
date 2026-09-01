@@ -28,16 +28,21 @@ export function splitRequestSummary(raw: string | null | undefined): {
   };
 }
 
-/** 未ログイン着地用。聞きたいこと抜き・短文の概要だけ */
+/** 未ログイン着地用。聞きたいこと抜きの概要。改行は残す（横一列に潰さない） */
 export function inviteTeaserSummary(
   workSummary: string | null | undefined,
-  max = 140,
+  max = 400,
 ): string {
   const { description } = splitRequestSummary(workSummary);
-  const t = description.replace(/\s+/g, " ").trim();
+  // 行末の余分な空白だけ整え、改行は維持
+  const t = description
+    .replace(/[^\S\n]+/g, " ")
+    .replace(/ ?\n ?/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
   if (!t) return "";
   if (t.length <= max) return t;
-  return `${t.slice(0, max - 1)}…`;
+  return `${t.slice(0, max - 1).trimEnd()}…`;
 }
 
 export type DirectRequestOfferSnapshot = {
