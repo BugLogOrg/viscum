@@ -295,6 +295,10 @@ export default function RequestDmThreadPage() {
     row.fromAccountName?.trim() ||
     displayAccountName(row.fromHandle, readLocalProfile(row.fromHandle));
   const isSeeder = row.fromHandle.toLowerCase() === me;
+  const threadEnded =
+    row.status === "closed" ||
+    row.status === "declined" ||
+    row.status === "paid";
   const inviteHref = row.inviteId
     ? `/dm/i/${encodeURIComponent(row.inviteId)}`
     : null;
@@ -396,6 +400,12 @@ export default function RequestDmThreadPage() {
 
   async function respond(next: "accepted" | "declined") {
     if (responding || !row) return;
+    if (next === "declined") {
+      const ok = window.confirm(
+        "このお願いを辞退しますか？\nスレは閉じ、案内リンクも無効になります。あとからこのスレには書けません。",
+      );
+      if (!ok) return;
+    }
     setResponding(true);
     const prev = row;
     const note =
@@ -430,6 +440,12 @@ export default function RequestDmThreadPage() {
     extendDays?: number,
   ) {
     if (responding) return;
+    if (next === "closed") {
+      const ok = window.confirm(
+        "このお願いを打ち切りますか？\n案内リンクは無効になり、このスレにはもう書けなくなります。\n続ける場合は、新しい直依頼を作って別の案内を送ってください。",
+      );
+      if (!ok) return;
+    }
     setResponding(true);
     setPayNote(null);
     try {
@@ -727,23 +743,31 @@ export default function RequestDmThreadPage() {
         ) : null}
 
         {isRecipient && row.status === "pending" && (
-          <div className="mt-4 flex gap-2">
-            <button
-              type="button"
-              disabled={responding}
-              onClick={() => void respond("accepted")}
-              className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-            >
-              {responding ? "送信中…" : "やる"}
-            </button>
-            <button
-              type="button"
-              disabled={responding}
-              onClick={() => void respond("declined")}
-              className="flex-1 rounded-md border border-viscum-line bg-white/70 px-3 py-2.5 text-[14px] font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:opacity-50"
-            >
-              いまは無理
-            </button>
+          <div className="mt-4 space-y-2 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+            <p className="text-[13px] font-medium text-viscum-ink">
+              このお願いへの返事
+            </p>
+            <p className="text-[12px] leading-relaxed text-viscum-muted">
+              「いまは無理」で辞退するとスレは閉じ、案内リンクも無効になります。
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={responding}
+                onClick={() => void respond("accepted")}
+                className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+              >
+                {responding ? "送信中…" : "やる"}
+              </button>
+              <button
+                type="button"
+                disabled={responding}
+                onClick={() => void respond("declined")}
+                className="flex-1 rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+              >
+                いまは無理（辞退）
+              </button>
+            </div>
           </div>
         )}
 
@@ -823,67 +847,92 @@ export default function RequestDmThreadPage() {
         (row.status === "pending" ||
           row.status === "accepted" ||
           row.status === "pay_waiting") ? (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={responding}
-              onClick={() => void extendDeadline(7)}
-              className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
-            >
-              希望日を7日延ばす
-            </button>
-            <button
-              type="button"
-              disabled={responding}
-              onClick={() => void extendDeadline(14)}
-              className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
-            >
-              希望日を14日延ばす
-            </button>
-            <button
-              type="button"
-              disabled={responding}
-              onClick={() => void runStatus("closed")}
-              className="rounded-md border border-viscum-berry/40 px-3 py-1.5 text-[12px] font-medium text-viscum-berry-deep disabled:opacity-50"
-            >
-              打ち切る
-            </button>
+          <div className="mt-4 space-y-3">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={responding}
+                onClick={() => void extendDeadline(7)}
+                className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
+              >
+                希望日を7日延ばす
+              </button>
+              <button
+                type="button"
+                disabled={responding}
+                onClick={() => void extendDeadline(14)}
+                className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
+              >
+                希望日を14日延ばす
+              </button>
+            </div>
+            <div className="rounded-lg border border-viscum-berry/35 bg-viscum-berry/5 px-3 py-3">
+              <p className="text-[13px] font-medium text-viscum-berry-deep">
+                このお願いを終わらせる
+              </p>
+              <p className="mt-1 text-[12px] leading-relaxed text-viscum-muted">
+                打ち切ると案内リンクは無効になり、このスレには書けなくなります。続けるときは新しい直依頼を作って別の案内を送ってください。
+              </p>
+              <button
+                type="button"
+                disabled={responding}
+                onClick={() => void runStatus("closed")}
+                className="mt-2 w-full rounded-md border border-viscum-berry/50 bg-white px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+              >
+                打ち切る
+              </button>
+            </div>
           </div>
         ) : null}
 
         {row.status === "paid" ? (
           <p className="mt-4 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[12px] text-viscum-ink">
-            支払済です。
+            支払済です。このスレへの追記はできません。
           </p>
         ) : null}
         {row.status === "closed" ? (
-          <p className="mt-4 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] text-viscum-muted">
-            このお願いは打ち切られています。
+          <p className="mt-4 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
+            打ち切り済みです。案内リンクは無効で、このスレには書けません。続ける場合は
+            <Link href="/new/request" className="text-viscum-brand underline">
+              新しい直依頼
+            </Link>
+            を作ってください。
+          </p>
+        ) : null}
+        {row.status === "declined" ? (
+          <p className="mt-4 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
+            辞退で終了しています。案内リンクは無効で、このスレには書けません。続ける場合は
+            <Link href="/new/request" className="text-viscum-brand underline">
+              新しい直依頼
+            </Link>
+            を作ってください。
           </p>
         ) : null}
 
-        <form onSubmit={(e) => void send(e)} className="mt-6 space-y-2">
-          <label className="sr-only" htmlFor="dm-draft">
-            メッセージ
-          </label>
-          <textarea
-            id="dm-draft"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            rows={3}
-            maxLength={2000}
-            disabled={sending}
-            placeholder="続きのすり合わせ（このご依頼だけ）"
-            className="w-full resize-y rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand disabled:opacity-60"
-          />
-          <button
-            type="submit"
-            disabled={!draft.trim() || sending}
-            className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-          >
-            {sending ? "送信中…" : "送る"}
-          </button>
-        </form>
+        {threadEnded ? null : (
+          <form onSubmit={(e) => void send(e)} className="mt-6 space-y-2">
+            <label className="sr-only" htmlFor="dm-draft">
+              メッセージ
+            </label>
+            <textarea
+              id="dm-draft"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              rows={3}
+              maxLength={2000}
+              disabled={sending}
+              placeholder="続きのすり合わせ（このご依頼だけ）"
+              className="w-full resize-y rounded-md border border-viscum-line bg-white/70 px-3 py-2 text-[14px] text-viscum-ink outline-none focus:border-viscum-brand disabled:opacity-60"
+            />
+            <button
+              type="submit"
+              disabled={!draft.trim() || sending}
+              className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+            >
+              {sending ? "送信中…" : "送る"}
+            </button>
+          </form>
+        )}
 
         <p className="mt-8 text-center">
           <Link

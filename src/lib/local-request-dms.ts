@@ -220,7 +220,7 @@ export function deliverableStatusHint(status: RequestDmStatus): string {
     return "引き受け済み。成果はDMに書いて「提出する」。依頼主の完了承認が検品です。";
   }
   if (status === "declined") {
-    return "辞退で終了しています。";
+    return "辞退で終了しています。このスレにはもう書けません。続ける場合は新しい直依頼を送ってください。";
   }
   if (status === "pay_waiting") {
     return "提出済み。依頼主が内容を確認し、完了承認・支払いへ進みます。";
@@ -229,7 +229,7 @@ export function deliverableStatusHint(status: RequestDmStatus): string {
     return "完了・支払済。公開実績（件数・累計¥）に載ります。";
   }
   if (status === "closed") {
-    return "依頼主が打ち切りました。";
+    return "依頼主が打ち切りました。案内リンクも無効です。このスレにはもう書けません。続ける場合は新しい直依頼を作ってください。";
   }
   return "相手の引き受け待ちです。成果物はまだありません。";
 }

@@ -156,6 +156,15 @@ export async function PATCH(req: Request, ctx: Ctx) {
         ? "やる、と返しました。"
         : "いまは無理、と返しました。",
     );
+    if (body.status === "declined") {
+      const inviteId = loaded.row.inviteId?.trim();
+      if (inviteId) {
+        await db
+          .update(dmInvites)
+          .set({ revokedAt: new Date() })
+          .where(eq(dmInvites.id, inviteId));
+      }
+    }
   } else if (body?.status === "pay_waiting") {
     if (!isMentor) {
       return NextResponse.json(
@@ -249,6 +258,12 @@ export async function PATCH(req: Request, ctx: Ctx) {
 
   const text = body?.message?.trim().slice(0, 2000);
   if (text) {
+    if (status === "paid" || status === "declined" || status === "closed") {
+      return NextResponse.json(
+        { error: "終了した依頼にはメッセージを送れません" },
+        { status: 400 },
+      );
+    }
     const last = messages[messages.length - 1];
     const sameRecent =
       last &&
