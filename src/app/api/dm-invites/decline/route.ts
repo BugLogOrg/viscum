@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db";
-import { createNotification } from "@/db/notifications";
 import { dmInvites, requestDms } from "@/db/schema";
+import { notifySeederRequestDeclined } from "@/lib/notify-request-declined";
 
 const GUEST_HANDLE = "（相手）";
 const DECLINE_NOTE =
@@ -121,15 +121,11 @@ export async function POST(req: Request) {
     .set({ revokedAt: now })
     .where(eq(dmInvites.id, inviteId));
 
-  const title = invite.workTitle.trim() || "（タイトル未設定）";
-  await createNotification({
-    userId: invite.fromUserId,
-    kind: "direct_request",
-    title: "直依頼が辞退されました",
-    body: `「${title}」へのお願いが、いまは無理と返されました。`,
-    href: `/dashboard/messages/${row.id}`,
-    audience: "seeder",
+  await notifySeederRequestDeclined({
+    seederUserId: invite.fromUserId,
+    requestId: row.id,
     workId: invite.workId,
+    workTitle: invite.workTitle,
   });
 
   return NextResponse.json({

@@ -165,16 +165,14 @@ export async function POST(req: Request) {
       .set({ revokedAt: new Date() })
       .where(eq(dmInvites.id, inviteId));
 
-    const { createNotification } = await import("@/db/notifications");
-    const title = invite.workTitle.trim() || "（タイトル未設定）";
-    await createNotification({
-      userId: invite.fromUserId,
-      kind: "direct_request",
-      title: "直依頼が辞退されました",
-      body: `「${title}」へのお願いが、いまは無理と返されました。`,
-      href: `/dashboard/messages/${updated.id}`,
-      audience: "seeder",
+    const { notifySeederRequestDeclined } = await import(
+      "@/lib/notify-request-declined"
+    );
+    await notifySeederRequestDeclined({
+      seederUserId: invite.fromUserId,
+      requestId: updated.id,
       workId: invite.workId,
+      workTitle: invite.workTitle,
     });
   }
 
