@@ -9,11 +9,17 @@ import {
   clearPendingLoginEmail,
   readPendingLoginEmail,
 } from "@/lib/pending-login-email";
+import {
+  readPostLoginDestination,
+  rememberPostLoginDestination,
+} from "@/lib/post-login-destination";
 
 function CheckEmailBody() {
   const params = useSearchParams();
   const fromQuery = params.get("email")?.trim() || "";
+  const nextFromQuery = params.get("next")?.trim() || "";
   const [email, setEmail] = useState(fromQuery);
+  const [loginHref, setLoginHref] = useState("/login");
 
   useEffect(() => {
     if (fromQuery) {
@@ -23,6 +29,20 @@ function CheckEmailBody() {
     const remembered = readPendingLoginEmail();
     if (remembered) setEmail(remembered);
   }, [fromQuery]);
+
+  useEffect(() => {
+    if (nextFromQuery.startsWith("/") && !nextFromQuery.startsWith("//")) {
+      rememberPostLoginDestination(nextFromQuery);
+      setLoginHref(
+        `/login?callbackUrl=${encodeURIComponent(nextFromQuery)}`,
+      );
+      return;
+    }
+    const dest = readPostLoginDestination("/");
+    if (dest && dest !== "/") {
+      setLoginHref(`/login?callbackUrl=${encodeURIComponent(dest)}`);
+    }
+  }, [nextFromQuery]);
 
   useEffect(() => {
     // リンクを踏んで戻ってきたあとに古い宛先が残らないよう、表示後しばらくで消す
@@ -62,7 +82,7 @@ function CheckEmailBody() {
       <p className="mt-4 text-[12px] leading-relaxed text-viscum-muted">
         届かない・宛先を間違えた場合は
         <Link
-          href="/login"
+          href={loginHref}
           className="text-viscum-brand underline-offset-2 hover:underline"
         >
           {" "}

@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  onboardingHandleHref,
+  onboardingWelcomeHref,
+  rememberPostLoginDestination,
+} from "@/lib/post-login-destination";
 
 /** 英語ID未設定でも通してよいパス（設定画面本体・認証・API・説明ページ） */
 const HANDLE_EXEMPT_PREFIX = [
@@ -41,6 +46,7 @@ function isOnboardingPublic(pathname: string) {
 /**
  * 英語ID未設定 → 必ず handle（フィード含む。ログイン後の最初の画面）。
  * 初回ウェルカム未了 → welcome（公開棚は止めない）。
+ * 招待着地／ご依頼DMにいた場合は戻り先を覚えてから飛ばす。
  */
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { data, status } = useSession();
@@ -55,8 +61,25 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // 深いページにいるなら戻り先を残す（ゲートで飛ばす前に）
+    if (
+      pathname.startsWith("/dm/i/") ||
+      pathname.startsWith("/dashboard/messages")
+    ) {
+      const q =
+        typeof window !== "undefined"
+          ? window.location.search.replace(/^\?/, "")
+          : "";
+      rememberPostLoginDestination(q ? `${pathname}?${q}` : pathname);
+    }
+
     if (data?.user?.needsHandle && !isHandleExempt(pathname)) {
-      router.replace("/onboarding/handle");
+      const q =
+        typeof window !== "undefined"
+          ? window.location.search.replace(/^\?/, "")
+          : "";
+      const here = q ? `${pathname}?${q}` : pathname;
+      router.replace(onboardingHandleHref(here));
       return;
     }
     if (
@@ -65,7 +88,7 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
       data.user.needsOnboarding &&
       !isOnboardingPublic(pathname)
     ) {
-      router.replace("/onboarding/welcome");
+      router.replace(onboardingWelcomeHref());
       return;
     }
     setReady(true);

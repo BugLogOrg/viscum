@@ -6,16 +6,19 @@ import { useRouter } from "next/navigation";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { rememberPendingLoginEmail } from "@/lib/pending-login-email";
+import {
+  describePostLoginDestination,
+  onboardingHandleHref,
+  onboardingWelcomeHref,
+  rememberPostLoginDestination,
+  safeInternalPath,
+} from "@/lib/post-login-destination";
 
 function safeCallback(raw: string | null): string {
-  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
-  return raw;
+  return safeInternalPath(raw) ?? "/";
 }
 
-const magicLinkUi =
-  process.env.NEXT_PUBLIC_AUTH_MAGIC_LINK !== "0";
-
-const POST_ONBOARDING_KEY = "viscum.postOnboarding";
+const magicLinkUi = process.env.NEXT_PUBLIC_AUTH_MAGIC_LINK !== "0";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,21 +28,30 @@ export default function LoginPage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showDemo, setShowDemo] = useState(false);
+  const [destHint, setDestHint] = useState<string | null>(null);
   const githubEnabled = process.env.NEXT_PUBLIC_AUTH_GITHUB === "1";
   const reservedDemoHint =
     "tori / ayu など棚デモ用の英語IDは使えません。guest や自分用のIDにしてください。";
 
   useEffect(() => {
+    const cb = readCallback();
+    if (cb !== "/") rememberPostLoginDestination(cb);
+    setDestHint(describePostLoginDestination(cb));
+  }, []);
+
+  useEffect(() => {
     if (status !== "authenticated" || !session?.user) return;
+    const cb = readCallback();
+    if (cb !== "/") rememberPostLoginDestination(cb);
     if (session.user.needsHandle || !session.user.handle?.trim()) {
-      router.replace("/onboarding/handle");
+      router.replace(onboardingHandleHref(cb !== "/" ? cb : "/"));
       return;
     }
     if (session.user.needsOnboarding) {
-      router.replace("/onboarding/welcome");
+      router.replace(onboardingWelcomeHref(cb !== "/" ? cb : null));
       return;
     }
-    router.replace(readCallback());
+    router.replace(cb);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, session?.user]);
 
@@ -50,27 +62,19 @@ export default function LoginPage() {
     );
   }
 
-  function rememberPostOnboarding(callbackUrl: string) {
-    try {
-      sessionStorage.setItem(POST_ONBOARDING_KEY, callbackUrl);
-    } catch {
-      /* ignore */
-    }
-  }
-
   async function magicLogin(e: React.FormEvent) {
     e.preventDefault();
     setPending(true);
     setError(null);
     const callbackUrl = readCallback();
-    rememberPostOnboarding(callbackUrl);
+    rememberPostLoginDestination(callbackUrl);
     const to = email.trim();
     rememberPendingLoginEmail(to);
-    // 着地は必ずウェルカム（英語ID）。済みの人は handle ページ側で飛ばす
+    // メールリンク先に next を載せる（別タブでも戻り先が残る）
     const res = await signIn("resend", {
       email: to,
       redirect: false,
-      callbackUrl: "/onboarding/handle",
+      callbackUrl: onboardingHandleHref(callbackUrl),
     });
     setPending(false);
     if (res?.error) {
@@ -80,6 +84,7 @@ export default function LoginPage() {
       return;
     }
     const q = new URLSearchParams({ email: to });
+    if (callbackUrl !== "/") q.set("next", callbackUrl);
     window.location.href = `/login/check-email?${q.toString()}`;
   }
 
@@ -88,7 +93,7 @@ export default function LoginPage() {
     setPending(true);
     setError(null);
     const callbackUrl = readCallback();
-    rememberPostOnboarding(callbackUrl);
+    rememberPostLoginDestination(callbackUrl);
     const res = await signIn("demo", {
       handle,
       redirect: false,
@@ -112,6 +117,11 @@ export default function LoginPage() {
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
           見る・読むは登録なしのままです。ログインすると、自分用のダッシュボードと、シード／書く／払う／受け取る／PFコメントが使えます。
         </p>
+        {destHint ? (
+          <p className="mt-3 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[13px] leading-relaxed text-viscum-ink">
+            {destHint}
+          </p>
+        ) : null}
 
         {magicLinkUi ? (
           <form onSubmit={magicLogin} className="mt-8 space-y-4">
@@ -134,14 +144,11 @@ export default function LoginPage() {
             )}
             <button
               type="submit"
-              disabled={pending || !email.trim()}
+              disabled={pending}
               className="w-full rounded-md bg-viscum-berry px-4 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
             >
-              {pending ? "送信中…" : "ログインリンクを送る"}
+              {pending ? "送信中…" : "ログイン用リンクを送る"}
             </button>
-            <p className="text-[11px] leading-relaxed text-viscum-muted">
-              パスワードはありません。届いたメールのリンクから入れます。英語ID（コテハン）は初回だけ決めます。
-            </p>
           </form>
         ) : (
           <p className="mt-8 text-[13px] text-viscum-muted">
@@ -155,8 +162,10 @@ export default function LoginPage() {
             className="mt-4 w-full rounded-md border border-viscum-line px-4 py-2.5 text-sm font-medium text-viscum-ink hover:bg-viscum-paper-2"
             onClick={() => {
               const callbackUrl = readCallback();
-              rememberPostOnboarding(callbackUrl);
-              void signIn("github", { callbackUrl: "/onboarding/handle" });
+              rememberPostLoginDestination(callbackUrl);
+              void signIn("github", {
+                callbackUrl: onboardingHandleHref(callbackUrl),
+              });
             }}
           >
             GitHubでログイン
@@ -195,12 +204,14 @@ export default function LoginPage() {
               >
                 {pending ? "入っています…" : "デモログイン"}
               </button>
+              {error && (
+                <p className="text-[13px] text-viscum-berry-deep">{error}</p>
+              )}
             </form>
           )}
         </div>
-
-        <SiteFooter />
       </main>
+      <SiteFooter />
     </div>
   );
 }

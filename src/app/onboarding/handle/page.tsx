@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -12,11 +12,20 @@ import {
   rememberAccountName,
   writeLocalProfile,
 } from "@/lib/local-profile";
+import {
+  consumePostLoginDestination,
+  describePostLoginDestination,
+  onboardingWelcomeHref,
+  readPostLoginDestination,
+  rememberPostLoginDestination,
+  safeInternalPath,
+} from "@/lib/post-login-destination";
 
 /** ログイン直後のウェルカム＝英語ID＋公開プロフィールの初回設定 */
-export default function OnboardingHandlePage() {
+function OnboardingHandleBody() {
   const { data, update, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const fileRef = useRef<HTMLInputElement>(null);
   const [handle, setHandle] = useState("");
   const [accountName, setAccountName] = useState("");
@@ -25,6 +34,14 @@ export default function OnboardingHandlePage() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loginEmail, setLoginEmail] = useState<string | null>(null);
+  const [destHint, setDestHint] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fromQuery = safeInternalPath(searchParams.get("next"));
+    if (fromQuery) rememberPostLoginDestination(fromQuery);
+    const dest = fromQuery || readPostLoginDestination("/");
+    setDestHint(describePostLoginDestination(dest));
+  }, [searchParams]);
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -110,20 +127,25 @@ export default function OnboardingHandlePage() {
     });
     rememberAccountName(savedHandle, savedName);
     await update({ handle: savedHandle });
-    router.replace("/onboarding/welcome");
+    router.replace(onboardingWelcomeHref());
     router.refresh();
   }
 
   if (status === "unauthenticated") {
-    router.replace("/login");
+    const next = readPostLoginDestination("/");
+    const login =
+      next && next !== "/"
+        ? `/login?callbackUrl=${encodeURIComponent(next)}`
+        : "/login";
+    router.replace(login);
     return null;
   }
 
   if (status === "authenticated" && data?.user && !data.user.needsHandle) {
     if (data.user.needsOnboarding) {
-      router.replace("/onboarding/welcome");
+      router.replace(onboardingWelcomeHref());
     } else {
-      router.replace("/");
+      router.replace(consumePostLoginDestination("/"));
     }
     return null;
   }
@@ -144,6 +166,11 @@ export default function OnboardingHandlePage() {
         <p className="mt-3 text-[14px] leading-relaxed text-viscum-muted">
           はじめに公開プロフィールを整えてください。英語IDはあとから変えられません。アカウント名・プロフィールはいつでも編集できます。
         </p>
+        {destHint ? (
+          <p className="mt-3 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[13px] leading-relaxed text-viscum-ink">
+            {destHint}
+          </p>
+        ) : null}
 
         <form onSubmit={(e) => void submit(e)} className="mt-8 space-y-5">
           <div className="space-y-2">
@@ -298,5 +325,19 @@ export default function OnboardingHandlePage() {
         <SiteFooter />
       </main>
     </div>
+  );
+}
+
+export default function OnboardingHandlePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto flex min-h-dvh max-w-lg items-center justify-center bg-viscum-paper text-sm text-viscum-muted">
+          読み込み中…
+        </div>
+      }
+    >
+      <OnboardingHandleBody />
+    </Suspense>
   );
 }

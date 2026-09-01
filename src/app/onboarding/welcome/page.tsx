@@ -12,19 +12,14 @@ import {
   fetchRemoteProfile,
   readLocalProfile,
 } from "@/lib/local-profile";
-
-const POST_KEY = "viscum.postOnboarding";
-
-function readPostPath(): string {
-  if (typeof window === "undefined") return "/";
-  try {
-    const raw = sessionStorage.getItem(POST_KEY);
-    if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
-  } catch {
-    /* ignore */
-  }
-  return "/";
-}
+import {
+  consumePostLoginDestination,
+  describePostLoginDestination,
+  onboardingHandleHref,
+  readPostLoginDestination,
+  rememberPostLoginDestination,
+  safeInternalPath,
+} from "@/lib/post-login-destination";
 
 function WelcomeBody() {
   const { data, update, status } = useSession();
@@ -35,6 +30,7 @@ function WelcomeBody() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [welcomeLine, setWelcomeLine] = useState("");
+  const [destHint, setDestHint] = useState<string | null>(null);
 
   const handle = data?.user?.handle?.replace(/^@/, "").trim() || "";
 
@@ -42,6 +38,14 @@ function WelcomeBody() {
     () => status === "authenticated" && !data?.user?.needsHandle,
     [status, data?.user?.needsHandle],
   );
+
+  useEffect(() => {
+    if (preview) return;
+    const fromQuery = safeInternalPath(searchParams.get("next"));
+    if (fromQuery) rememberPostLoginDestination(fromQuery);
+    const dest = fromQuery || readPostLoginDestination("/");
+    setDestHint(describePostLoginDestination(dest));
+  }, [preview, searchParams]);
 
   useEffect(() => {
     if (!handle) {
@@ -76,12 +80,12 @@ function WelcomeBody() {
       return;
     }
     if (data?.user?.needsHandle) {
-      router.replace("/onboarding/handle");
+      router.replace(onboardingHandleHref(readPostLoginDestination("/")));
       return;
     }
     if (data?.user && !data.user.needsOnboarding && canSkipGate) {
-      const next = readPostPath();
-      router.replace(next === "/dashboard" ? "/" : next);
+      const next = consumePostLoginDestination("/");
+      router.replace(next);
     }
   }, [
     preview,
@@ -111,15 +115,8 @@ function WelcomeBody() {
       return;
     }
     await update({ onboardingDone: true });
-    let next = "/";
-    try {
-      const raw = sessionStorage.getItem(POST_KEY);
-      if (raw && raw.startsWith("/") && !raw.startsWith("//")) next = raw;
-      sessionStorage.removeItem(POST_KEY);
-    } catch {
-      /* ignore */
-    }
-    router.replace(next === "/dashboard" ? "/" : next);
+    const next = consumePostLoginDestination("/");
+    router.replace(next);
     router.refresh();
   }
 
@@ -175,6 +172,11 @@ function WelcomeBody() {
             </>
           ) : null}
         </h1>
+        {destHint ? (
+          <p className="mt-4 rounded-md border border-viscum-brand/30 bg-viscum-leaf-soft/40 px-3 py-2 text-[13px] leading-relaxed text-viscum-ink">
+            {destHint}
+          </p>
+        ) : null}
         <h2 className="mt-8 text-lg font-semibold text-viscum-ink">
           気になる専門はありますか？
         </h2>
