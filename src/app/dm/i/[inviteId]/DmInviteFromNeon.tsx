@@ -240,7 +240,9 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
     if (declining || isOwnInvite || !invite) return;
     const targetId = invite.id;
     const ok = window.confirm(
-      "このお願いを辞退しますか？\nお礼を伝えて案内を閉じ、依頼主に通知します。ログインは不要です。",
+      isLoggedIn
+        ? "このお願いを辞退しますか？\nお礼を伝えて案内を閉じ、依頼主に通知します。"
+        : "このお願いを辞退しますか？\nお礼を伝えて案内を閉じ、依頼主に通知します。ログインは不要です。",
     );
     if (!ok) return;
     setDeclining(true);
@@ -392,7 +394,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                       このお願いへの返事
                     </p>
                     <p className="text-[12px] leading-relaxed text-viscum-muted">
-                      「いまは無理」はログイン不要です。お礼を伝えて案内を閉じ、依頼主に通知します。
+                      お礼を伝えて案内を閉じ、依頼主に通知します。
                     </p>
                     <div className="flex gap-2">
                       <button
