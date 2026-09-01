@@ -26,6 +26,8 @@ export type PublicDmInvite = {
   closesAt?: string;
   requestId?: string;
   requestStatus?: string;
+  canRespond?: boolean;
+  isOwner?: boolean;
 };
 
 /**
@@ -228,13 +230,23 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
     ? `/dm/i/${invite.id}?intent=accept`
     : `/login?callbackUrl=${encodeURIComponent(`/dm/i/${invite.id}?intent=accept`)}`;
   const isOwnInvite =
-    Boolean(handle) &&
-    handle.toLowerCase() === invite.fromHandle.replace(/^@/, "").toLowerCase();
+    invite.isOwner === true ||
+    (Boolean(handle) &&
+      handle.toLowerCase() ===
+        invite.fromHandle.replace(/^@/, "").toLowerCase());
   const depth = reveal === "full" && isLoggedIn ? "full" : "teaser";
   const requestPending =
     !invite.requestStatus || invite.requestStatus === "pending";
+  /** サーバ canRespond 優先。未設定時は従来どおり pending 判定 */
   const showDecide =
-    !isOwnInvite && requestPending && !declinedOk && !sentOk;
+    !isOwnInvite &&
+    !declinedOk &&
+    !sentOk &&
+    (invite.canRespond === true ||
+      (invite.canRespond !== false && requestPending));
+  const openThreadHref = invite.requestId
+    ? `/dashboard/messages/${invite.requestId}`
+    : null;
 
   async function declineWithoutLogin() {
     if (declining || isOwnInvite || !invite) return;
@@ -388,35 +400,6 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
               <>
                 <SeederCredibilityLink handle={invite.fromHandle} />
 
-                {showDecide ? (
-                  <section className="space-y-2 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
-                    <p className="text-[13px] font-medium text-viscum-ink">
-                      このお願いへの返事
-                    </p>
-                    <p className="text-[12px] leading-relaxed text-viscum-muted">
-                      お礼を伝えて案内を閉じ、依頼主に通知します。
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        disabled={accepting || declining}
-                        onClick={() => void acceptWhenReady()}
-                        className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-                      >
-                        {accepting ? "確定中…" : "やる"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={accepting || declining}
-                        onClick={() => void declineWithoutLogin()}
-                        className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
-                      >
-                        {declining ? "閉じています…" : "いまは無理（辞退）"}
-                      </button>
-                    </div>
-                  </section>
-                ) : null}
-
                 <section className="rounded-xl border border-viscum-brand/30 bg-white/70 px-4 py-4">
                   <p className="text-[13px] font-medium text-viscum-ink">
                     {isOwnInvite
@@ -501,6 +484,51 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                     </form>
                   )}
                 </section>
+
+                {showDecide ? (
+                  <section className="space-y-2 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+                    <p className="text-[13px] font-medium text-viscum-ink">
+                      このお願いへの返事
+                    </p>
+                    <p className="text-[12px] leading-relaxed text-viscum-muted">
+                      お礼を伝えて案内を閉じ、依頼主に通知します。
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        disabled={accepting || declining}
+                        onClick={() => void acceptWhenReady()}
+                        className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                      >
+                        {accepting ? "確定中…" : "やる"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={accepting || declining}
+                        onClick={() => void declineWithoutLogin()}
+                        className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+                      >
+                        {declining ? "閉じています…" : "いまは無理（辞退）"}
+                      </button>
+                    </div>
+                  </section>
+                ) : !isOwnInvite &&
+                  openThreadHref &&
+                  invite.requestStatus &&
+                  invite.requestStatus !== "pending" &&
+                  invite.requestStatus !== "declined" ? (
+                  <section className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+                    <p className="text-[13px] text-viscum-ink">
+                      このお願いへの返事は済みです。続きはご依頼DMからどうぞ。
+                    </p>
+                    <Link
+                      href={openThreadHref}
+                      className="mt-2 inline-flex text-[13px] font-medium text-viscum-brand underline"
+                    >
+                      ご依頼DMを開く
+                    </Link>
+                  </section>
+                ) : null}
 
                 <section className="rounded-xl border border-viscum-line bg-viscum-paper-2/50 px-4 py-4">
                   <p className="text-[13px] font-medium text-viscum-ink">

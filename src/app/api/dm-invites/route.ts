@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { dmInvites, requestDms, users } from "@/db/schema";
@@ -280,6 +280,7 @@ export async function GET(req: Request) {
     .select({ id: requestDms.id, status: requestDms.status })
     .from(requestDms)
     .where(eq(requestDms.inviteId, id))
+    .orderBy(desc(requestDms.createdAt))
     .limit(1);
   const requestRow = requestRows[0];
 
@@ -331,7 +332,12 @@ export async function GET(req: Request) {
       createdAt: row.createdAt.toISOString(),
       closesAt: row.closesAt ? row.closesAt.toISOString() : undefined,
       requestId: requestRow?.id,
-      requestStatus: requestRow?.status,
+      requestStatus: requestRow?.status ?? "pending",
+      /** 受け手がやる／辞退できる（依頼主本人は不可） */
+      canRespond:
+        !isOwner &&
+        (!requestRow || requestRow.status === "pending"),
+      isOwner,
       ...(isOwner ? { viewCount: row.viewCount ?? 0 } : {}),
     },
     persisted: true,
