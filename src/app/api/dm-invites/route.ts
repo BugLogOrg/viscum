@@ -251,10 +251,19 @@ export async function GET(req: Request) {
   }
 
   if (row.revokedAt) {
+    const declinedRows = await db
+      .select({ id: requestDms.id, status: requestDms.status })
+      .from(requestDms)
+      .where(eq(requestDms.inviteId, id))
+      .limit(1);
+    const declined = declinedRows[0]?.status === "declined";
     return NextResponse.json(
       {
-        error: "この招待リンクは無効化されています。依頼主に新しい案内を聞いてください。",
+        error: declined
+          ? "このお願いへの返事は済みです（辞退）。ご協力ありがとうございました。"
+          : "この招待リンクは無効化されています。依頼主に新しい案内を聞いてください。",
         revoked: true,
+        declined,
       },
       { status: 410 },
     );

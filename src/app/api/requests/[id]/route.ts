@@ -164,6 +164,17 @@ export async function PATCH(req: Request, ctx: Ctx) {
           .set({ revokedAt: new Date() })
           .where(eq(dmInvites.id, inviteId));
       }
+      const { createNotification } = await import("@/db/notifications");
+      const title = loaded.row.workTitle?.trim() || "（タイトル未設定）";
+      await createNotification({
+        userId: loaded.row.fromUserId,
+        kind: "direct_request",
+        title: "直依頼が辞退されました",
+        body: `「${title}」へのお願いが、いまは無理と返されました。`,
+        href: `/dashboard/messages/${loaded.row.id}`,
+        audience: "seeder",
+        workId: loaded.row.workId,
+      });
     }
   } else if (body?.status === "pay_waiting") {
     if (!isMentor) {

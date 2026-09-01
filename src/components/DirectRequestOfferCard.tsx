@@ -25,7 +25,8 @@ export function DirectRequestOfferCard({
   depth = "full",
   loginHref,
   loginAcceptHref,
-  loginDeclineHref,
+  onDecline,
+  declining = false,
 }: {
   snapshot: DirectRequestOfferSnapshot;
   /** 省略時: 「{名前} から、あなた宛てのお願いです」 */
@@ -38,8 +39,9 @@ export function DirectRequestOfferCard({
   loginHref?: string;
   /** teaser: 「やる」→ログイン後に引き受け */
   loginAcceptHref?: string;
-  /** teaser: 「いまは無理」→ログイン後に辞退 */
-  loginDeclineHref?: string;
+  /** teaser: 「いまは無理」→ログイン不要で辞退（親が API 呼び出し） */
+  onDecline?: () => void;
+  declining?: boolean;
 }) {
   const { description, prompts } = splitRequestSummary(snapshot.workSummary);
   const thumbUrl = snapshot.workThumbUrl?.trim() || "";
@@ -68,7 +70,7 @@ export function DirectRequestOfferCard({
   );
 
   const showTeaserReply =
-    depth === "teaser" && Boolean(loginAcceptHref && loginDeclineHref);
+    depth === "teaser" && Boolean(loginAcceptHref && onDecline);
 
   return (
     <div className="overflow-hidden bg-viscum-paper text-viscum-ink">
@@ -162,7 +164,7 @@ export function DirectRequestOfferCard({
                   このお願いへの返事
                 </p>
                 <p className="text-[12px] leading-relaxed text-viscum-muted">
-                  ログイン（無料）のあと、引き受けか辞退を確定します。「いまは無理」で辞退するとスレは閉じ、案内リンクも無効になります。あなたから課金はありません。
+                  「やる」はログイン（無料）のあと確定します。「いまは無理」はログイン不要です。お礼を伝えて案内を閉じ、依頼主に通知します。あなたから課金はありません。
                 </p>
                 <div className="flex gap-2">
                   <a
@@ -171,15 +173,17 @@ export function DirectRequestOfferCard({
                   >
                     やる
                   </a>
-                  <a
-                    href={loginDeclineHref}
-                    className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10"
+                  <button
+                    type="button"
+                    disabled={declining}
+                    onClick={() => onDecline?.()}
+                    className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
                   >
-                    いまは無理（辞退）
-                  </a>
+                    {declining ? "閉じています…" : "いまは無理（辞退）"}
+                  </button>
                 </div>
                 <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
-                  作品URL・お願いの詳細・希望日はログイン後に表示します。身に覚えがない場合は閉じて大丈夫です。
+                  作品URL・お願いの詳細・希望日は「やる」でログインしたあとに表示します。身に覚えがない場合は閉じて大丈夫です。
                 </p>
               </div>
             ) : loginHref ? (
