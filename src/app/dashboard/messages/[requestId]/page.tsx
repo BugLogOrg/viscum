@@ -892,20 +892,40 @@ export default function RequestDmThreadPage() {
         ) : null}
         {row.status === "closed" ? (
           <p className="mt-4 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
-            打ち切り済みです。案内リンクは無効で、このスレには書けません。続ける場合は
-            <Link href="/new/request" className="text-viscum-brand underline">
-              新しい直依頼
-            </Link>
-            を作ってください。
+            {isSeeder ? (
+              <>
+                打ち切りました。案内リンクは無効です。続ける場合は
+                <Link
+                  href="/new/request"
+                  className="text-viscum-brand underline"
+                >
+                  新しい直依頼
+                </Link>
+                を作って別の案内を送ってください。
+              </>
+            ) : (
+              <>
+                依頼主がこのお願いを打ち切りました。案内リンクは無効で、このスレには書けません。
+              </>
+            )}
           </p>
         ) : null}
         {row.status === "declined" ? (
           <p className="mt-4 rounded-md border border-viscum-line bg-viscum-paper-2/50 px-3 py-2 text-[12px] leading-relaxed text-viscum-muted">
-            辞退で終了しています。案内リンクは無効で、このスレには書けません。続ける場合は
-            <Link href="/new/request" className="text-viscum-brand underline">
-              新しい直依頼
-            </Link>
-            を作ってください。
+            {isSeeder ? (
+              <>
+                相手が辞退しました。案内リンクは無効です。続ける場合は
+                <Link
+                  href="/new/request"
+                  className="text-viscum-brand underline"
+                >
+                  新しい直依頼
+                </Link>
+                を作ってください。
+              </>
+            ) : (
+              <>辞退済みです。案内リンクは無効で、このスレには書けません。</>
+            )}
           </p>
         ) : null}
 
