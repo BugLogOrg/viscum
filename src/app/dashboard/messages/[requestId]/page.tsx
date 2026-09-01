@@ -440,6 +440,12 @@ export default function RequestDmThreadPage() {
     extendDays?: number,
   ) {
     if (responding) return;
+    if (next === "pay_waiting") {
+      const ok = window.confirm(
+        "成果を提出しますか？\n依頼主に提出済みとして届き、完了承認・お支払い待ちになります。",
+      );
+      if (!ok) return;
+    }
     if (next === "closed") {
       const ok = window.confirm(
         "このお願いを打ち切りますか？\n案内リンクは無効になり、このスレにはもう書けなくなります。\n続ける場合は、新しい直依頼を作って別の案内を送ってください。",
