@@ -14,7 +14,7 @@ import { LinkifiedText } from "@/components/LinkifiedText";
 /**
  * 直依頼の正本レイアウト（招待着地 `/dm/i/…` と同型）。
  * ご依頼DM・seed詳細でも同じカードを使う。
- * depth=teaser: 未ログイン着地（タイトル・概要・金額のみ）
+ * depth=teaser: 未ログイン着地（サムネ・タイトル・概要・金額・ご挨拶）
  */
 export function DirectRequestOfferCard({
   snapshot,
@@ -36,7 +36,7 @@ export function DirectRequestOfferCard({
   loginHref?: string;
 }) {
   const { description, prompts } = splitRequestSummary(snapshot.workSummary);
-  const thumbUrl = depth === "full" ? snapshot.workThumbUrl?.trim() || "" : "";
+  const thumbUrl = snapshot.workThumbUrl?.trim() || "";
   const externalUrl =
     depth === "full" ? snapshot.workExternalUrl?.trim() || "" : "";
   const pitch =

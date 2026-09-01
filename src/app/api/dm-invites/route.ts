@@ -279,12 +279,13 @@ export async function GET(req: Request) {
   const fromHandle = (from?.handle ?? "").replace(/^@/, "") || "unknown";
   const fromAccountName = from?.name?.trim() || undefined;
 
-  // 未ログイン: タイトル・概要級・金額・ご挨拶（作品URL・詳細・希望日は出さない）
+  // 未ログイン: サムネ・タイトル・概要級・金額・ご挨拶（作品URL・詳細・希望日は出さない）
   if (!isLoggedIn) {
     const teaser =
       inviteTeaserSummary(row.workSummary) ||
       "ログインすると作品URLとお願いの詳細を確認できます。";
     const pitchPublic = row.pitch?.trim().slice(0, 1000) || undefined;
+    const thumbPublic = sanitizeInviteThumbUrl(row.workThumbUrl);
     return NextResponse.json({
       reveal: "teaser" as const,
       invite: {
@@ -294,6 +295,7 @@ export async function GET(req: Request) {
         fromHandle,
         fromAccountName,
         teaserSummary: teaser,
+        ...(thumbPublic ? { workThumbUrl: thumbPublic } : {}),
         ...(pitchPublic ? { pitch: pitchPublic } : {}),
       },
       persisted: true,
