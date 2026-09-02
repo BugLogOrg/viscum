@@ -1,9 +1,13 @@
 import { NextResponse } from "next/server";
-import { desc, eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
-import { portfolioWallPosts, users } from "@/db/schema";
+import { portfolioWallPosts } from "@/db/schema";
 import type { PortfolioWallPost } from "@/data/dummy-portfolio-wall";
+import {
+  listNeonPortfolioWall,
+  userByHandleLower,
+} from "@/lib/neon-portfolio-wall";
 import {
   notifyProfileWallOwner,
   notifyProfileWallReply,
@@ -12,74 +16,14 @@ import {
 const NEON_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-function hoursAgoFrom(date: Date): number {
-  return Math.max(
-    0,
-    Math.floor((Date.now() - date.getTime()) / (60 * 60 * 1000)),
-  );
-}
-
-async function userByHandle(handle: string) {
-  const db = getDb();
-  if (!db) return null;
-  const key = handle.replace(/^@/, "").trim().toLowerCase();
-  if (!key) return null;
-  const rows = await db
-    .select({ id: users.id, handle: users.handle, name: users.name })
-    .from(users)
-    .where(sql`lower(${users.handle}) = ${key}`)
-    .limit(1);
-  return rows[0] ?? null;
-}
-
 /** GET ?handle= — PF壁コメント一覧 */
 export async function GET(req: Request) {
   const handle = new URL(req.url).searchParams.get("handle")?.trim() ?? "";
   if (!handle) {
     return NextResponse.json({ error: "handle required" }, { status: 400 });
   }
-  if (!hasDatabase()) {
-    return NextResponse.json({ posts: [] as PortfolioWallPost[], persisted: false });
-  }
-  const db = getDb();
-  if (!db) {
-    return NextResponse.json({ posts: [] as PortfolioWallPost[], persisted: false });
-  }
-
-  const owner = await userByHandle(handle);
-  if (!owner?.handle) {
-    // 持ち主ユーザーが居ない＝この壁はまだ Neon 正本にできない
-    return NextResponse.json({
-      posts: [] as PortfolioWallPost[],
-      persisted: false,
-    });
-  }
-
-  const rows = await db
-    .select({
-      id: portfolioWallPosts.id,
-      parentId: portfolioWallPosts.parentId,
-      body: portfolioWallPosts.body,
-      createdAt: portfolioWallPosts.createdAt,
-      authorHandle: users.handle,
-    })
-    .from(portfolioWallPosts)
-    .innerJoin(users, eq(portfolioWallPosts.authorId, users.id))
-    .where(eq(portfolioWallPosts.portfolioUserId, owner.id))
-    .orderBy(desc(portfolioWallPosts.createdAt))
-    .limit(80);
-
-  const posts: PortfolioWallPost[] = rows.map((r) => ({
-    id: r.id,
-    portfolioHandle: owner.handle!.replace(/^@/, ""),
-    author: (r.authorHandle ?? "unknown").replace(/^@/, ""),
-    body: r.body,
-    hoursAgo: hoursAgoFrom(r.createdAt),
-    parentId: r.parentId ?? undefined,
-    createdAtIso: r.createdAt.toISOString(),
-  }));
-
-  return NextResponse.json({ posts, persisted: true });
+  const { posts, persisted } = await listNeonPortfolioWall(handle);
+  return NextResponse.json({ posts, persisted });
 }
 
 /** POST — ログイン必須。PF持ち主／返信先著者へ通知 */
@@ -123,7 +67,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "本文が必要です" }, { status: 400 });
   }
 
-  const owner = await userByHandle(portfolioHandle);
+  const owner = await userByHandleLower(portfolioHandle);
   if (!owner) {
     return NextResponse.json(
       { error: "プロフィールが見つかりません" },

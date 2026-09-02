@@ -90,13 +90,21 @@ function buildThreads(posts: PortfolioWallPost[]): Thread[] {
 export function PortfolioCommentsClient({
   handle,
   initialPosts,
+  initialPersisted = false,
 }: {
   handle: string;
   initialPosts: PortfolioWallPost[];
+  /** サーバで Neon 正本を取れたか。取れていれば初回から一覧を出す */
+  initialPersisted?: boolean;
 }) {
   const { data: session, status } = useSession();
   const [local, setLocal] = useState<PortfolioWallPost[]>([]);
-  const [remote, setRemote] = useState<PortfolioWallPost[]>([]);
+  const [remote, setRemote] = useState<PortfolioWallPost[]>(() =>
+    initialPersisted ? initialPosts : [],
+  );
+  const [wallReady, setWallReady] = useState(
+    () => initialPersisted || initialPosts.length > 0,
+  );
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<PortfolioWallPost | null>(null);
   const [body, setBody] = useState("");
@@ -109,7 +117,15 @@ export function PortfolioCommentsClient({
   );
 
   useEffect(() => {
-    setRemote([]);
+    // サーバ初期値があるときは画面を空にしない（裏で再取得）
+    if (initialPersisted) {
+      setRemote(initialPosts);
+      setLocal([]);
+      setWallReady(true);
+    } else {
+      setRemote([]);
+      setWallReady(initialPosts.length > 0);
+    }
     setPostError(null);
     setOwnerName(resolveOwnerDisplayName(handle));
     let cancelled = false;
@@ -118,21 +134,31 @@ export function PortfolioCommentsClient({
       const n = r.accountName?.trim();
       if (n) setOwnerName(n);
     });
+    // SSR で Neon 済みならクライアント再取得はしない（空フラッシュ＆待ちの元）
+    if (initialPersisted) {
+      return () => {
+        cancelled = true;
+      };
+    }
     void fetchPortfolioWall(handle).then((res) => {
       if (cancelled) return;
       if (res.persisted) {
         clearLocalPortfolioWall(handle);
         setLocal([]);
         setRemote(res.posts);
+        setWallReady(true);
         return;
       }
       setLocal(readLocalPortfolioWall(handle));
       setRemote([]);
+      setWallReady(true);
     });
     return () => {
       cancelled = true;
     };
-  }, [handle]);
+    // initialPosts は handle 遷移時に差し替わる
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handle, initialPersisted]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -179,11 +205,15 @@ export function PortfolioCommentsClient({
 
   const posts = useMemo(() => {
     const map = new Map<string, PortfolioWallPost>();
-    for (const p of initialPosts) map.set(p.id, p);
+    if (initialPersisted) {
+      for (const p of initialPosts) map.set(p.id, p);
+    } else if (remote.length === 0) {
+      for (const p of initialPosts) map.set(p.id, p);
+    }
     for (const p of local) map.set(p.id, p);
     for (const p of remote) map.set(p.id, p);
     return [...map.values()];
-  }, [local, remote, initialPosts]);
+  }, [local, remote, initialPosts, initialPersisted]);
 
   const threads = useMemo(() => buildThreads(posts), [posts]);
   const commentCount = posts.length;
@@ -475,7 +505,7 @@ export function PortfolioCommentsClient({
 
       {threads.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">
-          {emptyCopy}
+          {!wallReady ? "コメントを読み込み中…" : emptyCopy}
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-viscum-line border-t border-viscum-line">
