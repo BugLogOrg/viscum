@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { CommentBody, commentPreviewPlain } from "@/components/CommentBody";
 import { DemoBadge } from "@/components/DemoBadge";
 import { ProtocolMark } from "@/components/ProtocolMark";
-import type { Comment, CompStatus } from "@/data/dummy-works";
+import type { Comment, CompStatus, DemoSeedPlan } from "@/data/dummy-works";
 import {
   formatHoursAgo,
   formatYen,
@@ -21,6 +21,10 @@ import { addLocalThanks, readLocalThanks } from "@/lib/local-thanks";
 import { removeLocalComment } from "@/lib/local-comments";
 import { deleteWorkComment, postCommentThanks } from "@/lib/remote-comments";
 import { PROTOCOL_COLORS } from "@/lib/protocol-colors";
+import {
+  planAllowsPrize,
+  resolveWorkPrizeYen,
+} from "@/lib/work-prize";
 
 const NEON_COMMENT_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -86,21 +90,68 @@ function CommentAuthor({
   );
 }
 
+type Thread = { root: Comment; replies: Comment[] };
+
+/** ルート＋直下返信。返信への返信もルート直下に寄せる（ADR-027） */
+function buildThreads(comments: Comment[]): Thread[] {
+  const byId = new Map(comments.map((c) => [c.id, c]));
+  const rootIdOf = (c: Comment): string => {
+    if (!c.parentId) return c.id;
+    const parent = byId.get(c.parentId);
+    if (!parent) return c.id; // 親欠落は疑似ルート
+    return parent.parentId ?? parent.id;
+  };
+
+  const repliesByRoot = new Map<string, Comment[]>();
+  const roots: Comment[] = [];
+  const seenRoot = new Set<string>();
+
+  for (const c of comments) {
+    if (!c.parentId || !byId.has(c.parentId)) {
+      if (!seenRoot.has(c.id)) {
+        roots.push(c);
+        seenRoot.add(c.id);
+      }
+      continue;
+    }
+    const rid = rootIdOf(c);
+    const list = repliesByRoot.get(rid) ?? [];
+    list.push(c);
+    repliesByRoot.set(rid, list);
+  }
+
+  // hoursAgo 大＝古い。スレは新しいルート順、返信は古い→新しい
+  roots.sort((a, b) => a.hoursAgo - b.hoursAgo);
+  return roots.map((root) => ({
+    root,
+    replies: (repliesByRoot.get(root.id) ?? [])
+      .filter((r) => r.id !== root.id)
+      .sort((a, b) => b.hoursAgo - a.hoursAgo),
+  }));
+}
+
 export function CommentList({
   comments,
   status,
   prizeYen,
+  plan,
   workId,
   seederHandle,
   onCommentDeleted,
+  onReply,
+  canReply,
 }: {
   comments: Comment[];
   status: CompStatus;
   prizeYen?: number;
+  plan?: DemoSeedPlan | null;
   workId: string;
   /** 作品のシーダー。操作ボタンはこの人だけに出す */
   seederHandle: string;
   onCommentDeleted?: (commentId: string) => void;
+  /** 1段返信を開始（親はルートへ正規化済みを渡す） */
+  onReply?: (parent: Comment) => void;
+  canReply?: boolean;
 }) {
   const { data: session } = useSession();
   const me = normHandle(session?.user?.handle ?? "");
@@ -114,6 +165,12 @@ export function CommentList({
   const [thankError, setThankError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const tippable = planAllowsPrize(plan);
+  const resolvedPrize = resolveWorkPrizeYen(plan, prizeYen);
+  const prizeLabel = resolvedPrize ? formatYen(resolvedPrize) : null;
+
+  const threads = useMemo(() => buildThreads(comments), [comments]);
 
   useEffect(() => {
     const fromComments = comments.filter((c) => c.thanked).map((c) => c.id);
@@ -136,9 +193,6 @@ export function CommentList({
     }, 120);
     return () => window.clearTimeout(timer);
   }, [comments]);
-
-  const prizeLabel = prizeYen ? formatYen(prizeYen) : "¥5,000";
-  const amountYen = prizeYen && prizeYen >= 5000 ? prizeYen : 5000;
 
   async function startThanks(commentId: string) {
     setThankError(null);
@@ -166,7 +220,7 @@ export function CommentList({
       const res = await fetch("/api/checkout/adopt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commentId, workId, amountYen }),
+        body: JSON.stringify({ commentId, workId }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         url?: string;
@@ -221,15 +275,290 @@ export function CommentList({
     }
   }
 
+  function renderActions(c: Comment, isRoot: boolean) {
+    const neon = isNeonCommentId(c.id);
+    const isCommentAuthor = Boolean(me) && me === normHandle(c.author);
+    const canPayLive =
+      tippable &&
+      Boolean(resolvedPrize) &&
+      isRoot &&
+      isSeeder &&
+      !isCommentAuthor &&
+      neon &&
+      !c.tipped &&
+      !c.afterClose &&
+      status !== "none" &&
+      status !== "closed";
+    const isThanked = Boolean(c.thanked) || thankedIds.has(c.id);
+    const canThank = isSeeder && !isCommentAuthor && !isThanked;
+    const showSeederDemoPrize =
+      tippable &&
+      Boolean(prizeLabel) &&
+      isRoot &&
+      isSeeder &&
+      !isCommentAuthor &&
+      !c.adopted &&
+      !c.afterClose &&
+      !neon &&
+      status !== "none" &&
+      status !== "closed";
+    const showSeederDemoPayHint =
+      tippable &&
+      Boolean(prizeLabel) &&
+      isRoot &&
+      isSeeder &&
+      !isCommentAuthor &&
+      !neon &&
+      c.adopted &&
+      !c.tipped &&
+      status !== "none" &&
+      status !== "closed";
+    const canDeleteOwn =
+      isCommentAuthor &&
+      !c.adopted &&
+      !c.tipped &&
+      !isDemoCommentId(c.id);
+    const showReply =
+      Boolean(canReply && onReply) && !isDemoCommentId(c.id);
+
+    return (
+      <div className="mt-3 flex flex-wrap gap-2">
+        {c.afterClose && isRoot && (
+          <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
+            終了後コメント（このラウンドの褒賞対象外）
+          </span>
+        )}
+
+        {showReply && (
+          <button
+            type="button"
+            className="rounded-md border border-viscum-line bg-white px-2.5 py-1 text-[11px] font-medium text-viscum-ink hover:border-viscum-brand hover:text-viscum-brand"
+            onClick={(e) => {
+              e.stopPropagation();
+              onReply?.(c);
+            }}
+          >
+            返信
+          </button>
+        )}
+
+        {canThank && (
+          <button
+            type="button"
+            disabled={thankingId === c.id}
+            className="rounded-md border border-viscum-moss bg-viscum-leaf-soft px-2.5 py-1 text-[11px] font-medium text-viscum-leaf-deep disabled:opacity-60"
+            onClick={(e) => {
+              e.stopPropagation();
+              void startThanks(c.id);
+            }}
+          >
+            {thankingId === c.id ? "お礼中…" : "お礼をする"}
+          </button>
+        )}
+        {isThanked && !canThank && (
+          <span className="rounded border border-viscum-moss/40 bg-viscum-leaf-soft/60 px-2 py-0.5 text-[11px] font-medium text-viscum-leaf-deep">
+            お礼済み
+          </span>
+        )}
+        {showSeederDemoPrize && prizeLabel && (
+          <span className="rounded bg-viscum-berry px-2 py-0.5 text-[11px] text-white">
+            褒賞 {prizeLabel}
+          </span>
+        )}
+
+        {canPayLive && prizeLabel && (
+          <button
+            type="button"
+            disabled={payingId === c.id}
+            className="rounded-md bg-viscum-berry px-2.5 py-1 text-[11px] font-medium text-white disabled:opacity-60"
+            onClick={(e) => {
+              e.stopPropagation();
+              void startCheckout(c.id);
+            }}
+          >
+            {payingId === c.id
+              ? "Checkoutへ…"
+              : `褒賞を渡す ${prizeLabel}`}
+          </button>
+        )}
+
+        {showSeederDemoPayHint && prizeLabel && (
+          <button
+            type="button"
+            className="rounded-md bg-viscum-berry px-2.5 py-1 text-[11px] font-medium text-white"
+            onClick={() => {
+              window.alert(
+                [
+                  "デモ初期コメントは実決済対象外です。",
+                  "",
+                  "Neonに保存されたコメント（ログイン投稿）を開き、",
+                  "「褒賞を渡す」で Stripe Checkout に進みます。",
+                ].join("\n"),
+              );
+            }}
+          >
+            褒賞を渡す {prizeLabel}（デモ）
+          </button>
+        )}
+
+        {canDeleteOwn && (
+          <button
+            type="button"
+            disabled={deletingId === c.id}
+            className="rounded-md border border-viscum-line px-2.5 py-1 text-[11px] font-medium text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry-deep disabled:opacity-60"
+            onClick={(e) => {
+              e.stopPropagation();
+              void startDelete(c);
+            }}
+          >
+            {deletingId === c.id ? "削除中…" : "削除"}
+          </button>
+        )}
+
+        {c.tipped && (
+          <>
+            <span className="rounded border border-viscum-berry/40 bg-viscum-berry/10 px-2 py-0.5 text-[11px] font-medium text-viscum-berry-deep">
+              褒賞支払い済み{" "}
+              {formatYen(c.tipYen ?? resolvedPrize ?? 0)}
+            </span>
+            {isCommentAuthor ? (
+              <button
+                type="button"
+                className="rounded-md border border-viscum-moss bg-viscum-leaf-soft px-2.5 py-1 text-[11px] font-medium text-viscum-leaf-deep"
+                onClick={() => {
+                  window.alert(
+                    [
+                      "メンター出金（Connect）は次段です。",
+                      "",
+                      "いまはシーダーの Checkout（入金）まで。",
+                      "支払い済み後に payout=eligible になり、",
+                      "出金リンクは Connect 配線後に有効化します。",
+                    ].join("\n"),
+                  );
+                }}
+              >
+                受け取る（Connect・準備中）
+              </button>
+            ) : null}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function renderRow(c: Comment, opts: { nested?: boolean; isRoot: boolean }) {
+    const open = openId === c.id;
+    return (
+      <li
+        key={c.id}
+        id={`comment-${c.id}`}
+        className={opts.nested ? "border-t border-viscum-line/60 bg-viscum-paper-2/40" : undefined}
+      >
+        <button
+          type="button"
+          onClick={() => setOpenId(open ? null : c.id)}
+          className={`flex w-full items-start gap-2 px-3 py-3 text-left transition ${
+            opts.nested ? "pl-8" : ""
+          } ${open ? "bg-viscum-bark-soft/60" : "hover:bg-viscum-paper-2/80"}`}
+          aria-expanded={open}
+        >
+          <span
+            className="mt-0.5 w-4 shrink-0 text-xs text-viscum-muted"
+            aria-hidden
+          >
+            {open ? "▾" : "▸"}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              {opts.nested ? (
+                <span className="rounded bg-viscum-paper-2 px-1.5 py-0.5 text-[10px] font-medium text-viscum-muted">
+                  返信
+                </span>
+              ) : null}
+              {c.attitude ? (
+                <span
+                  className="inline-flex shrink-0"
+                  title={
+                    [
+                      PROTOCOL_COLORS.find((p) => p.id === c.attitude)?.label,
+                      PROTOCOL_COLORS.find((p) => p.id === c.attitude)
+                        ?.attitude,
+                    ]
+                      .filter(Boolean)
+                      .join("：") || undefined
+                  }
+                >
+                  <ProtocolMark id={c.attitude} className="h-7 w-7" />
+                </span>
+              ) : null}
+              <span className="text-sm font-semibold leading-snug text-viscum-ink">
+                {c.subject}
+              </span>
+              {(Boolean(c.thanked) || thankedIds.has(c.id)) && (
+                <span className="rounded bg-viscum-moss/20 px-1.5 py-0.5 text-[10px] font-medium text-viscum-trunk">
+                  お礼済み
+                </span>
+              )}
+              {c.adopted && (
+                <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
+                  選出
+                </span>
+              )}
+              {c.afterClose && opts.isRoot && (
+                <span className="rounded bg-viscum-paper-2 px-1.5 py-0.5 text-[10px] font-medium text-viscum-muted">
+                  終了後・対象外
+                </span>
+              )}
+              {c.tipped && (
+                <span className="rounded bg-viscum-berry/15 px-1.5 py-0.5 text-[10px] font-medium text-viscum-berry-deep">
+                  褒賞済み
+                </span>
+              )}
+            </span>
+            <span className="mt-0.5 block text-[11px] text-viscum-muted">
+              <CommentAuthor
+                author={c.author}
+                accountName={c.accountName}
+                demo={isDemoCommentId(c.id)}
+              />
+              <span> · {formatHoursAgo(c.hoursAgo)}</span>
+              {!open && (
+                <>
+                  <span className="text-viscum-line"> · </span>
+                  <span className="line-clamp-1 font-normal text-viscum-muted/80">
+                    {commentPreviewPlain(c.body)}
+                  </span>
+                </>
+              )}
+            </span>
+          </span>
+        </button>
+
+        {open && (
+          <div
+            className={`border-t border-viscum-line/80 bg-viscum-paper px-3 py-3 ${
+              opts.nested ? "pl-12" : "pl-9"
+            }`}
+          >
+            <CommentBody body={c.body} imageUrls={c.imageUrls} />
+            {renderActions(c, opts.isRoot)}
+          </div>
+        )}
+      </li>
+    );
+  }
+
   return (
     <section className="border-t border-viscum-line pt-4" aria-label="コメント">
       <h2 className="text-[20px] font-bold text-viscum-ink">
         コメント · {comments.length}件
       </h2>
       <p className="mt-1 text-[11px] text-viscum-muted">
-        件名をタップして本文を展開（Gmail型）
+        件名をタップして本文を展開（Gmail型）· 返信は1段まで
         {isSeeder
-          ? " · お礼・褒賞の操作はこの画面のシーダーだけが使えます"
+          ? tippable
+            ? " · お礼・褒賞の操作はこの画面のシーダーだけが使えます"
+            : " · お礼はこの画面のシーダーだけが使えます（無料コメントに褒賞はありません）"
           : ""}
       </p>
       {payError && (
@@ -255,242 +584,12 @@ export function CommentList({
       )}
 
       <ul className="mt-3 divide-y divide-viscum-line overflow-hidden rounded-lg border border-viscum-line bg-white/50">
-        {comments.map((c) => {
-          const open = openId === c.id;
-          const neon = isNeonCommentId(c.id);
-          const isCommentAuthor =
-            Boolean(me) && me === normHandle(c.author);
-          /** 自分のコメントには褒賞UIを出さない（APIエラー前に止める） */
-          const canPayLive =
-            isSeeder &&
-            !isCommentAuthor &&
-            neon &&
-            !c.tipped &&
-            !c.afterClose &&
-            status !== "none" &&
-            status !== "closed";
-          const isThanked = Boolean(c.thanked) || thankedIds.has(c.id);
-          /** シーダー専用：メンターコメントへ無料お礼 */
-          const canThank =
-            isSeeder && !isCommentAuthor && !isThanked;
-          const showSeederDemoPrize =
-            isSeeder &&
-            !isCommentAuthor &&
-            !c.adopted &&
-            !c.afterClose &&
-            !neon &&
-            status !== "none" &&
-            status !== "closed";
-          const showSeederDemoPayHint =
-            isSeeder &&
-            !isCommentAuthor &&
-            !neon &&
-            c.adopted &&
-            !c.tipped &&
-            status !== "none" &&
-            status !== "closed";
-          const canDeleteOwn =
-            isCommentAuthor &&
-            !c.adopted &&
-            !c.tipped &&
-            !isDemoCommentId(c.id);
-
-          return (
-            <li key={c.id} id={`comment-${c.id}`}>
-              <button
-                type="button"
-                onClick={() => setOpenId(open ? null : c.id)}
-                className={`flex w-full items-start gap-2 px-3 py-3 text-left transition ${
-                  open ? "bg-viscum-bark-soft/60" : "hover:bg-viscum-paper-2/80"
-                }`}
-                aria-expanded={open}
-              >
-                <span
-                  className="mt-0.5 w-4 shrink-0 text-xs text-viscum-muted"
-                  aria-hidden
-                >
-                  {open ? "▾" : "▸"}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    {c.attitude ? (
-                      <span
-                        className="inline-flex shrink-0"
-                        title={
-                          [
-                            PROTOCOL_COLORS.find((p) => p.id === c.attitude)
-                              ?.label,
-                            PROTOCOL_COLORS.find((p) => p.id === c.attitude)
-                              ?.attitude,
-                          ]
-                            .filter(Boolean)
-                            .join("：") || undefined
-                        }
-                      >
-                        <ProtocolMark id={c.attitude} className="h-7 w-7" />
-                      </span>
-                    ) : null}
-                    <span className="text-sm font-semibold leading-snug text-viscum-ink">
-                      {c.subject}
-                    </span>
-                    {isThanked && (
-                      <span className="rounded bg-viscum-moss/20 px-1.5 py-0.5 text-[10px] font-medium text-viscum-trunk">
-                        お礼済み
-                      </span>
-                    )}
-                    {c.adopted && (
-                      <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
-                        選出
-                      </span>
-                    )}
-                    {c.afterClose && (
-                      <span className="rounded bg-viscum-paper-2 px-1.5 py-0.5 text-[10px] font-medium text-viscum-muted">
-                        終了後・対象外
-                      </span>
-                    )}
-                    {c.tipped && (
-                      <span className="rounded bg-viscum-berry/15 px-1.5 py-0.5 text-[10px] font-medium text-viscum-berry-deep">
-                        褒賞済み
-                      </span>
-                    )}
-                  </span>
-                  <span className="mt-0.5 block text-[11px] text-viscum-muted">
-                    <CommentAuthor
-                      author={c.author}
-                      accountName={c.accountName}
-                      demo={isDemoCommentId(c.id)}
-                    />
-                    <span> · {formatHoursAgo(c.hoursAgo)}</span>
-                    {!open && (
-                      <>
-                        <span className="text-viscum-line"> · </span>
-                        <span className="line-clamp-1 font-normal text-viscum-muted/80">
-                          {commentPreviewPlain(c.body)}
-                        </span>
-                      </>
-                    )}
-                  </span>
-                </span>
-              </button>
-
-              {open && (
-                <div className="border-t border-viscum-line/80 bg-viscum-paper px-3 py-3 pl-9">
-                  <CommentBody body={c.body} imageUrls={c.imageUrls} />
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {c.afterClose && (
-                      <span className="rounded border border-viscum-line px-2 py-0.5 text-[11px] text-viscum-muted">
-                        終了後コメント（このラウンドの褒賞対象外）
-                      </span>
-                    )}
-
-                    {/* シーダー専用：お礼（無料）・褒賞（Checkout） */}
-                    {canThank && (
-                      <button
-                        type="button"
-                        disabled={thankingId === c.id}
-                        className="rounded-md border border-viscum-moss bg-viscum-leaf-soft px-2.5 py-1 text-[11px] font-medium text-viscum-leaf-deep disabled:opacity-60"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void startThanks(c.id);
-                        }}
-                      >
-                        {thankingId === c.id ? "お礼中…" : "お礼をする"}
-                      </button>
-                    )}
-                    {isThanked && !canThank && (
-                      <span className="rounded border border-viscum-moss/40 bg-viscum-leaf-soft/60 px-2 py-0.5 text-[11px] font-medium text-viscum-leaf-deep">
-                        お礼済み
-                      </span>
-                    )}
-                    {showSeederDemoPrize && (
-                      <span className="rounded bg-viscum-berry px-2 py-0.5 text-[11px] text-white">
-                        褒賞 {prizeLabel}
-                      </span>
-                    )}
-
-                    {canPayLive && (
-                      <button
-                        type="button"
-                        disabled={payingId === c.id}
-                        className="rounded-md bg-viscum-berry px-2.5 py-1 text-[11px] font-medium text-white disabled:opacity-60"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void startCheckout(c.id);
-                        }}
-                      >
-                        {payingId === c.id
-                          ? "Checkoutへ…"
-                          : `褒賞を渡す ${prizeLabel}`}
-                      </button>
-                    )}
-
-                    {showSeederDemoPayHint && (
-                      <button
-                        type="button"
-                        className="rounded-md bg-viscum-berry px-2.5 py-1 text-[11px] font-medium text-white"
-                        onClick={() => {
-                          window.alert(
-                            [
-                              "デモ初期コメントは実決済対象外です。",
-                              "",
-                              "Neonに保存されたコメント（ログイン投稿）を開き、",
-                              "「褒賞を渡す」で Stripe Checkout に進みます。",
-                            ].join("\n"),
-                          );
-                        }}
-                      >
-                        褒賞を渡す {prizeLabel}（デモ）
-                      </button>
-                    )}
-
-                    {canDeleteOwn && (
-                      <button
-                        type="button"
-                        disabled={deletingId === c.id}
-                        className="rounded-md border border-viscum-line px-2.5 py-1 text-[11px] font-medium text-viscum-muted hover:border-viscum-berry hover:text-viscum-berry-deep disabled:opacity-60"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          void startDelete(c);
-                        }}
-                      >
-                        {deletingId === c.id ? "削除中…" : "削除"}
-                      </button>
-                    )}
-
-                    {/* 結果表示は全員。受け取り操作はメンター本人だけ */}
-                    {c.tipped && (
-                      <>
-                        <span className="rounded border border-viscum-berry/40 bg-viscum-berry/10 px-2 py-0.5 text-[11px] font-medium text-viscum-berry-deep">
-                          褒賞支払い済み{" "}
-                          {formatYen(c.tipYen ?? prizeYen ?? 5000)}
-                        </span>
-                        {isCommentAuthor ? (
-                          <button
-                            type="button"
-                            className="rounded-md border border-viscum-moss bg-viscum-leaf-soft px-2.5 py-1 text-[11px] font-medium text-viscum-leaf-deep"
-                            onClick={() => {
-                              window.alert(
-                                [
-                                  "メンター出金（Connect）は次段です。",
-                                  "",
-                                  "いまはシーダーの Checkout（入金）まで。",
-                                  "支払い済み後に payout=eligible になり、",
-                                  "出金リンクは Connect 配線後に有効化します。",
-                                ].join("\n"),
-                              );
-                            }}
-                          >
-                            受け取る（Connect・準備中）
-                          </button>
-                        ) : null}
-                      </>
-                    )}
-                  </div>
-                </div>
-              )}
-            </li>
-          );
-        })}
+        {threads.flatMap(({ root, replies }) => [
+          renderRow(root, { isRoot: true }),
+          ...replies.map((r) =>
+            renderRow(r, { nested: true, isRoot: false }),
+          ),
+        ])}
       </ul>
     </section>
   );

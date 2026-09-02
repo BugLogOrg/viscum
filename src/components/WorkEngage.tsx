@@ -6,7 +6,12 @@ import { useSession } from "next-auth/react";
 import { CommentList } from "@/components/CommentList";
 import { CommentAttitudePicker } from "@/components/CommentAttitudePicker";
 import { StatusBadge } from "@/components/StatusBadge";
-import { type Comment, type CompStatus } from "@/data/dummy-works";
+import {
+  type Comment,
+  type CompStatus,
+  type DemoSeedPlan,
+  formatYen,
+} from "@/data/dummy-works";
 import {
   addLocalComment,
   readLocalComments,
@@ -30,12 +35,14 @@ import {
   fetchBlobConfigured,
   prepareCommentImage,
 } from "@/lib/upload-comment-image";
+import { resolveWorkPrizeYen } from "@/lib/work-prize";
 
 type Props = {
   workId: string;
   seederHandle: string;
   status: CompStatus;
   prizeYen?: number;
+  plan?: DemoSeedPlan | null;
   paymentsDone?: number;
   planLabel?: string | null;
   /** 「この作品への○○を募集しています」— プランから自動 */
@@ -60,6 +67,7 @@ export function WorkEngage({
   seederHandle,
   status,
   prizeYen,
+  plan = null,
   paymentsDone,
   planLabel,
   recruitPitch = null,
@@ -75,11 +83,14 @@ export function WorkEngage({
   const { data: session, status: authStatus } = useSession();
   const handle = session?.user?.handle?.replace(/^@/, "").trim() ?? "";
   const canWrite = Boolean(session?.user?.id && handle);
+  const displayPrizeYen = resolveWorkPrizeYen(plan, prizeYen) ?? undefined;
 
   const [localExtra, setLocalExtra] = useState<Comment[]>([]);
   const [remoteExtra, setRemoteExtra] = useState<Comment[]>([]);
   const [removedIds, setRemovedIds] = useState<Set<string>>(() => new Set());
   const [openForm, setOpenForm] = useState(false);
+  /** 返信先（表示用）。投稿時はルートIDへ正規化 */
+  const [replyTo, setReplyTo] = useState<Comment | null>(null);
   const [subject, setSubject] = useState("");
   const [attitude, setAttitude] = useState<CommentAttitudeId | null>(null);
   const [blocks, setBlocks] = useState<CommentBlock[]>(emptyComposeBlocks);
@@ -170,12 +181,46 @@ export function WorkEngage({
   function startCompose() {
     if (!canWrite) {
       setOpenForm(true);
+      setReplyTo(null);
       setError(null);
       return;
     }
+    setReplyTo(null);
     setOpenForm(true);
     setJustPosted(false);
     setError(null);
+  }
+
+  function startReply(target: Comment) {
+    if (!canWrite) {
+      setOpenForm(true);
+      setError(null);
+      return;
+    }
+    const byId = new Map(comments.map((c) => [c.id, c]));
+    let parent = target;
+    if (target.parentId) {
+      const p = byId.get(target.parentId);
+      if (p && !p.parentId) parent = p;
+      else if (p?.parentId) {
+        const root = byId.get(p.parentId);
+        if (root) parent = root;
+      }
+    }
+    setReplyTo(parent);
+    const re = parent.subject.startsWith("Re:")
+      ? parent.subject
+      : `Re: ${parent.subject}`.slice(0, 80);
+    setSubject(re);
+    setOpenForm(true);
+    setJustPosted(false);
+    setError(null);
+    window.setTimeout(() => {
+      document.getElementById("work-comment-compose")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 80);
   }
 
   function resetForm() {
@@ -346,6 +391,7 @@ export function WorkEngage({
     setSubmitting(true);
     setError(null);
     try {
+      const parentId = replyTo?.id;
       const remote = await postWorkComment({
         workId,
         subject: s,
@@ -353,10 +399,12 @@ export function WorkEngage({
         imageUrls,
         afterClose: compClosed,
         attitude,
+        parentId,
       });
       if (remote.ok && remote.comment) {
         setRemoteExtra((prev) => [remote.comment!, ...prev]);
         resetForm();
+        setReplyTo(null);
         setOpenForm(false);
         setJustPosted(true);
         setLastPersisted(true);
@@ -371,9 +419,11 @@ export function WorkEngage({
         afterClose: compClosed,
         imageUrls,
         attitude,
+        parentId,
       });
       setLocalExtra(readLocalComments(workId));
       resetForm();
+      setReplyTo(null);
       setOpenForm(false);
       setJustPosted(true);
       setLastPersisted(false);
@@ -425,7 +475,7 @@ export function WorkEngage({
           ) : null}
           <StatusBadge
             status={status}
-            prizeYen={prizeYen}
+            prizeYen={displayPrizeYen}
             paymentsDone={paymentsDone}
             planLabel={planLabel ?? undefined}
             size="lg"
@@ -453,9 +503,9 @@ export function WorkEngage({
               )}
             </p>
           ) : null}
-          {prizeYen ? (
+          {displayPrizeYen ? (
             <p className="text-[13px] text-viscum-muted">
-              褒賞は選ばれた人へ
+              褒賞は選ばれた人へ（{formatYen(displayPrizeYen)}）
             </p>
           ) : null}
           {status === "pay_soon" ? (
@@ -482,7 +532,7 @@ export function WorkEngage({
                 : null}
             </p>
           ) : null}
-          {compActive && hasAdoptedUntipped ? (
+          {compActive && hasAdoptedUntipped && displayPrizeYen ? (
             <p className="text-[12px] text-viscum-muted">
               {isSeederViewer
                 ? "選出済み・褒賞の支払い待ち。コメントを展開 →「褒賞を渡す」で Checkout。"
@@ -551,10 +601,37 @@ export function WorkEngage({
       )}
 
       {openForm && canPost && (
-        <div className="space-y-3 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+        <div
+          id="work-comment-compose"
+          className="space-y-3 rounded-lg border border-viscum-line bg-white/70 px-3 py-3"
+        >
           <h3 className="text-[14px] font-semibold text-viscum-ink">
-            {compClosed ? "終了後コメント" : "コメントを書く"}
+            {replyTo
+              ? "返信を書く"
+              : compClosed
+                ? "終了後コメント"
+                : "コメントを書く"}
           </h3>
+          {replyTo ? (
+            <div className="rounded-md border border-viscum-moss/40 bg-viscum-leaf-soft/40 px-2.5 py-2 text-[12px] text-viscum-ink">
+              <p className="font-medium text-viscum-leaf-deep">
+                @{replyTo.author.replace(/^@/, "")} への返信
+              </p>
+              <p className="mt-0.5 line-clamp-2 text-viscum-muted">
+                {replyTo.subject}
+              </p>
+              <button
+                type="button"
+                className="mt-1.5 text-[11px] text-viscum-muted underline"
+                onClick={() => {
+                  setReplyTo(null);
+                  setSubject("");
+                }}
+              >
+                返信をやめて通常コメントにする
+              </button>
+            </div>
+          ) : null}
           {composeGate()}
           {canWrite && (
             <form onSubmit={submit} className="space-y-3">
@@ -793,6 +870,7 @@ export function WorkEngage({
                   type="button"
                   onClick={() => {
                     setOpenForm(false);
+                    setReplyTo(null);
                     setError(null);
                     resetForm();
                   }}
@@ -822,8 +900,11 @@ export function WorkEngage({
         comments={comments}
         status={status}
         prizeYen={prizeYen}
+        plan={plan}
         workId={workId}
         seederHandle={seederHandle}
+        canReply={canWrite && canPost}
+        onReply={startReply}
         onCommentDeleted={(commentId) => {
           setRemovedIds((prev) => new Set([...prev, commentId]));
           setLocalExtra((prev) => prev.filter((c) => c.id !== commentId));

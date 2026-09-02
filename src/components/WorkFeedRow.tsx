@@ -11,6 +11,7 @@ import {
   FeedBookmarkButton,
 } from "@/components/FeedThumbReactions";
 import { SeederLink } from "@/components/SeederLink";
+import { resolveWorkPrizeYen } from "@/lib/work-prize";
 
 /** note 見出し画像と同じ比率（1280×670 ≈ 1.91:1）。詳細・投稿プレビューでも参照 */
 export const THUMB_ASPECT = "aspect-[1280/670]";
@@ -67,7 +68,7 @@ function feedStatus(work: Work): {
       title:
         planBadgeLabel(work.plan) ??
         (work.status === "pay_soon" ? "決済準備中" : "コンペ開催中"),
-      prizeYen: work.prizeYen,
+      prizeYen: resolveWorkPrizeYen(work.plan, work.prizeYen) ?? undefined,
       deadline: formatDeadlineFeed(work.closesInHours, work.status),
     };
   }

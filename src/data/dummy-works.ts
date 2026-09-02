@@ -30,6 +30,8 @@ export type Comment = {
   afterClose?: boolean;
   /** コメント態度（緑／青／赤）。気になるは別 */
   attitude?: "green" | "blue" | "red";
+  /** 1段返信の親コメントID（ADR-027）。無い＝ルート */
+  parentId?: string;
 };
 
 export type Work = {

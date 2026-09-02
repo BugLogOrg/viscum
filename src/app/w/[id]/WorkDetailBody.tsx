@@ -322,6 +322,7 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
                   seederHandle={work.seeder}
                   status={work.status}
                   prizeYen={work.prizeYen}
+                  plan={work.plan}
                   paymentsDone={work.paymentsDone}
                   planLabel={planBadgeLabel(work.plan)}
                   recruitPitch={planRecruitPitch(work.plan)}

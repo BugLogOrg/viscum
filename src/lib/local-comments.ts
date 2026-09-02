@@ -54,6 +54,7 @@ export function addLocalComment(
     afterClose?: boolean;
     imageUrls?: string[];
     attitude: CommentAttitudeId;
+    parentId?: string;
   },
 ): Comment {
   const row: Comment = {
@@ -66,6 +67,7 @@ export function addLocalComment(
     afterClose: input.afterClose,
     imageUrls: input.imageUrls?.length ? input.imageUrls : undefined,
     attitude: input.attitude,
+    parentId: input.parentId,
   };
   const next = [row, ...readLocalComments(workId)];
   writeLocalComments(workId, next);

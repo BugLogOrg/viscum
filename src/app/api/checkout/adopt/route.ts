@@ -2,20 +2,37 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
-import { comments, payments, users } from "@/db/schema";
+import { comments, payments, users, works } from "@/db/schema";
+import type { DemoSeedPlan } from "@/data/dummy-works";
 import {
   appBaseUrl,
-  clampAdoptYen,
   getStripe,
   hasStripe,
   MIN_ADOPT_YEN,
 } from "@/lib/stripe";
+import {
+  planAllowsPrize,
+  resolveWorkPrizeYen,
+} from "@/lib/work-prize";
 
 const NEON_COMMENT_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+function asPlan(plan: string | null): DemoSeedPlan | null {
+  if (
+    plan === "free_comment" ||
+    plan === "first_impression" ||
+    plan === "brush_up" ||
+    plan === "public_boost"
+  ) {
+    return plan;
+  }
+  return null;
+}
+
 /**
- * 採用＋Stripe Checkout（段階C・入金のみ）。
+ * 褒賞 Checkout（段階C・入金のみ）。
+ * 金額は作品の prize_yen／プラン正本（5k／10k／30k）。クライアント送信額は使わない。
  * Connect 出金は後段。成功時 payout_status=eligible。
  */
 export async function POST(req: Request) {
@@ -53,12 +70,10 @@ export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as {
     commentId?: string;
     workId?: string;
-    amountYen?: number;
   } | null;
 
   const commentId = body?.commentId?.trim() ?? "";
   const workId = body?.workId?.trim() ?? "";
-  const amountYen = clampAdoptYen(body?.amountYen);
 
   if (!commentId || !NEON_COMMENT_ID.test(commentId)) {
     return NextResponse.json(
@@ -71,12 +86,6 @@ export async function POST(req: Request) {
   }
   if (!workId) {
     return NextResponse.json({ error: "workId required" }, { status: 400 });
-  }
-  if (amountYen < MIN_ADOPT_YEN) {
-    return NextResponse.json(
-      { error: `金額は¥${MIN_ADOPT_YEN.toLocaleString()}以上です` },
-      { status: 400 },
-    );
   }
 
   const payer = await db
@@ -91,11 +100,55 @@ export async function POST(req: Request) {
     );
   }
 
+  const workRows = await db
+    .select({
+      id: works.id,
+      seederId: works.seederId,
+      plan: works.plan,
+      prizeYen: works.prizeYen,
+      status: works.status,
+    })
+    .from(works)
+    .where(eq(works.id, workId))
+    .limit(1);
+  const work = workRows[0];
+  if (!work) {
+    return NextResponse.json({ error: "作品が見つかりません" }, { status: 404 });
+  }
+  if (work.seederId !== fromUserId) {
+    return NextResponse.json(
+      { error: "褒賞を渡せるのは作品のシーダーだけです" },
+      { status: 403 },
+    );
+  }
+  const plan = asPlan(work.plan);
+  if (plan === "free_comment" || !planAllowsPrize(plan)) {
+    return NextResponse.json(
+      { error: "無料コメントには褒賞を渡せません" },
+      { status: 400 },
+    );
+  }
+  if (work.status === "closed" || work.status === "none") {
+    return NextResponse.json(
+      { error: "このラウンドでは褒賞を渡せません（終了または募集なし）" },
+      { status: 400 },
+    );
+  }
+
+  const amountYen = resolveWorkPrizeYen(plan, work.prizeYen);
+  if (amountYen == null || amountYen < MIN_ADOPT_YEN) {
+    return NextResponse.json(
+      { error: `褒賞額が不正です（¥${MIN_ADOPT_YEN.toLocaleString()}以上）` },
+      { status: 400 },
+    );
+  }
+
   const commentRows = await db
     .select({
       id: comments.id,
       workId: comments.workId,
       authorId: comments.authorId,
+      parentId: comments.parentId,
       afterClose: comments.afterClose,
       subject: comments.subject,
     })
@@ -108,6 +161,12 @@ export async function POST(req: Request) {
   }
   if (comment.workId !== workId) {
     return NextResponse.json({ error: "作品とコメントが一致しません" }, { status: 400 });
+  }
+  if (comment.parentId) {
+    return NextResponse.json(
+      { error: "返信コメントには褒賞を渡せません（親コメントへ）" },
+      { status: 400 },
+    );
   }
   if (comment.afterClose) {
     return NextResponse.json(
@@ -139,13 +198,11 @@ export async function POST(req: Request) {
     );
   }
 
-  // 採用マーク
   await db
     .update(comments)
     .set({ adoptedAt: new Date() })
     .where(eq(comments.id, commentId));
 
-  // 未完了セッションがあれば再利用せず新規（古い pending は残してよい）
   const [payment] = await db
     .insert(payments)
     .values({

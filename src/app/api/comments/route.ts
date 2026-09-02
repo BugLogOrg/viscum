@@ -9,6 +9,9 @@ import type { Comment } from "@/data/dummy-works";
 import { isNeonWorkId } from "@/lib/neon-works";
 import { isCommentAttitudeId } from "@/lib/protocol-colors";
 
+const NEON_COMMENT_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function hoursAgoFrom(date: Date): number {
   return Math.max(
     0,
@@ -19,6 +22,7 @@ function hoursAgoFrom(date: Date): number {
 function toClientComment(
   row: {
     id: string;
+    parentId: string | null;
     subject: string;
     body: string;
     imageUrls: string[] | null;
@@ -36,6 +40,7 @@ function toClientComment(
   const name = row.name?.trim();
   return {
     id: row.id,
+    parentId: row.parentId ?? undefined,
     author: handle,
     accountName:
       name && name.toLowerCase() !== handle.toLowerCase() ? name : undefined,
@@ -71,6 +76,7 @@ export async function GET(req: Request) {
   const rows = await db
     .select({
       id: comments.id,
+      parentId: comments.parentId,
       subject: comments.subject,
       body: comments.body,
       imageUrls: comments.imageUrls,
@@ -86,7 +92,7 @@ export async function GET(req: Request) {
     .innerJoin(users, eq(comments.authorId, users.id))
     .where(eq(comments.workId, workId))
     .orderBy(desc(comments.createdAt))
-    .limit(80);
+    .limit(120);
 
   const ids = rows.map((r) => r.id);
   const paidMap = new Map<string, { tipped: boolean; tipYen: number }>();
@@ -118,7 +124,7 @@ export async function GET(req: Request) {
   });
 }
 
-/** ログイン＋英語ID必須で投稿 */
+/** ログイン＋英語ID必須で投稿。parentId あり＝1段返信（ADR-027） */
 export async function POST(req: Request) {
   const session = await auth();
   const userId = session?.user?.id;
@@ -149,6 +155,7 @@ export async function POST(req: Request) {
     imageUrls?: string[];
     afterClose?: boolean;
     attitude?: string;
+    parentId?: string;
   } | null;
 
   const workId = body?.workId?.trim();
@@ -160,6 +167,7 @@ export async function POST(req: Request) {
         .filter((u) => typeof u === "string" && u.length > 0)
         .slice(0, 6)
     : [];
+  const rawParentId = body?.parentId?.trim() ?? "";
 
   if (!workId) {
     return NextResponse.json({ error: "workId required" }, { status: 400 });
@@ -180,6 +188,37 @@ export async function POST(req: Request) {
     );
   }
 
+  let parentId: string | null = null;
+  let parentAuthorId: string | null = null;
+  if (rawParentId) {
+    if (!NEON_COMMENT_ID.test(rawParentId)) {
+      return NextResponse.json(
+        { error: "返信先コメントが不正です" },
+        { status: 400 },
+      );
+    }
+    const parentRows = await db
+      .select({
+        id: comments.id,
+        workId: comments.workId,
+        parentId: comments.parentId,
+        authorId: comments.authorId,
+      })
+      .from(comments)
+      .where(eq(comments.id, rawParentId))
+      .limit(1);
+    const parent = parentRows[0];
+    if (!parent || parent.workId !== workId) {
+      return NextResponse.json(
+        { error: "返信先コメントが見つかりません" },
+        { status: 404 },
+      );
+    }
+    // 深いネスト禁止: 返信への返信はルート直下へ。通知は直近の親著者へ
+    parentId = parent.parentId ?? parent.id;
+    parentAuthorId = parent.authorId;
+  }
+
   const authorRows = await db
     .select({ id: users.id })
     .from(users)
@@ -197,6 +236,7 @@ export async function POST(req: Request) {
     .values({
       workId,
       authorId: userId,
+      parentId,
       subject,
       body: text || "（画像のみ）",
       imageUrls,
@@ -205,6 +245,7 @@ export async function POST(req: Request) {
     })
     .returning({
       id: comments.id,
+      parentId: comments.parentId,
       subject: comments.subject,
       body: comments.body,
       imageUrls: comments.imageUrls,
@@ -228,37 +269,56 @@ export async function POST(req: Request) {
     name: accountName,
   });
 
-  // フォロー中メンターの参加通知（自分のシードへの自コメントは除外）
-  try {
-    let isOwnSeed = false;
-    let workTitle = "";
-    if (isNeonWorkId(workId)) {
-      const wrows = await db
-        .select({ seederId: works.seederId, title: works.title })
-        .from(works)
-        .where(eq(works.id, workId))
-        .limit(1);
-      if (wrows[0]?.seederId === userId) isOwnSeed = true;
-      workTitle = wrows[0]?.title?.trim() ?? "";
-    }
-    if (!isOwnSeed) {
-      const followerIds = await listFollowerUserIds(userId);
-      const short =
-        workTitle.length > 36 ? `${workTitle.slice(0, 36)}…` : workTitle;
-      await createNotificationsForUsers(followerIds, {
+  // 返信: 親コメント著者へ通知（自分自身は除く）
+  if (parentId && parentAuthorId && parentAuthorId !== userId) {
+    try {
+      await createNotificationsForUsers([parentAuthorId], {
         kind: "comment",
-        title: "フォロー中の人がコメントしました",
-        body: short
-          ? `@${handle} が「${short}」に反応しました。`
-          : `@${handle} が作品に反応しました。`,
-        href: `/w/${encodeURIComponent(workId)}`,
+        title: "コメントに返信がありました",
+        body: `@${handle} があなたのコメントに返信しました。`,
+        href: `/w/${encodeURIComponent(workId)}?c=${encodeURIComponent(inserted.id)}`,
         audience: "mentor",
         actorHandle: handle,
         workId,
       });
+    } catch (e) {
+      console.error("[POST /api/comments] reply notify", e);
     }
-  } catch (e) {
-    console.error("[POST /api/comments] mentor notify", e);
+  }
+
+  // フォロー中メンターの参加通知（自分のシードへの自コメントは除外・返信はスキップ）
+  if (!parentId) {
+    try {
+      let isOwnSeed = false;
+      let workTitle = "";
+      if (isNeonWorkId(workId)) {
+        const wrows = await db
+          .select({ seederId: works.seederId, title: works.title })
+          .from(works)
+          .where(eq(works.id, workId))
+          .limit(1);
+        if (wrows[0]?.seederId === userId) isOwnSeed = true;
+        workTitle = wrows[0]?.title?.trim() ?? "";
+      }
+      if (!isOwnSeed) {
+        const followerIds = await listFollowerUserIds(userId);
+        const short =
+          workTitle.length > 36 ? `${workTitle.slice(0, 36)}…` : workTitle;
+        await createNotificationsForUsers(followerIds, {
+          kind: "comment",
+          title: "フォロー中の人がコメントしました",
+          body: short
+            ? `@${handle} が「${short}」に反応しました。`
+            : `@${handle} が作品に反応しました。`,
+          href: `/w/${encodeURIComponent(workId)}`,
+          audience: "mentor",
+          actorHandle: handle,
+          workId,
+        });
+      }
+    } catch (e) {
+      console.error("[POST /api/comments] mentor notify", e);
+    }
   }
 
   return NextResponse.json({ comment, persisted: true });

@@ -133,6 +133,11 @@ export const comments = pgTable(
     authorId: text("author_id")
       .notNull()
       .references(() => users.id),
+    /**
+     * 1段返信の親（ADR-027）。深いネストはしない。
+     * 返信への返信はルート直下に正規化する（アプリ側）。
+     */
+    parentId: text("parent_id"),
     subject: text("subject").notNull(),
     body: text("body").notNull(),
     /** Blob 等の公開URL配列（本体バイナリはDBに置かない） */
@@ -149,7 +154,10 @@ export const comments = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (t) => [index("comments_work_id_idx").on(t.workId)],
+  (t) => [
+    index("comments_work_id_idx").on(t.workId),
+    index("comments_parent_id_idx").on(t.parentId),
+  ],
 );
 
 /**

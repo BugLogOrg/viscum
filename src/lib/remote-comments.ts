@@ -29,6 +29,8 @@ export async function postWorkComment(input: {
   imageUrls?: string[];
   afterClose?: boolean;
   attitude: "green" | "blue" | "red";
+  /** 1段返信の親（ADR-027） */
+  parentId?: string;
 }): Promise<{ ok: boolean; comment?: Comment; error?: string; persisted?: boolean }> {
   try {
     const res = await fetch("/api/comments", {
