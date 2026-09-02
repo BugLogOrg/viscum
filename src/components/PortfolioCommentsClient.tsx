@@ -51,6 +51,18 @@ function postTimeMs(p: PortfolioWallPost): number {
   return Date.now() - p.hoursAgo * 3_600_000;
 }
 
+function authorLabel(author: string): string {
+  const raw = author.replace(/^@/, "").trim();
+  const label = accountLabelForHandle(raw);
+  const localName = readLocalProfile(raw)?.accountName?.trim();
+  const name =
+    localName ||
+    (label.accountName.toLowerCase() !== raw.toLowerCase()
+      ? label.accountName
+      : "");
+  return name ? `${name} @${raw}` : `@${raw}`;
+}
+
 /** 1段返信のみ。返信への返信もルート直下に付ける */
 function buildThreads(posts: PortfolioWallPost[]): Thread[] {
   const byId = new Map(posts.map((p) => [p.id, p]));
@@ -62,7 +74,6 @@ function buildThreads(posts: PortfolioWallPost[]): Thread[] {
     return parent.parentId;
   }
 
-  // ルートは新しい順（上）。返信は古い→新しい（下へ時系列）
   const roots = posts
     .filter((p) => !p.parentId || !byId.has(p.parentId))
     .sort((a, b) => postTimeMs(b) - postTimeMs(a));
@@ -85,6 +96,179 @@ function buildThreads(posts: PortfolioWallPost[]): Thread[] {
       (a, b) => postTimeMs(a) - postTimeMs(b),
     ),
   }));
+}
+
+/** 親内に定義すると入力のたびに再マウントして1文字しか打てなくなる */
+function WallComposeForm({
+  mode,
+  myHandle,
+  replyAuthor,
+  body,
+  submitting,
+  placeholderNew,
+  onBodyChange,
+  onSubmit,
+  onClose,
+}: {
+  mode: "new" | "reply";
+  myHandle: string;
+  replyAuthor?: string;
+  body: string;
+  submitting: boolean;
+  placeholderNew: string;
+  onBodyChange: (value: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onClose: () => void;
+}) {
+  return (
+    <form
+      id={mode === "reply" ? "pf-wall-compose" : "pf-wall-compose-new"}
+      onSubmit={onSubmit}
+      className="space-y-2 rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3"
+    >
+      <p className="text-[12px] text-viscum-ink">
+        投稿者 <span className="font-medium">@{myHandle}</span>
+        <span className="ml-1 text-viscum-muted">（コテハン）</span>
+        {replyAuthor && mode === "reply" && (
+          <span className="ml-2 text-viscum-muted">
+            → @{replyAuthor} への返信
+            <button
+              type="button"
+              className="ml-1 text-viscum-brand hover:underline"
+              onClick={onClose}
+            >
+              閉じる
+            </button>
+          </span>
+        )}
+      </p>
+      <textarea
+        value={body}
+        onChange={(e) => onBodyChange(e.target.value)}
+        rows={3}
+        placeholder={mode === "reply" ? "返信を書く…" : placeholderNew}
+        className="w-full resize-y rounded border border-viscum-line bg-white px-2 py-1.5 text-[13px] leading-relaxed"
+      />
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="submit"
+          disabled={!body.trim() || submitting}
+          className="rounded-md bg-viscum-brand px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-40"
+        >
+          {submitting
+            ? "保存中…"
+            : mode === "reply"
+              ? "返信する"
+              : "投稿する"}
+        </button>
+        {mode === "new" && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-[12px] text-viscum-muted hover:underline"
+          >
+            閉じる
+          </button>
+        )}
+      </div>
+    </form>
+  );
+}
+
+function WallCommentBody({
+  p,
+  indented,
+  focusId,
+  loggedIn,
+  myHandle,
+  loginHref,
+  showReplyCompose,
+  deletingId,
+  compose,
+  onToggleReply,
+  onDelete,
+}: {
+  p: PortfolioWallPost;
+  indented?: boolean;
+  focusId: string | null;
+  loggedIn: boolean;
+  myHandle: string;
+  loginHref: string;
+  showReplyCompose: boolean;
+  deletingId: string | null;
+  compose: React.ReactNode;
+  onToggleReply: () => void;
+  onDelete: () => void;
+}) {
+  const isMine =
+    loggedIn &&
+    myHandle.toLowerCase() === p.author.replace(/^@/, "").toLowerCase();
+  const raw = p.author.replace(/^@/, "").trim();
+
+  return (
+    <div>
+      <div
+        id={`pf-wall-${p.id}`}
+        className={`px-4 py-3 ${
+          indented
+            ? "ml-3 border-l-2 border-viscum-line bg-viscum-paper-2/40"
+            : ""
+        } ${
+          focusId === p.id
+            ? "ring-2 ring-viscum-berry/50 ring-inset bg-viscum-berry/5"
+            : ""
+        }`}
+      >
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Link
+            href={`/u/${encodeURIComponent(raw)}`}
+            className="text-[13px] font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
+          >
+            {authorLabel(p.author)}
+          </Link>
+          <span className="text-[11px] text-viscum-muted">
+            {formatCommentStamp(p.createdAtIso, p.hoursAgo)}
+          </span>
+        </div>
+        <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
+          <LinkifiedText text={p.body} />
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-3">
+          {loggedIn ? (
+            <button
+              type="button"
+              onClick={onToggleReply}
+              className="text-[11px] font-medium text-viscum-brand hover:underline"
+            >
+              {showReplyCompose ? "閉じる" : "返信"}
+            </button>
+          ) : (
+            <Link
+              href={loginHref}
+              className="text-[11px] font-medium text-viscum-brand hover:underline"
+            >
+              ログインして返信
+            </Link>
+          )}
+          {isMine && (
+            <button
+              type="button"
+              disabled={deletingId === p.id}
+              onClick={onDelete}
+              className="text-[11px] font-medium text-viscum-muted hover:text-viscum-berry-deep hover:underline disabled:opacity-60"
+            >
+              {deletingId === p.id ? "削除中…" : "削除"}
+            </button>
+          )}
+        </div>
+      </div>
+      {showReplyCompose && loggedIn && (
+        <div className="border-t border-viscum-moss/40 bg-viscum-leaf-soft/30 px-4 py-3 pl-7">
+          {compose}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function PortfolioCommentsClient({
@@ -117,7 +301,6 @@ export function PortfolioCommentsClient({
   );
 
   useEffect(() => {
-    // サーバ初期値があるときは画面を空にしない（裏で再取得）
     if (initialPersisted) {
       setRemote(initialPosts);
       setLocal([]);
@@ -134,7 +317,6 @@ export function PortfolioCommentsClient({
       const n = r.accountName?.trim();
       if (n) setOwnerName(n);
     });
-    // SSR で Neon 済みならクライアント再取得はしない（空フラッシュ＆待ちの元）
     if (initialPersisted) {
       return () => {
         cancelled = true;
@@ -156,7 +338,6 @@ export function PortfolioCommentsClient({
     return () => {
       cancelled = true;
     };
-    // initialPosts は handle 遷移時に差し替わる
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handle, initialPersisted]);
 
@@ -304,157 +485,21 @@ export function PortfolioCommentsClient({
     }
   }
 
-  function ComposeForm({ mode }: { mode: "new" | "reply" }) {
-    return (
-      <form
-        id={mode === "reply" ? "pf-wall-compose" : "pf-wall-compose-new"}
-        onSubmit={onSubmit}
-        className="space-y-2 rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3"
-      >
-        <p className="text-[12px] text-viscum-ink">
-          投稿者 <span className="font-medium">@{myHandle}</span>
-          <span className="ml-1 text-viscum-muted">（コテハン）</span>
-          {replyTo && mode === "reply" && (
-            <span className="ml-2 text-viscum-muted">
-              → @{replyTo.author} への返信
-              <button
-                type="button"
-                className="ml-1 text-viscum-brand hover:underline"
-                onClick={closeCompose}
-              >
-                閉じる
-              </button>
-            </span>
-          )}
-        </p>
-        <textarea
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          rows={3}
-          placeholder={mode === "reply" ? "返信を書く…" : placeholderNew}
-          className="w-full resize-y rounded border border-viscum-line bg-white px-2 py-1.5 text-[13px] leading-relaxed"
-        />
-        <div className="flex flex-wrap items-center gap-2">
-          <button
-            type="submit"
-            disabled={!body.trim() || submitting}
-            className="rounded-md bg-viscum-brand px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-40"
-          >
-            {submitting
-              ? "保存中…"
-              : mode === "reply"
-                ? "返信する"
-                : "投稿する"}
-          </button>
-          {mode === "new" && (
-            <button
-              type="button"
-              onClick={closeCompose}
-              className="text-[12px] text-viscum-muted hover:underline"
-            >
-              閉じる
-            </button>
-          )}
-        </div>
-      </form>
-    );
-  }
-
-  function CommentBody({
-    p,
-    indented,
-  }: {
-    p: PortfolioWallPost;
-    indented?: boolean;
-  }) {
-    const isMine =
-      loggedIn &&
-      myHandle.toLowerCase() === p.author.replace(/^@/, "").toLowerCase();
-    const showReplyCompose = composeOpen && replyTo?.id === p.id;
-
-    return (
-      <div>
-        <div
-          id={`pf-wall-${p.id}`}
-          className={`px-4 py-3 ${
-            indented
-              ? "ml-3 border-l-2 border-viscum-line bg-viscum-paper-2/40"
-              : ""
-          } ${
-            focusId === p.id
-              ? "ring-2 ring-viscum-berry/50 ring-inset bg-viscum-berry/5"
-              : ""
-          }`}
-        >
-          <div className="flex flex-wrap items-center gap-1.5">
-            {(() => {
-              const raw = p.author.replace(/^@/, "").trim();
-              const label = accountLabelForHandle(raw);
-              const localName = readLocalProfile(raw)?.accountName?.trim();
-              const name =
-                localName ||
-                (label.accountName.toLowerCase() !== raw.toLowerCase()
-                  ? label.accountName
-                  : "");
-              const text = name ? `${name} @${raw}` : `@${raw}`;
-              return (
-                <Link
-                  href={`/u/${encodeURIComponent(raw)}`}
-                  className="text-[13px] font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
-                >
-                  {text}
-                </Link>
-              );
-            })()}
-            <span className="text-[11px] text-viscum-muted">
-              {formatCommentStamp(p.createdAtIso, p.hoursAgo)}
-            </span>
-          </div>
-          <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
-            <LinkifiedText text={p.body} />
-          </p>
-          <div className="mt-1.5 flex flex-wrap items-center gap-3">
-            {loggedIn ? (
-              <button
-                type="button"
-                onClick={() => {
-                  if (showReplyCompose) closeCompose();
-                  else openReply(p);
-                }}
-                className="text-[11px] font-medium text-viscum-brand hover:underline"
-              >
-                {showReplyCompose ? "閉じる" : "返信"}
-              </button>
-            ) : (
-              <Link
-                href={loginHref}
-                className="text-[11px] font-medium text-viscum-brand hover:underline"
-              >
-                ログインして返信
-              </Link>
-            )}
-            {isMine && (
-              <button
-                type="button"
-                disabled={deletingId === p.id}
-                onClick={() => void startDelete(p)}
-                className="text-[11px] font-medium text-viscum-muted hover:text-viscum-berry-deep hover:underline disabled:opacity-60"
-              >
-                {deletingId === p.id ? "削除中…" : "削除"}
-              </button>
-            )}
-          </div>
-        </div>
-        {showReplyCompose && loggedIn && (
-          <div className="border-t border-viscum-moss/40 bg-viscum-leaf-soft/30 px-4 py-3 pl-7">
-            <ComposeForm mode="reply" />
-          </div>
-        )}
-      </div>
-    );
-  }
-
   const showTopCompose = composeOpen && loggedIn && !replyTo;
+
+  const replyCompose = (
+    <WallComposeForm
+      mode="reply"
+      myHandle={myHandle}
+      replyAuthor={replyTo?.author}
+      body={body}
+      submitting={submitting}
+      placeholderNew={placeholderNew}
+      onBodyChange={setBody}
+      onSubmit={onSubmit}
+      onClose={closeCompose}
+    />
+  );
 
   return (
     <section
@@ -499,7 +544,16 @@ export function PortfolioCommentsClient({
 
       {showTopCompose && (
         <div className="mx-4 mt-3">
-          <ComposeForm mode="new" />
+          <WallComposeForm
+            mode="new"
+            myHandle={myHandle}
+            body={body}
+            submitting={submitting}
+            placeholderNew={placeholderNew}
+            onBodyChange={setBody}
+            onSubmit={onSubmit}
+            onClose={closeCompose}
+          />
         </div>
       )}
 
@@ -511,9 +565,39 @@ export function PortfolioCommentsClient({
         <ul className="mt-3 divide-y divide-viscum-line border-t border-viscum-line">
           {threads.map(({ root, replies }) => (
             <li key={root.id}>
-              <CommentBody p={root} />
+              <WallCommentBody
+                p={root}
+                focusId={focusId}
+                loggedIn={loggedIn}
+                myHandle={myHandle}
+                loginHref={loginHref}
+                showReplyCompose={composeOpen && replyTo?.id === root.id}
+                deletingId={deletingId}
+                compose={replyCompose}
+                onToggleReply={() => {
+                  if (composeOpen && replyTo?.id === root.id) closeCompose();
+                  else openReply(root);
+                }}
+                onDelete={() => void startDelete(root)}
+              />
               {replies.map((r) => (
-                <CommentBody key={r.id} p={r} indented />
+                <WallCommentBody
+                  key={r.id}
+                  p={r}
+                  indented
+                  focusId={focusId}
+                  loggedIn={loggedIn}
+                  myHandle={myHandle}
+                  loginHref={loginHref}
+                  showReplyCompose={composeOpen && replyTo?.id === r.id}
+                  deletingId={deletingId}
+                  compose={replyCompose}
+                  onToggleReply={() => {
+                    if (composeOpen && replyTo?.id === r.id) closeCompose();
+                    else openReply(r);
+                  }}
+                  onDelete={() => void startDelete(r)}
+                />
               ))}
             </li>
           ))}
