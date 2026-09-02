@@ -41,3 +41,10 @@ export function addLocalPortfolioWallPost(
   writeLocalPortfolioWall(h, next);
   return row;
 }
+
+/** Neon 正本に切り替えたあと、端末ゴーストを消す */
+export function clearLocalPortfolioWall(handle: string) {
+  if (typeof window === "undefined") return;
+  const key = handle.replace(/^@/, "").toLowerCase();
+  localStorage.removeItem(prefix + key);
+}

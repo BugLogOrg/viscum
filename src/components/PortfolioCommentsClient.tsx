@@ -7,7 +7,7 @@ import type { PortfolioWallPost } from "@/data/dummy-portfolio-wall";
 import { formatHoursAgo } from "@/data/dummy-works";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import {
-  addLocalPortfolioWallPost,
+  clearLocalPortfolioWall,
   readLocalPortfolioWall,
 } from "@/lib/local-portfolio-wall";
 import {
@@ -95,8 +95,8 @@ export function PortfolioCommentsClient({
   );
 
   useEffect(() => {
-    setLocal(readLocalPortfolioWall(handle));
     setRemote([]);
+    setPostError(null);
     setOwnerName(resolveOwnerDisplayName(handle));
     let cancelled = false;
     void fetchRemoteProfile(handle).then((r) => {
@@ -106,7 +106,15 @@ export function PortfolioCommentsClient({
     });
     void fetchPortfolioWall(handle).then((res) => {
       if (cancelled) return;
-      setRemote(res.posts);
+      if (res.persisted) {
+        // Neon 正本。端末ローカルの幽霊投稿は捨てる（他人に見えない原因だった）
+        clearLocalPortfolioWall(handle);
+        setLocal([]);
+        setRemote(res.posts);
+        return;
+      }
+      setLocal(readLocalPortfolioWall(handle));
+      setRemote([]);
     });
     return () => {
       cancelled = true;
@@ -179,32 +187,35 @@ export function PortfolioCommentsClient({
     setSubmitting(true);
     setPostError(null);
     try {
+      const parentId =
+        replyTo && !replyTo.id.startsWith("local_wall_")
+          ? replyTo.id
+          : undefined;
+      if (replyTo?.id.startsWith("local_wall_")) {
+        setPostError(
+          "古い端末内コメントへの返信はできません。新しいコメントとして書き直してください。",
+        );
+        return;
+      }
       const remoteRes = await postPortfolioWall({
         handle,
         body: body.trim(),
-        parentId: replyTo?.id,
+        parentId,
       });
       if (remoteRes.ok && remoteRes.post) {
+        clearLocalPortfolioWall(handle);
+        setLocal([]);
         setRemote((prev) => [remoteRes.post!, ...prev]);
         setBody("");
         setReplyTo(null);
         setComposeOpen(false);
         return;
       }
-      addLocalPortfolioWallPost(handle, {
-        author: myHandle,
-        body: body.trim(),
-        parentId: replyTo?.id,
-      });
-      setLocal(readLocalPortfolioWall(handle));
-      setBody("");
-      setReplyTo(null);
-      setComposeOpen(false);
-      if (remoteRes.error) {
-        setPostError(
-          `${remoteRes.error}（この端末には保存しました。通知はサーバ保存時のみ届きます）`,
-        );
-      }
+      // 失敗時はローカルに逃がさない（自分にだけ見えて壊れて見える）
+      setPostError(
+        remoteRes.error ||
+          "保存に失敗しました。通信とログイン状態を確認してください。",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -310,6 +321,12 @@ export function PortfolioCommentsClient({
         )}
       </div>
 
+      {postError && (
+        <p className="mx-4 mt-3 rounded-md border border-viscum-berry/40 bg-viscum-berry/10 px-3 py-2 text-[12px] text-viscum-berry-deep">
+          {postError}
+        </p>
+      )}
+
       {composeOpen && loggedIn && (
         <form
           onSubmit={onSubmit}
@@ -341,9 +358,6 @@ export function PortfolioCommentsClient({
             placeholder={replyTo ? "返信を書く…" : placeholderNew}
             className="w-full resize-y rounded border border-viscum-line bg-white px-2 py-1.5 text-[13px] leading-relaxed"
           />
-          {postError && (
-            <p className="text-[12px] text-viscum-berry-deep">{postError}</p>
-          )}
           <button
             type="submit"
             disabled={!body.trim() || submitting}

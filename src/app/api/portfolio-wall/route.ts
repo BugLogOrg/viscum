@@ -48,7 +48,11 @@ export async function GET(req: Request) {
 
   const owner = await userByHandle(handle);
   if (!owner?.handle) {
-    return NextResponse.json({ posts: [] as PortfolioWallPost[], persisted: true });
+    // 持ち主ユーザーが居ない＝この壁はまだ Neon 正本にできない
+    return NextResponse.json({
+      posts: [] as PortfolioWallPost[],
+      persisted: false,
+    });
   }
 
   const rows = await db
@@ -89,12 +93,8 @@ export async function POST(req: Request) {
       { status: 401 },
     );
   }
-  if (userId.startsWith("demo:")) {
-    return NextResponse.json(
-      { error: "デモログインでは保存できません" },
-      { status: 403 },
-    );
-  }
+  // デモログインも Neon に残す（upsert 済みの demo: ユーザー）。
+  // 端末ローカルだけだと他人の画面に出ず「死んでる」ように見える。
   if (!hasDatabase()) {
     return NextResponse.json(
       { error: "DATABASE_URL 未設定のため保存できません" },

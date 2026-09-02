@@ -105,7 +105,8 @@ export default async function SeederPortfolioPage({ params }: Props) {
         initialParticipations={mentored}
       />
 
-      <PortfolioWall handle={display} />
+      {/* URL の handle を正とする（作品 seeder の display とずらさない） */}
+      <PortfolioWall handle={handle} />
 
       <p className="px-4 py-8 text-center text-sm">
         <Link href="/" className="text-viscum-brand hover:underline">
