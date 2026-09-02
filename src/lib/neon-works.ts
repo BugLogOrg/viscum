@@ -1,4 +1,4 @@
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db";
 import { users, works, type WorkRow } from "@/db/schema";
 import type { CompStatus, DemoSeedPlan, Work } from "@/data/dummy-works";
@@ -204,6 +204,38 @@ export async function getNeonWork(
     handle: hit.handle,
     name: hit.name,
   });
+}
+
+/** 複数ID一括取得（メンター棚など）。下書きも含む（参加済み作品の表札用） */
+export async function getNeonWorksByIds(
+  ids: string[],
+): Promise<Map<string, Work>> {
+  const out = new Map<string, Work>();
+  const unique = [...new Set(ids.map((id) => id.trim()).filter(isNeonWorkId))];
+  if (unique.length === 0 || !hasDatabase()) return out;
+  const db = getDb();
+  if (!db) return out;
+
+  const rows = await db
+    .select({
+      work: works,
+      handle: users.handle,
+      name: users.name,
+    })
+    .from(works)
+    .innerJoin(users, eq(works.seederId, users.id))
+    .where(inArray(works.id, unique));
+
+  for (const hit of rows) {
+    out.set(
+      hit.work.id,
+      workFromNeonRow(hit.work, {
+        handle: hit.handle,
+        name: hit.name,
+      }),
+    );
+  }
+  return out;
 }
 
 /** サーバ page 用：セッションを見て下書きも作者に返す */

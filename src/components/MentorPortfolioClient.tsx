@@ -217,7 +217,7 @@ export function MentoredWorksList({
               return (
               <div key={work.id} className="relative min-w-0">
                 {(adopted || tipped || commentSubject) && (
-                  <div className="flex flex-wrap gap-1.5 px-4 pt-3">
+                  <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
                     {adopted ? (
                       <span className="rounded bg-viscum-leaf-soft px-1.5 py-0.5 text-[10px] font-medium text-viscum-leaf-deep">
                         選出
@@ -229,8 +229,11 @@ export function MentoredWorksList({
                       </span>
                     ) : null}
                     {commentSubject ? (
-                      <span className="truncate text-[11px] text-viscum-muted">
-                        「{commentSubject}」
+                      <span
+                        className="min-w-0 truncate text-[11px] text-viscum-muted"
+                        title={commentSubject}
+                      >
+                        コメント「{commentSubject}」
                       </span>
                     ) : null}
                   </div>

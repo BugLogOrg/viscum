@@ -10,6 +10,7 @@ import {
   type Work,
 } from "@/data/dummy-works";
 import { mentorPayFactsFromDb } from "@/db/payment-facts";
+import { getNeonWorksByIds, isNeonWorkId } from "@/lib/neon-works";
 
 function stubWork(workId: string): Work {
   return {
@@ -27,7 +28,7 @@ function stubWork(workId: string): Work {
   };
 }
 
-function resolveWork(workId: string): Work {
+function resolveDemoOrStub(workId: string): Work {
   return getWork(workId) ?? stubWork(workId);
 }
 
@@ -35,6 +36,9 @@ function preferWork(a: Work, b: Work): Work {
   // タイトルが ID のままより、実タイトルがある方を優先
   if (a.title !== a.id && b.title === b.id) return a;
   if (b.title !== b.id && a.title === a.id) return b;
+  // シーダーが unknown より実ハンドルを優先
+  if (a.seeder === "unknown" && b.seeder !== "unknown") return b;
+  if (b.seeder === "unknown" && a.seeder !== "unknown") return a;
   return a;
 }
 
@@ -86,16 +90,21 @@ export async function mentorPortfolioFromDb(handle: string): Promise<{
     if (p.commentId) tippedByComment.set(p.commentId, p.amountYen);
   }
 
+  const neonIds = commentRows.map((r) => r.workId).filter(isNeonWorkId);
+  const neonWorks = await getNeonWorksByIds(neonIds);
+
   const byWork = new Map<string, MentorParticipation>();
   let adoptedCount = 0;
   for (const row of commentRows) {
     const tippedYen = tippedByComment.get(row.commentId);
     const adopted = Boolean(row.adoptedAt) || tippedYen != null;
     if (row.adoptedAt) adoptedCount += 1;
+    const work =
+      neonWorks.get(row.workId) ?? resolveDemoOrStub(row.workId);
     const prev = byWork.get(row.workId);
     if (!prev) {
       byWork.set(row.workId, {
-        work: resolveWork(row.workId),
+        work,
         adopted,
         tipped: tippedYen != null,
         commentSubject: row.subject,
@@ -104,6 +113,7 @@ export async function mentorPortfolioFromDb(handle: string): Promise<{
     } else {
       byWork.set(row.workId, {
         ...prev,
+        work: preferWork(prev.work, work),
         adopted: prev.adopted || adopted,
         tipped: prev.tipped || tippedYen != null,
         commentSubject: prev.commentSubject ?? row.subject,
