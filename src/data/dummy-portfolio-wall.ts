@@ -10,6 +10,7 @@ export type PortfolioWallPost = {
   hoursAgo: number;
   /** 返信先コメントID（1段のみ。深いネストはしない） */
   parentId?: string;
+  createdAtIso?: string;
 };
 
 const DUMMY_WALL: PortfolioWallPost[] = [

@@ -38,6 +38,7 @@ function prefsQuery(): string {
   const q = new URLSearchParams();
   if (!p.seederAlerts) q.set("seeder", "0");
   if (!p.mentorParticipateAlerts) q.set("mentor", "0");
+  if (!p.profileWallAlerts) q.set("profile", "0");
   const s = q.toString();
   return s ? `?${s}` : "";
 }

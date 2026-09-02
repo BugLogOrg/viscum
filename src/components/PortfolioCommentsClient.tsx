@@ -10,6 +10,10 @@ import {
   addLocalPortfolioWallPost,
   readLocalPortfolioWall,
 } from "@/lib/local-portfolio-wall";
+import {
+  fetchPortfolioWall,
+  postPortfolioWall,
+} from "@/lib/remote-portfolio-wall";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import {
   fetchRemoteProfile,
@@ -79,26 +83,57 @@ export function PortfolioCommentsClient({
 }) {
   const { data: session, status } = useSession();
   const [local, setLocal] = useState<PortfolioWallPost[]>([]);
+  const [remote, setRemote] = useState<PortfolioWallPost[]>([]);
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<PortfolioWallPost | null>(null);
   const [body, setBody] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const [ownerName, setOwnerName] = useState(() =>
     resolveOwnerDisplayName(handle),
   );
 
   useEffect(() => {
     setLocal(readLocalPortfolioWall(handle));
+    setRemote([]);
     setOwnerName(resolveOwnerDisplayName(handle));
     let cancelled = false;
-    void fetchRemoteProfile(handle).then((remote) => {
-      if (cancelled || !remote?.persisted) return;
-      const n = remote.accountName?.trim();
+    void fetchRemoteProfile(handle).then((r) => {
+      if (cancelled || !r?.persisted) return;
+      const n = r.accountName?.trim();
       if (n) setOwnerName(n);
+    });
+    void fetchPortfolioWall(handle).then((res) => {
+      if (cancelled) return;
+      setRemote(res.posts);
     });
     return () => {
       cancelled = true;
     };
   }, [handle]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const id = new URLSearchParams(window.location.search).get("pw");
+    if (!id) return;
+    setFocusId(id);
+  }, [handle]);
+
+  useEffect(() => {
+    if (!focusId) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`pf-wall-${focusId}`)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }, 120);
+    const clear = window.setTimeout(() => setFocusId(null), 2800);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearTimeout(clear);
+    };
+  }, [focusId, remote, local]);
 
   const ownerLabel = ownerName.trim() || handle.replace(/^@/, "");
   const commentCta = `「${ownerLabel}」にコメントする`;
@@ -108,9 +143,12 @@ export function PortfolioCommentsClient({
   const placeholderNew = `「${ownerLabel}」にコメントを書く…`;
 
   const posts = useMemo(() => {
-    const ids = new Set(local.map((p) => p.id));
-    return [...local, ...initialPosts.filter((p) => !ids.has(p.id))];
-  }, [local, initialPosts]);
+    const map = new Map<string, PortfolioWallPost>();
+    for (const p of initialPosts) map.set(p.id, p);
+    for (const p of local) map.set(p.id, p);
+    for (const p of remote) map.set(p.id, p);
+    return [...map.values()];
+  }, [local, remote, initialPosts]);
 
   const threads = useMemo(() => buildThreads(posts), [posts]);
   const commentCount = posts.length;
@@ -119,40 +157,57 @@ export function PortfolioCommentsClient({
   const myHandle = session?.user?.handle?.replace(/^@/, "") ?? "";
   const loginHref = `/login?callbackUrl=${encodeURIComponent(`/u/${handle}`)}`;
 
-  function resolveRoot(target: PortfolioWallPost): PortfolioWallPost {
-    if (!target.parentId) return target;
-    const parent = posts.find((p) => p.id === target.parentId);
-    if (!parent) return target;
-    if (!parent.parentId) return parent;
-    return posts.find((p) => p.id === parent.parentId) ?? parent;
-  }
-
   function openNew() {
     setReplyTo(null);
     setBody("");
+    setPostError(null);
     setComposeOpen(true);
   }
 
   function openReply(target: PortfolioWallPost) {
     if (!loggedIn) return;
-    const root = resolveRoot(target);
-    setReplyTo(root);
-    setBody(`@${target.author} `);
+    // 直返信先を保持（通知はコメント主へ）。一覧はルート直下フラット
+    setReplyTo(target);
+    setBody("");
+    setPostError(null);
     setComposeOpen(true);
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!loggedIn || !body.trim()) return;
-    addLocalPortfolioWallPost(handle, {
-      author: myHandle,
-      body,
-      parentId: replyTo?.id,
-    });
-    setBody("");
-    setReplyTo(null);
-    setComposeOpen(false);
-    setLocal(readLocalPortfolioWall(handle));
+    if (!loggedIn || !body.trim() || submitting) return;
+    setSubmitting(true);
+    setPostError(null);
+    try {
+      const remoteRes = await postPortfolioWall({
+        handle,
+        body: body.trim(),
+        parentId: replyTo?.id,
+      });
+      if (remoteRes.ok && remoteRes.post) {
+        setRemote((prev) => [remoteRes.post!, ...prev]);
+        setBody("");
+        setReplyTo(null);
+        setComposeOpen(false);
+        return;
+      }
+      addLocalPortfolioWallPost(handle, {
+        author: myHandle,
+        body: body.trim(),
+        parentId: replyTo?.id,
+      });
+      setLocal(readLocalPortfolioWall(handle));
+      setBody("");
+      setReplyTo(null);
+      setComposeOpen(false);
+      if (remoteRes.error) {
+        setPostError(
+          `${remoteRes.error}（この端末には保存しました。通知はサーバ保存時のみ届きます）`,
+        );
+      }
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function CommentBody({
@@ -164,10 +219,13 @@ export function PortfolioCommentsClient({
   }) {
     return (
       <div
+        id={`pf-wall-${p.id}`}
         className={`px-4 py-3 ${
           indented
             ? "ml-3 border-l-2 border-viscum-line bg-viscum-paper-2/40"
             : ""
+        } ${
+          focusId === p.id ? "ring-2 ring-viscum-berry/50 ring-inset bg-viscum-berry/5" : ""
         }`}
       >
         <div className="flex flex-wrap items-center gap-1.5">
@@ -283,12 +341,19 @@ export function PortfolioCommentsClient({
             placeholder={replyTo ? "返信を書く…" : placeholderNew}
             className="w-full resize-y rounded border border-viscum-line bg-white px-2 py-1.5 text-[13px] leading-relaxed"
           />
+          {postError && (
+            <p className="text-[12px] text-viscum-berry-deep">{postError}</p>
+          )}
           <button
             type="submit"
-            disabled={!body.trim()}
+            disabled={!body.trim() || submitting}
             className="rounded-md bg-viscum-brand px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-40"
           >
-            {replyTo ? "返信する（デモ）" : "投稿する（デモ・端末内）"}
+            {submitting
+              ? "保存中…"
+              : replyTo
+                ? "返信する"
+                : "投稿する"}
           </button>
         </form>
       )}

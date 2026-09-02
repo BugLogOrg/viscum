@@ -16,7 +16,13 @@ import {
 function applyPrefs(rows: RemoteNotify[]): LocalNotify[] {
   const p = readNotifyPrefs();
   return rows.filter((n) => {
-    if (n.audience === "seeder" && !p.seederAlerts) return false;
+    if (n.kind === "profile_wall" && !p.profileWallAlerts) return false;
+    if (
+      n.audience === "seeder" &&
+      n.kind !== "profile_wall" &&
+      !p.seederAlerts
+    )
+      return false;
     if (n.audience === "mentor" && !p.mentorParticipateAlerts) return false;
     return true;
   });

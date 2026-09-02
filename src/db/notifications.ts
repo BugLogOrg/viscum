@@ -4,6 +4,7 @@ import { notifications } from "@/db/schema";
 
 export type NotifyKind =
   | "comment"
+  | "profile_wall"
   | "adopt_pay"
   | "tip_received"
   | "follow"

@@ -2,6 +2,7 @@
 
 export type NotifyKind =
   | "comment"
+  | "profile_wall"
   | "adopt_pay"
   | "tip_received"
   | "follow"
@@ -32,11 +33,14 @@ export type NotifyPrefs = {
    * 既定 ON（場を盛り上げる）。専業シーダーなど不要な人はOFF可。
    */
   mentorParticipateAlerts: boolean;
+  /** 自分のPFへのコメント／自分の壁コメントへの返信。既定ON */
+  profileWallAlerts: boolean;
 };
 
 const DEFAULT_PREFS: NotifyPrefs = {
   seederAlerts: true,
   mentorParticipateAlerts: true,
+  profileWallAlerts: true,
 };
 
 export function readNotifyPrefs(): NotifyPrefs {
@@ -74,7 +78,9 @@ export function unreadNotifyCount(prefs?: NotifyPrefs): number {
   const p = prefs ?? readNotifyPrefs();
   return readLocalNotifies().filter((n) => {
     if (n.read) return false;
-    if (n.audience === "seeder" && !p.seederAlerts) return false;
+    if (n.kind === "profile_wall" && !p.profileWallAlerts) return false;
+    if (n.audience === "seeder" && n.kind !== "profile_wall" && !p.seederAlerts)
+      return false;
     if (n.audience === "mentor" && !p.mentorParticipateAlerts) return false;
     return true;
   }).length;
@@ -84,7 +90,13 @@ export function visibleNotifies(prefs?: NotifyPrefs): LocalNotify[] {
   const p = prefs ?? readNotifyPrefs();
   return readLocalNotifies()
     .filter((n) => {
-      if (n.audience === "seeder" && !p.seederAlerts) return false;
+      if (n.kind === "profile_wall" && !p.profileWallAlerts) return false;
+      if (
+        n.audience === "seeder" &&
+        n.kind !== "profile_wall" &&
+        !p.seederAlerts
+      )
+        return false;
       if (n.audience === "mentor" && !p.mentorParticipateAlerts) return false;
       return true;
     })

@@ -306,7 +306,7 @@ export const notifications = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    /** follow | follow_seed | comment | adopt_pay | tip_received | deadline | direct_request */
+    /** follow | follow_seed | comment | profile_wall | adopt_pay | tip_received | deadline | direct_request */
     kind: text("kind").notNull(),
     title: text("title").notNull(),
     body: text("body").notNull(),
@@ -323,6 +323,36 @@ export const notifications = pgTable(
   (t) => [
     index("notifications_user_idx").on(t.userId),
     index("notifications_user_created_idx").on(t.userId, t.createdAt),
+  ],
+);
+
+/**
+ * 公開プロフィール壁コメント（ADR-027）。
+ * 作品コメントとは別。ログイン＋英語ID必須。1段返信。
+ */
+export const portfolioWallPosts = pgTable(
+  "portfolio_wall_posts",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    /** PF 持ち主 */
+    portfolioUserId: text("portfolio_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    authorId: text("author_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** 直返信先（無い＝ルート）。表示はルート直下フラット */
+    parentId: text("parent_id"),
+    body: text("body").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    index("portfolio_wall_portfolio_idx").on(t.portfolioUserId),
+    index("portfolio_wall_parent_idx").on(t.parentId),
   ],
 );
 
@@ -368,6 +398,7 @@ export type PaymentRow = typeof payments.$inferSelect;
 export type RequestDmRow = typeof requestDms.$inferSelect;
 export type FollowRow = typeof follows.$inferSelect;
 export type NotificationRow = typeof notifications.$inferSelect;
+export type PortfolioWallPostRow = typeof portfolioWallPosts.$inferSelect;
 export type DmInviteRow = typeof dmInvites.$inferSelect;
 
 export type WorkPlan =

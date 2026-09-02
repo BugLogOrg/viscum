@@ -31,13 +31,11 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const seederAlerts = url.searchParams.get("seeder") !== "0";
   const mentorParticipateAlerts = url.searchParams.get("mentor") !== "0";
+  const profileWallAlerts = url.searchParams.get("profile") !== "0";
   const unreadOnly = url.searchParams.get("unread") === "1";
 
   if (unreadOnly) {
-    // ヘッダ用: 件数だけ。audience 濾しは prefs OFF 時のみ一覧相当が必要だが、
-    // 既定は両方 ON。OFF 時は一覧 API と同じく全件から数えると重いので概算＝DB未読。
-    // prefs OFF を厳密にしたいときは unread を付けず一覧を使う。
-    if (seederAlerts && mentorParticipateAlerts) {
+    if (seederAlerts && mentorParticipateAlerts && profileWallAlerts) {
       const unread = await countUnreadNotifications(userId);
       return NextResponse.json({ notifications: [], unread, persisted: true });
     }
@@ -45,7 +43,13 @@ export async function GET(req: Request) {
 
   const rows = await listNotificationsForUser(userId);
   const visible = rows.filter((n) => {
-    if (n.audience === "seeder" && !seederAlerts) return false;
+    if (n.kind === "profile_wall" && !profileWallAlerts) return false;
+    if (
+      n.audience === "seeder" &&
+      n.kind !== "profile_wall" &&
+      !seederAlerts
+    )
+      return false;
     if (n.audience === "mentor" && !mentorParticipateAlerts) return false;
     return true;
   });

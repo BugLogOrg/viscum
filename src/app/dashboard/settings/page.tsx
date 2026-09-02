@@ -37,6 +37,7 @@ function SettingsPageInner() {
   const [prefs, setPrefs] = useState<NotifyPrefs>({
     seederAlerts: true,
     mentorParticipateAlerts: true,
+    profileWallAlerts: true,
   });
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
@@ -284,6 +285,27 @@ function SettingsPageInner() {
               <span className="font-medium">シーダー向け</span>
               <span className="mt-0.5 block text-[11px] text-viscum-muted">
                 コメント・返信・締切・フォロー・褒賞受取・フォロー中のシード公開など
+              </span>
+            </span>
+          </label>
+          <label className="flex items-start gap-2.5 text-[13px] text-viscum-ink">
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={prefs.profileWallAlerts}
+              onChange={(e) => {
+                const next = {
+                  ...prefs,
+                  profileWallAlerts: e.target.checked,
+                };
+                writeNotifyPrefs(next);
+                setPrefs(next);
+              }}
+            />
+            <span>
+              <span className="font-medium">プロフィールへのコメント</span>
+              <span className="mt-0.5 block text-[11px] text-viscum-muted">
+                自分のPFへの書き込み、および自分の壁コメントへの返信
               </span>
             </span>
           </label>
