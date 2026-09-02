@@ -11,12 +11,29 @@ import {
   readLocalPortfolioWall,
 } from "@/lib/local-portfolio-wall";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
-import { readLocalProfile } from "@/lib/local-profile";
+import {
+  fetchRemoteProfile,
+  readLocalProfile,
+} from "@/lib/local-profile";
 
 type Thread = {
   root: PortfolioWallPost;
   replies: PortfolioWallPost[];
 };
+
+function resolveOwnerDisplayName(handle: string): string {
+  const key = handle.replace(/^@/, "").trim();
+  const demo = accountLabelForHandle(key);
+  const local = readLocalProfile(key)?.accountName?.trim();
+  if (local) return local;
+  if (
+    demo.accountName &&
+    demo.accountName.toLowerCase() !== key.toLowerCase()
+  ) {
+    return demo.accountName;
+  }
+  return key;
+}
 
 /** 1段返信のみ。返信への返信もルート直下に付ける */
 function buildThreads(posts: PortfolioWallPost[]): Thread[] {
@@ -65,10 +82,30 @@ export function PortfolioCommentsClient({
   const [composeOpen, setComposeOpen] = useState(false);
   const [replyTo, setReplyTo] = useState<PortfolioWallPost | null>(null);
   const [body, setBody] = useState("");
+  const [ownerName, setOwnerName] = useState(() =>
+    resolveOwnerDisplayName(handle),
+  );
 
   useEffect(() => {
     setLocal(readLocalPortfolioWall(handle));
+    setOwnerName(resolveOwnerDisplayName(handle));
+    let cancelled = false;
+    void fetchRemoteProfile(handle).then((remote) => {
+      if (cancelled || !remote?.persisted) return;
+      const n = remote.accountName?.trim();
+      if (n) setOwnerName(n);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [handle]);
+
+  const ownerLabel = ownerName.trim() || handle.replace(/^@/, "");
+  const commentCta = `「${ownerLabel}」にコメントする`;
+  const commentHeading = `「${ownerLabel}」へのコメント`;
+  const loginCta = `ログインして「${ownerLabel}」にコメント`;
+  const emptyCopy = `まだ「${ownerLabel}」へのコメントはありません。`;
+  const placeholderNew = `「${ownerLabel}」にコメントを書く…`;
 
   const posts = useMemo(() => {
     const ids = new Set(local.map((p) => p.id));
@@ -183,15 +220,15 @@ export function PortfolioCommentsClient({
   return (
     <section
       className="border-b border-viscum-line"
-      aria-label="プロフィールのコメント"
+      aria-label={`${ownerLabel}へのコメント`}
     >
       <div className="flex flex-wrap items-end justify-between gap-2 px-4 pt-4">
         <div>
           <p className="text-[20px] font-bold text-viscum-ink">
-            コメント · {commentCount}件
+            {commentHeading} · {commentCount}件
           </p>
           <p className="mt-1 max-w-md text-[11px] leading-snug text-viscum-muted">
-            ログインしたコテハンのみ。返信は1段まで。全文公開（自浄）。運営は原則裁定しません（デモ）。
+            ログインしたコテハンのみ。返信は1段まで。全文公開（自浄）。運営は原則裁定しません（デモ）。作品への反応とは別です。
           </p>
         </div>
         {loggedIn ? (
@@ -203,14 +240,14 @@ export function PortfolioCommentsClient({
             }}
             className="shrink-0 rounded-md border border-viscum-line bg-viscum-paper-2 px-2.5 py-1.5 text-[12px] font-medium text-viscum-ink hover:border-viscum-brand"
           >
-            {composeOpen && !replyTo ? "閉じる" : "コメントする"}
+            {composeOpen && !replyTo ? "閉じる" : commentCta}
           </button>
         ) : (
           <Link
             href={loginHref}
             className="shrink-0 rounded-md border border-viscum-line bg-viscum-paper-2 px-2.5 py-1.5 text-[12px] font-medium text-viscum-ink hover:border-viscum-brand"
           >
-            {status === "loading" ? "…" : "ログインしてコメント"}
+            {status === "loading" ? "…" : loginCta}
           </Link>
         )}
       </div>
@@ -243,7 +280,7 @@ export function PortfolioCommentsClient({
             value={body}
             onChange={(e) => setBody(e.target.value)}
             rows={3}
-            placeholder={replyTo ? "返信を書く…" : "コメントを書く…"}
+            placeholder={replyTo ? "返信を書く…" : placeholderNew}
             className="w-full resize-y rounded border border-viscum-line bg-white px-2 py-1.5 text-[13px] leading-relaxed"
           />
           <button
@@ -258,7 +295,7 @@ export function PortfolioCommentsClient({
 
       {threads.length === 0 ? (
         <p className="px-4 py-6 text-center text-sm text-viscum-muted">
-          まだコメントはありません。
+          {emptyCopy}
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-viscum-line border-t border-viscum-line">
