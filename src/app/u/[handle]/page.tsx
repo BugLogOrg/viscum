@@ -15,14 +15,22 @@ import {
 } from "@/data/dummy-works";
 import { seederPayFactsForHandle } from "@/db/payment-facts";
 import { mentorPortfolioForHandle } from "@/db/mentor-portfolio";
+import { listNeonWorksBySeederHandle } from "@/lib/neon-works";
 
 type Props = { params: Promise<{ handle: string }> };
 
 export default async function SeederPortfolioPage({ params }: Props) {
   const { handle: raw } = await params;
-  const handle = decodeURIComponent(raw);
-  const works = getWorksBySeeder(handle);
-  const display = works[0]?.seeder ?? handle;
+  const handle = decodeURIComponent(raw).replace(/^@/, "").trim();
+  const demoWorks = getWorksBySeeder(handle);
+  const neonWorks = await listNeonWorksBySeederHandle(handle);
+  const byId = new Map(demoWorks.map((w) => [w.id, w]));
+  for (const w of neonWorks) byId.set(w.id, w);
+  const works = [...byId.values()].sort((a, b) => a.hoursAgo - b.hoursAgo);
+  const display =
+    neonWorks[0]?.seeder ??
+    demoWorks[0]?.seeder ??
+    handle;
   const pay = await seederPayFactsForHandle(display);
   const { facts: mentor, participations: mentored } =
     await mentorPortfolioForHandle(display);

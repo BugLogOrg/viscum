@@ -1,4 +1,4 @@
-import { desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db";
 import { users, works, type WorkRow } from "@/db/schema";
 import type { CompStatus, DemoSeedPlan, Work } from "@/data/dummy-works";
@@ -236,6 +236,38 @@ export async function getNeonWorksByIds(
     );
   }
   return out;
+}
+
+/** 公開PF用：ハンドルの棚出し済み Neon 作品 */
+export async function listNeonWorksBySeederHandle(
+  handle: string,
+): Promise<Work[]> {
+  const h = handle.replace(/^@/, "").trim();
+  if (!h || !hasDatabase()) return [];
+  const db = getDb();
+  if (!db) return [];
+
+  const key = h.toLowerCase();
+  const rows = await db
+    .select({
+      work: works,
+      handle: users.handle,
+      name: users.name,
+    })
+    .from(works)
+    .innerJoin(users, eq(works.seederId, users.id))
+    .where(
+      and(
+        sql`lower(${users.handle}) = ${key}`,
+        eq(works.listedOnShelf, true),
+      ),
+    )
+    .orderBy(desc(works.createdAt))
+    .limit(80);
+
+  return rows.map((r) =>
+    workFromNeonRow(r.work, { handle: r.handle, name: r.name }),
+  );
 }
 
 /** サーバ page 用：セッションを見て下書きも作者に返す */
