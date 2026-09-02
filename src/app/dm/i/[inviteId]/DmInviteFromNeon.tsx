@@ -28,6 +28,7 @@ export type PublicDmInvite = {
   requestStatus?: string;
   canRespond?: boolean;
   isOwner?: boolean;
+  isRecipient?: boolean;
 };
 
 /**
@@ -128,6 +129,25 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       /* ignore */
     });
   }, [invite?.id]);
+
+  // すでに返事済みならご依頼DMへ（送付URLの再訪問でやる／辞退を出さない）
+  useEffect(() => {
+    if (!invite || loading || authStatus === "loading") return;
+    if (!isLoggedIn || invite.isOwner === true) return;
+    if (invite.canRespond === true) return;
+    const status = invite.requestStatus;
+    if (!status || status === "pending") return;
+    // 受け手本人だけ：辞退画面 or スレへ自動遷移
+    if (!invite.isRecipient) return;
+    if (status === "declined") {
+      setDeclinedOk(true);
+      return;
+    }
+    if (invite.requestId) {
+      setIntentNote("ご依頼DMへ移動します…");
+      router.replace(`/dashboard/messages/${invite.requestId}`);
+    }
+  }, [invite, loading, authStatus, isLoggedIn, router]);
 
   // teaser で選んだ「やる」を、ログイン＋英語ID後に確定
   useEffect(() => {
@@ -235,15 +255,14 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       handle.toLowerCase() ===
         invite.fromHandle.replace(/^@/, "").toLowerCase());
   const depth = reveal === "full" && isLoggedIn ? "full" : "teaser";
-  const requestPending =
-    !invite.requestStatus || invite.requestStatus === "pending";
-  /** サーバ canRespond 優先。未設定時は従来どおり pending 判定 */
+  /** 未返信のときだけ。ログイン後は canRespond を正とする */
   const showDecide =
     !isOwnInvite &&
     !declinedOk &&
     !sentOk &&
-    (invite.canRespond === true ||
-      (invite.canRespond !== false && requestPending));
+    (depth === "teaser"
+      ? true
+      : invite.canRespond === true);
   const openThreadHref = invite.requestId
     ? `/dashboard/messages/${invite.requestId}`
     : null;
@@ -513,6 +532,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                     </div>
                   </section>
                 ) : !isOwnInvite &&
+                  invite.isRecipient &&
                   openThreadHref &&
                   invite.requestStatus &&
                   invite.requestStatus !== "pending" &&
@@ -527,6 +547,16 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                     >
                       ご依頼DMを開く
                     </Link>
+                  </section>
+                ) : !isOwnInvite &&
+                  invite.canRespond === false &&
+                  invite.requestStatus &&
+                  invite.requestStatus !== "pending" &&
+                  !invite.isRecipient ? (
+                  <section className="rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+                    <p className="text-[13px] text-viscum-ink">
+                      この招待はすでに返事済みです。やる／辞退はできません。
+                    </p>
                   </section>
                 ) : null}
 

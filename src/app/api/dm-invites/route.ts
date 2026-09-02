@@ -277,7 +277,11 @@ export async function GET(req: Request) {
   const from = fromRows[0];
 
   const requestRows = await db
-    .select({ id: requestDms.id, status: requestDms.status })
+    .select({
+      id: requestDms.id,
+      status: requestDms.status,
+      toUserId: requestDms.toUserId,
+    })
     .from(requestDms)
     .where(eq(requestDms.inviteId, id))
     .orderBy(desc(requestDms.createdAt))
@@ -285,10 +289,19 @@ export async function GET(req: Request) {
   const requestRow = requestRows[0];
 
   const session = await auth();
-  const isLoggedIn = Boolean(session?.user?.id);
-  const isOwner = session?.user?.id === row.fromUserId;
+  const userId = session?.user?.id ?? null;
+  const isLoggedIn = Boolean(userId);
+  const isOwner = Boolean(userId && userId === row.fromUserId);
   const fromHandle = (from?.handle ?? "").replace(/^@/, "") || "unknown";
   const fromAccountName = from?.name?.trim() || undefined;
+  const isRecipient = Boolean(
+    userId && requestRow?.toUserId && requestRow.toUserId === userId,
+  );
+  const status = requestRow?.status ?? "pending";
+  const canRespond =
+    !isOwner &&
+    status === "pending" &&
+    (!requestRow?.toUserId || requestRow.toUserId === userId);
 
   // 未ログイン: サムネ・タイトル・概要級・金額・ご挨拶（作品URL・詳細・希望日は出さない）
   if (!isLoggedIn) {
@@ -332,12 +345,11 @@ export async function GET(req: Request) {
       createdAt: row.createdAt.toISOString(),
       closesAt: row.closesAt ? row.closesAt.toISOString() : undefined,
       requestId: requestRow?.id,
-      requestStatus: requestRow?.status ?? "pending",
-      /** 受け手がやる／辞退できる（依頼主本人は不可） */
-      canRespond:
-        !isOwner &&
-        (!requestRow || requestRow.status === "pending"),
+      requestStatus: status,
+      /** 受け手がやる／辞退できる（未返信のときだけ） */
+      canRespond,
       isOwner,
+      isRecipient,
       ...(isOwner ? { viewCount: row.viewCount ?? 0 } : {}),
     },
     persisted: true,
