@@ -230,6 +230,22 @@ export async function PATCH(req: Request, ctx: Ctx) {
     }
     status = "paid";
     pushNote("完了を承認しました（無料・支払済）。");
+    if (loaded.row.toUserId) {
+      try {
+        const { notifyMentorRequestPaid } = await import(
+          "@/lib/notify-request-paid"
+        );
+        await notifyMentorRequestPaid({
+          mentorUserId: loaded.row.toUserId,
+          requestId: loaded.row.id,
+          workId: loaded.row.workId,
+          workTitle: loaded.row.workTitle,
+          amountYen: loaded.row.amountYen,
+        });
+      } catch {
+        // 通知失敗でも支払済は成立
+      }
+    }
   } else if (body?.status === "closed") {
     if (!isSeeder) {
       return NextResponse.json(

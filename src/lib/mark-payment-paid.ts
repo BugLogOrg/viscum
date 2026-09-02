@@ -51,6 +51,10 @@ export async function markPaymentPaid(input: {
         id: requestDms.id,
         status: requestDms.status,
         messages: requestDms.messages,
+        toUserId: requestDms.toUserId,
+        workId: requestDms.workId,
+        workTitle: requestDms.workTitle,
+        amountYen: requestDms.amountYen,
       })
       .from(requestDms)
       .where(eq(requestDms.id, payment.requestId))
@@ -71,6 +75,22 @@ export async function markPaymentPaid(input: {
           updatedAt: new Date(),
         })
         .where(eq(requestDms.id, req.id));
+      if (req.toUserId) {
+        try {
+          const { notifyMentorRequestPaid } = await import(
+            "@/lib/notify-request-paid"
+          );
+          await notifyMentorRequestPaid({
+            mentorUserId: req.toUserId,
+            requestId: req.id,
+            workId: req.workId,
+            workTitle: req.workTitle,
+            amountYen: req.amountYen,
+          });
+        } catch {
+          // 通知失敗でも支払済は成立
+        }
+      }
     }
     return { ok: true, requestId: payment.requestId };
   }
