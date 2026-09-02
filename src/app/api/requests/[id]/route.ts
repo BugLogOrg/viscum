@@ -237,9 +237,19 @@ export async function PATCH(req: Request, ctx: Ctx) {
         { status: 403 },
       );
     }
-    if (status === "paid" || status === "declined") {
+    // 提出後は打ち切り不可（払う／承認が本線。提出を無にする抜け道を塞ぐ）
+    if (
+      status === "paid" ||
+      status === "declined" ||
+      status === "pay_waiting"
+    ) {
       return NextResponse.json(
-        { error: "この状態では打ち切れません" },
+        {
+          error:
+            status === "pay_waiting"
+              ? "提出済みのため打ち切れません。内容を確認して完了承認・お支払いに進んでください。"
+              : "この状態では打ち切れません",
+        },
         { status: 400 },
       );
     }
