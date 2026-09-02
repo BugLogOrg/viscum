@@ -58,7 +58,16 @@ export async function POST(req: Request) {
 
   if (row && row.status !== "pending") {
     return NextResponse.json(
-      { error: "未返信のときだけ辞退できます" },
+      {
+        error:
+          row.status === "accepted" ||
+          row.status === "pay_waiting" ||
+          row.status === "paid"
+            ? "このお願いはすでに引き受け済みです。辞退はできません。続きはご依頼DMからどうぞ。"
+            : "未返信のときだけ辞退できます",
+        requestStatus: row.status,
+        path: `/dashboard/messages/${row.id}`,
+      },
       { status: 400 },
     );
   }

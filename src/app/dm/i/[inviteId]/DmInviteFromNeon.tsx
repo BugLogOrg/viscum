@@ -278,17 +278,26 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       handle.toLowerCase() ===
         invite.fromHandle.replace(/^@/, "").toLowerCase());
   const depth = reveal === "full" && isLoggedIn ? "full" : "teaser";
-  /** 未返信のときだけ。teaser も requestStatus があれば尊重 */
+  const requestPending =
+    !invite.requestStatus || invite.requestStatus === "pending";
+  const requestAccepted =
+    invite.requestStatus === "accepted" ||
+    invite.requestStatus === "pay_waiting" ||
+    invite.requestStatus === "paid";
+  /** 未返信のときだけ。teaser / full 共通 */
   const showDecide =
     !isOwnInvite &&
     !declinedOk &&
     !sentOk &&
     (depth === "teaser"
-      ? !invite.requestStatus || invite.requestStatus === "pending"
+      ? requestPending
       : invite.canRespond === true);
   const openThreadHref = invite.requestId
     ? `/dashboard/messages/${invite.requestId}`
     : null;
+  const openThreadLoginHref = openThreadHref
+    ? `/login?callbackUrl=${encodeURIComponent(openThreadHref)}`
+    : loginHref;
 
   async function declineWithoutLogin() {
     if (declining || isOwnInvite || !invite) return;
@@ -437,16 +446,20 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
           depth={depth}
           loginHref={depth === "teaser" ? loginHref : undefined}
           loginAcceptHref={
-            depth === "teaser" && !isOwnInvite ? acceptHref : undefined
+            depth === "teaser" && !isOwnInvite && showDecide
+              ? acceptHref
+              : undefined
           }
           onDecline={
-            depth === "teaser" && !isOwnInvite
+            depth === "teaser" && !isOwnInvite && showDecide
               ? () => void declineWithoutLogin()
               : undefined
           }
           declining={declining}
           declineError={
-            depth === "teaser" && !isOwnInvite ? declineError : null
+            depth === "teaser" && !isOwnInvite && showDecide
+              ? declineError
+              : null
           }
           snapshot={{
             fromDisplayName: displayName,
@@ -464,7 +477,34 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
             closesAt: invite.closesAt,
           }}
           afterBody={
-            depth === "full" ? (
+            depth === "teaser" &&
+            !isOwnInvite &&
+            !showDecide &&
+            requestAccepted ? (
+              <div className="space-y-4">
+                <SeederCredibilityLink handle={invite.fromHandle} />
+                <section className="space-y-2 rounded-lg border border-viscum-line bg-white/70 px-3 py-3">
+                  <p className="text-[13px] font-medium text-viscum-ink">
+                    状態：引き受け済み
+                  </p>
+                  <p className="text-[12px] leading-relaxed text-viscum-muted">
+                    この案内はすでに「やる」と返事済みです。辞退はできません。続きはご依頼DMからどうぞ。
+                  </p>
+                  <Link
+                    href={
+                      isLoggedIn && openThreadHref
+                        ? openThreadHref
+                        : openThreadLoginHref
+                    }
+                    className="inline-flex w-full items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep"
+                  >
+                    {isLoggedIn
+                      ? "ご依頼DMを開く"
+                      : "ログインしてご依頼DMを開く"}
+                  </Link>
+                </section>
+              </div>
+            ) : depth === "full" ? (
               <>
                 <SeederCredibilityLink handle={invite.fromHandle} />
 
