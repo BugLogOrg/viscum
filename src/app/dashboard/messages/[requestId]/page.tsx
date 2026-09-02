@@ -783,24 +783,22 @@ export default function RequestDmThreadPage() {
                 <p className="text-[12px] leading-relaxed text-viscum-muted">
                   辞退するとスレは閉じ、案内リンクも無効になります。あとからこのスレには書けません。
                 </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    disabled={responding}
-                    onClick={() => setConfirmDecline(false)}
-                    className="flex-1 rounded-md border border-viscum-line bg-white px-3 py-2.5 text-[14px] font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:opacity-50"
-                  >
-                    やめる
-                  </button>
-                  <button
-                    type="button"
-                    disabled={responding}
-                    onClick={() => void respond("declined")}
-                    className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-                  >
-                    {responding ? "閉じています…" : "辞退して閉じる"}
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={responding}
+                  onClick={() => void respond("declined")}
+                  className="w-full rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                >
+                  {responding ? "反映しています…" : "辞退して案内を終了"}
+                </button>
+                <button
+                  type="button"
+                  disabled={responding}
+                  onClick={() => setConfirmDecline(false)}
+                  className="w-full text-center text-[12px] text-viscum-muted underline underline-offset-2 hover:text-viscum-ink disabled:opacity-50"
+                >
+                  辞退しない（やる／辞退の選択に戻る）
+                </button>
               </>
             )}
           </div>
