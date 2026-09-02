@@ -283,7 +283,7 @@ function SettingsPageInner() {
             <span>
               <span className="font-medium">シーダー向け</span>
               <span className="mt-0.5 block text-[11px] text-viscum-muted">
-                コメント・締切・フォロー・褒賞受取・フォロー中のシード公開など
+                コメント・返信・締切・フォロー・褒賞受取・フォロー中のシード公開など
               </span>
             </span>
           </label>

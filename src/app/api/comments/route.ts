@@ -8,6 +8,11 @@ import { comments, payments, users, works } from "@/db/schema";
 import type { Comment } from "@/data/dummy-works";
 import { isNeonWorkId } from "@/lib/neon-works";
 import { isCommentAttitudeId } from "@/lib/protocol-colors";
+import {
+  notifyCommentReply,
+  notifySeedNewComment,
+  notifySeedReplyActivity,
+} from "@/lib/notify-work-comment";
 
 const NEON_COMMENT_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -280,56 +285,72 @@ export async function POST(req: Request) {
     name: accountName,
   });
 
-  // 返信: 親コメント著者へ通知（自分自身は除く）
-  if (parentId && parentAuthorId && parentAuthorId !== userId) {
-    try {
-      await createNotificationsForUsers([parentAuthorId], {
+  // 通知: 返信→親著者／ルート→シーダー／返信でもシーダー（重複除外）／ルートのみフォロワー
+  try {
+    let seederId: string | null = null;
+    let workTitle = "";
+    if (isNeonWorkId(workId)) {
+      const wrows = await db
+        .select({ seederId: works.seederId, title: works.title })
+        .from(works)
+        .where(eq(works.id, workId))
+        .limit(1);
+      seederId = wrows[0]?.seederId ?? null;
+      workTitle = wrows[0]?.title?.trim() ?? "";
+    }
+
+    const notified = new Set<string>();
+
+    if (parentId && parentAuthorId && parentAuthorId !== userId) {
+      await notifyCommentReply({
+        toUserId: parentAuthorId,
+        workId,
+        commentId: inserted.id,
+        workTitle,
+        fromHandle: handle,
+      });
+      notified.add(parentAuthorId);
+    }
+
+    if (seederId && seederId !== userId && !notified.has(seederId)) {
+      if (parentId) {
+        await notifySeedReplyActivity({
+          seederId,
+          workId,
+          commentId: inserted.id,
+          workTitle,
+          fromHandle: handle,
+        });
+      } else {
+        await notifySeedNewComment({
+          seederId,
+          workId,
+          commentId: inserted.id,
+          workTitle,
+          fromHandle: handle,
+        });
+      }
+      notified.add(seederId);
+    }
+
+    if (!parentId && seederId !== userId) {
+      const followerIds = await listFollowerUserIds(userId);
+      const short =
+        workTitle.length > 36 ? `${workTitle.slice(0, 36)}…` : workTitle;
+      await createNotificationsForUsers(followerIds, {
         kind: "comment",
-        title: "コメントに返信がありました",
-        body: `@${handle} があなたのコメントに返信しました。`,
+        title: "フォロー中の人がコメントしました",
+        body: short
+          ? `@${handle} が「${short}」に反応しました。`
+          : `@${handle} が作品に反応しました。`,
         href: `/w/${encodeURIComponent(workId)}?c=${encodeURIComponent(inserted.id)}`,
         audience: "mentor",
         actorHandle: handle,
         workId,
       });
-    } catch (e) {
-      console.error("[POST /api/comments] reply notify", e);
     }
-  }
-
-  // フォロー中メンターの参加通知（自分のシードへの自コメントは除外・返信はスキップ）
-  if (!parentId) {
-    try {
-      let isOwnSeed = false;
-      let workTitle = "";
-      if (isNeonWorkId(workId)) {
-        const wrows = await db
-          .select({ seederId: works.seederId, title: works.title })
-          .from(works)
-          .where(eq(works.id, workId))
-          .limit(1);
-        if (wrows[0]?.seederId === userId) isOwnSeed = true;
-        workTitle = wrows[0]?.title?.trim() ?? "";
-      }
-      if (!isOwnSeed) {
-        const followerIds = await listFollowerUserIds(userId);
-        const short =
-          workTitle.length > 36 ? `${workTitle.slice(0, 36)}…` : workTitle;
-        await createNotificationsForUsers(followerIds, {
-          kind: "comment",
-          title: "フォロー中の人がコメントしました",
-          body: short
-            ? `@${handle} が「${short}」に反応しました。`
-            : `@${handle} が作品に反応しました。`,
-          href: `/w/${encodeURIComponent(workId)}`,
-          audience: "mentor",
-          actorHandle: handle,
-          workId,
-        });
-      }
-    } catch (e) {
-      console.error("[POST /api/comments] mentor notify", e);
-    }
+  } catch (e) {
+    console.error("[POST /api/comments] notify", e);
   }
 
   return NextResponse.json({ comment, persisted: true });

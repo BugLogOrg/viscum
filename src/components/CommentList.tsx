@@ -179,6 +179,7 @@ export function CommentList({
   const isSeeder = Boolean(me) && me === normHandle(seederHandle);
 
   const [openId, setOpenId] = useState<string | null>(null);
+  const [focusFlashId, setFocusFlashId] = useState<string | null>(null);
   const [payingId, setPayingId] = useState<string | null>(null);
   const [payError, setPayError] = useState<string | null>(null);
   const [thankedIds, setThankedIds] = useState<Set<string>>(() => new Set());
@@ -203,20 +204,35 @@ export function CommentList({
     setThankedIds(new Set([...fromComments, ...local]));
   }, [comments, workId]);
 
-  /** PFメンター棚などから ?c= で来たとき、該当コメントを開いてスクロール */
+  /** 通知などから ?c= で来たとき、該当コメントを開いてスクロール＋ハイライト */
   useEffect(() => {
     if (typeof window === "undefined") return;
     const focusId = new URLSearchParams(window.location.search).get("c");
     if (!focusId) return;
     if (!comments.some((c) => c.id === focusId)) return;
     setOpenId(focusId);
-    const timer = window.setTimeout(() => {
-      document.getElementById(`comment-${focusId}`)?.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-    }, 120);
-    return () => window.clearTimeout(timer);
+    setFocusFlashId(focusId);
+
+    let tries = 0;
+    const tryScroll = () => {
+      const el = document.getElementById(`comment-${focusId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        return true;
+      }
+      return false;
+    };
+    const timer = window.setInterval(() => {
+      tries += 1;
+      if (tryScroll() || tries >= 8) {
+        window.clearInterval(timer);
+      }
+    }, 80);
+    const clearFlash = window.setTimeout(() => setFocusFlashId(null), 2800);
+    return () => {
+      window.clearInterval(timer);
+      window.clearTimeout(clearFlash);
+    };
   }, [comments]);
 
   useEffect(() => {
@@ -487,7 +503,14 @@ export function CommentList({
       <li
         key={c.id}
         id={`comment-${c.id}`}
-        className={opts.nested ? "border-t border-viscum-line/60 bg-viscum-paper-2/40" : undefined}
+        className={[
+          opts.nested ? "border-t border-viscum-line/60 bg-viscum-paper-2/40" : "",
+          focusFlashId === c.id
+            ? "ring-2 ring-viscum-berry/50 ring-inset bg-viscum-berry/5"
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined}
       >
         <button
           type="button"
