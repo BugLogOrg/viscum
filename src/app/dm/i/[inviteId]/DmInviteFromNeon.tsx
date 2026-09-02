@@ -259,10 +259,10 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
           {loadError || "このお願いが見つかりませんでした。"}
         </p>
         <Link
-          href="/dm/promo-15s"
+          href="/lp"
           className="mt-4 inline-block text-viscum-brand underline"
         >
-          デモの着地を見る
+          VISCUMについて見る
         </Link>
       </div>
     );

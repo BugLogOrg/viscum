@@ -4,13 +4,7 @@ import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { MessagesLocalCleanup } from "@/components/MessagesLocalCleanup";
 import { MessagesInbox } from "@/components/MessagesInbox";
-import {
-  formatRequestAmountLabel,
-  formatRequestDmStamp,
-} from "@/lib/local-request-dms";
 import { listMyRequestDms } from "@/lib/list-my-request-dms";
-import { listMyDmInvites } from "@/lib/list-my-dm-invites";
-import { displayRequestWorkTitle } from "@/lib/local-seeds";
 
 export default async function MessagesIndexPage() {
   const session = await auth();
@@ -37,10 +31,7 @@ export default async function MessagesIndexPage() {
     );
   }
 
-  const [{ requests, persisted }, { invites }] = await Promise.all([
-    listMyRequestDms(userId),
-    listMyDmInvites(userId),
-  ]);
+  const { requests, persisted } = await listMyRequestDms(userId);
   const me = handle.toLowerCase();
   const mine = requests.filter(
     (r) =>
@@ -53,11 +44,10 @@ export default async function MessagesIndexPage() {
       r.toHandle &&
       r.toHandle.toLowerCase() === me,
   );
-  const orphanInvites = invites.filter(
-    (inv) => !mine.some((r) => r.inviteId === inv.id),
-  );
   const invitePaths = Object.fromEntries(
-    invites.map((i) => [i.id, i.path] as const),
+    mine
+      .filter((r) => Boolean(r.inviteId?.trim()))
+      .map((r) => [r.inviteId!.trim(), `/dm/i/${r.inviteId!.trim()}`] as const),
   );
 
   return (
@@ -81,53 +71,11 @@ export default async function MessagesIndexPage() {
           </p>
         )}
 
-        {orphanInvites.length > 0 && (
-          <section className="space-y-2">
-            <h2 className="text-[13px] font-semibold text-viscum-ink">
-              外に出したリンク（旧・スレ未紐づけ）
-            </h2>
-            <p className="text-[11px] leading-relaxed text-viscum-muted">
-              新しい発行は「やりとり」に返事待ちスレとして先に出ます。ここは過去の招待の残りです。
-            </p>
-            <ul className="divide-y divide-viscum-line rounded-lg border border-viscum-line bg-white/50">
-              {orphanInvites.map((inv) => (
-                <li key={inv.id}>
-                  <Link
-                    href={inv.path}
-                    className="block px-3 py-3 transition hover:bg-viscum-leaf-soft/30"
-                  >
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className="truncate text-[14px] font-medium text-viscum-ink">
-                        {displayRequestWorkTitle(inv.workId, inv.workTitle)}
-                      </p>
-                      <span className="shrink-0 text-[11px] font-medium text-viscum-berry-deep">
-                        返事待ち
-                      </span>
-                    </div>
-                    <p className="mt-0.5 truncate text-[12px] text-viscum-muted">
-                      外リンク · {formatRequestAmountLabel(inv.amountYen)}
-                    </p>
-                    <p className="mt-0.5 text-[11px] tabular-nums text-viscum-muted">
-                      <time dateTime={inv.createdAt}>
-                        発行 {formatRequestDmStamp(inv.createdAt)}
-                      </time>
-                    </p>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
         <MessagesInbox
           handle={handle}
           requests={mine}
           invitePaths={invitePaths}
-          emptyHint={
-            orphanInvites.length > 0
-              ? "新しい発行はここに返事待ちスレとして出ます。"
-              : "まだご依頼DMはありません"
-          }
+          emptyHint="まだご依頼DMはありません"
         />
       </main>
     </BrowseChrome>
