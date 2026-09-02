@@ -28,10 +28,12 @@ export type Comment = {
   tipYen?: number;
   /** コンペ締切後に書かれたコメント（賞金対象外の明示用） */
   afterClose?: boolean;
-  /** コメント態度（緑／青／赤）。気になるは別 */
+  /** コメント態度（緑／青／赤）。気になるは別。返信は無し可 */
   attitude?: "green" | "blue" | "red";
   /** 1段返信の親コメントID（ADR-027）。無い＝ルート */
   parentId?: string;
+  /** 投稿打刻（ISO）。無いときは hoursAgo から合成表示 */
+  createdAtIso?: string;
 };
 
 export type Work = {
@@ -1120,6 +1122,36 @@ export function formatHoursAgo(h: number): string {
   if (h < 24) return `${h}時間前`;
   const d = Math.floor(h / 24);
   return `${d}日前`;
+}
+
+/** コメント打刻（例: 2026/09/02 22:35）。ISO が無ければ hoursAgo から合成 */
+export function formatCommentStamp(
+  createdAtIso: string | undefined,
+  hoursAgo: number,
+  now: Date = new Date(),
+): string {
+  if (createdAtIso) {
+    const d = new Date(createdAtIso);
+    if (!Number.isNaN(d.getTime())) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      return `${y}/${m}/${day} ${hh}:${mm}`;
+    }
+  }
+  return formatDateTime(postedAtFromHoursAgo(hoursAgo, now));
+}
+
+/** コメントの時系列ソート用（古い→新しい） */
+export function commentTimeMs(c: Comment): number {
+  if (c.createdAtIso) {
+    const t = Date.parse(c.createdAtIso);
+    if (!Number.isNaN(t)) return t;
+  }
+  // hoursAgo 大きい＝古い → 疑似時刻を過去へ
+  return Date.now() - c.hoursAgo * 3_600_000;
 }
 
 /** スケジュール帳に書きやすい日時（例: 2026/8/18 16:38） */

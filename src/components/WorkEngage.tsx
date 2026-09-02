@@ -199,20 +199,11 @@ export function WorkEngage({
       setError(null);
       return;
     }
-    const byId = new Map(comments.map((c) => [c.id, c]));
-    let parent = target;
-    if (target.parentId) {
-      const p = byId.get(target.parentId);
-      if (p && !p.parentId) parent = p;
-      else if (p?.parentId) {
-        const root = byId.get(p.parentId);
-        if (root) parent = root;
-      }
-    }
-    setReplyTo(parent);
-    const re = parent.subject.startsWith("Re:")
-      ? parent.subject
-      : `Re: ${parent.subject}`.slice(0, 80);
+    // UIはクリックしたコメントの直下。投稿の parentId はルートへ正規化
+    setReplyTo(target);
+    const re = target.subject.startsWith("Re:")
+      ? target.subject
+      : `Re: ${target.subject}`.slice(0, 80);
     setSubject(re);
     setReplyBody("");
     setAttitude(null);
@@ -225,6 +216,14 @@ export function WorkEngage({
         block: "center",
       });
     }, 80);
+  }
+
+  function replyParentIdForPost(target: Comment): string {
+    const byId = new Map(comments.map((c) => [c.id, c]));
+    if (!target.parentId) return target.id;
+    const parent = byId.get(target.parentId);
+    if (!parent) return target.id;
+    return parent.parentId ?? parent.id;
   }
 
   function resetForm() {
@@ -387,7 +386,7 @@ export function WorkEngage({
       setSubmitting(true);
       setError(null);
       try {
-        const parentId = replyTo!.id;
+        const parentId = replyParentIdForPost(replyTo!);
         const remote = await postWorkComment({
           workId,
           subject: s,
@@ -661,88 +660,16 @@ export function WorkEngage({
         </p>
       )}
 
-      {openForm && canPost && (
+      {openForm && canPost && !replyTo && (
         <div
           id="work-comment-compose"
           className="space-y-3 rounded-lg border border-viscum-line bg-white/70 px-3 py-3"
         >
           <h3 className="text-[14px] font-semibold text-viscum-ink">
-            {replyTo
-              ? "返信を書く"
-              : compClosed
-                ? "終了後コメント"
-                : "コメントを書く"}
+            {compClosed ? "終了後コメント" : "コメントを書く"}
           </h3>
-          {replyTo ? (
-            <div className="rounded-md border border-viscum-moss/40 bg-viscum-leaf-soft/40 px-2.5 py-2 text-[12px] text-viscum-ink">
-              <p className="font-medium text-viscum-leaf-deep">
-                @{replyTo.author.replace(/^@/, "")} への返信
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-viscum-muted">
-                {replyTo.subject}
-              </p>
-              <button
-                type="button"
-                className="mt-1.5 text-[11px] text-viscum-muted underline"
-                onClick={() => {
-                  setReplyTo(null);
-                  setSubject("");
-                  setReplyBody("");
-                }}
-              >
-                返信をやめて通常コメントにする
-              </button>
-            </div>
-          ) : null}
           {composeGate()}
-          {canWrite && replyTo ? (
-            <form onSubmit={submit} className="space-y-3">
-              <p className="text-[11px] text-viscum-muted">
-                投稿者: @{handle}
-                {session?.user?.name &&
-                session.user.name.trim().toLowerCase() !== handle.toLowerCase()
-                  ? `（${session.user.name.trim()}）`
-                  : ""}
-                　· 地の文章のみ（URLはそのまま貼れます）
-              </p>
-              <label className="block space-y-1">
-                <span className="text-[12px] text-viscum-muted">返信</span>
-                <textarea
-                  value={replyBody}
-                  onChange={(e) => setReplyBody(e.target.value)}
-                  rows={5}
-                  maxLength={4000}
-                  placeholder="返信を書く。http(s)のURLはそのまま貼れます"
-                  className="w-full resize-y rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[14px] leading-relaxed text-viscum-ink outline-none focus:border-viscum-brand"
-                />
-              </label>
-              {error && (
-                <p className="text-[12px] text-viscum-berry-deep">{error}</p>
-              )}
-              <div className="flex gap-2">
-                <button
-                  type="submit"
-                  disabled={submitting || !replyBody.trim()}
-                  className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-                >
-                  {submitting ? "保存中…" : "返信する"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOpenForm(false);
-                    setReplyTo(null);
-                    setError(null);
-                    resetForm();
-                  }}
-                  className="rounded-md border border-viscum-line px-3 py-2.5 text-sm text-viscum-muted"
-                >
-                  やめる
-                </button>
-              </div>
-            </form>
-          ) : null}
-          {canWrite && !replyTo ? (
+          {canWrite ? (
             <form onSubmit={submit} className="space-y-3">
               {compClosed && (
                 <p className="text-[12px] leading-relaxed text-viscum-berry-deep">
@@ -1015,6 +942,59 @@ export function WorkEngage({
         seederHandle={seederHandle}
         canReply={canWrite && canPost}
         onReply={startReply}
+        replyToId={replyTo?.id ?? null}
+        replyCompose={
+          openForm && canPost && replyTo ? (
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h3 className="text-[14px] font-semibold text-viscum-ink">
+                  返信を書く
+                </h3>
+                <p className="text-[11px] text-viscum-muted">
+                  @{replyTo.author.replace(/^@/, "")} へ · 地の文章のみ（URL可）
+                </p>
+              </div>
+              {composeGate()}
+              {canWrite ? (
+                <form onSubmit={submit} className="space-y-3">
+                  <textarea
+                    value={replyBody}
+                    onChange={(e) => setReplyBody(e.target.value)}
+                    rows={4}
+                    maxLength={4000}
+                    placeholder="返信を書く。http(s)のURLはそのまま貼れます"
+                    className="w-full resize-y rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[14px] leading-relaxed text-viscum-ink outline-none focus:border-viscum-brand"
+                    autoFocus
+                  />
+                  {error && (
+                    <p className="text-[12px] text-viscum-berry-deep">{error}</p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="submit"
+                      disabled={submitting || !replyBody.trim()}
+                      className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                    >
+                      {submitting ? "保存中…" : "返信する"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenForm(false);
+                        setReplyTo(null);
+                        setError(null);
+                        resetForm();
+                      }}
+                      className="rounded-md border border-viscum-line px-3 py-2.5 text-sm text-viscum-muted"
+                    >
+                      やめる
+                    </button>
+                  </div>
+                </form>
+              ) : null}
+            </div>
+          ) : null
+        }
         onCommentDeleted={(commentId) => {
           setRemovedIds((prev) => new Set([...prev, commentId]));
           setLocalExtra((prev) => prev.filter((c) => c.id !== commentId));

@@ -64,6 +64,7 @@ export function addLocalComment(
     subject: input.subject.trim(),
     body: input.body.trim(),
     hoursAgo: 0,
+    createdAtIso: new Date().toISOString(),
     afterClose: input.afterClose,
     imageUrls: input.imageUrls?.length ? input.imageUrls : undefined,
     attitude: input.attitude,

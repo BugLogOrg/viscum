@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { CommentBody, commentPreviewPlain } from "@/components/CommentBody";
@@ -8,7 +8,8 @@ import { DemoBadge } from "@/components/DemoBadge";
 import { ProtocolMark } from "@/components/ProtocolMark";
 import type { Comment, CompStatus, DemoSeedPlan } from "@/data/dummy-works";
 import {
-  formatHoursAgo,
+  commentTimeMs,
+  formatCommentStamp,
   formatYen,
   isDemoCommentId,
 } from "@/data/dummy-works";
@@ -120,13 +121,16 @@ function buildThreads(comments: Comment[]): Thread[] {
     repliesByRoot.set(rid, list);
   }
 
-  // hoursAgo 大＝古い。スレは新しいルート順、返信は古い→新しい
-  roots.sort((a, b) => a.hoursAgo - b.hoursAgo);
+  // ルートは新しいルート順。返信は古い→新しい（下に連なる）
+  roots.sort((a, b) => commentTimeMs(b) - commentTimeMs(a));
   return roots.map((root) => ({
     root,
     replies: (repliesByRoot.get(root.id) ?? [])
       .filter((r) => r.id !== root.id)
-      .sort((a, b) => b.hoursAgo - a.hoursAgo),
+      .sort((a, b) => {
+        const d = commentTimeMs(a) - commentTimeMs(b);
+        return d !== 0 ? d : a.id.localeCompare(b.id);
+      }),
   }));
 }
 
@@ -140,6 +144,8 @@ export function CommentList({
   onCommentDeleted,
   onReply,
   canReply,
+  replyToId,
+  replyCompose,
 }: {
   comments: Comment[];
   status: CompStatus;
@@ -149,9 +155,12 @@ export function CommentList({
   /** 作品のシーダー。操作ボタンはこの人だけに出す */
   seederHandle: string;
   onCommentDeleted?: (commentId: string) => void;
-  /** 1段返信を開始（親はルートへ正規化済みを渡す） */
+  /** 1段返信を開始（クリックしたコメント。投稿時はルートへ正規化） */
   onReply?: (parent: Comment) => void;
   canReply?: boolean;
+  /** 返信中のコメントID。入力窓をこの直下に出す */
+  replyToId?: string | null;
+  replyCompose?: ReactNode;
 }) {
   const { data: session } = useSession();
   const me = normHandle(session?.user?.handle ?? "");
@@ -193,6 +202,11 @@ export function CommentList({
     }, 120);
     return () => window.clearTimeout(timer);
   }, [comments]);
+
+  useEffect(() => {
+    if (!replyToId) return;
+    setOpenId(replyToId);
+  }, [replyToId]);
 
   async function startThanks(commentId: string) {
     setThankError(null);
@@ -521,7 +535,7 @@ export function CommentList({
                 accountName={c.accountName}
                 demo={isDemoCommentId(c.id)}
               />
-              <span> · {formatHoursAgo(c.hoursAgo)}</span>
+              <span> · {formatCommentStamp(c.createdAtIso, c.hoursAgo)}</span>
               {!open && (
                 <>
                   <span className="text-viscum-line"> · </span>
@@ -584,12 +598,28 @@ export function CommentList({
       )}
 
       <ul className="mt-3 divide-y divide-viscum-line overflow-hidden rounded-lg border border-viscum-line bg-white/50">
-        {threads.flatMap(({ root, replies }) => [
-          renderRow(root, { isRoot: true }),
-          ...replies.map((r) =>
-            renderRow(r, { nested: true, isRoot: false }),
-          ),
-        ])}
+        {threads.flatMap(({ root, replies }) => {
+          const rows: ReactNode[] = [];
+          const pushRow = (c: Comment, opts: { nested?: boolean; isRoot: boolean }) => {
+            rows.push(renderRow(c, opts));
+            if (replyToId === c.id && replyCompose) {
+              rows.push(
+                <li
+                  key={`compose-${c.id}`}
+                  id="work-comment-compose"
+                  className="border-t border-viscum-moss/40 bg-viscum-leaf-soft/30 px-3 py-3 pl-9"
+                >
+                  {replyCompose}
+                </li>,
+              );
+            }
+          };
+          pushRow(root, { isRoot: true });
+          for (const r of replies) {
+            pushRow(r, { nested: true, isRoot: false });
+          }
+          return rows;
+        })}
       </ul>
     </section>
   );

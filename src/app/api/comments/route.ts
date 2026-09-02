@@ -48,6 +48,7 @@ function toClientComment(
     body: row.body,
     imageUrls: row.imageUrls?.length ? row.imageUrls : undefined,
     hoursAgo: hoursAgoFrom(row.createdAt),
+    createdAtIso: row.createdAt.toISOString(),
     adopted: Boolean(row.adoptedAt) || Boolean(paid?.tipped),
     thanked: Boolean(row.thankedAt) || undefined,
     tipped: paid?.tipped || undefined,
