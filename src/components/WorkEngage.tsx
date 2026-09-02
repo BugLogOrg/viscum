@@ -91,6 +91,8 @@ export function WorkEngage({
   const [openForm, setOpenForm] = useState(false);
   /** 返信先（表示用）。投稿時はルートIDへ正規化 */
   const [replyTo, setReplyTo] = useState<Comment | null>(null);
+  /** 返信専用の地の文章（態度・画像なし） */
+  const [replyBody, setReplyBody] = useState("");
   const [subject, setSubject] = useState("");
   const [attitude, setAttitude] = useState<CommentAttitudeId | null>(null);
   const [blocks, setBlocks] = useState<CommentBlock[]>(emptyComposeBlocks);
@@ -212,6 +214,8 @@ export function WorkEngage({
       ? parent.subject
       : `Re: ${parent.subject}`.slice(0, 80);
     setSubject(re);
+    setReplyBody("");
+    setAttitude(null);
     setOpenForm(true);
     setJustPosted(false);
     setError(null);
@@ -225,6 +229,7 @@ export function WorkEngage({
 
   function resetForm() {
     setSubject("");
+    setReplyBody("");
     setAttitude(null);
     setBlocks((prev) => {
       for (const b of prev) {
@@ -360,6 +365,70 @@ export function WorkEngage({
       setError("コメントにはログインと英語ID（コテハン）が必要です。");
       return;
     }
+
+    const isReply = Boolean(replyTo?.id);
+    const accountName =
+      session?.user?.name?.trim() &&
+      session.user.name.trim().toLowerCase() !== handle.toLowerCase()
+        ? session.user.name.trim()
+        : undefined;
+
+    if (isReply) {
+      const text = replyBody.trim();
+      if (!text) {
+        setError("返信を書いてください。");
+        return;
+      }
+      const s =
+        subject.trim() ||
+        (replyTo!.subject.startsWith("Re:")
+          ? replyTo!.subject
+          : `Re: ${replyTo!.subject}`.slice(0, 80));
+      setSubmitting(true);
+      setError(null);
+      try {
+        const parentId = replyTo!.id;
+        const remote = await postWorkComment({
+          workId,
+          subject: s,
+          body: text,
+          imageUrls: [],
+          afterClose: compClosed,
+          parentId,
+        });
+        if (remote.ok && remote.comment) {
+          setRemoteExtra((prev) => [remote.comment!, ...prev]);
+          resetForm();
+          setReplyTo(null);
+          setOpenForm(false);
+          setJustPosted(true);
+          setLastPersisted(true);
+          return;
+        }
+        addLocalComment(workId, {
+          author: handle,
+          accountName,
+          subject: s,
+          body: text,
+          afterClose: compClosed,
+          imageUrls: [],
+          parentId,
+        });
+        setLocalExtra(readLocalComments(workId));
+        resetForm();
+        setReplyTo(null);
+        setOpenForm(false);
+        setJustPosted(true);
+        setLastPersisted(false);
+        if (remote.error) {
+          setError(`${remote.error}（この端末には保存しました）`);
+        }
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
     const s = subject.trim();
     if (!s) {
       setError("件名を書いてください。");
@@ -382,16 +451,10 @@ export function WorkEngage({
       setError("本文か画像を入れてください。");
       return;
     }
-    const accountName =
-      session?.user?.name?.trim() &&
-      session.user.name.trim().toLowerCase() !== handle.toLowerCase()
-        ? session.user.name.trim()
-        : undefined;
 
     setSubmitting(true);
     setError(null);
     try {
-      const parentId = replyTo?.id;
       const remote = await postWorkComment({
         workId,
         subject: s,
@@ -399,7 +462,6 @@ export function WorkEngage({
         imageUrls,
         afterClose: compClosed,
         attitude,
-        parentId,
       });
       if (remote.ok && remote.comment) {
         setRemoteExtra((prev) => [remote.comment!, ...prev]);
@@ -419,7 +481,6 @@ export function WorkEngage({
         afterClose: compClosed,
         imageUrls,
         attitude,
-        parentId,
       });
       setLocalExtra(readLocalComments(workId));
       resetForm();
@@ -626,6 +687,7 @@ export function WorkEngage({
                 onClick={() => {
                   setReplyTo(null);
                   setSubject("");
+                  setReplyBody("");
                 }}
               >
                 返信をやめて通常コメントにする
@@ -633,7 +695,54 @@ export function WorkEngage({
             </div>
           ) : null}
           {composeGate()}
-          {canWrite && (
+          {canWrite && replyTo ? (
+            <form onSubmit={submit} className="space-y-3">
+              <p className="text-[11px] text-viscum-muted">
+                投稿者: @{handle}
+                {session?.user?.name &&
+                session.user.name.trim().toLowerCase() !== handle.toLowerCase()
+                  ? `（${session.user.name.trim()}）`
+                  : ""}
+                　· 地の文章のみ（URLはそのまま貼れます）
+              </p>
+              <label className="block space-y-1">
+                <span className="text-[12px] text-viscum-muted">返信</span>
+                <textarea
+                  value={replyBody}
+                  onChange={(e) => setReplyBody(e.target.value)}
+                  rows={5}
+                  maxLength={4000}
+                  placeholder="返信を書く。http(s)のURLはそのまま貼れます"
+                  className="w-full resize-y rounded-md border border-viscum-line bg-viscum-paper px-3 py-2 text-[14px] leading-relaxed text-viscum-ink outline-none focus:border-viscum-brand"
+                />
+              </label>
+              {error && (
+                <p className="text-[12px] text-viscum-berry-deep">{error}</p>
+              )}
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  disabled={submitting || !replyBody.trim()}
+                  className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-sm font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                >
+                  {submitting ? "保存中…" : "返信する"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpenForm(false);
+                    setReplyTo(null);
+                    setError(null);
+                    resetForm();
+                  }}
+                  className="rounded-md border border-viscum-line px-3 py-2.5 text-sm text-viscum-muted"
+                >
+                  やめる
+                </button>
+              </div>
+            </form>
+          ) : null}
+          {canWrite && !replyTo ? (
             <form onSubmit={submit} className="space-y-3">
               {compClosed && (
                 <p className="text-[12px] leading-relaxed text-viscum-berry-deep">
@@ -880,12 +989,13 @@ export function WorkEngage({
                 </button>
               </div>
             </form>
-          )}
+          ) : null}
           {!canWrite && (
             <button
               type="button"
               onClick={() => {
                 setOpenForm(false);
+                setReplyTo(null);
                 setError(null);
               }}
               className="rounded-md border border-viscum-line px-3 py-2 text-sm text-viscum-muted"

@@ -53,7 +53,7 @@ export function addLocalComment(
     body: string;
     afterClose?: boolean;
     imageUrls?: string[];
-    attitude: CommentAttitudeId;
+    attitude?: CommentAttitudeId;
     parentId?: string;
   },
 ): Comment {

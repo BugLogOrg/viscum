@@ -175,18 +175,6 @@ export async function POST(req: Request) {
   if (!subject) {
     return NextResponse.json({ error: "件名が必要です" }, { status: 400 });
   }
-  if (!attitude) {
-    return NextResponse.json(
-      { error: "コメントの態度（賛同／止まれ／別軸）を選んでください" },
-      { status: 400 },
-    );
-  }
-  if (!text && imageUrls.length === 0) {
-    return NextResponse.json(
-      { error: "本文か画像が必要です" },
-      { status: 400 },
-    );
-  }
 
   let parentId: string | null = null;
   let parentAuthorId: string | null = null;
@@ -219,6 +207,28 @@ export async function POST(req: Request) {
     parentAuthorId = parent.authorId;
   }
 
+  const isReply = Boolean(parentId);
+  // 返信は地の文章のみ（態度・画像なし）。ルートは態度必須
+  if (!isReply && !attitude) {
+    return NextResponse.json(
+      { error: "コメントの態度（賛同／止まれ／別軸）を選んでください" },
+      { status: 400 },
+    );
+  }
+  if (isReply) {
+    if (!text) {
+      return NextResponse.json({ error: "返信本文が必要です" }, { status: 400 });
+    }
+  } else if (!text && imageUrls.length === 0) {
+    return NextResponse.json(
+      { error: "本文か画像が必要です" },
+      { status: 400 },
+    );
+  }
+
+  const savedImageUrls = isReply ? [] : imageUrls;
+  const savedAttitude = isReply ? null : attitude;
+
   const authorRows = await db
     .select({ id: users.id })
     .from(users)
@@ -239,9 +249,9 @@ export async function POST(req: Request) {
       parentId,
       subject,
       body: text || "（画像のみ）",
-      imageUrls,
+      imageUrls: savedImageUrls,
       afterClose: Boolean(body?.afterClose),
-      attitude,
+      attitude: savedAttitude,
     })
     .returning({
       id: comments.id,
