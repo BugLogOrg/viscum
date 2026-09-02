@@ -213,7 +213,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
             辞退済み（案内終了）
           </h1>
           <p className="mt-3 text-[14px] leading-relaxed text-viscum-ink">
-            ご確認ありがとうございました。無理のない返事で大丈夫です。
+            ご確認ありがとうございました。
           </p>
           <div className="mt-5 space-y-3 rounded-lg border border-viscum-line bg-white/70 px-4 py-4 text-[13px] leading-relaxed text-viscum-ink">
             <p>
