@@ -13,6 +13,7 @@ import {
 import {
   fetchPortfolioWall,
   postPortfolioWall,
+  deletePortfolioWallPost,
 } from "@/lib/remote-portfolio-wall";
 import { accountLabelForHandle } from "@/data/suggested-seeders";
 import {
@@ -89,6 +90,7 @@ export function PortfolioCommentsClient({
   const [body, setBody] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [ownerName, setOwnerName] = useState(() =>
     resolveOwnerDisplayName(handle),
@@ -221,6 +223,37 @@ export function PortfolioCommentsClient({
     }
   }
 
+  async function startDelete(p: PortfolioWallPost) {
+    if (
+      !window.confirm("このコメントを削除しますか？元に戻せません。")
+    ) {
+      return;
+    }
+    setPostError(null);
+    setDeletingId(p.id);
+    try {
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        p.id,
+      )) {
+        setPostError("このコメントは削除できません");
+        return;
+      }
+      const res = await deletePortfolioWallPost(p.id);
+      if (!res.ok) {
+        setPostError(res.error || "削除に失敗しました");
+        return;
+      }
+      setRemote((prev) => prev.filter((x) => x.id !== p.id));
+      setLocal((prev) => prev.filter((x) => x.id !== p.id));
+      if (replyTo?.id === p.id) {
+        setReplyTo(null);
+        setComposeOpen(false);
+      }
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   function CommentBody({
     p,
     indented,
@@ -266,22 +299,35 @@ export function PortfolioCommentsClient({
         <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
           <LinkifiedText text={p.body} />
         </p>
-        {loggedIn ? (
-          <button
-            type="button"
-            onClick={() => openReply(p)}
-            className="mt-1.5 text-[11px] font-medium text-viscum-brand hover:underline"
-          >
-            返信
-          </button>
-        ) : (
-          <Link
-            href={loginHref}
-            className="mt-1.5 inline-block text-[11px] font-medium text-viscum-brand hover:underline"
-          >
-            ログインして返信
-          </Link>
-        )}
+        <div className="mt-1.5 flex flex-wrap items-center gap-3">
+          {loggedIn ? (
+            <button
+              type="button"
+              onClick={() => openReply(p)}
+              className="text-[11px] font-medium text-viscum-brand hover:underline"
+            >
+              返信
+            </button>
+          ) : (
+            <Link
+              href={loginHref}
+              className="text-[11px] font-medium text-viscum-brand hover:underline"
+            >
+              ログインして返信
+            </Link>
+          )}
+          {loggedIn &&
+            myHandle.toLowerCase() === p.author.replace(/^@/, "").toLowerCase() && (
+              <button
+                type="button"
+                disabled={deletingId === p.id}
+                onClick={() => void startDelete(p)}
+                className="text-[11px] font-medium text-viscum-muted hover:text-viscum-berry-deep hover:underline disabled:opacity-60"
+              >
+                {deletingId === p.id ? "削除中…" : "削除"}
+              </button>
+            )}
+        </div>
       </div>
     );
   }

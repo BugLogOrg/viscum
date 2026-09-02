@@ -58,3 +58,26 @@ export async function postPortfolioWall(input: {
     return { ok: false, error: "ネットワークエラー" };
   }
 }
+
+/** 書き込み主本人の削除 */
+export async function deletePortfolioWallPost(postId: string): Promise<{
+  ok: boolean;
+  error?: string;
+}> {
+  try {
+    const res = await fetch(
+      `/api/portfolio-wall/${encodeURIComponent(postId)}`,
+      { method: "DELETE" },
+    );
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
+    if (!res.ok) {
+      return {
+        ok: false,
+        error: data.error || `削除に失敗（${res.status}）`,
+      };
+    }
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "ネットワークエラー" };
+  }
+}
