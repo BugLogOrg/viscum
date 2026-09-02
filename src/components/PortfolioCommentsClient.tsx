@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import type { PortfolioWallPost } from "@/data/dummy-portfolio-wall";
-import { formatHoursAgo } from "@/data/dummy-works";
+import { formatCommentStamp } from "@/data/dummy-works";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import {
   clearLocalPortfolioWall,
@@ -26,6 +26,9 @@ type Thread = {
   replies: PortfolioWallPost[];
 };
 
+const NEON_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 function resolveOwnerDisplayName(handle: string): string {
   const key = handle.replace(/^@/, "").trim();
   const demo = accountLabelForHandle(key);
@@ -40,6 +43,14 @@ function resolveOwnerDisplayName(handle: string): string {
   return key;
 }
 
+function postTimeMs(p: PortfolioWallPost): number {
+  if (p.createdAtIso) {
+    const t = Date.parse(p.createdAtIso);
+    if (!Number.isNaN(t)) return t;
+  }
+  return Date.now() - p.hoursAgo * 3_600_000;
+}
+
 /** 1段返信のみ。返信への返信もルート直下に付ける */
 function buildThreads(posts: PortfolioWallPost[]): Thread[] {
   const byId = new Map(posts.map((p) => [p.id, p]));
@@ -51,9 +62,10 @@ function buildThreads(posts: PortfolioWallPost[]): Thread[] {
     return parent.parentId;
   }
 
+  // ルートは新しい順（上）。返信は古い→新しい（下へ時系列）
   const roots = posts
     .filter((p) => !p.parentId || !byId.has(p.parentId))
-    .sort((a, b) => a.hoursAgo - b.hoursAgo);
+    .sort((a, b) => postTimeMs(b) - postTimeMs(a));
 
   const rootIdSet = new Set(roots.map((r) => r.id));
 
@@ -70,7 +82,7 @@ function buildThreads(posts: PortfolioWallPost[]): Thread[] {
   return roots.map((root) => ({
     root,
     replies: (repliesByRoot.get(root.id) ?? []).sort(
-      (a, b) => a.hoursAgo - b.hoursAgo,
+      (a, b) => postTimeMs(a) - postTimeMs(b),
     ),
   }));
 }
@@ -109,7 +121,6 @@ export function PortfolioCommentsClient({
     void fetchPortfolioWall(handle).then((res) => {
       if (cancelled) return;
       if (res.persisted) {
-        // Neon 正本。端末ローカルの幽霊投稿は捨てる（他人に見えない原因だった）
         clearLocalPortfolioWall(handle);
         setLocal([]);
         setRemote(res.posts);
@@ -145,6 +156,20 @@ export function PortfolioCommentsClient({
     };
   }, [focusId, remote, local]);
 
+  useEffect(() => {
+    if (!composeOpen || !replyTo) return;
+    const t = window.setTimeout(() => {
+      document.getElementById("pf-wall-compose")?.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+      document
+        .querySelector<HTMLTextAreaElement>("#pf-wall-compose textarea")
+        ?.focus();
+    }, 80);
+    return () => window.clearTimeout(t);
+  }, [composeOpen, replyTo]);
+
   const ownerLabel = ownerName.trim() || handle.replace(/^@/, "");
   const commentCta = `「${ownerLabel}」にコメントする`;
   const commentHeading = `「${ownerLabel}」へのコメント`;
@@ -176,11 +201,16 @@ export function PortfolioCommentsClient({
 
   function openReply(target: PortfolioWallPost) {
     if (!loggedIn) return;
-    // 直返信先を保持（通知はコメント主へ）。一覧はルート直下フラット
     setReplyTo(target);
     setBody("");
     setPostError(null);
     setComposeOpen(true);
+  }
+
+  function closeCompose() {
+    setComposeOpen(false);
+    setReplyTo(null);
+    setBody("");
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -208,12 +238,9 @@ export function PortfolioCommentsClient({
         clearLocalPortfolioWall(handle);
         setLocal([]);
         setRemote((prev) => [remoteRes.post!, ...prev]);
-        setBody("");
-        setReplyTo(null);
-        setComposeOpen(false);
+        closeCompose();
         return;
       }
-      // 失敗時はローカルに逃がさない（自分にだけ見えて壊れて見える）
       setPostError(
         remoteRes.error ||
           "保存に失敗しました。通信とログイン状態を確認してください。",
@@ -224,17 +251,13 @@ export function PortfolioCommentsClient({
   }
 
   async function startDelete(p: PortfolioWallPost) {
-    if (
-      !window.confirm("このコメントを削除しますか？元に戻せません。")
-    ) {
+    if (!window.confirm("このコメントを削除しますか？元に戻せません。")) {
       return;
     }
     setPostError(null);
     setDeletingId(p.id);
     try {
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-        p.id,
-      )) {
+      if (!NEON_ID.test(p.id)) {
         setPostError("このコメントは削除できません");
         return;
       }
@@ -245,13 +268,66 @@ export function PortfolioCommentsClient({
       }
       setRemote((prev) => prev.filter((x) => x.id !== p.id));
       setLocal((prev) => prev.filter((x) => x.id !== p.id));
-      if (replyTo?.id === p.id) {
-        setReplyTo(null);
-        setComposeOpen(false);
-      }
+      if (replyTo?.id === p.id) closeCompose();
     } finally {
       setDeletingId(null);
     }
+  }
+
+  function ComposeForm({ mode }: { mode: "new" | "reply" }) {
+    return (
+      <form
+        id={mode === "reply" ? "pf-wall-compose" : "pf-wall-compose-new"}
+        onSubmit={onSubmit}
+        className="space-y-2 rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3"
+      >
+        <p className="text-[12px] text-viscum-ink">
+          投稿者 <span className="font-medium">@{myHandle}</span>
+          <span className="ml-1 text-viscum-muted">（コテハン）</span>
+          {replyTo && mode === "reply" && (
+            <span className="ml-2 text-viscum-muted">
+              → @{replyTo.author} への返信
+              <button
+                type="button"
+                className="ml-1 text-viscum-brand hover:underline"
+                onClick={closeCompose}
+              >
+                閉じる
+              </button>
+            </span>
+          )}
+        </p>
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          rows={3}
+          placeholder={mode === "reply" ? "返信を書く…" : placeholderNew}
+          className="w-full resize-y rounded border border-viscum-line bg-white px-2 py-1.5 text-[13px] leading-relaxed"
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="submit"
+            disabled={!body.trim() || submitting}
+            className="rounded-md bg-viscum-brand px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-40"
+          >
+            {submitting
+              ? "保存中…"
+              : mode === "reply"
+                ? "返信する"
+                : "投稿する"}
+          </button>
+          {mode === "new" && (
+            <button
+              type="button"
+              onClick={closeCompose}
+              className="text-[12px] text-viscum-muted hover:underline"
+            >
+              閉じる
+            </button>
+          )}
+        </div>
+      </form>
+    );
   }
 
   function CommentBody({
@@ -261,63 +337,73 @@ export function PortfolioCommentsClient({
     p: PortfolioWallPost;
     indented?: boolean;
   }) {
+    const isMine =
+      loggedIn &&
+      myHandle.toLowerCase() === p.author.replace(/^@/, "").toLowerCase();
+    const showReplyCompose = composeOpen && replyTo?.id === p.id;
+
     return (
-      <div
-        id={`pf-wall-${p.id}`}
-        className={`px-4 py-3 ${
-          indented
-            ? "ml-3 border-l-2 border-viscum-line bg-viscum-paper-2/40"
-            : ""
-        } ${
-          focusId === p.id ? "ring-2 ring-viscum-berry/50 ring-inset bg-viscum-berry/5" : ""
-        }`}
-      >
-        <div className="flex flex-wrap items-center gap-1.5">
-          {(() => {
-            const raw = p.author.replace(/^@/, "").trim();
-            const label = accountLabelForHandle(raw);
-            const localName = readLocalProfile(raw)?.accountName?.trim();
-            const name =
-              localName ||
-              (label.accountName.toLowerCase() !== raw.toLowerCase()
-                ? label.accountName
-                : "");
-            const text = name ? `${name} @${raw}` : `@${raw}`;
-            return (
-              <Link
-                href={`/u/${encodeURIComponent(raw)}`}
-                className="text-[13px] font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
+      <div>
+        <div
+          id={`pf-wall-${p.id}`}
+          className={`px-4 py-3 ${
+            indented
+              ? "ml-3 border-l-2 border-viscum-line bg-viscum-paper-2/40"
+              : ""
+          } ${
+            focusId === p.id
+              ? "ring-2 ring-viscum-berry/50 ring-inset bg-viscum-berry/5"
+              : ""
+          }`}
+        >
+          <div className="flex flex-wrap items-center gap-1.5">
+            {(() => {
+              const raw = p.author.replace(/^@/, "").trim();
+              const label = accountLabelForHandle(raw);
+              const localName = readLocalProfile(raw)?.accountName?.trim();
+              const name =
+                localName ||
+                (label.accountName.toLowerCase() !== raw.toLowerCase()
+                  ? label.accountName
+                  : "");
+              const text = name ? `${name} @${raw}` : `@${raw}`;
+              return (
+                <Link
+                  href={`/u/${encodeURIComponent(raw)}`}
+                  className="text-[13px] font-medium text-viscum-trunk underline decoration-viscum-line underline-offset-2 hover:text-viscum-brand hover:decoration-viscum-brand"
+                >
+                  {text}
+                </Link>
+              );
+            })()}
+            <span className="text-[11px] text-viscum-muted">
+              {formatCommentStamp(p.createdAtIso, p.hoursAgo)}
+            </span>
+          </div>
+          <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
+            <LinkifiedText text={p.body} />
+          </p>
+          <div className="mt-1.5 flex flex-wrap items-center gap-3">
+            {loggedIn ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (showReplyCompose) closeCompose();
+                  else openReply(p);
+                }}
+                className="text-[11px] font-medium text-viscum-brand hover:underline"
               >
-                {text}
+                {showReplyCompose ? "閉じる" : "返信"}
+              </button>
+            ) : (
+              <Link
+                href={loginHref}
+                className="text-[11px] font-medium text-viscum-brand hover:underline"
+              >
+                ログインして返信
               </Link>
-            );
-          })()}
-          <span className="text-[11px] text-viscum-muted">
-            {formatHoursAgo(p.hoursAgo)}
-          </span>
-        </div>
-        <p className="mt-1.5 whitespace-pre-wrap text-[14px] leading-relaxed text-viscum-ink">
-          <LinkifiedText text={p.body} />
-        </p>
-        <div className="mt-1.5 flex flex-wrap items-center gap-3">
-          {loggedIn ? (
-            <button
-              type="button"
-              onClick={() => openReply(p)}
-              className="text-[11px] font-medium text-viscum-brand hover:underline"
-            >
-              返信
-            </button>
-          ) : (
-            <Link
-              href={loginHref}
-              className="text-[11px] font-medium text-viscum-brand hover:underline"
-            >
-              ログインして返信
-            </Link>
-          )}
-          {loggedIn &&
-            myHandle.toLowerCase() === p.author.replace(/^@/, "").toLowerCase() && (
+            )}
+            {isMine && (
               <button
                 type="button"
                 disabled={deletingId === p.id}
@@ -327,10 +413,18 @@ export function PortfolioCommentsClient({
                 {deletingId === p.id ? "削除中…" : "削除"}
               </button>
             )}
+          </div>
         </div>
+        {showReplyCompose && loggedIn && (
+          <div className="border-t border-viscum-moss/40 bg-viscum-leaf-soft/30 px-4 py-3 pl-7">
+            <ComposeForm mode="reply" />
+          </div>
+        )}
       </div>
     );
   }
+
+  const showTopCompose = composeOpen && loggedIn && !replyTo;
 
   return (
     <section
@@ -350,12 +444,12 @@ export function PortfolioCommentsClient({
           <button
             type="button"
             onClick={() => {
-              if (composeOpen && !replyTo) setComposeOpen(false);
+              if (showTopCompose) closeCompose();
               else openNew();
             }}
             className="shrink-0 rounded-md border border-viscum-line bg-viscum-paper-2 px-2.5 py-1.5 text-[12px] font-medium text-viscum-ink hover:border-viscum-brand"
           >
-            {composeOpen && !replyTo ? "閉じる" : commentCta}
+            {showTopCompose ? "閉じる" : commentCta}
           </button>
         ) : (
           <Link
@@ -373,49 +467,10 @@ export function PortfolioCommentsClient({
         </p>
       )}
 
-      {composeOpen && loggedIn && (
-        <form
-          onSubmit={onSubmit}
-          className="mx-4 mt-3 space-y-2 rounded-lg border border-viscum-line bg-viscum-paper-2/60 px-3 py-3"
-        >
-          <p className="text-[12px] text-viscum-ink">
-            投稿者 <span className="font-medium">@{myHandle}</span>
-            <span className="ml-1 text-viscum-muted">（コテハン）</span>
-            {replyTo && (
-              <span className="ml-2 text-viscum-muted">
-                → @{replyTo.author} への返信
-                <button
-                  type="button"
-                  className="ml-1 text-viscum-brand hover:underline"
-                  onClick={() => {
-                    setReplyTo(null);
-                    setBody("");
-                  }}
-                >
-                  解除
-                </button>
-              </span>
-            )}
-          </p>
-          <textarea
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            rows={3}
-            placeholder={replyTo ? "返信を書く…" : placeholderNew}
-            className="w-full resize-y rounded border border-viscum-line bg-white px-2 py-1.5 text-[13px] leading-relaxed"
-          />
-          <button
-            type="submit"
-            disabled={!body.trim() || submitting}
-            className="rounded-md bg-viscum-brand px-3 py-1.5 text-[12px] font-medium text-white disabled:opacity-40"
-          >
-            {submitting
-              ? "保存中…"
-              : replyTo
-                ? "返信する"
-                : "投稿する"}
-          </button>
-        </form>
+      {showTopCompose && (
+        <div className="mx-4 mt-3">
+          <ComposeForm mode="new" />
+        </div>
       )}
 
       {threads.length === 0 ? (
