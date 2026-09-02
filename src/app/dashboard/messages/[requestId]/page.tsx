@@ -51,6 +51,7 @@ export default function RequestDmThreadPage() {
   const [origin, setOrigin] = useState("");
   const [inviteViewCount, setInviteViewCount] = useState<number | null>(null);
   const [reissueBusy, setReissueBusy] = useState(false);
+  const [confirmDecline, setConfirmDecline] = useState(false);
 
   useEffect(() => {
     clearLocalRequestDms();
@@ -400,12 +401,6 @@ export default function RequestDmThreadPage() {
 
   async function respond(next: "accepted" | "declined") {
     if (responding || !row) return;
-    if (next === "declined") {
-      const ok = window.confirm(
-        "このお願いを辞退しますか？\nスレは閉じ、案内リンクも無効になります。あとからこのスレには書けません。",
-      );
-      if (!ok) return;
-    }
     setResponding(true);
     const prev = row;
     const note =
@@ -427,9 +422,15 @@ export default function RequestDmThreadPage() {
     try {
       const res = await patchRequestDm(requestId, { status: next });
       if (res.request) setRow(res.request);
-      else if (!res.ok) setRow(prev);
+      else if (!res.ok) {
+        setRow(prev);
+        setConfirmDecline(false);
+      } else {
+        setConfirmDecline(false);
+      }
     } catch {
       setRow(prev);
+      setConfirmDecline(false);
     } finally {
       setResponding(false);
     }
@@ -753,27 +754,55 @@ export default function RequestDmThreadPage() {
             <p className="text-[13px] font-medium text-viscum-ink">
               このお願いへの返事
             </p>
-            <p className="text-[12px] leading-relaxed text-viscum-muted">
-              「いまは無理」で辞退するとスレは閉じ、案内リンクも無効になります。
-            </p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={responding}
-                onClick={() => void respond("accepted")}
-                className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-              >
-                {responding ? "送信中…" : "やる"}
-              </button>
-              <button
-                type="button"
-                disabled={responding}
-                onClick={() => void respond("declined")}
-                className="flex-1 rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
-              >
-                いまは無理（辞退）
-              </button>
-            </div>
+            {!confirmDecline ? (
+              <>
+                <p className="text-[12px] leading-relaxed text-viscum-muted">
+                  「いまは無理」で辞退するとスレは閉じ、案内リンクも無効になります。
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={responding}
+                    onClick={() => void respond("accepted")}
+                    className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                  >
+                    {responding ? "送信中…" : "やる"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={responding}
+                    onClick={() => setConfirmDecline(true)}
+                    className="flex-1 rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+                  >
+                    いまは無理（辞退）
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="text-[12px] leading-relaxed text-viscum-muted">
+                  辞退するとスレは閉じ、案内リンクも無効になります。あとからこのスレには書けません。
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={responding}
+                    onClick={() => setConfirmDecline(false)}
+                    className="flex-1 rounded-md border border-viscum-line bg-white px-3 py-2.5 text-[14px] font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:opacity-50"
+                  >
+                    やめる
+                  </button>
+                  <button
+                    type="button"
+                    disabled={responding}
+                    onClick={() => void respond("declined")}
+                    className="flex-1 rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                  >
+                    {responding ? "閉じています…" : "辞退して閉じる"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 

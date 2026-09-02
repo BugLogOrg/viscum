@@ -255,6 +255,7 @@ export async function GET(req: Request) {
       .select({ id: requestDms.id, status: requestDms.status })
       .from(requestDms)
       .where(eq(requestDms.inviteId, id))
+      .orderBy(desc(requestDms.createdAt))
       .limit(1);
     const declined = declinedRows[0]?.status === "declined";
     return NextResponse.json(

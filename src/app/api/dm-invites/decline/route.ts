@@ -121,12 +121,16 @@ export async function POST(req: Request) {
     .set({ revokedAt: now })
     .where(eq(dmInvites.id, inviteId));
 
-  await notifySeederRequestDeclined({
-    seederUserId: invite.fromUserId,
-    requestId: row.id,
-    workId: invite.workId,
-    workTitle: invite.workTitle,
-  });
+  try {
+    await notifySeederRequestDeclined({
+      seederUserId: invite.fromUserId,
+      requestId: row.id,
+      workId: invite.workId,
+      workTitle: invite.workTitle,
+    });
+  } catch {
+    // 通知失敗でも辞退自体は成立させる（案内は閉じる）
+  }
 
   return NextResponse.json({
     ok: true,

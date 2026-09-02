@@ -60,6 +60,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const [declinedOk, setDeclinedOk] = useState(false);
   const [declineError, setDeclineError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
+  const [confirmDeclineFull, setConfirmDeclineFull] = useState(false);
 
   useEffect(() => {
     if (authStatus === "loading") return;
@@ -255,13 +256,13 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       handle.toLowerCase() ===
         invite.fromHandle.replace(/^@/, "").toLowerCase());
   const depth = reveal === "full" && isLoggedIn ? "full" : "teaser";
-  /** 未返信のときだけ。ログイン後は canRespond を正とする */
+  /** 未返信のときだけ。teaser も requestStatus があれば尊重 */
   const showDecide =
     !isOwnInvite &&
     !declinedOk &&
     !sentOk &&
     (depth === "teaser"
-      ? true
+      ? !invite.requestStatus || invite.requestStatus === "pending"
       : invite.canRespond === true);
   const openThreadHref = invite.requestId
     ? `/dashboard/messages/${invite.requestId}`
@@ -270,12 +271,6 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   async function declineWithoutLogin() {
     if (declining || isOwnInvite || !invite) return;
     const targetId = invite.id;
-    const ok = window.confirm(
-      isLoggedIn
-        ? "このお願いを辞退しますか？\nお礼を伝えて案内を閉じ、依頼主に通知します。"
-        : "このお願いを辞退しますか？\nお礼を伝えて案内を閉じ、依頼主に通知します。ログインは不要です。",
-    );
-    if (!ok) return;
     setDeclining(true);
     setDeclineError(null);
     try {
@@ -286,15 +281,30 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
+        declined?: boolean;
+        already?: boolean;
         error?: string;
       };
-      if (res.ok && data.ok) {
+      if (res.ok && (data.ok || data.declined || data.already)) {
         setDeclinedOk(true);
         return;
       }
-      setDeclineError(data.error || "辞退できませんでした");
+      // サーバ側では既に閉じ済みのことがある（通知失敗など）
+      const check = await fetch(
+        `/api/dm-invites?id=${encodeURIComponent(targetId)}`,
+        { cache: "no-store" },
+      );
+      const checkData = (await check.json().catch(() => ({}))) as {
+        revoked?: boolean;
+        declined?: boolean;
+      };
+      if (check.status === 410 && (checkData.declined || checkData.revoked)) {
+        setDeclinedOk(true);
+        return;
+      }
+      setDeclineError(data.error || "辞退できませんでした。もう一度お試しください。");
     } catch {
-      setDeclineError("ネットワークエラー");
+      setDeclineError("ネットワークエラー。回線を確認してもう一度どうぞ。");
     } finally {
       setDeclining(false);
     }
@@ -509,27 +519,60 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                     <p className="text-[13px] font-medium text-viscum-ink">
                       このお願いへの返事
                     </p>
-                    <p className="text-[12px] leading-relaxed text-viscum-muted">
-                      お礼を伝えて案内を閉じ、依頼主に通知します。
-                    </p>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        disabled={accepting || declining}
-                        onClick={() => void acceptWhenReady()}
-                        className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
-                      >
-                        {accepting ? "確定中…" : "やる"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={accepting || declining}
-                        onClick={() => void declineWithoutLogin()}
-                        className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
-                      >
-                        {declining ? "閉じています…" : "いまは無理（辞退）"}
-                      </button>
-                    </div>
+                    {!confirmDeclineFull ? (
+                      <>
+                        <p className="text-[12px] leading-relaxed text-viscum-muted">
+                          お礼を伝えて案内を閉じ、依頼主に通知します。
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={accepting || declining}
+                            onClick={() => void acceptWhenReady()}
+                            className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                          >
+                            {accepting ? "確定中…" : "やる"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={accepting || declining}
+                            onClick={() => setConfirmDeclineFull(true)}
+                            className="flex flex-1 items-center justify-center rounded-md border border-viscum-berry/45 bg-viscum-berry/5 px-3 py-2.5 text-[14px] font-medium text-viscum-berry-deep hover:bg-viscum-berry/10 disabled:opacity-50"
+                          >
+                            いまは無理（辞退）
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[12px] leading-relaxed text-viscum-muted">
+                          辞退すると案内は閉じ、依頼主に「いまは無理」と届きます。
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            disabled={declining}
+                            onClick={() => setConfirmDeclineFull(false)}
+                            className="flex flex-1 items-center justify-center rounded-md border border-viscum-line bg-white px-3 py-2.5 text-[14px] font-medium text-viscum-ink hover:bg-viscum-paper-2 disabled:opacity-50"
+                          >
+                            やめる
+                          </button>
+                          <button
+                            type="button"
+                            disabled={declining}
+                            onClick={() => void declineWithoutLogin()}
+                            className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
+                          >
+                            {declining ? "閉じています…" : "辞退して閉じる"}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                    {declineError ? (
+                      <p className="text-[12px] text-viscum-berry-deep">
+                        {declineError}
+                      </p>
+                    ) : null}
                   </section>
                 ) : !isOwnInvite &&
                   invite.isRecipient &&
