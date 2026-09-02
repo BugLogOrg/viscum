@@ -976,6 +976,9 @@ export function DirectRequestForm({
               無料のため上乗せはありません。
             </p>
           )}
+          <p className="mt-1.5 text-[11px] leading-snug text-viscum-muted">
+            税務（源泉徴収・所得申告など）は依頼主・受取側で各自ご確認ください。VISCUMは源泉の代行・預かりはしません。上の約10%は場の手数料（決済込み）です。
+          </p>
         </div>
 
         <div>
