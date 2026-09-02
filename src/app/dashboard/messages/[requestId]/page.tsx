@@ -108,10 +108,6 @@ export default function RequestDmThreadPage() {
   }, [row?.inviteId, row?.fromHandle, row?.workThumbUrl, handle]);
 
   useEffect(() => {
-    if (!handle) {
-      setLoading(false);
-      return;
-    }
     if (isLegacyLocalRequestId(requestId)) {
       setRow(null);
       setError(
@@ -120,6 +116,7 @@ export default function RequestDmThreadPage() {
       setLoading(false);
       return;
     }
+    // セッション待ちの前に取りに行く（クッキーあれば通る）。handle 待ちだと読み込みが二重になる
     let cancelled = false;
     setLoading(true);
     void fetchRequestDm(requestId).then((res) => {
@@ -136,7 +133,7 @@ export default function RequestDmThreadPage() {
     return () => {
       cancelled = true;
     };
-  }, [handle, requestId]);
+  }, [requestId]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !handle) return;
@@ -181,7 +178,8 @@ export default function RequestDmThreadPage() {
     };
   }, [handle, requestId]);
 
-  if (status === "loading" || (handle && loading)) {
+  // 初回だけフル画面の読み込み。再取得や session 再評価でシェルを潰さない
+  if ((status === "loading" || loading) && !row) {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/dashboard/messages" hideOnMd hidePostCta />
@@ -192,7 +190,7 @@ export default function RequestDmThreadPage() {
     );
   }
 
-  if (!session?.user || !handle) {
+  if (status === "unauthenticated" || (!session?.user && status !== "loading")) {
     return (
       <BrowseChrome>
         <SiteHeader backHref="/" hideOnMd hidePostCta />
@@ -205,6 +203,17 @@ export default function RequestDmThreadPage() {
             ログインへ
           </Link>
         </main>
+      </BrowseChrome>
+    );
+  }
+
+  if (!handle) {
+    return (
+      <BrowseChrome>
+        <SiteHeader backHref="/dashboard/messages" hideOnMd hidePostCta />
+        <div className="max-w-lg px-4 py-10 text-sm text-viscum-muted">
+          英語IDの設定が必要です…
+        </div>
       </BrowseChrome>
     );
   }
