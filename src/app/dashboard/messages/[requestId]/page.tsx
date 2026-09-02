@@ -33,6 +33,7 @@ import {
   INVITE_VIEW_WARN_THRESHOLD,
 } from "@/lib/outbound-invite-share";
 import { fetchRequestDm, patchRequestDm } from "@/lib/remote-requests";
+import { markDmThreadSeen } from "@/lib/dm-thread-seen";
 
 export default function RequestDmThreadPage() {
   const params = useParams();
@@ -56,6 +57,13 @@ export default function RequestDmThreadPage() {
   useEffect(() => {
     clearLocalRequestDms();
   }, []);
+
+  useEffect(() => {
+    if (!requestId || isLegacyLocalRequestId(requestId)) return;
+    const at = row?.updatedAt || row?.createdAt || new Date().toISOString();
+    markDmThreadSeen(requestId, at);
+    window.dispatchEvent(new Event("viscum-dm-seen"));
+  }, [requestId, row?.updatedAt, row?.createdAt]);
 
   useEffect(() => {
     setOrigin(window.location.origin);

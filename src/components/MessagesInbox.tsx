@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { RequestDm } from "@/lib/local-request-dms";
 import {
@@ -9,6 +9,8 @@ import {
 } from "@/lib/local-request-dms";
 import { displayRequestWorkTitle } from "@/lib/local-seeds";
 import { RequestDeliverableStatus } from "@/components/RequestDeliverableStatus";
+import { isDmRowAlert, needsDmAttention } from "@/lib/dm-attention";
+import { getDmThreadSeenMap } from "@/lib/dm-thread-seen";
 
 type Tab = "active" | "inbox" | "sent";
 
@@ -38,7 +40,19 @@ export function MessagesInbox({
   emptyHint,
 }: Props) {
   const [tab, setTab] = useState<Tab>("active");
+  const [seenMap, setSeenMap] = useState<Record<string, string>>({});
   const me = handle.toLowerCase();
+
+  useEffect(() => {
+    setSeenMap(getDmThreadSeenMap());
+    const sync = () => setSeenMap(getDmThreadSeenMap());
+    window.addEventListener("focus", sync);
+    window.addEventListener("viscum-dm-seen", sync);
+    return () => {
+      window.removeEventListener("focus", sync);
+      window.removeEventListener("viscum-dm-seen", sync);
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const rows = [...requests].sort((a, b) =>
@@ -65,27 +79,63 @@ export function MessagesInbox({
     let inbox = 0;
     let sent = 0;
     let active = 0;
+    let alertActive = 0;
+    let alertInbox = 0;
+    let alertSent = 0;
     for (const r of requests) {
-      if (isActiveRequest(r)) active += 1;
-      if (
-        !r.outboundUnassigned &&
-        r.toHandle.toLowerCase() === me
-      ) {
+      const alert = isDmRowAlert(r, handle, seenMap[r.id]);
+      const inInbox =
+        !r.outboundUnassigned && r.toHandle.toLowerCase() === me;
+      const inSent =
+        Boolean(r.outboundUnassigned) ||
+        r.fromHandle.toLowerCase() === me;
+      if (isActiveRequest(r)) {
+        active += 1;
+        if (alert) alertActive += 1;
+      }
+      if (inInbox) {
         inbox += 1;
-      } else if (
-        r.outboundUnassigned ||
-        r.fromHandle.toLowerCase() === me
-      ) {
+        if (alert) alertInbox += 1;
+      }
+      if (inSent) {
         sent += 1;
+        if (alert) alertSent += 1;
       }
     }
-    return { active, inbox, sent };
-  }, [requests, me]);
+    return {
+      active,
+      inbox,
+      sent,
+      alertActive,
+      alertInbox,
+      alertSent,
+    };
+  }, [requests, me, handle, seenMap]);
 
-  const tabs: { id: Tab; label: string; count: number }[] = [
-    { id: "active", label: "進行中", count: counts.active },
-    { id: "inbox", label: "依頼された", count: counts.inbox },
-    { id: "sent", label: "依頼した", count: counts.sent },
+  const tabs: {
+    id: Tab;
+    label: string;
+    count: number;
+    alerts: number;
+  }[] = [
+    {
+      id: "active",
+      label: "進行中",
+      count: counts.active,
+      alerts: counts.alertActive,
+    },
+    {
+      id: "inbox",
+      label: "依頼された",
+      count: counts.inbox,
+      alerts: counts.alertInbox,
+    },
+    {
+      id: "sent",
+      label: "依頼した",
+      count: counts.sent,
+      alerts: counts.alertSent,
+    },
   ];
 
   return (
@@ -111,7 +161,7 @@ export function MessagesInbox({
               role="tab"
               aria-selected={on}
               onClick={() => setTab(t.id)}
-              className={`min-w-[4.5rem] flex-1 rounded-md px-1.5 py-2 text-[11px] font-medium transition sm:text-[12px] ${
+              className={`relative min-w-[4.5rem] flex-1 rounded-md px-1.5 py-2 text-[11px] font-medium transition sm:text-[12px] ${
                 on
                   ? t.id === "inbox"
                     ? "bg-viscum-berry/15 text-viscum-berry-deep"
@@ -123,6 +173,12 @@ export function MessagesInbox({
             >
               {t.label}
               <span className="ml-1 tabular-nums opacity-70">{t.count}</span>
+              {t.alerts > 0 ? (
+                <span
+                  className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-viscum-berry"
+                  aria-label={`未確認 ${t.alerts}件`}
+                />
+              ) : null}
             </button>
           );
         })}
@@ -147,6 +203,8 @@ export function MessagesInbox({
             ? invitePaths[r.inviteId] ?? `/dm/i/${r.inviteId}`
             : null;
           const stamp = activityAt(r);
+          const alert = isDmRowAlert(r, handle, seenMap[r.id]);
+          const actionNeeded = needsDmAttention(r, handle);
           return (
             <li key={r.id} className="border-b border-viscum-line last:border-b-0">
               <Link
@@ -174,14 +232,23 @@ export function MessagesInbox({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-2">
-                      <p className="truncate text-[14px] font-medium text-viscum-ink">
-                        {peerName}
-                        {peer ? (
-                          <span className="font-normal text-viscum-muted">
-                            {" "}
-                            (@{peer})
-                          </span>
+                      <p className="flex min-w-0 items-center gap-1.5 truncate text-[14px] font-medium text-viscum-ink">
+                        {alert ? (
+                          <span
+                            className="h-1.5 w-1.5 shrink-0 rounded-full bg-viscum-berry"
+                            title={actionNeeded ? "対応が必要" : "更新あり"}
+                            aria-label={actionNeeded ? "対応が必要" : "更新あり"}
+                          />
                         ) : null}
+                        <span className="truncate">
+                          {peerName}
+                          {peer ? (
+                            <span className="font-normal text-viscum-muted">
+                              {" "}
+                              (@{peer})
+                            </span>
+                          ) : null}
+                        </span>
                       </p>
                       <RequestDeliverableStatus
                         status={r.status}
@@ -192,6 +259,7 @@ export function MessagesInbox({
                       {formatYen(r.amountYen)} ·{" "}
                       {displayRequestWorkTitle(r.workId, r.workTitle)}
                       {invitePath ? " · 招待あり" : ""}
+                      {actionNeeded ? " · 対応待ち" : alert ? " · 更新" : ""}
                     </p>
                   </div>
                 </div>
@@ -199,11 +267,13 @@ export function MessagesInbox({
                   <time
                     dateTime={stamp}
                     className={`rounded-sm px-1.5 py-0.5 text-[11px] tabular-nums ${
-                      outbound
-                        ? "bg-white/60 text-viscum-muted"
-                        : incoming
-                          ? "bg-viscum-berry/10 font-medium text-viscum-berry-deep"
-                          : "bg-white/50 font-medium text-viscum-leaf-deep"
+                      alert
+                        ? "bg-viscum-berry/10 font-medium text-viscum-berry-deep"
+                        : outbound
+                          ? "bg-white/60 text-viscum-muted"
+                          : incoming
+                            ? "bg-viscum-berry/10 font-medium text-viscum-berry-deep"
+                            : "bg-white/50 font-medium text-viscum-leaf-deep"
                     }`}
                   >
                     最終更新 {formatRequestDmStamp(stamp)}
