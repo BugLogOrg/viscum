@@ -101,6 +101,24 @@ export async function POST(req: Request) {
         .update(requestDms)
         .set({ messages, updatedAt: now })
         .where(eq(requestDms.id, row.id));
+      if (!sameRecent && row.toUserId) {
+        try {
+          const { notifyRequestPartyMessage } = await import(
+            "@/lib/notify-request-message"
+          );
+          await notifyRequestPartyMessage({
+            toUserId: row.toUserId,
+            requestId: row.id,
+            workId: invite.workId,
+            workTitle: invite.workTitle,
+            fromHandle: mentorHandle,
+            body: text,
+            audience: "mentor",
+          });
+        } catch {
+          /* ignore */
+        }
+      }
       return NextResponse.json({
         ok: true,
         requestId: row.id,
@@ -132,6 +150,24 @@ export async function POST(req: Request) {
         updatedAt: now,
       })
       .where(eq(requestDms.id, row.id));
+    if (!sameRecent) {
+      try {
+        const { notifyRequestPartyMessage } = await import(
+          "@/lib/notify-request-message"
+        );
+        await notifyRequestPartyMessage({
+          toUserId: invite.fromUserId,
+          requestId: row.id,
+          workId: invite.workId,
+          workTitle: invite.workTitle,
+          fromHandle: mentorHandle,
+          body: text,
+          audience: "seeder",
+        });
+      } catch {
+        /* ignore */
+      }
+    }
     return NextResponse.json({
       ok: true,
       requestId: row.id,
@@ -211,6 +247,24 @@ export async function POST(req: Request) {
       .set({ messages, updatedAt: now, inviteId: inviteId })
       .where(eq(requestDms.id, row.id));
     requestId = row.id;
+    if (!sameRecent) {
+      try {
+        const { notifyRequestPartyMessage } = await import(
+          "@/lib/notify-request-message"
+        );
+        await notifyRequestPartyMessage({
+          toUserId: invite.fromUserId,
+          requestId,
+          workId: invite.workId,
+          workTitle: invite.workTitle,
+          fromHandle: mentorHandle,
+          body: text,
+          audience: "seeder",
+        });
+      } catch {
+        /* ignore */
+      }
+    }
   } else {
     const seederRows = await db
       .select({ handle: users.handle })
@@ -248,6 +302,22 @@ export async function POST(req: Request) {
       })
       .returning();
     requestId = inserted.id;
+    try {
+      const { notifyRequestPartyMessage } = await import(
+        "@/lib/notify-request-message"
+      );
+      await notifyRequestPartyMessage({
+        toUserId: invite.fromUserId,
+        requestId,
+        workId: invite.workId,
+        workTitle: invite.workTitle,
+        fromHandle: mentorHandle,
+        body: text,
+        audience: "seeder",
+      });
+    } catch {
+      /* ignore */
+    }
   }
 
   return NextResponse.json({

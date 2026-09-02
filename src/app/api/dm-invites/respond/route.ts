@@ -165,15 +165,33 @@ export async function POST(req: Request) {
       .set({ revokedAt: new Date() })
       .where(eq(dmInvites.id, inviteId));
 
-    const { notifySeederRequestDeclined } = await import(
-      "@/lib/notify-request-declined"
-    );
-    await notifySeederRequestDeclined({
-      seederUserId: invite.fromUserId,
-      requestId: updated.id,
-      workId: invite.workId,
-      workTitle: invite.workTitle,
-    });
+    try {
+      const { notifySeederRequestDeclined } = await import(
+        "@/lib/notify-request-declined"
+      );
+      await notifySeederRequestDeclined({
+        seederUserId: invite.fromUserId,
+        requestId: updated.id,
+        workId: invite.workId,
+        workTitle: invite.workTitle,
+      });
+    } catch {
+      /* 通知失敗でも辞退は成立 */
+    }
+  } else if (next === "accepted") {
+    try {
+      const { notifySeederRequestAccepted } = await import(
+        "@/lib/notify-request-accepted"
+      );
+      await notifySeederRequestAccepted({
+        seederUserId: invite.fromUserId,
+        requestId: updated.id,
+        workId: invite.workId,
+        workTitle: invite.workTitle,
+      });
+    } catch {
+      /* 通知失敗でも引き受けは成立 */
+    }
   }
 
   return NextResponse.json({

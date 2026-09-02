@@ -164,15 +164,33 @@ export async function PATCH(req: Request, ctx: Ctx) {
           .set({ revokedAt: new Date() })
           .where(eq(dmInvites.id, inviteId));
       }
-      const { notifySeederRequestDeclined } = await import(
-        "@/lib/notify-request-declined"
-      );
-      await notifySeederRequestDeclined({
-        seederUserId: loaded.row.fromUserId,
-        requestId: loaded.row.id,
-        workId: loaded.row.workId,
-        workTitle: loaded.row.workTitle,
-      });
+      try {
+        const { notifySeederRequestDeclined } = await import(
+          "@/lib/notify-request-declined"
+        );
+        await notifySeederRequestDeclined({
+          seederUserId: loaded.row.fromUserId,
+          requestId: loaded.row.id,
+          workId: loaded.row.workId,
+          workTitle: loaded.row.workTitle,
+        });
+      } catch {
+        /* 通知失敗でも辞退は成立 */
+      }
+    } else if (body.status === "accepted") {
+      try {
+        const { notifySeederRequestAccepted } = await import(
+          "@/lib/notify-request-accepted"
+        );
+        await notifySeederRequestAccepted({
+          seederUserId: loaded.row.fromUserId,
+          requestId: loaded.row.id,
+          workId: loaded.row.workId,
+          workTitle: loaded.row.workTitle,
+        });
+      } catch {
+        /* 通知失敗でも引き受けは成立 */
+      }
     }
   } else if (body?.status === "pay_waiting") {
     if (!isMentor) {
@@ -278,6 +296,21 @@ export async function PATCH(req: Request, ctx: Ctx) {
         .set({ revokedAt: new Date() })
         .where(eq(dmInvites.id, inviteId));
     }
+    if (loaded.row.toUserId) {
+      try {
+        const { notifyMentorRequestClosed } = await import(
+          "@/lib/notify-request-closed"
+        );
+        await notifyMentorRequestClosed({
+          mentorUserId: loaded.row.toUserId,
+          requestId: loaded.row.id,
+          workId: loaded.row.workId,
+          workTitle: loaded.row.workTitle,
+        });
+      } catch {
+        /* 通知失敗でも打ち切りは成立 */
+      }
+    }
   }
 
   if (
@@ -305,6 +338,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
   }
 
   const text = body?.message?.trim().slice(0, 2000);
+  let messageAdded = false;
   if (text) {
     if (status === "paid" || status === "declined" || status === "closed") {
       return NextResponse.json(
@@ -325,6 +359,7 @@ export async function PATCH(req: Request, ctx: Ctx) {
         body: text,
         createdAt: new Date().toISOString(),
       });
+      messageAdded = true;
     }
   }
 
@@ -338,6 +373,30 @@ export async function PATCH(req: Request, ctx: Ctx) {
     })
     .where(eq(requestDms.id, id))
     .returning();
+
+  if (messageAdded && text) {
+    const peerUserId = isSeeder
+      ? loaded.row.toUserId
+      : loaded.row.fromUserId;
+    if (peerUserId) {
+      try {
+        const { notifyRequestPartyMessage } = await import(
+          "@/lib/notify-request-message"
+        );
+        await notifyRequestPartyMessage({
+          toUserId: peerUserId,
+          requestId: loaded.row.id,
+          workId: loaded.row.workId,
+          workTitle: loaded.row.workTitle,
+          fromHandle: handle,
+          body: text,
+          audience: isSeeder ? "mentor" : "seeder",
+        });
+      } catch {
+        /* 通知失敗でも送信は成立 */
+      }
+    }
+  }
 
   const request = requestDmToClient(
     { ...updated, workThumbUrl: null },
