@@ -44,6 +44,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const isLoggedIn = Boolean(session?.user?.id);
   const intentRaw = searchParams.get("intent")?.trim().toLowerCase() ?? "";
   const intent = intentRaw === "accept" ? "accept" : null;
+  const doneDeclined = searchParams.get("done") === "declined";
   const intentRan = useRef(false);
 
   const [invite, setInvite] = useState<PublicDmInvite | null>(null);
@@ -57,10 +58,14 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   const [sentOk, setSentOk] = useState(false);
   const [threadPath, setThreadPath] = useState<string | null>(null);
   const [declining, setDeclining] = useState(false);
-  const [declinedOk, setDeclinedOk] = useState(false);
+  const [declinedOk, setDeclinedOk] = useState(doneDeclined);
   const [declineError, setDeclineError] = useState<string | null>(null);
   const [accepting, setAccepting] = useState(false);
   const [confirmDeclineFull, setConfirmDeclineFull] = useState(false);
+
+  useEffect(() => {
+    if (doneDeclined) setDeclinedOk(true);
+  }, [doneDeclined]);
 
   useEffect(() => {
     if (authStatus === "loading") return;
@@ -188,15 +193,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
       });
   }, [intent, canWrite, invite?.id, invite?.fromHandle, handle, router]);
 
-  if (loading || authStatus === "loading") {
-    return (
-      <div className="min-h-dvh bg-viscum-paper px-4 py-10 text-viscum-muted">
-        読み込み中…
-      </div>
-    );
-  }
-
-  if (declinedOk) {
+  if (declinedOk || doneDeclined) {
     return (
       <div className="min-h-dvh bg-viscum-paper text-viscum-ink">
         <header className="border-b border-viscum-line bg-viscum-leaf-deep px-4 py-3.5 text-white">
@@ -209,11 +206,28 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
           </Link>
         </header>
         <main className="mx-auto max-w-lg px-4 py-10">
-          <h1 className="text-[17px] font-semibold text-viscum-ink">
-            お礼を伝えて閉じました
+          <p className="text-[12px] font-medium tracking-wide text-viscum-muted">
+            状態が変わりました
+          </p>
+          <h1 className="mt-1 text-[17px] font-semibold text-viscum-ink">
+            辞退済み（案内終了）
           </h1>
-          <p className="mt-3 text-[14px] leading-relaxed text-viscum-muted">
-            依頼主に「いまは無理」と通知しました。この案内リンクはもう使えません。アカウント登録は不要です。このタブは閉じて大丈夫です。
+          <div className="mt-5 space-y-3 rounded-lg border border-viscum-line bg-white/70 px-4 py-4 text-[13px] leading-relaxed text-viscum-ink">
+            <p>
+              <span className="text-viscum-muted">あなたの返事：</span>
+              いまは無理（辞退）
+            </p>
+            <p>
+              <span className="text-viscum-muted">依頼主への通知：</span>
+              送信済み
+            </p>
+            <p>
+              <span className="text-viscum-muted">この案内リンク：</span>
+              無効（もう使えません）
+            </p>
+          </div>
+          <p className="mt-4 text-[14px] leading-relaxed text-viscum-muted">
+            アカウント登録は不要です。ブラウザのタブはこのまま閉じて大丈夫です。
           </p>
           <Link
             href="/lp"
@@ -223,6 +237,14 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
           </Link>
         </main>
         <SiteFooter />
+      </div>
+    );
+  }
+
+  if (loading || authStatus === "loading") {
+    return (
+      <div className="min-h-dvh bg-viscum-paper px-4 py-10 text-viscum-muted">
+        読み込み中…
       </div>
     );
   }
@@ -271,13 +293,18 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
   async function declineWithoutLogin() {
     if (declining || isOwnInvite || !invite) return;
     const targetId = invite.id;
+    const doneUrl = `/dm/i/${encodeURIComponent(targetId)}?done=declined`;
     setDeclining(true);
     setDeclineError(null);
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), 15000);
     try {
       const res = await fetch("/api/dm-invites/decline", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ inviteId: targetId }),
+        signal: controller.signal,
+        cache: "no-store",
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -286,26 +313,35 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
         error?: string;
       };
       if (res.ok && (data.ok || data.declined || data.already)) {
-        setDeclinedOk(true);
+        // Bing 等で React 状態だけでは切り替わらないことがあるのでハード遷移
+        window.location.replace(doneUrl);
         return;
       }
-      // サーバ側では既に閉じ済みのことがある（通知失敗など）
       const check = await fetch(
         `/api/dm-invites?id=${encodeURIComponent(targetId)}`,
-        { cache: "no-store" },
+        { cache: "no-store", signal: controller.signal },
       );
       const checkData = (await check.json().catch(() => ({}))) as {
         revoked?: boolean;
         declined?: boolean;
       };
       if (check.status === 410 && (checkData.declined || checkData.revoked)) {
-        setDeclinedOk(true);
+        window.location.replace(doneUrl);
         return;
       }
-      setDeclineError(data.error || "辞退できませんでした。もう一度お試しください。");
-    } catch {
-      setDeclineError("ネットワークエラー。回線を確認してもう一度どうぞ。");
+      setDeclineError(
+        data.error || "辞退できませんでした。もう一度お試しください。",
+      );
+    } catch (err) {
+      const aborted =
+        err instanceof DOMException && err.name === "AbortError";
+      setDeclineError(
+        aborted
+          ? "応答が遅いようです。もう一度「辞退して案内を終了」を押してください。"
+          : "ネットワークエラー。回線を確認してもう一度どうぞ。",
+      );
     } finally {
+      window.clearTimeout(timer);
       setDeclining(false);
     }
   }
@@ -409,6 +445,9 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
               : undefined
           }
           declining={declining}
+          declineError={
+            depth === "teaser" && !isOwnInvite ? declineError : null
+          }
           snapshot={{
             fromDisplayName: displayName,
             fromHandle: invite.fromHandle,
@@ -546,7 +585,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                     ) : (
                       <>
                         <p className="text-[12px] leading-relaxed text-viscum-muted">
-                          辞退すると案内は閉じ、依頼主に「いまは無理」と届きます。
+                          辞退すると案内は終了し、依頼主に「いまは無理」と届きます。
                         </p>
                         <div className="flex gap-2">
                           <button
@@ -563,7 +602,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                             onClick={() => void declineWithoutLogin()}
                             className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
                           >
-                            {declining ? "閉じています…" : "辞退して閉じる"}
+                            {declining ? "反映しています…" : "辞退して案内を終了"}
                           </button>
                         </div>
                       </>

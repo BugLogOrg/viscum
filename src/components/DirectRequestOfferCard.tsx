@@ -27,6 +27,7 @@ export function DirectRequestOfferCard({
   loginAcceptHref,
   onDecline,
   declining = false,
+  declineError = null,
 }: {
   snapshot: DirectRequestOfferSnapshot;
   /** 省略時: 「{名前} から、あなた宛てのお願いです」 */
@@ -42,6 +43,7 @@ export function DirectRequestOfferCard({
   /** teaser: 「いまは無理」→ログイン不要で辞退（親が API 呼び出し） */
   onDecline?: () => void;
   declining?: boolean;
+  declineError?: string | null;
 }) {
   const [confirmDecline, setConfirmDecline] = useState(false);
   const { description, prompts } = splitRequestSummary(snapshot.workSummary);
@@ -280,7 +282,7 @@ export function DirectRequestOfferCard({
             ) : (
               <>
                 <p className="text-[12px] leading-relaxed text-viscum-muted">
-                  辞退すると案内は閉じ、依頼主に「いまは無理」と届きます。ログインは不要です。
+                  辞退すると案内は終了し、依頼主に「いまは無理」と届きます。ログインは不要です。
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -297,9 +299,14 @@ export function DirectRequestOfferCard({
                     onClick={() => onDecline?.()}
                     className="flex flex-1 items-center justify-center rounded-md bg-viscum-berry px-3 py-2.5 text-[14px] font-medium text-white hover:bg-viscum-berry-deep disabled:opacity-50"
                   >
-                    {declining ? "閉じています…" : "辞退して閉じる"}
+                    {declining ? "反映しています…" : "辞退して案内を終了"}
                   </button>
                 </div>
+                {declineError ? (
+                  <p className="text-[12px] text-viscum-berry-deep">
+                    {declineError}
+                  </p>
+                ) : null}
               </>
             )}
             <p className="text-center text-[11px] leading-relaxed text-viscum-muted">
