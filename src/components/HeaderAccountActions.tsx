@@ -13,6 +13,7 @@ import {
   readLocalProfile,
 } from "@/lib/local-profile";
 import { fetchMyRequests } from "@/lib/remote-requests";
+import { countDmAttention } from "@/lib/dm-attention";
 
 /** ベル＝通知。アカウントメニュー＝ダッシュ／設定／気になる */
 export function HeaderAccountActions({
@@ -63,12 +64,7 @@ export function HeaderAccountActions({
     };
     const syncPendingDm = () => {
       void fetchMyRequests().then((res) => {
-        const me = handle.toLowerCase();
-        const n = res.requests.filter(
-          (r) =>
-            r.status === "pending" && r.toHandle.toLowerCase() === me,
-        ).length;
-        setPendingDm(n);
+        setPendingDm(countDmAttention(res.requests, handle));
       });
     };
     syncProfile();
@@ -139,14 +135,7 @@ export function HeaderAccountActions({
         onClick={() => {
           if (handle) {
             void fetchMyRequests().then((res) => {
-              const me = handle.toLowerCase();
-              setPendingDm(
-                res.requests.filter(
-                  (r) =>
-                    r.status === "pending" &&
-                    r.toHandle.toLowerCase() === me,
-                ).length,
-              );
+              setPendingDm(countDmAttention(res.requests, handle));
             });
           }
         }}

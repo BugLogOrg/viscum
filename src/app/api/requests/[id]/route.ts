@@ -190,6 +190,19 @@ export async function PATCH(req: Request, ctx: Ctx) {
     if (status !== "pay_waiting") {
       status = "pay_waiting";
       pushNote("提出しました。依頼主の完了承認・お支払い待ちです。");
+      try {
+        const { notifySeederRequestSubmitted } = await import(
+          "@/lib/notify-request-submitted"
+        );
+        await notifySeederRequestSubmitted({
+          seederUserId: loaded.row.fromUserId,
+          requestId: loaded.row.id,
+          workId: loaded.row.workId,
+          workTitle: loaded.row.workTitle,
+        });
+      } catch {
+        // 通知失敗でも提出自体は成立
+      }
     }
   } else if (body?.status === "paid") {
     if (!isSeeder) {
