@@ -123,8 +123,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             apiKey: resendKey,
             from: `VISCUM <${emailFrom}>`,
             async sendVerificationRequest({ identifier, url }) {
-              const { host } = new URL(url);
               const to = identifier.trim();
+              // Gmail等の先読みでワンタイムURLが消費されるのを防ぐ：
+              // メールは確認ページへ。人間がボタンを押してから本ログイン。
+              // ※確認ページのホストはトークン発行ホストと揃える（AUTH_URL／cookie）
+              let link = url;
+              try {
+                const authUrl = new URL(url);
+                const confirm = new URL(
+                  "/login/verify",
+                  `${authUrl.protocol}//${authUrl.host}`,
+                );
+                confirm.searchParams.set("url", url);
+                link = confirm.toString();
+              } catch {
+                /* url のまま送る */
+              }
+              const { host } = new URL(link);
               const res = await fetch("https://api.resend.com/emails", {
                 method: "POST",
                 headers: {
@@ -140,7 +155,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     "",
                     `宛先: ${to}`,
                     "",
-                    url,
+                    "次のページを開き、「ログインする」を押してください。",
+                    link,
                     "",
                     `有効期限が過ぎた場合は、もう一度ログイン画面から送ってください。`,
                     `（${host}）`,
@@ -148,8 +164,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                   html: `
                     <p>VISCUM へのログインリンクです。</p>
                     <p style="color:#444;font-size:14px">このメールの宛先: <strong>${to.replace(/</g, "&lt;")}</strong></p>
-                    <p><a href="${url}">ログインする</a></p>
-                    <p style="color:#666;font-size:12px">リンクが開けない場合は次のURLをブラウザに貼ってください。<br/>${url}</p>
+                    <p><a href="${link}">ログインページを開く</a></p>
+                    <p style="color:#666;font-size:12px">開いたら「ログインする」ボタンを押してください（メールの自動チェックで無効にならないようにしています）。</p>
+                    <p style="color:#666;font-size:12px">リンクが開けない場合は次のURLをブラウザに貼ってください。<br/>${link}</p>
                     <p style="color:#666;font-size:12px">有効期限が過ぎた場合は、もう一度ログイン画面から送ってください。</p>
                   `,
                 }),

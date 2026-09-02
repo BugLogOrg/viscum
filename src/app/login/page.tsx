@@ -10,6 +10,7 @@ import {
   describePostLoginDestination,
   onboardingHandleHref,
   onboardingWelcomeHref,
+  readPostLoginDestination,
   rememberPostLoginDestination,
   safeInternalPath,
 } from "@/lib/post-login-destination";
@@ -34,9 +35,36 @@ export default function LoginPage() {
     "tori / ayu など棚デモ用の英語IDは使えません。guest や自分用のIDにしてください。";
 
   useEffect(() => {
-    const cb = readCallback();
+    const params = new URLSearchParams(window.location.search);
+    const cb = safeCallback(params.get("callbackUrl"));
     if (cb !== "/") rememberPostLoginDestination(cb);
-    setDestHint(describePostLoginDestination(cb));
+    else {
+      // error=Verification で callback が落ちても、覚えていた招待先を復元
+      const remembered = readPostLoginDestination("/");
+      if (remembered !== "/") {
+        setDestHint(describePostLoginDestination(remembered));
+        // アドレスバーにも残す（再送時に使える）
+        if (!params.get("callbackUrl")) {
+          const next = new URL(window.location.href);
+          next.searchParams.set("callbackUrl", remembered);
+          window.history.replaceState({}, "", next.toString());
+        }
+      }
+    }
+    if (cb !== "/") setDestHint(describePostLoginDestination(cb));
+
+    const authError = params.get("error");
+    if (authError === "Verification") {
+      setError(
+        "ログインリンクが無効か、期限切れです。メールの自動チェックで一度開かれた場合もあります。下からもう一度送ってください。",
+      );
+    } else if (authError === "OAuthAccountNotLinked") {
+      setError(
+        "このメールは別のログイン方法ですでに使われています。同じメールで送り直すか、以前の方法で入ってください。",
+      );
+    } else if (authError && authError !== "undefined") {
+      setError("ログインに失敗しました。もう一度お試しください。");
+    }
   }, []);
 
   useEffect(() => {
