@@ -199,7 +199,7 @@ export function WorkEngage({
       setError(null);
       return;
     }
-    // UIはクリックしたコメントの直下。投稿の parentId はルートへ正規化
+    // UI・parentId ともクリックしたコメント（引用の正本）。表示はルート直下にフラット
     setReplyTo(target);
     const re = target.subject.startsWith("Re:")
       ? target.subject
@@ -216,14 +216,6 @@ export function WorkEngage({
         block: "center",
       });
     }, 80);
-  }
-
-  function replyParentIdForPost(target: Comment): string {
-    const byId = new Map(comments.map((c) => [c.id, c]));
-    if (!target.parentId) return target.id;
-    const parent = byId.get(target.parentId);
-    if (!parent) return target.id;
-    return parent.parentId ?? parent.id;
   }
 
   function resetForm() {
@@ -386,7 +378,7 @@ export function WorkEngage({
       setSubmitting(true);
       setError(null);
       try {
-        const parentId = replyParentIdForPost(replyTo!);
+        const parentId = replyTo!.id;
         const remote = await postWorkComment({
           workId,
           subject: s,

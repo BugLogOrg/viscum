@@ -203,8 +203,8 @@ export async function POST(req: Request) {
         { status: 404 },
       );
     }
-    // 深いネスト禁止: 返信への返信はルート直下へ。通知は直近の親著者へ
-    parentId = parent.parentId ?? parent.id;
+    // 直近の返信先を保持（引用表示用）。一覧はルート直下にフラット表示（ADR-027）
+    parentId = parent.id;
     parentAuthorId = parent.authorId;
   }
 

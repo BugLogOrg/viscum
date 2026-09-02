@@ -93,14 +93,20 @@ function CommentAuthor({
 
 type Thread = { root: Comment; replies: Comment[] };
 
-/** ルート＋直下返信。返信への返信もルート直下に寄せる（ADR-027） */
+/** ルート＋直下返信。DBの parent は直返信先。表示はルート直下にフラット（ADR-027） */
 function buildThreads(comments: Comment[]): Thread[] {
   const byId = new Map(comments.map((c) => [c.id, c]));
   const rootIdOf = (c: Comment): string => {
-    if (!c.parentId) return c.id;
-    const parent = byId.get(c.parentId);
-    if (!parent) return c.id; // 親欠落は疑似ルート
-    return parent.parentId ?? parent.id;
+    let cur = c;
+    const seen = new Set<string>();
+    while (cur.parentId) {
+      if (seen.has(cur.id)) break;
+      seen.add(cur.id);
+      const parent = byId.get(cur.parentId);
+      if (!parent) break;
+      cur = parent;
+    }
+    return cur.id;
   };
 
   const repliesByRoot = new Map<string, Comment[]>();
@@ -134,6 +140,12 @@ function buildThreads(comments: Comment[]): Thread[] {
   }));
 }
 
+function quotePreview(c: Comment): string {
+  const body = commentPreviewPlain(c.body);
+  if (body) return body;
+  return c.subject;
+}
+
 export function CommentList({
   comments,
   status,
@@ -155,7 +167,7 @@ export function CommentList({
   /** 作品のシーダー。操作ボタンはこの人だけに出す */
   seederHandle: string;
   onCommentDeleted?: (commentId: string) => void;
-  /** 1段返信を開始（クリックしたコメント。投稿時はルートへ正規化） */
+  /** 1段返信を開始（クリックしたコメント＝引用先） */
   onReply?: (parent: Comment) => void;
   canReply?: boolean;
   /** 返信中のコメントID。入力窓をこの直下に出す */
@@ -180,6 +192,10 @@ export function CommentList({
   const prizeLabel = resolvedPrize ? formatYen(resolvedPrize) : null;
 
   const threads = useMemo(() => buildThreads(comments), [comments]);
+  const byId = useMemo(
+    () => new Map(comments.map((c) => [c.id, c])),
+    [comments],
+  );
 
   useEffect(() => {
     const fromComments = comments.filter((c) => c.thanked).map((c) => c.id);
@@ -462,6 +478,11 @@ export function CommentList({
 
   function renderRow(c: Comment, opts: { nested?: boolean; isRoot: boolean }) {
     const open = openId === c.id;
+    const quoted =
+      c.parentId && byId.has(c.parentId) ? byId.get(c.parentId)! : null;
+    const quotedHandle = quoted
+      ? quoted.author.replace(/^@/, "").trim()
+      : "";
     return (
       <li
         key={c.id}
@@ -536,7 +557,15 @@ export function CommentList({
                 demo={isDemoCommentId(c.id)}
               />
               <span> · {formatCommentStamp(c.createdAtIso, c.hoursAgo)}</span>
-              {!open && (
+              {!open && quoted && (
+                <>
+                  <span className="text-viscum-line"> · </span>
+                  <span className="line-clamp-1 font-normal text-viscum-trunk/80">
+                    ↪ @{quotedHandle}: {quotePreview(quoted)}
+                  </span>
+                </>
+              )}
+              {!open && !quoted && (
                 <>
                   <span className="text-viscum-line"> · </span>
                   <span className="line-clamp-1 font-normal text-viscum-muted/80">
@@ -554,6 +583,31 @@ export function CommentList({
               opts.nested ? "pl-12" : "pl-9"
             }`}
           >
+            {quoted ? (
+              <blockquote className="mb-3 rounded-md border border-viscum-line/80 border-l-[3px] border-l-viscum-moss bg-viscum-paper-2/70 px-2.5 py-2 text-[12px] leading-snug text-viscum-ink">
+                <p className="font-medium text-viscum-leaf-deep">
+                  @{quotedHandle} への返信
+                </p>
+                <p className="mt-1 line-clamp-3 text-viscum-muted">
+                  {quotePreview(quoted)}
+                </p>
+                <button
+                  type="button"
+                  className="mt-1.5 text-[11px] text-viscum-brand underline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenId(quoted.id);
+                    window.setTimeout(() => {
+                      document
+                        .getElementById(`comment-${quoted.id}`)
+                        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }, 40);
+                  }}
+                >
+                  元のコメントを見る
+                </button>
+              </blockquote>
+            ) : null}
             <CommentBody body={c.body} imageUrls={c.imageUrls} />
             {renderActions(c, opts.isRoot)}
           </div>
