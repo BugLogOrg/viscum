@@ -886,9 +886,7 @@ export default function RequestDmThreadPage() {
         ) : null}
 
         {isSeeder &&
-        (row.status === "pending" ||
-          row.status === "accepted" ||
-          row.status === "pay_waiting") ? (
+        (row.status === "pending" || row.status === "accepted") ? (
           <div className="mt-4 space-y-3">
             <div className="flex flex-wrap gap-2">
               <button
@@ -924,6 +922,27 @@ export default function RequestDmThreadPage() {
                 打ち切る
               </button>
             </div>
+          </div>
+        ) : null}
+
+        {isSeeder && row.status === "pay_waiting" ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => void extendDeadline(7)}
+              className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
+            >
+              希望日を7日延ばす
+            </button>
+            <button
+              type="button"
+              disabled={responding}
+              onClick={() => void extendDeadline(14)}
+              className="rounded-md border border-viscum-line px-3 py-1.5 text-[12px] font-medium text-viscum-ink disabled:opacity-50"
+            >
+              希望日を14日延ばす
+            </button>
           </div>
         ) : null}
 
