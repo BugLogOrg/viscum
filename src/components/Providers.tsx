@@ -13,12 +13,7 @@ export function Providers({
   session: Session | null;
 }) {
   return (
-    <SessionProvider
-      session={session}
-      refetchOnWindowFocus={false}
-      // layout で渡した session を正とする。マウント時の再取得は「読み込み中」が二重に出てガチャつく
-      refetchOnMount={false}
-    >
+    <SessionProvider session={session} refetchOnWindowFocus={false}>
       <OnboardingGate>{children}</OnboardingGate>
     </SessionProvider>
   );
