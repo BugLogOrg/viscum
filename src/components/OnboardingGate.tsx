@@ -16,6 +16,8 @@ const HANDLE_EXEMPT_PREFIX = [
   "/api",
   "/lp",
   "/faq",
+  "/terms",
+  "/privacy",
 ];
 
 /** ウェルカム（専門タグ）未了でも通してよい公開面 */
@@ -24,6 +26,9 @@ const ONBOARDING_PUBLIC_PREFIX = [
   "/onboarding",
   "/api",
   "/lp",
+  "/faq",
+  "/terms",
+  "/privacy",
   "/u",
   "/w",
 ];

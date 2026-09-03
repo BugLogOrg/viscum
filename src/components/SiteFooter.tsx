@@ -12,6 +12,14 @@ export function SiteFooter() {
         FAQ
       </Link>
       {" · "}
+      <Link href="/terms" className="text-viscum-brand hover:underline">
+        利用規約
+      </Link>
+      {" · "}
+      <Link href="/privacy" className="text-viscum-brand hover:underline">
+        プライバシー
+      </Link>
+      {" · "}
       <span className="tracking-[0.08em]">VISCUM</span>
       {" · "}
       <span>フィード作品の一部はサンプル</span>
