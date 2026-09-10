@@ -183,7 +183,7 @@ function PinSection({
         </Link>
       </div>
       <p className="mt-1.5 text-[12px] leading-snug break-words text-viscum-muted">
-        シーダーが上に出している開催中コンペ（1週）
+        シーダーが出している開催中コンペ（1週）
       </p>
       <ul className="mt-2 divide-y divide-viscum-line">
         {pinned.map((w) => (
