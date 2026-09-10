@@ -24,6 +24,36 @@ import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
 import { PinPurchaseControl } from "@/components/PinPurchaseControl";
+import { hasPinIntent, takePinIntent } from "@/lib/pin-intent";
+
+/** 投稿フォームの☑「公開したらすぐピン」→ 公開直後に Checkout へ。失敗は公開を止めない */
+async function startPinCheckoutAfterPublish(workId: string): Promise<boolean> {
+  try {
+    const res = await fetch("/api/checkout/pin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ workId }),
+    });
+    const data = (await res.json().catch(() => null)) as
+      | { url?: string; error?: string; nextFreeAtIso?: string | null }
+      | null;
+    if (res.ok && data?.url) {
+      window.location.assign(data.url);
+      return true;
+    }
+    const next = data?.nextFreeAtIso
+      ? `（次の空き ${new Date(data.nextFreeAtIso).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} 頃）`
+      : "";
+    window.alert(
+      `公開は完了しました。ピンは付けられませんでした：${data?.error ?? "エラー"}${next}\n作品ページの「シーダー操作」からいつでも付けられます。`,
+    );
+  } catch {
+    window.alert(
+      "公開は完了しました。ピンの決済画面を開けませんでした。作品ページの「シーダー操作」からいつでも付けられます。",
+    );
+  }
+  return false;
+}
 
 /**
  * シーダー本人だけ：公開／下書き戻し／削除。
@@ -284,7 +314,9 @@ export function OwnerSeedActions({
             onClick={() => {
               if (
                 !window.confirm(
-                  "トップの「反応を募集中」に公開しますか？誰でもURLで見られるようになります。",
+                  hasPinIntent(workId)
+                    ? "トップの「反応を募集中」に公開しますか？誰でもURLで見られるようになります。\n\n公開のあと、そのまま「ピン」の決済（¥3,000／1週）に進みます。"
+                    : "トップの「反応を募集中」に公開しますか？誰でもURLで見られるようになります。",
                 )
               ) {
                 return;
@@ -307,24 +339,30 @@ export function OwnerSeedActions({
                   }
                   const data = (await res.json()) as { work?: Work };
                   setListedNeon(true);
+                  const wantPin = takePinIntent(workId);
                   if (data.work) {
-                    void announcePublishedSeedToX(data.work).then((r) => {
-                      const msg = announceResultMessage(r);
-                      if (msg) window.alert(msg);
-                      markJustPublished(workId);
-                      router.push("/");
-                    });
-                  } else {
-                    markJustPublished(workId);
-                    router.push("/");
+                    const r = await announcePublishedSeedToX(data.work);
+                    const msg = announceResultMessage(r);
+                    if (msg) window.alert(msg);
                   }
+                  markJustPublished(workId);
+                  if (wantPin) {
+                    // Stripe へ遷移できたらここで離脱。戻り先は /w/{id}?pin=success
+                    const left = await startPinCheckoutAfterPublish(workId);
+                    if (left) return;
+                    router.refresh();
+                    return;
+                  }
+                  router.push("/");
                 } finally {
                   setBusy(false);
                 }
               })();
             }}
           >
-            公開する（トップに出す）
+            {hasPinIntent(workId)
+              ? "公開してピンを付ける（トップに出す → ¥3,000）"
+              : "公開する（トップに出す）"}
           </button>
         )}
         <button

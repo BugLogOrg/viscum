@@ -31,6 +31,18 @@ import {
 } from "@/lib/local-profile";
 import { WORK_TITLE_MAX, WORK_DESCRIPTION_MAX, clampWorkTitle } from "@/lib/work-title";
 import { resolveWorkThumbForSave } from "@/lib/resolve-work-thumb";
+import { markPinIntent } from "@/lib/pin-intent";
+import { PIN_PRICE_YEN, formatYenJa } from "@/lib/seeder-pricing";
+
+type PinAvailability = {
+  max: number;
+  active: number;
+  holding: number;
+  canPin: boolean;
+  nextFreeAtIso: string | null;
+  priceYen: number;
+  persisted: boolean;
+};
 
 const RECOMMENDED_TAGS = [
   "アプリ",
@@ -98,6 +110,27 @@ export function PostForm() {
   const compOn = isFieldCourse(seedPlan);
   const extReviewOn = seedPlan === "public_boost";
   const freeOn = seedPlan === "free_comment";
+
+  // 注目ピン（ADR-069）: 公開したらそのまま Checkout へ。褒賞ありのプランだけ・ログイン時だけ
+  const [pinAtPublish, setPinAtPublish] = useState(false);
+  const [pinAvail, setPinAvail] = useState<PinAvailability | null>(null);
+  const pinEligiblePlan = compOn || extReviewOn;
+  const loggedIn = Boolean(session?.user?.id?.trim() && session?.user?.handle?.trim());
+  useEffect(() => {
+    if (!pinEligiblePlan || !loggedIn) return;
+    let cancelled = false;
+    void fetch("/api/pin/availability", { cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: PinAvailability | null) => {
+        if (!cancelled && d) setPinAvail(d);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [pinEligiblePlan, loggedIn]);
+  const pinFree = pinAvail ? Math.max(0, pinAvail.max - pinAvail.active - pinAvail.holding) : null;
+  const pinFull = pinAvail ? !pinAvail.canPin : false;
   const needsDeadline = compOn || freeOn;
   const courseId: SeedCourseId = isFieldCourse(seedPlan)
     ? seedPlan
@@ -354,6 +387,8 @@ export function PostForm() {
               window.alert("保存に失敗しました");
               return;
             }
+            // ☑「公開したらすぐピン」→ 作品ページの「公開する」直後に Checkout へ
+            if (pinAtPublish && pinEligiblePlan && !pinFull) markPinIntent(id);
             router.push(`/w/${encodeURIComponent(id)}?seeded=1`);
             return;
           }
@@ -676,6 +711,43 @@ export function PostForm() {
           />
           <span className="text-[12px] text-viscum-ink">{previewMeta}</span>
         </div>
+
+        {pinEligiblePlan ? (
+          <div className="rounded-md border border-viscum-line bg-white/60 px-3 py-2.5">
+            <label
+              className={`flex items-start gap-2 ${
+                loggedIn && !pinFull ? "cursor-pointer" : "cursor-not-allowed opacity-70"
+              }`}
+            >
+              <input
+                type="checkbox"
+                className="mt-0.5 h-4 w-4 accent-viscum-brand"
+                checked={pinAtPublish && loggedIn && !pinFull}
+                disabled={!loggedIn || pinFull}
+                onChange={(e) => setPinAtPublish(e.target.checked)}
+              />
+              <span className="min-w-0 text-[13px] leading-snug text-viscum-ink">
+                公開したらすぐ「ピン」を付ける
+                <span className="ml-1.5 text-[11px] text-viscum-muted">
+                  有料掲載・{formatYenJa(pinAvail?.priceYen ?? PIN_PRICE_YEN)}／1週
+                </span>
+              </span>
+            </label>
+            <p className="mt-1 pl-6 text-[11px] leading-snug text-viscum-muted">
+              {!loggedIn
+                ? "ログインして保存した作品だけ付けられます。"
+                : pinFull
+                  ? `今週は満席（${pinAvail!.active + pinAvail!.holding}／${pinAvail!.max}）。${
+                      pinAvail?.nextFreeAtIso
+                        ? `次の空き ${new Date(pinAvail.nextFreeAtIso).toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" })} 頃。`
+                        : ""
+                    }公開後に作品ページからいつでも。`
+                  : `TOPと詳細の「ピン」枠に7日間出ます${
+                      pinFree != null ? `（いま空き ${pinFree}／${pinAvail!.max}）` : ""
+                    }。次の画面で「公開する」を押すと決済に進みます。締切で終わり・返金なし。`}
+            </p>
+          </div>
+        ) : null}
 
         {compOn && (
           <div className="space-y-4 border-t border-viscum-line pt-4">
