@@ -177,7 +177,7 @@ function PinSection({
   );
 }
 
-/** ピンが（自分以外に）0本のとき：空箱を出さず1行だけ。空き数は自分の分も含めて数える */
+/** ピンが0本のとき：空箱を出さず1行だけ */
 function PinEmptyLine({
   free,
   className = "",
@@ -339,12 +339,9 @@ export function FeedShelfCorners({
 
   const works = worksProp ?? localShelf;
 
-  // 空き数は「いま見ている作品」も含めて数える（自分のピンを空きに数えない）
+  // ピン枠は「いま見ている作品」も除外しない（有料で出したものが自分の画面で見えないのは不自然。mDB 2026-09-10）
   const pinnedAll = useMemo(() => rankPinnedWorks(works), [works]);
-  const pinned = useMemo(
-    () => pinnedAll.filter((w) => w.id !== excludeWorkId),
-    [pinnedAll, excludeWorkId],
-  );
+  const pinned = pinnedAll;
   const pinnedIds = useMemo(() => new Set(pinnedAll.map((w) => w.id)), [pinnedAll]);
   const pinFree = Math.max(0, PIN_MAX_ACTIVE - pinnedAll.length);
 
