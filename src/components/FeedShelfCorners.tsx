@@ -177,15 +177,21 @@ function PinSection({
   );
 }
 
-/** ピンが0本のとき：空箱を出さず1行だけ */
-function PinEmptyLine({ className = "" }: { className?: string }) {
+/** ピンが（自分以外に）0本のとき：空箱を出さず1行だけ。空き数は自分の分も含めて数える */
+function PinEmptyLine({
+  free,
+  className = "",
+}: {
+  free: number;
+  className?: string;
+}) {
   return (
     <p className={`text-[12px] leading-snug text-viscum-muted ${className}`}>
       <Link
         href="/faq#pin"
         className="font-medium text-viscum-brand underline-offset-2 hover:underline"
       >
-        ピン枠（空き{PIN_MAX_ACTIVE}）
+        ピン枠（{free > 0 ? `空き${free}` : "満席"}）
       </Link>
       <span className="ml-1">— 開催中コンペを上に出す</span>
     </p>
@@ -288,7 +294,7 @@ function SkewSection({
  * 発見コーナー（ピン → 注目 → 終了間近 → 偏差）。ADR-069。
  * - bottom: TOP用。ピンあり＝2×2（左上ピン｜右上終了間近／左下注目｜右下偏差）。
  *           ピン0本＝1行リンク＋横3枠（注目｜終了間近｜偏差）。携帯は縦積み
- * - sideDuo: 詳細用。内側右＝ピン→注目→終了間近／外側右＝偏差。携帯は縦にピン→注目→終了→偏差
+ * - sideDuo: 詳細用。内側右＝ピン→注目／外側右＝終了間近→偏差（TOP 2×2 と同じ並び）。携帯は縦にピン→注目→終了→偏差
  */
 export function FeedShelfCorners({
   works: worksProp,
@@ -333,19 +339,22 @@ export function FeedShelfCorners({
 
   const works = worksProp ?? localShelf;
 
+  // 空き数は「いま見ている作品」も含めて数える（自分のピンを空きに数えない）
+  const pinnedAll = useMemo(() => rankPinnedWorks(works), [works]);
   const pinned = useMemo(
-    () => rankPinnedWorks(works, { excludeId: excludeWorkId }),
-    [works, excludeWorkId],
+    () => pinnedAll.filter((w) => w.id !== excludeWorkId),
+    [pinnedAll, excludeWorkId],
   );
-  const pinnedIds = useMemo(() => new Set(pinned.map((w) => w.id)), [pinned]);
+  const pinnedIds = useMemo(() => new Set(pinnedAll.map((w) => w.id)), [pinnedAll]);
+  const pinFree = Math.max(0, PIN_MAX_ACTIVE - pinnedAll.length);
 
   // 注目はピンと被らせない（有料で出ている分は自然枠から外す）
   const hot = useMemo(
     () =>
-      rankHotOpenWorks(works, { excludeId: excludeWorkId, limit: 5 + pinned.length })
+      rankHotOpenWorks(works, { excludeId: excludeWorkId, limit: 5 + pinnedAll.length })
         .filter((w) => !pinnedIds.has(w.id))
         .slice(0, 5),
-    [works, excludeWorkId, pinned.length, pinnedIds],
+    [works, excludeWorkId, pinnedAll.length, pinnedIds],
   );
 
   const closing = useMemo(
@@ -382,12 +391,12 @@ export function FeedShelfCorners({
         className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:min-w-0 xl:flex-1 xl:flex-row xl:self-stretch xl:border-l xl:border-t-0 ${className}`}
         aria-label="発見"
       >
-        {/* 内側右（携帯では上）：ピン → 注目 → 終了間近。余り幅を両カラムで分け合う */}
+        {/* 内側右（携帯では上）：ピン → 注目。TOP 2×2 の左列と同じ */}
         <div className="min-w-0 xl:sticky xl:top-12 xl:flex-1 xl:basis-0 xl:border-r xl:border-viscum-line">
           {pinned.length > 0 ? (
             <PinSection pinned={pinned} className="min-w-0 px-2.5 py-3 xl:px-3" />
           ) : (
-            <PinEmptyLine className="px-2.5 pt-3 xl:px-3" />
+            <PinEmptyLine free={pinFree} className="px-2.5 pt-3 xl:px-3" />
           )}
           <HotSection
             hot={hot}
@@ -395,16 +404,19 @@ export function FeedShelfCorners({
               pinned.length > 0 ? "border-t border-viscum-line" : ""
             }`}
           />
+        </div>
+        {/* 外側右（携帯では下）：終了間近 → 偏差。TOP 2×2 の右列と同じ */}
+        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:flex-1 xl:basis-0 xl:border-t-0">
           <ClosingSoonSection
             closing={closing}
+            className="min-w-0 px-2.5 py-3 xl:px-3"
+          />
+          <SkewSection
+            skewed={skewed}
             className={`min-w-0 px-2.5 py-3 xl:px-3 ${
-              hot.length > 0 || pinned.length > 0 ? "border-t border-viscum-line" : ""
+              closing.length > 0 ? "border-t border-viscum-line" : ""
             }`}
           />
-        </div>
-        {/* 外側右（携帯では下）：偏差。右端まで伸ばす */}
-        <div className="min-w-0 border-t border-viscum-line xl:sticky xl:top-12 xl:flex-1 xl:basis-0 xl:border-t-0">
-          <SkewSection skewed={skewed} className="min-w-0 px-2.5 py-3 xl:px-3" />
         </div>
       </aside>
     );
@@ -445,7 +457,7 @@ export function FeedShelfCorners({
       className={`min-w-0 overflow-hidden border-t border-viscum-line bg-viscum-paper-2/25 ${className}`}
       aria-label="発見"
     >
-      <PinEmptyLine className="border-b border-viscum-line px-4 py-2" />
+      <PinEmptyLine free={pinFree} className="border-b border-viscum-line px-4 py-2" />
       <div className="grid min-w-0 gap-0 md:grid-cols-3 md:divide-x md:divide-viscum-line">
         <HotSection
           hot={hot}
