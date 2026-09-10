@@ -1,7 +1,7 @@
 import { BrowseChrome } from "@/components/BrowseChrome";
 import { SiteHeader } from "@/components/SiteHeader";
 import { getWork } from "@/data/dummy-works";
-import { getNeonWorkForRequest } from "@/lib/neon-works";
+import { getNeonWorkForRequest, listListedNeonWorks } from "@/lib/neon-works";
 import { workPageMetadata } from "@/lib/work-og";
 import { WorkDetailGate } from "./WorkDetailGate";
 
@@ -19,13 +19,21 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function WorkDetailPage({ params }: Props) {
   const { id } = await params;
-  const initialWork =
-    getWork(id) ?? (await getNeonWorkForRequest(id)) ?? null;
+  // 発見枠（ピン・注目・終了間近・偏差）の初期値もサーバーで読む。
+  // クライアント側 fetch 待ちで「空き3→2」と数字が変わるのを防ぐ
+  const [initialWork, shelfWorks] = await Promise.all([
+    (async () => getWork(id) ?? (await getNeonWorkForRequest(id)) ?? null)(),
+    listListedNeonWorks().catch(() => []),
+  ]);
 
   return (
     <BrowseChrome>
       <SiteHeader backHref="/" hideOnMd />
-      <WorkDetailGate workId={id} initialWork={initialWork} />
+      <WorkDetailGate
+        workId={id}
+        initialWork={initialWork}
+        shelfWorks={shelfWorks}
+      />
     </BrowseChrome>
   );
 }

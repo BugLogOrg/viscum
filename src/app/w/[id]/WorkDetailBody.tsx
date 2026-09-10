@@ -33,7 +33,14 @@ const TONE: Record<Work["thumbTone"], string> = {
 };
 
 /** `/w/[id]` の本体。棚シードは常にフル詳細（省略版なし）。下書きは参加UIのみ隠す */
-export function WorkDetailBody({ work }: { work: Work }) {
+export function WorkDetailBody({
+  work,
+  shelfWorks,
+}: {
+  work: Work;
+  /** 発見枠の初期値（サーバー読み） */
+  shelfWorks?: Work[];
+}) {
   return (
     <Suspense
       fallback={
@@ -42,12 +49,18 @@ export function WorkDetailBody({ work }: { work: Work }) {
         </div>
       }
     >
-      <WorkDetailBodyInner work={work} />
+      <WorkDetailBodyInner work={work} shelfWorks={shelfWorks} />
     </Suspense>
   );
 }
 
-function WorkDetailBodyInner({ work }: { work: Work }) {
+function WorkDetailBodyInner({
+  work,
+  shelfWorks,
+}: {
+  work: Work;
+  shelfWorks?: Work[];
+}) {
   const search = useSearchParams();
   const router = useRouter();
   const [isDraft, setIsDraft] = useState(() =>
@@ -349,7 +362,11 @@ function WorkDetailBodyInner({ work }: { work: Work }) {
         </p>
       </div>
 
-      <FeedShelfCorners excludeWorkId={work.id} layout="sideDuo" />
+      <FeedShelfCorners
+        excludeWorkId={work.id}
+        layout="sideDuo"
+        initialWorks={shelfWorks}
+      />
     </div>
   );
 }

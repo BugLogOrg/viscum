@@ -296,19 +296,31 @@ function SkewSection({
  *           ピン0本＝1行リンク＋横3枠（注目｜終了間近｜偏差）。携帯は縦積み
  * - sideDuo: 詳細用。内側右＝ピン→注目／外側右＝終了間近→偏差（TOP 2×2 と同じ並び）。携帯は縦にピン→注目→終了→偏差
  */
+function mergeNeonAndLocal(neon: Work[], local: Work[]): Work[] {
+  const neonIds = new Set(neon.map((w) => w.id));
+  return [...neon, ...local.filter((w) => !neonIds.has(w.id))];
+}
+
 export function FeedShelfCorners({
   works: worksProp,
+  initialWorks,
   excludeWorkId,
   layout = "bottom",
   className = "",
 }: {
+  /** 棚そのもの（TOP）。渡されたら fetch しない */
   works?: Work[];
+  /**
+   * サーバーで読んだ公開中 Neon 作品（詳細ページ）。最初の描画からピン・注目を正しく出す。
+   * 無いときは fetch が返るまで何も描かない（「空き3→2」のような数字のブレを見せない）
+   */
+  initialWorks?: Work[];
   excludeWorkId?: string;
   layout?: "bottom" | "sideDuo";
   className?: string;
 }) {
-  const [localShelf, setLocalShelf] = useState<Work[]>(() =>
-    typeof window === "undefined" ? [] : loadClientShelfWorks(),
+  const [localShelf, setLocalShelf] = useState<Work[]>(
+    () => initialWorks ?? [],
   );
 
   useEffect(() => {
@@ -320,13 +332,11 @@ export function FeedShelfCorners({
         .then((r) => (r.ok ? r.json() : null))
         .then((data: { works?: Work[] } | null) => {
           if (cancelled) return;
-          const neon = data?.works ?? [];
-          const neonIds = new Set(neon.map((w) => w.id));
-          const rest = local.filter((w) => !neonIds.has(w.id));
-          setLocalShelf([...neon, ...rest]);
+          const neon = data?.works ?? initialWorks ?? [];
+          setLocalShelf(mergeNeonAndLocal(neon, local));
         })
         .catch(() => {
-          if (!cancelled) setLocalShelf(local);
+          if (!cancelled) setLocalShelf(mergeNeonAndLocal(initialWorks ?? [], local));
         });
     };
     refresh();
@@ -335,7 +345,7 @@ export function FeedShelfCorners({
       cancelled = true;
       window.removeEventListener("focus", refresh);
     };
-  }, [worksProp]);
+  }, [worksProp, initialWorks]);
 
   const works = worksProp ?? localShelf;
 

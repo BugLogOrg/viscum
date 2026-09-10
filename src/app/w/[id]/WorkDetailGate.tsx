@@ -11,9 +11,12 @@ import { WorkDetailBody } from "./WorkDetailBody";
 export function WorkDetailGate({
   workId,
   initialWork,
+  shelfWorks,
 }: {
   workId: string;
   initialWork: Work | null;
+  /** 発見枠の初期値（サーバーで読んだ公開中 Neon 作品） */
+  shelfWorks?: Work[];
 }) {
   const [work, setWork] = useState<Work | null>(initialWork);
   const [loading, setLoading] = useState(!initialWork);
@@ -79,5 +82,5 @@ export function WorkDetailGate({
     );
   }
 
-  return <WorkDetailBody work={work} />;
+  return <WorkDetailBody work={work} shelfWorks={shelfWorks} />;
 }
