@@ -62,6 +62,7 @@ function rankSkewedWorks(
 function CompactWorkLink({
   work,
   skewHint,
+  isCurrent = false,
 }: {
   work: Work;
   skewHint?: {
@@ -70,6 +71,8 @@ function CompactWorkLink({
     blue: number;
     red: number;
   };
+  /** いま開いている作品（同じURLなので遷移しない → 先頭へ戻して反応を返す） */
+  isCurrent?: boolean;
 }) {
   const rx = getWorkReactionCounts(work);
   const countdown = formatClosesIn(work.closesInHours, work.status);
@@ -78,8 +81,22 @@ function CompactWorkLink({
     <Link
       href={`/w/${work.id}`}
       className="block min-w-0 py-2 transition hover:bg-viscum-paper-2/80"
+      aria-current={isCurrent ? "page" : undefined}
+      onClick={
+        isCurrent
+          ? (e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }
+          : undefined
+      }
     >
       <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5">
+        {isCurrent ? (
+          <span className="shrink-0 rounded-sm border border-viscum-line px-1 text-[10px] font-medium text-viscum-muted">
+            いま見ている
+          </span>
+        ) : null}
         {work.status === "open" || work.status === "pay_soon" ? (
           <StatusBadge
             status={work.status}
@@ -141,9 +158,11 @@ function rankPinnedWorks(works: Work[], opts?: { excludeId?: string }): Work[] {
  */
 function PinSection({
   pinned,
+  currentId,
   className = "",
 }: {
   pinned: Work[];
+  currentId?: string;
   className?: string;
 }) {
   if (pinned.length === 0) return null;
@@ -169,7 +188,7 @@ function PinSection({
       <ul className="mt-2 divide-y divide-viscum-line">
         {pinned.map((w) => (
           <li key={w.id}>
-            <CompactWorkLink work={w} />
+            <CompactWorkLink work={w} isCurrent={w.id === currentId} />
           </li>
         ))}
       </ul>
@@ -401,7 +420,11 @@ export function FeedShelfCorners({
         {/* 内側右（携帯では上）：ピン → 注目。TOP 2×2 の左列と同じ */}
         <div className="min-w-0 xl:sticky xl:top-12 xl:flex-1 xl:basis-0 xl:border-r xl:border-viscum-line">
           {pinned.length > 0 ? (
-            <PinSection pinned={pinned} className="min-w-0 px-2.5 py-3 xl:px-3" />
+            <PinSection
+              pinned={pinned}
+              currentId={excludeWorkId}
+              className="min-w-0 px-2.5 py-3 xl:px-3"
+            />
           ) : (
             <PinEmptyLine free={pinFree} className="px-2.5 pt-3 xl:px-3" />
           )}
