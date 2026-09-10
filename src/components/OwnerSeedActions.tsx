@@ -23,6 +23,7 @@ import { markJustPublished } from "@/lib/just-published";
 import { buildCachedOutboundShareText } from "@/lib/outbound-invite-share";
 import { displayAccountName, readLocalProfile } from "@/lib/local-profile";
 import { ShareTextCopyButton } from "@/components/ShareTextCopyButton";
+import { PinPurchaseControl } from "@/components/PinPurchaseControl";
 
 /**
  * シーダー本人だけ：公開／下書き戻し／削除。
@@ -36,7 +37,17 @@ export function OwnerSeedActions({
   workId: string;
   seederHandle: string;
   /** Neon作品の公開状態など（あれば優先） */
-  work?: Pick<Work, "persisted" | "listedOnShelf" | "title" | "externalUrl" | "focusNote">;
+  work?: Pick<
+    Work,
+    | "persisted"
+    | "listedOnShelf"
+    | "title"
+    | "externalUrl"
+    | "focusNote"
+    | "status"
+    | "prizeYen"
+    | "plan"
+  >;
 }) {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -357,6 +368,12 @@ export function OwnerSeedActions({
       ) : null}
       {error ? (
         <p className="text-[12px] text-viscum-berry-deep">{error}</p>
+      ) : null}
+      {listedNeon &&
+      work?.status === "open" &&
+      (work.prizeYen ?? 0) > 0 &&
+      work.plan !== "free_comment" ? (
+        <PinPurchaseControl workId={workId} />
       ) : null}
     </div>
   );

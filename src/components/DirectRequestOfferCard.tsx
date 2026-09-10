@@ -102,7 +102,7 @@ export function DirectRequestOfferCard({
           </p>
           {showFeeNote && depth === "full" ? (
             <p className="mt-1 text-[12px] leading-snug text-viscum-muted">
-              依頼主があなたに渡す額面です（手数料は依頼主負担・約10%決済込み。ここからは引きません）。
+              依頼主があなたに渡す額面です（場の手数料10%と決済実費は依頼主負担。ここからは引きません）。
             </p>
           ) : null}
           {depth === "teaser" ? (

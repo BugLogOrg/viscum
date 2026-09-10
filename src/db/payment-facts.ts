@@ -1,4 +1,4 @@
-import { and, count, eq, sum } from "drizzle-orm";
+import { and, count, eq, ne, sum } from "drizzle-orm";
 import { getDb } from "@/db";
 import { payments, users } from "@/db/schema";
 import {
@@ -6,7 +6,7 @@ import {
   type SeederPayFacts,
 } from "@/data/dummy-works";
 
-/** 作品バッジ用: Checkout 完了件数（paymentsDone 相当） */
+/** 作品バッジ用: Checkout 完了件数（paymentsDone 相当）。pin（場の役務）は数えない */
 export async function countPaidPaymentsForWork(
   workId: string,
 ): Promise<number> {
@@ -19,12 +19,13 @@ export async function countPaidPaymentsForWork(
       and(
         eq(payments.workId, workId),
         eq(payments.checkoutStatus, "paid"),
+        ne(payments.kind, "pin"),
       ),
     );
   return Number(rows[0]?.n ?? 0);
 }
 
-/** 層B: シーダーの支払い完了集計 */
+/** 層B: シーダーの支払い完了集計（褒賞のみ。pin は「褒賞を払った」に含めない） */
 export async function seederPayFactsFromDb(userId: string): Promise<{
   paidCount: number;
   paidYenTotal: number;
@@ -41,6 +42,7 @@ export async function seederPayFactsFromDb(userId: string): Promise<{
       and(
         eq(payments.fromUserId, userId),
         eq(payments.checkoutStatus, "paid"),
+        ne(payments.kind, "pin"),
       ),
     );
   return {

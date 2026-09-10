@@ -855,7 +855,7 @@ export default function RequestDmThreadPage() {
                   {formatRequestAmountLabel(
                     estimateSeederPaysYen(row.amountYen).seederPaysYen,
                   )}
-                  （約10%・決済込み）。
+                  （褒賞＋場の手数料10%＋決済手数料 実費。決済画面に内訳が出ます）。
                 </p>
                 <button
                   type="button"

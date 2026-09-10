@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { payments } from "@/db/schema";
 import { getStripe, hasStripe } from "@/lib/stripe";
-import { markPaymentPaid } from "@/lib/mark-payment-paid";
+import { markPaymentPaid, releasePaymentHold } from "@/lib/mark-payment-paid";
 
 /**
  * Checkout 成功戻り用の保険。
@@ -63,6 +63,13 @@ export async function POST(req: Request) {
     payment.stripeCheckoutSessionId,
   );
   if (checkout.payment_status !== "paid") {
+    if (checkout.status === "expired") {
+      await db
+        .update(payments)
+        .set({ checkoutStatus: "failed", updatedAt: new Date() })
+        .where(eq(payments.id, paymentId));
+      await releasePaymentHold(paymentId);
+    }
     return NextResponse.json({
       ok: true,
       status: payment.checkoutStatus,
@@ -83,7 +90,8 @@ export async function POST(req: Request) {
 
   return NextResponse.json({
     ok: true,
-    status: "paid",
+    status: marked.pin?.refunded ? "refunded" : "paid",
     requestId: marked.requestId,
+    pin: marked.pin ?? undefined,
   });
 }

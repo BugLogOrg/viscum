@@ -106,6 +106,13 @@ export const works = pgTable("works", {
   thumbUrl: text("thumb_url"),
   /** トップの「反応を募集中」に載せるか。false＝下書き */
   listedOnShelf: boolean("listed_on_shelf").notNull().default(false),
+  /**
+   * 注目ピン（ADR-069）。購入で now()+7d。表示は pinned_until > now() かつ status=open。
+   * 締切・取り下げで closed になれば自然に外れる（返金なし）。
+   */
+  pinnedUntil: timestamp("pinned_until", { withTimezone: true }),
+  /** ピン Checkout 開始時の30分仮押さえ（空き枠カウントに含める） */
+  pinHoldUntil: timestamp("pin_hold_until", { withTimezone: true }),
   viewCount: integer("view_count").notNull().default(0),
   emoCount: integer("emo_count").notNull().default(0),
   bookmarkCount: integer("bookmark_count").notNull().default(0),
@@ -168,7 +175,7 @@ export const payments = pgTable("payments", {
   id: text("id")
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  /** field_adopt | public_boost_reward | direct_request */
+  /** field_adopt | public_boost_reward | direct_request | pin */
   kind: text("kind").notNull(),
   /** デモ作品IDも可のため FK なし（comments.work_id と同方針） */
   workId: text("work_id"),
@@ -180,10 +187,14 @@ export const payments = pgTable("payments", {
   fromUserId: text("from_user_id")
     .notNull()
     .references(() => users.id),
-  toUserId: text("to_user_id")
-    .notNull()
-    .references(() => users.id),
+  /** 受取メンター。pin（場の役務）は null */
+  toUserId: text("to_user_id").references(() => users.id),
+  /** 褒賞の額面（層B用）。pin は ¥3,000 固定 */
   amountYen: integer("amount_yen").notNull(),
+  /** 場の手数料10%（ADR-039 改訂 2026-09-10）。pin は 0 */
+  feeYen: integer("fee_yen"),
+  /** 決済手数料（実費・シーダー負担）。pin は 0（¥3,000 込み） */
+  processingYen: integer("processing_yen"),
   /** none | pending | paid | failed | refunded */
   checkoutStatus: text("checkout_status").notNull().default("none"),
   /** none | eligible | pending | paid | failed */
@@ -412,7 +423,8 @@ export type WorkStatus = "none" | "open" | "pay_soon" | "closed";
 export type PaymentKind =
   | "field_adopt"
   | "public_boost_reward"
-  | "direct_request";
+  | "direct_request"
+  | "pin";
 
 export type CheckoutStatus =
   | "none"

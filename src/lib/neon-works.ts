@@ -98,6 +98,10 @@ export function workFromNeonRow(
     closesAtIso: row.closesAt ? row.closesAt.toISOString() : undefined,
     persisted: true,
     listedOnShelf: row.listedOnShelf,
+    pinnedUntilIso:
+      row.pinnedUntil && row.pinnedUntil.getTime() > Date.now()
+        ? row.pinnedUntil.toISOString()
+        : undefined,
   };
 }
 
@@ -123,6 +127,8 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
       prizeYen: works.prizeYen,
       closesAt: works.closesAt,
       listedOnShelf: works.listedOnShelf,
+      pinnedUntil: works.pinnedUntil,
+      pinHoldUntil: works.pinHoldUntil,
       emoCount: works.emoCount,
       bookmarkCount: works.bookmarkCount,
       viewCount: works.viewCount,
@@ -161,6 +167,8 @@ export async function listListedNeonWorks(limit = 80): Promise<Work[]> {
       closesAt: r.closesAt,
       thumbUrl: thumbStored,
       listedOnShelf: r.listedOnShelf,
+      pinnedUntil: r.pinnedUntil,
+      pinHoldUntil: r.pinHoldUntil,
       viewCount: r.viewCount,
       emoCount: r.emoCount,
       bookmarkCount: r.bookmarkCount,

@@ -1,5 +1,11 @@
 /** 直依頼単位の薄いDM（端末内デモ。全開受信箱ではない・ADR-028） */
 
+import {
+  CARD_PROCESSING_RATE,
+  PLATFORM_FEE_RATE,
+  quoteSeederCharge,
+} from "@/lib/seeder-pricing";
+
 /**
  * pending → accepted | declined
  * accepted → pay_waiting（メンターが提出）
@@ -272,30 +278,30 @@ export function coerceDirectRequestAmountYen(
 }
 
 /**
- * シーダー上乗せ（対外正本）: 褒賞額面の **約10%・決済込み**。
- * Stripe実費と場の通行料の内訳はユーザーに分けない（ADR-039）。
- * 褒賞（メンター向け額面）からは引かない。
+ * シーダー負担（対外正本・ADR-039 改訂 2026-09-10）:
+ * 褒賞額面 ＋ 場の手数料10% ＋ 決済手数料（実費）。
+ * 褒賞（メンター向け額面）からは引かない。正本は `@/lib/seeder-pricing`。
  */
-export const SEEDER_ALL_IN_SURCHARGE_RATE = 0.1;
+export const SEEDER_ALL_IN_SURCHARGE_RATE = PLATFORM_FEE_RATE;
 
-/** @deprecated ADR-039 — 対外は SEEDER_ALL_IN_SURCHARGE_RATE を使う */
-export const SEEDER_CARD_FEE_RATE_ESTIMATE = SEEDER_ALL_IN_SURCHARGE_RATE;
+/** @deprecated ADR-039 改訂 — 決済実費は CARD_PROCESSING_RATE（seeder-pricing） */
+export const SEEDER_CARD_FEE_RATE_ESTIMATE = CARD_PROCESSING_RATE;
 
 export function estimateSeederPaysYen(mentorAmountYen: number): {
   mentorYen: number;
-  /** 上乗せ額（褒賞×約10%・決済込み） */
+  /** 場の手数料（褒賞×10%） */
   feeYen: number;
+  /** 決済手数料（実費・概算） */
+  processingYen: number;
+  /** シーダーが払う総額 */
   seederPaysYen: number;
 } {
-  const mentorYen = Math.max(0, Math.round(mentorAmountYen));
-  if (mentorYen <= 0) {
-    return { mentorYen: 0, feeYen: 0, seederPaysYen: 0 };
-  }
-  const feeYen = Math.ceil(mentorYen * SEEDER_ALL_IN_SURCHARGE_RATE);
+  const q = quoteSeederCharge(mentorAmountYen);
   return {
-    mentorYen,
-    feeYen,
-    seederPaysYen: mentorYen + feeYen,
+    mentorYen: q.mentorYen,
+    feeYen: q.feeYen,
+    processingYen: q.processingYen,
+    seederPaysYen: q.totalYen,
   };
 }
 

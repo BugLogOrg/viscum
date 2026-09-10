@@ -896,7 +896,7 @@ export function DirectRequestForm({
             <span className="text-viscum-berry">必須</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            相手に見える額です。手数料はあなた負担（約10%・完了時）。送った時点ではカード不要。近い相手は無料も可。
+            相手に見える額です。場の手数料10%＋決済実費はあなた負担（完了時）。送った時点ではカード不要。近い相手は無料も可。
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             {DIRECT_REQUEST_AMOUNT_PRESETS.map((yen) => {
@@ -969,7 +969,8 @@ export function DirectRequestForm({
             <p className="mt-0.5 text-[12px] text-viscum-muted">
               完了時のあなたのお支払い目安: 約{" "}
               {formatRequestAmountLabel(seederPayHint.seederPaysYen)}
-              （褒賞の約10%・決済込み）
+              （褒賞＋場の手数料10% {formatRequestAmountLabel(seederPayHint.feeYen)}
+              ＋決済手数料 約{formatRequestAmountLabel(seederPayHint.processingYen)}・実費）
             </p>
           ) : (
             <p className="mt-0.5 text-[12px] text-viscum-muted">
@@ -977,7 +978,7 @@ export function DirectRequestForm({
             </p>
           )}
           <p className="mt-1.5 text-[11px] leading-snug text-viscum-muted">
-            税務（源泉徴収・所得申告など）は依頼主・受取側で各自ご確認ください。VISCUMは源泉の代行・預かりはしません。上の約10%は場の手数料（決済込み）です。
+            税務（源泉徴収・所得申告など）は依頼主・受取側で各自ご確認ください。VISCUMは源泉の代行・預かりはしません。上の10%は場の手数料、決済手数料はカード会社の実費です。
           </p>
         </div>
 

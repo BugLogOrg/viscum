@@ -3,7 +3,8 @@ import { and, eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { getDb, hasDatabase } from "@/db";
 import { payments, requestDms, users } from "@/db/schema";
-import { estimateSeederPaysYen } from "@/lib/local-request-dms";
+import { quoteSeederCharge } from "@/lib/seeder-pricing";
+import { seederChargeLineItems } from "@/lib/stripe-line-items";
 import {
   appBaseUrl,
   getStripe,
@@ -13,7 +14,8 @@ import {
 
 /**
  * 直依頼・完了承認 → Stripe Checkout（段階C・入金のみ）。
- * 請求額 = 褒賞額面 × 約1.10（ADR-039）。payments.amountYen は額面（層B用）。
+ * 請求 = 褒賞額面 ＋ 場の手数料10% ＋ 決済手数料（実費）の3行（ADR-039 改訂 2026-09-10）。
+ * payments.amountYen は額面（層B用）。
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -99,7 +101,8 @@ export async function POST(req: Request) {
     );
   }
 
-  const { seederPaysYen } = estimateSeederPaysYen(mentorYen);
+  const quote = quoteSeederCharge(mentorYen);
+  const seederPaysYen = quote.totalYen;
 
   const alreadyPaid = await db
     .select({ id: payments.id })
@@ -139,6 +142,8 @@ export async function POST(req: Request) {
       fromUserId,
       toUserId: row.toUserId,
       amountYen: mentorYen,
+      feeYen: quote.feeYen,
+      processingYen: quote.processingYen,
       checkoutStatus: "pending",
       payoutStatus: "none",
     })
@@ -153,24 +158,17 @@ export async function POST(req: Request) {
       mode: "payment",
       locale: "ja",
       client_reference_id: payment.id,
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: "jpy",
-            unit_amount: seederPaysYen,
-            product_data: {
-              name: "Viscum 直依頼・完了払い",
-              description: `${row.workTitle.slice(0, 80)}（褒賞¥${mentorYen.toLocaleString()}＋約10%決済込み）`,
-            },
-          },
-        },
-      ],
+      line_items: seederChargeLineItems(quote, {
+        rewardName: "直依頼・完了払い 褒賞（メンターへ額面どおり）",
+        rewardDescription: row.workTitle.slice(0, 120),
+      }),
       metadata: {
         paymentId: payment.id,
         requestId,
         kind: "direct_request",
         mentorYen: String(mentorYen),
+        feeYen: String(quote.feeYen),
+        processingYen: String(quote.processingYen),
         seederPaysYen: String(seederPaysYen),
       },
       success_url: successUrl,
@@ -197,6 +195,8 @@ export async function POST(req: Request) {
       url: checkout.url,
       paymentId: payment.id,
       mentorYen,
+      feeYen: quote.feeYen,
+      processingYen: quote.processingYen,
       seederPaysYen,
     });
   } catch (e) {

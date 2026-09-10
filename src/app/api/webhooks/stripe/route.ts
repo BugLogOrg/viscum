@@ -4,13 +4,14 @@ import type Stripe from "stripe";
 import { getDb, hasDatabase } from "@/db";
 import { payments } from "@/db/schema";
 import { getStripe } from "@/lib/stripe";
-import { markPaymentPaid } from "@/lib/mark-payment-paid";
+import { markPaymentPaid, releasePaymentHold } from "@/lib/mark-payment-paid";
 
 export const runtime = "nodejs";
 
 /**
  * Stripe Webhook（段階C）。
- * checkout.session.completed → payments paid ＋直依頼なら request_dms paid
+ * checkout.session.completed → payments paid ＋直依頼なら request_dms paid ＋ pin なら pinned_until
+ * checkout.session.expired  → failed ＋ pin なら仮押さえ解除
  */
 export async function POST(req: Request) {
   const stripe = getStripe();
@@ -80,6 +81,7 @@ export async function POST(req: Request) {
           updatedAt: new Date(),
         })
         .where(eq(payments.id, paymentId));
+      await releasePaymentHold(paymentId);
     }
   }
 

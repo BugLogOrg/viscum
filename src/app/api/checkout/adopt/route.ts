@@ -14,6 +14,8 @@ import {
   planAllowsPrize,
   resolveWorkPrizeYen,
 } from "@/lib/work-prize";
+import { quoteSeederCharge } from "@/lib/seeder-pricing";
+import { seederChargeLineItems } from "@/lib/stripe-line-items";
 
 const NEON_COMMENT_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -33,6 +35,7 @@ function asPlan(plan: string | null): DemoSeedPlan | null {
 /**
  * 褒賞 Checkout（段階C・入金のみ）。
  * 金額は作品の prize_yen／プラン正本（5k／10k／30k）。クライアント送信額は使わない。
+ * 請求は 褒賞＋場の手数料10%＋決済手数料（実費）の3行（ADR-039 改訂 2026-09-10）。
  * Connect 出金は後段。成功時 payout_status=eligible。
  */
 export async function POST(req: Request) {
@@ -203,6 +206,8 @@ export async function POST(req: Request) {
     .set({ adoptedAt: new Date() })
     .where(eq(comments.id, commentId));
 
+  const quote = quoteSeederCharge(amountYen);
+
   const [payment] = await db
     .insert(payments)
     .values({
@@ -212,6 +217,8 @@ export async function POST(req: Request) {
       fromUserId,
       toUserId: comment.authorId,
       amountYen,
+      feeYen: quote.feeYen,
+      processingYen: quote.processingYen,
       checkoutStatus: "pending",
       payoutStatus: "none",
     })
@@ -226,24 +233,19 @@ export async function POST(req: Request) {
       mode: "payment",
       locale: "ja",
       client_reference_id: payment.id,
-      line_items: [
-        {
-          quantity: 1,
-          price_data: {
-            currency: "jpy",
-            unit_amount: amountYen,
-            product_data: {
-              name: "Viscum 褒賞",
-              description: comment.subject.slice(0, 120),
-            },
-          },
-        },
-      ],
+      line_items: seederChargeLineItems(quote, {
+        rewardName: "褒賞（メンターへ額面どおり）",
+        rewardDescription: comment.subject.slice(0, 120),
+      }),
       metadata: {
         paymentId: payment.id,
         commentId,
         workId,
         kind: "field_adopt",
+        mentorYen: String(quote.mentorYen),
+        feeYen: String(quote.feeYen),
+        processingYen: String(quote.processingYen),
+        totalYen: String(quote.totalYen),
       },
       success_url: successUrl,
       cancel_url: cancelUrl,
@@ -269,6 +271,9 @@ export async function POST(req: Request) {
       url: checkout.url,
       paymentId: payment.id,
       amountYen,
+      feeYen: quote.feeYen,
+      processingYen: quote.processingYen,
+      totalYen: quote.totalYen,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Stripe エラー";

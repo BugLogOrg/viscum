@@ -7,8 +7,10 @@ import {
   formatClosesIn,
   formatCount,
   getWorkReactionCounts,
+  isWorkPinned,
   planBadgeLabel,
 } from "@/data/dummy-works";
+import { PIN_MAX_ACTIVE } from "@/lib/seeder-pricing";
 import { SeederNameText } from "@/components/SeederNameText";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
@@ -123,6 +125,73 @@ function CompactWorkLink({
   );
 }
 
+/** ピン枠（ADR-069）。開催中かつ期限内。期限が近い順（＝先に買った順に近い） */
+function rankPinnedWorks(works: Work[], opts?: { excludeId?: string }): Work[] {
+  const now = Date.now();
+  return works
+    .filter((w) => w.id !== opts?.excludeId && isWorkPinned(w, now))
+    .slice()
+    .sort((a, b) => Date.parse(a.pinnedUntilIso!) - Date.parse(b.pinnedUntilIso!))
+    .slice(0, PIN_MAX_ACTIVE);
+}
+
+/**
+ * ピン枠。独立枠（注目に混ぜない）。「広告／PR／スポンサー」の語は使わず
+ * 「ピン」＋小さく「有料掲載」で有料と分かる表示にする。
+ */
+function PinSection({
+  pinned,
+  className = "",
+}: {
+  pinned: Work[];
+  className?: string;
+}) {
+  if (pinned.length === 0) return null;
+  return (
+    <section className={className} aria-label="ピン（有料掲載）">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-[18px] font-bold leading-tight tracking-wide text-viscum-brand">
+          ピン
+          <span className="ml-1.5 align-middle text-[10px] font-medium tracking-normal text-viscum-muted">
+            有料掲載
+          </span>
+        </h2>
+        <Link
+          href="/faq#pin"
+          className="shrink-0 text-[12px] font-medium text-viscum-brand underline-offset-2 hover:underline"
+        >
+          ピンとは
+        </Link>
+      </div>
+      <p className="mt-1.5 text-[12px] leading-snug break-words text-viscum-muted">
+        シーダーが上に出している開催中コンペ（1週）
+      </p>
+      <ul className="mt-2 divide-y divide-viscum-line">
+        {pinned.map((w) => (
+          <li key={w.id}>
+            <CompactWorkLink work={w} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** ピンが0本のとき：空箱を出さず1行だけ */
+function PinEmptyLine({ className = "" }: { className?: string }) {
+  return (
+    <p className={`text-[12px] leading-snug text-viscum-muted ${className}`}>
+      <Link
+        href="/faq#pin"
+        className="font-medium text-viscum-brand underline-offset-2 hover:underline"
+      >
+        ピン枠（空き{PIN_MAX_ACTIVE}）
+      </Link>
+      <span className="ml-1">— 開催中コンペを上に出す</span>
+    </p>
+  );
+}
+
 function HotSection({
   hot,
   className = "",
@@ -216,9 +285,10 @@ function SkewSection({
 }
 
 /**
- * 発見コーナー（注目 → 終了間近 → 偏差）。
- * - bottom: TOP用。横3枠（注目｜終了間近｜偏差）。携帯は縦積み
- * - sideDuo: 詳細用。内側右＝注目＋終了間近／外側右＝偏差。携帯は縦に注目→終了→偏差
+ * 発見コーナー（ピン → 注目 → 終了間近 → 偏差）。ADR-069。
+ * - bottom: TOP用。ピンあり＝2×2（左上ピン｜右上終了間近／左下注目｜右下偏差）。
+ *           ピン0本＝1行リンク＋横3枠（注目｜終了間近｜偏差）。携帯は縦積み
+ * - sideDuo: 詳細用。内側右＝ピン→注目→終了間近／外側右＝偏差。携帯は縦にピン→注目→終了→偏差
  */
 export function FeedShelfCorners({
   works: worksProp,
@@ -263,19 +333,29 @@ export function FeedShelfCorners({
 
   const works = worksProp ?? localShelf;
 
-  const hot = useMemo(
-    () => rankHotOpenWorks(works, { excludeId: excludeWorkId, limit: 5 }),
+  const pinned = useMemo(
+    () => rankPinnedWorks(works, { excludeId: excludeWorkId }),
     [works, excludeWorkId],
+  );
+  const pinnedIds = useMemo(() => new Set(pinned.map((w) => w.id)), [pinned]);
+
+  // 注目はピンと被らせない（有料で出ている分は自然枠から外す）
+  const hot = useMemo(
+    () =>
+      rankHotOpenWorks(works, { excludeId: excludeWorkId, limit: 5 + pinned.length })
+        .filter((w) => !pinnedIds.has(w.id))
+        .slice(0, 5),
+    [works, excludeWorkId, pinned.length, pinnedIds],
   );
 
   const closing = useMemo(
     () =>
       rankClosingSoonWorks(works, {
         excludeId: excludeWorkId,
-        excludeIds: hot.map((w) => w.id),
+        excludeIds: [...hot.map((w) => w.id), ...pinnedIds],
         limit: 5,
       }),
-    [works, excludeWorkId, hot],
+    [works, excludeWorkId, hot, pinnedIds],
   );
 
   // 偏差は「いま見ている作品」も候補に残す（除外するとTOPと件数がズレる）
@@ -287,7 +367,12 @@ export function FeedShelfCorners({
     return without.slice(0, 5);
   }, [works, excludeWorkId]);
 
-  if (hot.length === 0 && closing.length === 0 && skewed.length === 0) {
+  if (
+    pinned.length === 0 &&
+    hot.length === 0 &&
+    closing.length === 0 &&
+    skewed.length === 0
+  ) {
     return null;
   }
 
@@ -297,13 +382,23 @@ export function FeedShelfCorners({
         className={`flex w-full min-w-0 flex-col border-t border-viscum-line bg-viscum-paper-2/30 xl:min-w-0 xl:flex-1 xl:flex-row xl:self-stretch xl:border-l xl:border-t-0 ${className}`}
         aria-label="発見"
       >
-        {/* 内側右（携帯では上）：注目 → 終了間近。余り幅を両カラムで分け合う */}
+        {/* 内側右（携帯では上）：ピン → 注目 → 終了間近。余り幅を両カラムで分け合う */}
         <div className="min-w-0 xl:sticky xl:top-12 xl:flex-1 xl:basis-0 xl:border-r xl:border-viscum-line">
-          <HotSection hot={hot} className="min-w-0 px-2.5 py-3 xl:px-3" />
+          {pinned.length > 0 ? (
+            <PinSection pinned={pinned} className="min-w-0 px-2.5 py-3 xl:px-3" />
+          ) : (
+            <PinEmptyLine className="px-2.5 pt-3 xl:px-3" />
+          )}
+          <HotSection
+            hot={hot}
+            className={`min-w-0 px-2.5 py-3 xl:px-3 ${
+              pinned.length > 0 ? "border-t border-viscum-line" : ""
+            }`}
+          />
           <ClosingSoonSection
             closing={closing}
             className={`min-w-0 px-2.5 py-3 xl:px-3 ${
-              hot.length > 0 ? "border-t border-viscum-line" : ""
+              hot.length > 0 || pinned.length > 0 ? "border-t border-viscum-line" : ""
             }`}
           />
         </div>
@@ -315,12 +410,42 @@ export function FeedShelfCorners({
     );
   }
 
-  // TOP: 横3枠（注目｜終了間近｜偏差）。携帯は縦：注目→終了→偏差
+  if (pinned.length > 0) {
+    // TOP・ピンあり: 2×2（左上ピン｜右上終了間近／左下注目｜右下偏差）。携帯は縦：ピン→注目→終了→偏差
+    return (
+      <aside
+        className={`min-w-0 overflow-hidden border-t border-viscum-line bg-viscum-paper-2/25 ${className}`}
+        aria-label="発見"
+      >
+        <div className="grid min-w-0 gap-0 md:grid-cols-2">
+          <PinSection
+            pinned={pinned}
+            className="order-1 min-w-0 border-b border-viscum-line px-4 py-4 md:border-r"
+          />
+          <ClosingSoonSection
+            closing={closing}
+            className="order-3 min-w-0 border-b border-viscum-line px-4 py-4 md:order-2"
+          />
+          <HotSection
+            hot={hot}
+            className="order-2 min-w-0 border-b border-viscum-line px-4 py-4 md:order-3 md:border-b-0 md:border-r"
+          />
+          <SkewSection
+            skewed={skewed}
+            className="order-4 min-w-0 px-4 py-4"
+          />
+        </div>
+      </aside>
+    );
+  }
+
+  // TOP・ピン0本: 1行リンク＋横3枠（注目｜終了間近｜偏差）。注目が上に詰まる
   return (
     <aside
       className={`min-w-0 overflow-hidden border-t border-viscum-line bg-viscum-paper-2/25 ${className}`}
       aria-label="発見"
     >
+      <PinEmptyLine className="border-b border-viscum-line px-4 py-2" />
       <div className="grid min-w-0 gap-0 md:grid-cols-3 md:divide-x md:divide-viscum-line">
         <HotSection
           hot={hot}

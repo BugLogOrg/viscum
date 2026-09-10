@@ -83,7 +83,16 @@ export type Work = {
    */
   persisted?: boolean;
   listedOnShelf?: boolean;
+  /** 注目ピン（ADR-069）の掲載期限 ISO。これより前なら「ピン」枠に出る */
+  pinnedUntilIso?: string;
 };
+
+/** ピン枠に出す条件：開催中 かつ 期限内 */
+export function isWorkPinned(work: Work, now = Date.now()): boolean {
+  if (work.status !== "open" || !work.pinnedUntilIso) return false;
+  const t = Date.parse(work.pinnedUntilIso);
+  return Number.isFinite(t) && t > now;
+}
 
 export function planBadgeLabel(plan?: DemoSeedPlan): string | undefined {
   if (plan === "free_comment") return "無料コメント";
