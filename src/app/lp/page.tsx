@@ -25,9 +25,14 @@ export default function LandingPage() {
             <br />
             最初の反応を集める場所。
           </h1>
-          <p className="mt-5 max-w-lg text-[15px] leading-relaxed text-white/92">
-            VISCUMの中で反応を集める。必要なら、ストアやSNSなど自分の公開場所でも正直な反応を試せる。見るだけならお金はかからない。お金が動くのは、つくった側が「ちゃんと聞きたい」と思ったときだけです。
-          </p>
+          <div className="mt-5 max-w-lg space-y-3 text-[15px] leading-relaxed text-white/92">
+            <p>
+              VISCUMの中で反応を集める。必要なら、ストアやSNSなど自分の公開場所でも正直な反応を試せる。
+            </p>
+            <p>
+              お金が動くのは、つくった側が有料で反応を頼んだときだけです。
+            </p>
+          </div>
           <div className="mt-8">
             <Link
               href="/"
