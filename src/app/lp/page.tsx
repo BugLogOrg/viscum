@@ -202,6 +202,15 @@ export default function LandingPage() {
             </Link>
             <span className="text-viscum-muted">（FAQ）</span>
           </p>
+          <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60">
+            <img
+              src="/lp-mechanism.png"
+              alt="VISCUMのしくみ。シーダーが出して、作品が並び、メンターが書く。無料コメントではお金は動かず、褒賞はメンターへ額面どおり（初見レビュー五千円、改善提案一万円、公開ブースト三万円）"
+              className="h-auto w-full"
+              width={1920}
+              height={1000}
+            />
+          </figure>
         </section>
 
         <section className="mt-14 space-y-4">
