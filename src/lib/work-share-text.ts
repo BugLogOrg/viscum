@@ -20,7 +20,7 @@ export function buildWorkShareText(work: Work, origin?: string): string {
     );
   } else if (work.prizeYen != null && work.status !== "none") {
     lines.push(
-      `【VISCUM】${planLabel ?? "コンペ"} · 褒賞 ${formatYen(work.prizeYen)}`,
+      `【VISCUM】${planLabel ?? "お願い"} · 褒賞 ${formatYen(work.prizeYen)}`,
     );
   } else {
     lines.push(`【VISCUM】コメント歓迎`);

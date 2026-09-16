@@ -183,7 +183,7 @@ function PinSection({
         </Link>
       </div>
       <p className="mt-1.5 text-[12px] leading-snug break-words text-viscum-muted">
-        シーダーが出している開催中コンペ（1週）
+        シーダーが出している開催中のお願い（1週）
       </p>
       <ul className="mt-2 divide-y divide-viscum-line">
         {pinned.map((w) => (
@@ -212,7 +212,7 @@ function PinEmptyLine({
       >
         ピン枠（{free > 0 ? `空き${free}` : "満席"}）
       </Link>
-      <span className="ml-1">— 開催中コンペを上に出す</span>
+      <span className="ml-1">— 開催中のお願いを上に出す</span>
     </p>
   );
 }

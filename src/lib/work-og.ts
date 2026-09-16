@@ -45,7 +45,7 @@ export function workOgBadge(work: Work): string {
     return `公開ブースト · 褒賞 ${formatYen(work.prizeYen ?? 30000)}`;
   }
   if (work.prizeYen != null && work.status !== "none") {
-    return `${plan ?? "コンペ"} · 褒賞 ${formatYen(work.prizeYen)}`;
+    return `${plan ?? "お願い"} · 褒賞 ${formatYen(work.prizeYen)}`;
   }
   return plan ?? "コメント歓迎";
 }
@@ -106,7 +106,7 @@ export function workPageMetadata(work: Work | null, id: string): Metadata {
           width: 1200,
           height: 630,
           type: "image/png",
-          alt: title || "VISCUM | 作品×反応×コンペ",
+          alt: title || "VISCUM | 作品×反応×お願い",
         },
       ],
     },

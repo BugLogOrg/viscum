@@ -44,7 +44,7 @@ export default function SeedIntentPage() {
                 指名して頼む（直依頼）
               </p>
               <p className="mt-1.5 text-[13px] leading-relaxed text-viscum-ink">
-                特定の人への有償オファー。シード棚には出ません。売りは支払い実績が見える取引の器です（公式Xブーストは付きません）。コンペの代わりにはしません。
+                特定の人への有償オファー。シード棚には出ません。売りは支払い実績が見える取引の器です（公式Xブーストは付きません）。お願いの代わりにはしません。
               </p>
               <p className="mt-2 text-[12px] font-medium text-viscum-brand">
                 直依頼レーンへ →

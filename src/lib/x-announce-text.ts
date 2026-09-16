@@ -37,7 +37,7 @@ export function buildXAnnounceText(
   const planLabel = planBadgeLabel(input.plan);
   const head =
     input.prizeYen != null && input.status !== "none"
-      ? `【VISCUM】${planLabel ?? "コンペ"} · 褒賞 ${formatYen(input.prizeYen)}`
+      ? `【VISCUM】${planLabel ?? "お願い"} · 褒賞 ${formatYen(input.prizeYen)}`
       : `【VISCUM】${planLabel ?? "コメント歓迎"}`;
 
   const budget = 280 - head.length - url.length - 2; // \n\n

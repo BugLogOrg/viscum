@@ -149,7 +149,7 @@ export function DirectRequestPitchFields({
             <span className="font-normal text-viscum-muted">任意・リスト</span>
           </p>
           <p className="mt-0.5 text-[12px] text-viscum-muted">
-            コンペの「聞くこと」と同じ足場です。編集・追加・削除・並べ替えできます。左のつまみをドラッグ。ログイン後の着地に載ります（案内文のコピペには入れません・最大
+            お願いの「聞くこと」と同じ足場です。編集・追加・削除・並べ替えできます。左のつまみをドラッグ。ログイン後の着地に載ります（案内文のコピペには入れません・最大
             {MAX_DR_CHECKLIST}）。
           </p>
           <EditableReorderList

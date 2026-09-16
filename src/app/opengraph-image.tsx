@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import { OgViscumMark } from "@/components/OgViscumMark";
 
-export const alt = "VISCUM | 作品×反応×コンペ";
+export const alt = "VISCUM | 作品×反応×お願い";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const revalidate = 86400;
@@ -53,7 +53,7 @@ export default async function Image() {
               lineHeight: 1,
             }}
           >
-            VISCUM | 作品×反応×コンペ
+            VISCUM | 作品×反応×お願い
           </div>
         </div>
         <div

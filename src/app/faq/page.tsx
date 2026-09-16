@@ -26,7 +26,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           と呼びます。
         </p>
         <p>
-          入場（見る・眺める）は無料。少額のコンペ＝小さな広告、という読みです。
+          入場（見る・眺める）は無料です。お金が動くのは、つくった人が「書いてほしい」と褒賞をつけたときです。
         </p>
       </>
     ),
@@ -87,7 +87,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
       <>
         <p>
           <span className="font-medium">
-            払うのは、今のところシーダー（出した人・コンペ主催者）だけ
+            払うのは、今のところシーダー（出した人）だけ
           </span>
           です。
         </p>
@@ -95,7 +95,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           <li>見る・読む・気になる → 無料</li>
           <li>無料コメント歓迎だけ置く → お金は動かない</li>
           <li>
-            VISCUM内コンペ（初見レビュー ¥5,000／改善提案 ¥10,000）や公開ブースト（¥30,000）
+            VISCUM内のお願い（初見レビュー ¥5,000／改善提案 ¥10,000）や公開ブースト（¥30,000）
             → シーダーが褒賞の財布を出す
           </li>
           <li>直依頼 → 指名した相手への有償オファー</li>
@@ -153,7 +153,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
       <>
         <p>
           はい、有料掲載です。シーダーが自分の
-          <span className="font-medium">開催中・褒賞つきのコンペ</span>
+          <span className="font-medium">開催中・褒賞つきのお願い</span>
           を、TOPと詳細ページの「ピン」枠に7日間出せます。
           <span className="font-medium">¥3,000／1週（税込・決済込み）</span>
           、同時に出せるのは全体で3本まで。空いていれば作品ページの「シーダー操作」から自分で付けられます。運営の審査や手作業はありません。
@@ -173,7 +173,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           </li>
           <li>
             <span className="font-medium">締切で終わり・返金なし</span>
-            … コンペを締めたり取り下げたりすると、残り日数があってもピンは外れます。日割り返金はしません。延長は1週単位で、連続は最大2週まで。
+            … お願いを締めたり取り下げたりすると、残り日数があってもピンは外れます。日割り返金はしません。延長は1週単位で、連続は最大2週まで。
           </li>
         </ul>
         <p>
@@ -208,7 +208,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           </li>
         </ol>
         <p>
-          初期は薄いのが本音です。コンペ主催者であるシーダーが人を集めるほど盛り上がる——運営が人を配るより、作者の拡声が祭りを大きくする、という形です。
+          初期は薄いのが本音です。シーダーが人を集めるほど盛り上がる——運営が人を配るより、作者の拡声が祭りを大きくする、という形です。
         </p>
       </>
     ),
@@ -231,7 +231,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         </ul>
         <p>
           ミソは
-          <span className="font-medium">コンペであること</span>
+          <span className="font-medium">作者が選ぶお願いであること</span>
           です。全員払いだと薄い量産になりやすい。稀少褒賞＋作者が選ぶ、で張り合いと褒賞の枠の両方を守ります。「プロだけが書ける審査会」ではなく、軽い評価が取れる場が先です。本気の反応が欲しいときは金額と直依頼で寄せます。
         </p>
       </>
@@ -248,7 +248,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            コンペの評価者はシーダー本人。荒らしやただの悪口には選出・褒賞が付きにくい
+            お願いの評価者はシーダー本人。荒らしやただの悪口には選出・褒賞が付きにくい
           </li>
           <li>
             褒賞は全員払いではない。薄い量産や荒れコメントが得になりにくい
@@ -388,7 +388,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            <span className="font-medium">シード棚（VISCUM内コンペ／公開ブースト）</span>
+            <span className="font-medium">シード棚（VISCUM内のお願い／公開ブースト）</span>
             … 広く集める祭り。コメントと選出は公開が燃料です。
           </li>
           <li>
@@ -397,9 +397,9 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
           </li>
         </ul>
         <p>
-          <span className="font-medium">直依頼でコンペにする</span>
+          <span className="font-medium">直依頼を公開のお願いにする</span>
           のは向きません（指名の器に祭りを載せない）。
-          <span className="font-medium">コンペの参加者を増やしたい</span>
+          <span className="font-medium">書いてくれる人を増やしたい</span>
           ときは直依頼ボタンではなく、
           <span className="font-medium">告知文・URLのコピー</span>
           を自分のSNSや友人に貼るのが本線です。「勝手に参加を呼びかけて」は、場が一斉DMするのではなく、シーダー自身の拡声です。
@@ -409,7 +409,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
   },
   {
     id: "profile-public",
-    q: "プロフィールには何が公開されるの？非公開コンペは？",
+    q: "プロフィールには何が公開されるの？非公開のお願いは？",
     body: (
       <>
         <p>
@@ -419,16 +419,16 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            <span className="font-medium">コンペで選ばれたコメント</span>
+            <span className="font-medium">お願いで選ばれたコメント</span>
             … 既定で公開します。書く側の実績にもなります。
           </li>
           <li>
-            <span className="font-medium">非公開コンペや「高額だけ秘匿」</span>
+            <span className="font-medium">非公開のお願いや「高額だけ秘匿」</span>
             … 置きません。企業案件っぽくなり、払った事実が外から検証できなくなるためです。
           </li>
           <li>
             <span className="font-medium">中身を秘匿したい相談</span>
-            … 非公開コンペではなく、直依頼レーンを使います。
+            … 非公開のお願いではなく、直依頼レーンを使います。
           </li>
         </ul>
         <p>
@@ -452,7 +452,7 @@ const FAQS: { id?: string; q: string; body: ReactNode }[] = [
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            <span className="font-medium">VISCUM内コンペ／公開ブースト</span>
+            <span className="font-medium">VISCUM内のお願い／公開ブースト</span>
             … 広く募って、シーダーが選ぶ稀少褒賞。全員に払う外注ではありません。書けば必ずもらえるわけではないので、メンター側は「ただ働きになりうる」一方、シーダーは少額で複数の反応を集められます。これは意図した非対称です。
           </li>
           <li>

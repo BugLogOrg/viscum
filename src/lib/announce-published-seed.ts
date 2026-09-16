@@ -56,7 +56,7 @@ export function announceResultMessage(r: AnnounceResult): string | null {
       return null;
     }
     if (r.reason === "not_configured") {
-      return "公開は完了。公式Xの自動告知はいまオフです（告知文は下からコピーできます）。有料コンペ（¥5k／¥10k／¥30k）公開時のみ対象です。";
+      return "公開は完了。公式Xの自動告知はいまオフです（告知文は下からコピーできます）。褒賞つきのお願い（¥5k／¥10k／¥30k）公開時のみ対象です。";
     }
     return "公開は完了。X告知はスキップされました。";
   }

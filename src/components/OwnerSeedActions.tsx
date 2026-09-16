@@ -271,7 +271,7 @@ export function OwnerSeedActions({
         シーダー操作（本人のみ）
       </p>
       <p className="text-[11px] leading-relaxed text-viscum-muted">
-        サーバに保存済みです。公開するとURLを共有できます。告知文は公開後に「このコンペを広げる」から。
+        サーバに保存済みです。公開するとURLを共有できます。告知文は公開後に「このお願いを広げる」から。
       </p>
       <div className="flex flex-wrap gap-2">
         {listedNeon ? (

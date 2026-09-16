@@ -168,7 +168,7 @@ export function PinPurchaseControl({ workId }: { workId: string }) {
           </button>
         ) : null}
         <span className="text-[11px] leading-relaxed text-viscum-muted">
-          開催中の褒賞つきコンペだけ。締切で終わり・日割り返金なし。順位以外は保証しません。
+          開催中の褒賞つきのお願いだけ。締切で終わり・日割り返金なし。順位以外は保証しません。
         </span>
       </div>
       {error ? (

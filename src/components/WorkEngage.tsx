@@ -569,10 +569,10 @@ export function WorkEngage({
               role="status"
             >
               <p className="font-semibold text-viscum-berry-deep">
-                このコンペは締め切っています
+                このお願いは締め切っています
               </p>
               <p className="mt-1 text-viscum-muted">
-                このラウンドの褒賞対象にはなりません。再コンペの希望や、追加の感想・指摘のコメントは歓迎です。
+                このラウンドの褒賞対象にはなりません。もう一度お願いする希望や、追加の感想・指摘のコメントは歓迎です。
               </p>
             </div>
           ) : null}
@@ -611,7 +611,7 @@ export function WorkEngage({
               className="mt-1 w-full rounded-md bg-viscum-berry px-3 py-2 text-sm font-medium text-white hover:bg-viscum-berry-deep"
             >
               {compClosed
-                ? "コメントする（コンペは終了）"
+                ? "コメントする（お願いは終了）"
                 : "参加してコメント"}
             </button>
           ) : null}
@@ -665,7 +665,7 @@ export function WorkEngage({
             <form onSubmit={submit} className="space-y-3">
               {compClosed && (
                 <p className="text-[12px] leading-relaxed text-viscum-berry-deep">
-                  締切済みのため、このコメントはコンペの賞金対象外です。
+                  締切済みのため、このコメントは褒賞の対象外です。
                 </p>
               )}
               <p className="text-[11px] text-viscum-muted">

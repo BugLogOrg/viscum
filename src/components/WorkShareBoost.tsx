@@ -36,7 +36,7 @@ export function WorkShareBoost({
   return (
     <div className="space-y-2 rounded-lg border border-viscum-line bg-white/50 px-3 py-3">
       <p className="text-[12px] font-medium text-viscum-ink">
-        {isComp ? "このコンペを広げる" : "このシードを広げる"}
+        {isComp ? "このお願いを広げる" : "このシードを広げる"}
       </p>
       <p className="text-[11px] leading-relaxed text-viscum-muted">
         SNSやチャットに貼れる告知文です。シーダー以外もコピーできます。

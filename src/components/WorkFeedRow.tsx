@@ -67,7 +67,7 @@ function feedStatus(work: Work): {
     return {
       title:
         planBadgeLabel(work.plan) ??
-        (work.status === "pay_soon" ? "決済準備中" : "コンペ開催中"),
+        (work.status === "pay_soon" ? "決済準備中" : "お願い開催中"),
       prizeYen: resolveWorkPrizeYen(work.plan, work.prizeYen) ?? undefined,
       deadline: formatDeadlineFeed(work.closesInHours, work.status),
     };
