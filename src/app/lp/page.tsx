@@ -83,7 +83,7 @@ export default function LandingPage() {
 
         <section className="mt-14 space-y-4">
           <h2 className="text-lg font-semibold text-viscum-brand">
-            何ができるの？
+            具体的に何ができるの？
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             つくった作品を出して反応を集められます。訪れた人は見て、コメントできます。必要なら有料で反応を募ったり、特定の人に頼んだりもできます。
