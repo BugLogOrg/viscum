@@ -59,6 +59,15 @@ export default function LandingPage() {
             <span className="font-medium">メンター</span>
             と呼びます。どちらから入っても大丈夫です。
           </p>
+          <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
+            <img
+              src="/lp-concept.png"
+              alt="VISCUMの循環。シーダー（ヤドリギ）がコンペし、作品（実）をメンター（鳥）がレビューして繋がる。内側は反応・楽しむ・褒賞"
+              className="h-auto w-full"
+              width={1280}
+              height={720}
+            />
+          </figure>
         </section>
 
         <section className="mt-14 space-y-4">
@@ -94,7 +103,7 @@ export default function LandingPage() {
 
         <section className="mt-14 space-y-3">
           <h2 className="text-lg font-semibold text-viscum-brand">
-            見る人・書く人へ
+            メンター（見る人・書く人）へ
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             見る人も、書く人も歓迎です。専門家でなくても、率直な第一印象だけで参加できます。コメントにはログインが必要ですが、受け取り用の口座登録は褒賞をもらうときまで不要です。
@@ -138,15 +147,6 @@ export default function LandingPage() {
             <figcaption className="border-t border-viscum-line px-4 py-3 text-[13px] leading-relaxed text-viscum-muted">
               一本の木に、いくつもの丸いヤドリギ——それぞれの種が、それぞれの世界を育てる。鳥が実を運び、反応が寄り添う。
             </figcaption>
-          </figure>
-          <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
-            <img
-              src="/lp-concept.png"
-              alt="VISCUMの循環。シーダー（ヤドリギ）がコンペし、作品（実）をメンター（鳥）がレビューして繋がる。内側は反応・楽しむ・褒賞"
-              className="h-auto w-full"
-              width={1280}
-              height={720}
-            />
           </figure>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             VISCUM（ヴィスカム）は日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
