@@ -47,8 +47,17 @@ export default function LandingPage() {
       <main className="mx-auto max-w-3xl px-6 py-14 sm:px-10">
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-viscum-brand">
-            VISCUMという名前について
+            どんな場所なの？
           </h2>
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            つくったあと、「誰かに見てもらいたい」のに投稿しても流れていく感じ、ありませんか。SNSでは既読スルーだったり、友人に頼むのは気後れしたり。あの少し寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。
+          </p>
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            いまは誰でもつくれる時代です。つくることは大事だけど、それだけでは終わらない。どう守り、どう育てるか——ブーストのかけ方が大事になる、と思っています。
+          </p>
+        </section>
+
+        <section className="mt-14 space-y-4">
           <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
             <img
               src="/lp-worldview.jpg"
@@ -61,6 +70,9 @@ export default function LandingPage() {
               一本の木に、いくつもの丸いヤドリギ——それぞれの種が、それぞれの世界を育てる。鳥が実を運び、反応が寄り添う。
             </figcaption>
           </figure>
+          <h2 className="text-lg font-semibold text-viscum-brand">
+            VISCUMという名前について
+          </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             VISCUM（ヴィスカム）は日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
           </p>
@@ -141,18 +153,6 @@ export default function LandingPage() {
             >
               書くときの目安は？（FAQ）
             </Link>
-          </p>
-        </section>
-
-        <section className="mt-14 space-y-4">
-          <h2 className="text-lg font-semibold text-viscum-brand">
-            どんな場所なの？
-          </h2>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            つくったあと、「誰かに見てもらいたい」のに投稿しても流れていく感じ、ありませんか。SNSでは既読スルーだったり、友人に頼むのは気後れしたり。あの少し寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。
-          </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            いまは誰でもつくれる時代です。つくることは大事だけど、それだけでは終わらない。どう守り、どう育てるか——ブーストのかけ方が大事になる、と思っています。
           </p>
         </section>
 
