@@ -139,6 +139,15 @@ export default function LandingPage() {
               一本の木に、いくつもの丸いヤドリギ——それぞれの種が、それぞれの世界を育てる。鳥が実を運び、反応が寄り添う。
             </figcaption>
           </figure>
+          <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
+            <img
+              src="/lp-concept.png"
+              alt="VISCUMの循環。シーダー（ヤドリギ）がコンペし、作品（実）をメンター（鳥）がレビューして繋がる。内側は反応・楽しむ・褒賞"
+              className="h-auto w-full"
+              width={1280}
+              height={720}
+            />
+          </figure>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             VISCUM（ヴィスカム）は日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
           </p>
