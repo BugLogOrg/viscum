@@ -47,6 +47,30 @@ export default function LandingPage() {
       <main className="mx-auto max-w-3xl px-6 py-14 sm:px-10">
         <section className="space-y-4">
           <h2 className="text-lg font-semibold text-viscum-brand">
+            VISCUMという名前について
+          </h2>
+          <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
+            <img
+              src="/lp-worldview.jpg"
+              alt="木に寄生する丸いヤドリギの房と、実を運ぶ鳥のイラスト"
+              className="h-auto w-full"
+              width={1400}
+              height={933}
+            />
+            <figcaption className="border-t border-viscum-line px-4 py-3 text-[13px] leading-relaxed text-viscum-muted">
+              一本の木に、いくつもの丸いヤドリギ——それぞれの種が、それぞれの世界を育てる。鳥が実を運び、反応が寄り添う。
+            </figcaption>
+          </figure>
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            VISCUM（ヴィスカム）は日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
+          </p>
+          <p className="text-[15px] leading-relaxed text-viscum-ink">
+            推しを応援する感覚でいい。ただし推す先は有名人ではなく、自分の作品——「ちゃんと聞きたい」からお金が動く、という考え方です。
+          </p>
+        </section>
+
+        <section className="mt-14 space-y-4">
+          <h2 className="text-lg font-semibold text-viscum-brand">
             何ができるの？
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
@@ -129,30 +153,6 @@ export default function LandingPage() {
           </p>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             いまは誰でもつくれる時代です。つくることは大事だけど、それだけでは終わらない。どう守り、どう育てるか——ブーストのかけ方が大事になる、と思っています。
-          </p>
-        </section>
-
-        <section className="mt-14 space-y-4">
-          <h2 className="text-lg font-semibold text-viscum-brand">
-            VISCUMという名前について
-          </h2>
-          <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
-            <img
-              src="/lp-worldview.jpg"
-              alt="木に寄生する丸いヤドリギの房と、実を運ぶ鳥のイラスト"
-              className="h-auto w-full"
-              width={1400}
-              height={933}
-            />
-            <figcaption className="border-t border-viscum-line px-4 py-3 text-[13px] leading-relaxed text-viscum-muted">
-              一本の木に、いくつもの丸いヤドリギ——それぞれの種が、それぞれの世界を育てる。鳥が実を運び、反応が寄り添う。
-            </figcaption>
-          </figure>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            VISCUM（ヴィスカム）は日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
-          </p>
-          <p className="text-[15px] leading-relaxed text-viscum-ink">
-            推しを応援する感覚でいい。ただし推す先は有名人ではなく、自分の作品——「ちゃんと聞きたい」からお金が動く、という考え方です。
           </p>
         </section>
 
