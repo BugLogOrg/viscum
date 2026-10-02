@@ -4,7 +4,7 @@ import Link from "next/link";
 export function SiteFooter() {
   return (
     <footer className="px-4 py-8 text-center text-[11px] text-viscum-muted">
-      <Link href="/lp" className="text-viscum-brand hover:underline">
+      <Link href="/start" className="text-viscum-brand hover:underline">
         はじめに
       </Link>
       {" · "}

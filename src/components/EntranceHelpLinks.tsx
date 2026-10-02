@@ -8,7 +8,7 @@ export function EntranceHelpLinks({ className = "" }: { className?: string }) {
       aria-label="はじめに・FAQ"
     >
       <Link
-        href="/lp"
+        href="/start"
         className="text-viscum-brand/90 hover:underline"
       >
         はじめに

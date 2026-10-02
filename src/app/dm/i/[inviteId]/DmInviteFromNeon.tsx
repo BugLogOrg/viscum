@@ -233,7 +233,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
             アカウント登録は不要です。ブラウザのタブはこのまま閉じて大丈夫です。
           </p>
           <Link
-            href="/lp"
+            href="/lp/mentor"
             className="mt-6 inline-block text-[13px] text-viscum-brand underline"
           >
             VISCUMについて見る
@@ -259,7 +259,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
           {loadError || "このお願いが見つかりませんでした。"}
         </p>
         <Link
-          href="/lp"
+          href="/lp/mentor"
           className="mt-4 inline-block text-viscum-brand underline"
         >
           VISCUMについて見る
@@ -691,7 +691,7 @@ export function DmInviteFromNeon({ inviteId }: { inviteId: string }) {
                     個人の作品に、必要なときだけ反応をお願いする場です。見るだけ無料。返事する側に課金はありません。
                   </p>
                   <Link
-                    href="/lp"
+                    href="/lp/mentor"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="mt-3 inline-block text-[13px] font-medium text-viscum-brand underline"

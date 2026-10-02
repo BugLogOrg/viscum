@@ -240,7 +240,8 @@ export function HeaderAccountActions({
                       path === "/" ||
                       path.startsWith("/u/") ||
                       path.startsWith("/w/") ||
-                      path.startsWith("/lp");
+                      path.startsWith("/lp") ||
+                      path === "/start";
                     void signOut({ callbackUrl: stay ? path : "/" });
                   }}
                 >

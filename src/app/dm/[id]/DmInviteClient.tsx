@@ -204,7 +204,7 @@ export function DmInviteClient({
               シーダー（種を撒く人）が作品を出し、必要なときだけコメントをお願いする場。入場無料。稼ぐ副業アプリではなく、小さな広告費の出口です。
             </p>
             <Link
-              href="/lp"
+              href="/lp/mentor"
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-block text-[13px] font-medium text-viscum-brand underline"

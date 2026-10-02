@@ -562,14 +562,14 @@ export default function FaqPage() {
       <header className="border-b border-viscum-line bg-viscum-paper-2/40">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-6 py-5 sm:px-10">
           <Link
-            href="/lp"
+            href="/start"
             className="flex items-center gap-2.5 text-[15px] font-semibold tracking-[0.12em] text-viscum-brand"
           >
             <ViscumMark className="h-8 w-8" />
             VISCUM
           </Link>
           <nav className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-            <Link href="/lp" className="text-viscum-muted hover:text-viscum-brand">
+            <Link href="/start" className="text-viscum-muted hover:text-viscum-brand">
               はじめに
             </Link>
             <Link href="/" className="text-viscum-muted hover:text-viscum-brand">
@@ -618,7 +618,7 @@ export default function FaqPage() {
 
         <div className="mt-12 flex flex-wrap gap-3">
           <Link
-            href="/lp"
+            href="/start"
             className="inline-flex rounded-md border border-viscum-brand px-5 py-2.5 text-sm font-medium text-viscum-brand transition hover:bg-viscum-leaf-soft"
           >
             「はじめに」に戻る

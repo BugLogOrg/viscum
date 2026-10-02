@@ -317,8 +317,8 @@ function OnboardingHandleBody() {
             。
           </p>
           <p className="text-[11px] text-viscum-muted">
-            <Link href="/lp" className="text-viscum-brand underline">
-              LPを見る
+            <Link href="/start" className="text-viscum-brand underline">
+              はじめにを見る
             </Link>
           </p>
         </div>

@@ -14,7 +14,7 @@ npm run dev
 ```
 
 - トップ: http://localhost:3000  
-- LP: http://localhost:3000/lp  
+- LP: http://localhost:3000/lp/seeder （出す人）／ http://localhost:3000/lp/mentor （書く人）／ http://localhost:3000/start （二択）  
 - 投稿: http://localhost:3000/new  
 
 ## DB（Neon）
@@ -46,7 +46,7 @@ npm run db:push
 - [x] トンマナ CSS 変数
 - [x] `/` **S01 高密度フィード**（ダミー12件・注目・開催中フィルタ）
 - [x] `/w/[id]` **S02 詳細**（コメントはここだけ）
-- [x] `/lp` 説明ページ（何の場か・シーダー／メンター・お金のやり取り）
+- [x] 説明ページ: `/lp/seeder`（出す人）／`/lp/mentor`（書く人）／`/start`（はじめに二択）。`/lp` は `/lp/seeder` へ転送（ADR-071）
 - [x] `/new` **S04 投稿**（ダミー。コンペON・タグ・見てほしい・保存後の共有）
 - [x] `/w/[id]/request`・`/dm/[id]` 直依頼（サイト内／外部DM）
 - [x] `/u/[handle]` ポートフォリオ（支払い実績・フォロー）

@@ -173,7 +173,7 @@ export function DirectRequestOfferCard({
               </p>
               <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                 <Link
-                  href="/lp"
+                  href="/lp/mentor"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex flex-1 items-center justify-center rounded-md border border-viscum-brand bg-white px-3 py-2.5 text-sm font-medium text-viscum-brand hover:bg-viscum-leaf-soft"
