@@ -1197,6 +1197,18 @@ export function closesAtFromHours(
   return new Date(now.getTime() + closesInHours * 60 * 60 * 1000);
 }
 
+/** 締切を過ぎた open は終了として扱う（cron で DB を閉じない。表示側で倒す） */
+export function effectiveCompStatus(
+  status: CompStatus,
+  closesAt: Date | null | undefined,
+  now: number = Date.now(),
+): CompStatus {
+  if (status === "open" && closesAt && closesAt.getTime() <= now) {
+    return "closed";
+  }
+  return status;
+}
+
 /**
  * カウントダウン文言だけ。
  * 例: あと20時間／あと2日／まもなく／終了

@@ -65,6 +65,9 @@ async function loadPinState(
   };
   if (!row.listedOnShelf) return { state: { ...base, reason: "公開してからピンを付けられます" }, row, status: 200 };
   if (row.status !== "open") return { state: { ...base, reason: "開催中のお願いだけです" }, row, status: 200 };
+  if (row.closesAt && row.closesAt <= now) {
+    return { state: { ...base, reason: "締切を過ぎたお願いには付けられません" }, row, status: 200 };
+  }
   if (!row.prizeYen || row.prizeYen <= 0 || row.plan === "free_comment") {
     return { state: { ...base, reason: "褒賞のあるお願いだけです" }, row, status: 200 };
   }

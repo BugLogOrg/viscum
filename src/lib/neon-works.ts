@@ -1,7 +1,12 @@
 import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb, hasDatabase } from "@/db";
 import { users, works, type WorkRow } from "@/db/schema";
-import type { CompStatus, DemoSeedPlan, Work } from "@/data/dummy-works";
+import {
+  effectiveCompStatus,
+  type CompStatus,
+  type DemoSeedPlan,
+  type Work,
+} from "@/data/dummy-works";
 import { auth } from "@/auth";
 
 /** Neon 作品ID（UUID）。local_ / デモ短いID と区別 */
@@ -74,7 +79,7 @@ export function workFromNeonRow(
     seederAccountName:
       name && name.toLowerCase() !== handle.toLowerCase() ? name : undefined,
     tags: row.tags ?? [],
-    status: asStatus(row.status),
+    status: effectiveCompStatus(asStatus(row.status), row.closesAt),
     plan: asPlan(row.plan),
     prizeYen: row.prizeYen ?? undefined,
     hoursAgo: hoursAgoFrom(row.createdAt),

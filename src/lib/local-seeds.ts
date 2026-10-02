@@ -1,6 +1,6 @@
 /** ブラウザ端末内のシード控え（Neon未接続時のB段階フォールバック） */
 import { courseById, PUBLIC_BOOST } from "@/data/seed-courses";
-import { getWork, type Work } from "@/data/dummy-works";
+import { effectiveCompStatus, getWork, type Work } from "@/data/dummy-works";
 
 export type LocalSeed = {
   id: string;
@@ -404,7 +404,7 @@ export function workFromLocalSeed(seed: LocalSeed): Work {
     seeder: seed.seederHandle,
     seederAccountName: seed.seederAccountName,
     tags: seed.tags,
-    status: seed.status,
+    status: effectiveCompStatus(seed.status, localSeedClosesAt(seed)),
     plan,
     prizeYen: seed.prizeYen,
     hoursAgo,

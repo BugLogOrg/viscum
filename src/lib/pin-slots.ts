@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, ne, or, sql } from "drizzle-orm";
+import { and, asc, eq, gt, isNull, ne, or, sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { works } from "@/db/schema";
 import {
@@ -9,7 +9,7 @@ import {
 
 /**
  * 注目ピンの枠管理（ADR-069）。
- * - 有効 = status=open かつ pinned_until > now()
+ * - 有効 = status=open かつ締切前 かつ pinned_until > now()
  * - 仮押さえ = pin_hold_until > now()（Checkout 中の30分）
  * - 空き判定は「有効＋仮押さえ」で数える。cron なし・表示条件だけで自然に外れる
  */
@@ -42,6 +42,7 @@ export async function getPinAvailability(opts?: {
   const now = new Date();
   const base = and(
     eq(works.status, "open"),
+    or(isNull(works.closesAt), gt(works.closesAt, now)),
     eq(works.listedOnShelf, true),
     or(gt(works.pinnedUntil, now), gt(works.pinHoldUntil, now)),
     ...(opts?.excludeWorkId ? [ne(works.id, opts.excludeWorkId)] : []),
