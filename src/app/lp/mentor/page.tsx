@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SiteFooter } from "@/components/SiteFooter";
+import { SiteFooter, VISCUM_X_URL } from "@/components/SiteFooter";
 import {
   LP_SHARE_IMAGE,
   LpAudienceSwitch,
@@ -135,7 +135,7 @@ export default function MentorLandingPage() {
               いま出ている作品を見る
             </Link>
             <a
-              href="https://x.com/viscumorg"
+              href={VISCUM_X_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex rounded-md border border-viscum-brand px-5 py-2.5 text-sm font-medium text-viscum-brand transition hover:bg-viscum-leaf-soft"

@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+export const VISCUM_X_URL = "https://x.com/viscumorg";
+
 /** 全画面共通フッター。ラボ用ページは載せない */
 export function SiteFooter() {
   return (
@@ -11,6 +13,15 @@ export function SiteFooter() {
       <Link href="/faq" className="text-viscum-brand hover:underline">
         FAQ
       </Link>
+      {" · "}
+      <a
+        href={VISCUM_X_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-viscum-brand hover:underline"
+      >
+        公式X
+      </a>
       {" · "}
       <Link href="/terms" className="text-viscum-brand hover:underline">
         利用規約
