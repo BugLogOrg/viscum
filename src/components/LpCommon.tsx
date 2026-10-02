@@ -2,6 +2,14 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ViscumMark } from "@/components/ViscumMark";
 
+/** LPのカード画像。ページで openGraph を書くとルートの opengraph-image は継がれないため明示する */
+export const LP_SHARE_IMAGE = {
+  url: "/lp-worldview.jpg",
+  width: 1400,
+  height: 933,
+  alt: "木に寄生する丸いヤドリギの房と、実を運ぶ鳥のイラスト",
+};
+
 /** LP共通の緑ヒーロー。見出しと本文は立場ごとに渡す */
 export function LpHero({
   title,
@@ -68,7 +76,7 @@ export function LpNameStory({ children }: { children?: ReactNode }) {
         VISCUMという名前について
       </h2>
       <p className="text-[15px] leading-relaxed text-viscum-ink">
-        VISCUM（ヴィスカム）は日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」、メンターは寄り添って書いてくれる人、という由来です。
+        VISCUM（ヴィスカム）は日本語に訳すと「ヤドリギ」です。鳥が実を運び、種を落とす——つくった人が種を撒いて、反応をもらって、また次をつくる。シーダーは「種を撒く人」。メンターは教える人ではなく、隣で見て、思ったことを書く人、という意味で使っています。
       </p>
       {children}
     </section>
@@ -76,15 +84,24 @@ export function LpNameStory({ children }: { children?: ReactNode }) {
 }
 
 /** 支払いの事実・お金の扱い・FAQ。シーダー／メンターどちらのLPにも置く */
-export function LpTrustAndMoney() {
+export function LpTrustAndMoney({
+  audience,
+}: {
+  audience: "seeder" | "mentor";
+}) {
+  const isSeeder = audience === "seeder";
   return (
     <>
       <section className="mt-14 rounded-xl border border-viscum-line bg-viscum-paper-2/60 px-5 py-6">
         <h2 className="text-[15px] font-semibold text-viscum-ink">
-          「ちゃんと払う人？」について
+          {isSeeder
+            ? "あなたの支払いも、事実として残ります"
+            : "「ちゃんと払う人？」について"}
         </h2>
         <p className="mt-2 text-[14px] leading-relaxed text-viscum-muted">
-          お金の話が出ると、「ちゃんと払ってくれるのかな」は気になりますよね。点数や星で人を並べず、プロフィールには「支払いが終わった件数」と「これまでの合計金額」という事実だけを出します。スコアではありません。
+          {isSeeder
+            ? "書く人にとって、「ちゃんと払ってくれる相手か」は気になるところです。点数や星で人を並べず、あなたのプロフィールには「支払いが終わった件数」と「これまでの合計金額」という事実だけが出ます。スコアではありません。"
+            : "お金の話が出ると、「ちゃんと払ってくれるのかな」は気になりますよね。点数や星で人を並べず、作品を出した人のプロフィールには「支払いが終わった件数」と「これまでの合計金額」という事実だけを出します。スコアではありません。"}
         </p>
         <p className="mt-3 text-[13px]">
           <Link
@@ -93,7 +110,7 @@ export function LpTrustAndMoney() {
             rel="noopener noreferrer"
             className="font-medium text-viscum-brand underline"
           >
-            支払い実績の例
+            表示の見本（デモの人物・実際の取引ではありません）
           </Link>
         </p>
       </section>
@@ -105,6 +122,11 @@ export function LpTrustAndMoney() {
         <p className="text-[15px] leading-relaxed text-viscum-ink">
           決済はStripeを利用します。カード情報や振込先をVISCUMが保持することはありません。コメントにはログインが必要ですが、口座登録は褒賞を受け取るときだけで大丈夫です。
         </p>
+        {isSeeder ? (
+          <p className="text-[13px] leading-relaxed text-viscum-muted">
+            有料のお願いは、いま準備を進めているところです。実際のお金のやり取りは、まだ始まっていません。
+          </p>
+        ) : null}
         <p className="text-[13px] leading-relaxed">
           <Link
             href="/faq#fees"

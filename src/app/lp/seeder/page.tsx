@@ -2,17 +2,55 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter } from "@/components/SiteFooter";
 import {
+  LP_SHARE_IMAGE,
   LpAudienceSwitch,
   LpHero,
   LpNameStory,
   LpTrustAndMoney,
 } from "@/components/LpCommon";
+import {
+  PLATFORM_FEE_RATE,
+  formatYenJa,
+  quoteSeederCharge,
+} from "@/lib/seeder-pricing";
+
+const SEEDER_DESCRIPTION =
+  "作ったものを出して、最初の反応を募る場所。見るだけ無料。件数の保証はありません。お金が動くのは、つくった側が有料で反応を頼んだときです。";
 
 export const metadata: Metadata = {
   title: "作ったものを出す人へ",
-  description:
-    "作ったものを出して、最初の反応を集める場所。見るだけ無料。お金が動くのは、つくった側が有料で反応を頼んだときだけです。",
+  description: SEEDER_DESCRIPTION,
+  openGraph: {
+    title: "VISCUM ｜ 作ったものを出す人へ",
+    description: SEEDER_DESCRIPTION,
+    url: "/lp/seeder",
+    images: [LP_SHARE_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VISCUM ｜ 作ったものを出す人へ",
+    description: SEEDER_DESCRIPTION,
+    images: [LP_SHARE_IMAGE],
+  },
 };
+
+const COURSES = [
+  {
+    name: "初見レビュー",
+    prizeYen: 5000,
+    body: "VISCUM内で、初めて見た人に「どう見えたか」を聞く。",
+  },
+  {
+    name: "改善提案",
+    prizeYen: 10000,
+    body: "VISCUM内で、どこを直せば伝わるかを聞く。",
+  },
+  {
+    name: "公開ブースト",
+    prizeYen: 30000,
+    body: "ストアやSNSなど、自分の公開場所へ正直な反応を募る。",
+  },
+] as const;
 
 /** シーダー向けLP。30秒理解 → コース → 感情／信用。細則は FAQ へ */
 export default function LandingPage() {
@@ -30,7 +68,10 @@ export default function LandingPage() {
         <p>
           VISCUMの中で反応を集める。必要なら、ストアやSNSなど自分の公開場所でも正直な反応を試せる。
         </p>
-        <p>お金が動くのは、つくった側が有料で反応を頼んだときだけです。</p>
+        <p>お金が動くのは、つくった側が有料で反応を頼んだときです。</p>
+        <p className="text-[13px] text-white/80">
+          反応の件数や内容は保証しません。
+        </p>
       </LpHero>
 
       <main className="mx-auto max-w-3xl px-6 py-14 sm:px-10">
@@ -42,7 +83,7 @@ export default function LandingPage() {
             つくったあと、「誰かに見てもらいたい」のに投稿しても流れていく感じ、ありませんか。SNSでは既読スルーだったり、友人に頼むのは気後れしたり。あの少し寂しい感じをなんとかしたくて、気後れせずに「見てください」と言える場所にしたいと思っています。
           </p>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            いまは誰でもつくれる時代です。つくることは大事だけど、それだけでは終わらない。どう守り、どう育てるか——ブーストのかけ方が大事になる、と思っています。
+            いまは誰でもつくれる時代です。つくることは大事だけど、それだけでは終わらない。出したあと、誰に見てもらい、何を聞くかが大事になる、と思っています。
           </p>
         </section>
 
@@ -69,7 +110,7 @@ export default function LandingPage() {
           <figure className="overflow-hidden rounded-xl border border-viscum-line bg-viscum-paper-2/60 shadow-sm">
             <img
               src="/lp-concept.png"
-              alt="VISCUMの循環。シーダー（ヤドリギ）がコンペし、作品（実）をメンター（鳥）がレビューして繋がる。内側は反応・楽しむ・褒賞"
+              alt="VISCUMの循環。シーダー（ヤドリギ）が作品（実）を出し、メンター（鳥）が見て書いて繋がる。内側は反応・楽しむ・褒賞"
               className="h-auto w-full"
               width={1280}
               height={720}
@@ -89,26 +130,31 @@ export default function LandingPage() {
               <span className="font-medium">無料コメント</span>
               … コメント歓迎だけ。お金は使いません。
             </li>
-            <li>
-              <span className="font-medium">初見レビュー ¥5,000</span>
-              … VISCUM内で、初めて見た人に「どう見えたか」を聞く。
-            </li>
-            <li>
-              <span className="font-medium">改善提案 ¥10,000</span>
-              … VISCUM内で、どこを直せば伝わるかを聞く。
-            </li>
-            <li>
-              <span className="font-medium">公開ブースト ¥30,000</span>
-              … ストアやSNSなど、自分の公開場所へ正直な反応を募る。
-            </li>
+            {COURSES.map((c) => (
+              <li key={c.name}>
+                <span className="font-medium">
+                  {c.name} 褒賞{formatYenJa(c.prizeYen)}
+                </span>
+                <span className="text-viscum-muted">
+                  （お支払い 約{formatYenJa(quoteSeederCharge(c.prizeYen).totalYen)}）
+                </span>
+                … {c.body}
+              </li>
+            ))}
           </ul>
+          <p className="text-[13px] leading-relaxed text-viscum-muted">
+            お支払いは、褒賞の額面＋場の手数料{PLATFORM_FEE_RATE * 100}%＋決済手数料（実費）です。褒賞は選ばれた人へ額面のまま渡ります。
+          </p>
+          <p className="text-[13px] leading-relaxed text-viscum-muted">
+            公開ブーストでは、書かれた感想に「依頼して書いてもらったもの」と分かる表示（PRなど）が付きます。お願いする側も、その表示を外さない前提でお願いしてください。
+          </p>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             <span className="font-medium">直依頼</span>
             は上の4つとは別ものです。「この人の反応が欲しい」ときの有償オファー（目安¥5,000〜¥50,000）。シードしたあとにできます。
           </p>
         </section>
 
-        <LpTrustAndMoney />
+        <LpTrustAndMoney audience="seeder" />
 
         <LpAudienceSwitch to="mentor" />
 

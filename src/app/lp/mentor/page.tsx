@@ -2,16 +2,31 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SiteFooter } from "@/components/SiteFooter";
 import {
+  LP_SHARE_IMAGE,
   LpAudienceSwitch,
   LpHero,
   LpNameStory,
   LpTrustAndMoney,
 } from "@/components/LpCommon";
 
+const MENTOR_DESCRIPTION =
+  "個人が出したばかりの作品を、見る側として開ける場所。見るだけ無料。作品を出した人が言葉を選んだときに、褒賞が渡る仕組みです。";
+
 export const metadata: Metadata = {
   title: "見て、書く人へ",
-  description:
-    "個人が出したばかりの作品を、見る側として開ける場所。見るだけ無料。選ばれた言葉には、作品を出した人から褒賞が渡ります。",
+  description: MENTOR_DESCRIPTION,
+  openGraph: {
+    title: "VISCUM ｜ 見て、書く人へ",
+    description: MENTOR_DESCRIPTION,
+    url: "/lp/mentor",
+    images: [LP_SHARE_IMAGE],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "VISCUM ｜ 見て、書く人へ",
+    description: MENTOR_DESCRIPTION,
+    images: [LP_SHARE_IMAGE],
+  },
 };
 
 /** メンター向けLP。金額の表は置かず、褒賞は条件とセットで書く */
@@ -65,7 +80,7 @@ export default function MentorLandingPage() {
             <li>「音を消して見ても、何の話か伝わった」</li>
           </ul>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
-            そのくらいの一言で足ります。厳しい内容でも、短くても構いません。出した人が知りたいのは、次をどう直すかです。ほめてもらえるように書く場所でも、頼まれた通りの感想を書く場所でもありません。
+            そのくらいの一言で足ります。厳しい内容でも、短くても構いません。出した人が知りたいのは、次をどう直すかです。ほめるために書く場所でも、頼まれた通りの感想を書く場所でもありません。
           </p>
           <p className="text-[13px]">
             <Link
@@ -81,7 +96,7 @@ export default function MentorLandingPage() {
 
         <section className="mt-14 space-y-4">
           <h2 className="text-lg font-semibold text-viscum-brand">
-            選ばれた言葉には、褒賞が渡ります
+            選ばれた言葉には、褒賞が渡る仕組みです
           </h2>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             作品によっては、出した人が「この言葉がほしかった」と思った人へ、褒賞をつけています。いくらのお願いかは、作品ごとに書いてあります（初めて見た印象なら5,000円、など）。
@@ -89,10 +104,13 @@ export default function MentorLandingPage() {
           <ul className="list-disc space-y-2 pl-5 text-[15px] leading-relaxed text-viscum-ink">
             <li>選ぶのは、作品を出した人です。書いた人全員に渡るわけではありません</li>
             <li>褒賞のない作品では、お金は動きません</li>
-            <li>選ばれたら、書かれた額面がそのまま渡ります。手数料は出した人の側です</li>
+            <li>選ばれたら、書かれた額面がそのまま渡る仕組みです。手数料は出した人の側です</li>
             <li>口座の登録は、褒賞を受け取るときまで要りません</li>
             <li>名前を指定してお願いが届いても、受けるか断るかは自分で決められます</li>
           </ul>
+          <p className="text-[13px] leading-relaxed text-viscum-muted">
+            有料のお願いは、いま準備を進めているところです。実際の褒賞の受け渡しは、まだ始まっていません。
+          </p>
           <p className="text-[15px] leading-relaxed text-viscum-ink">
             作品によっては、自分のSNSやストアに感想を残すお願いもあります。そのときは、頼まれて書いたことが分かる表示を隠しません。自分から書いた感想のふりはしません。
           </p>
@@ -101,7 +119,7 @@ export default function MentorLandingPage() {
           </p>
         </section>
 
-        <LpTrustAndMoney />
+        <LpTrustAndMoney audience="mentor" />
 
         <LpAudienceSwitch to="seeder" />
 
